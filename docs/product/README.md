@@ -13,7 +13,10 @@
 - [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)：P0 用户故事、状态规则和逐项验收标准。
 - [信息架构](INFORMATION_ARCHITECTURE.md)：导航、页面职责、核心记录流程和内容层级。
 - [KPI 框架](KPI_FRAMEWORK.md)：北极星候选、驱动指标、质量护栏和隐私约束。
-- [设计方向](DESIGN_DIRECTIONS.md)：三套视觉方向、选择标准和原型推进规则。
+- [设计方向](DESIGN_DIRECTIONS.md)：已选暖色纸感日志、飞机图标和视觉约束。
+- [视觉原型 v1](PROTOTYPE_V1.md)：月历、日期详情、统计、活动管理和标记系统五张评审稿。
+- [可扩展日历标记](SCALABLE_CALENDAR_MARKERS.md)：2/4/8+ 活动显示、状态与无障碍规则。
+- [产品 Backlog](PRODUCT_BACKLOG.md)：Now/Next/Later、里程碑和完成证据。
 - [Sprint 0 记录](SPRINT_0_LOG.md)：本次一小时产品发现任务的操作记录、结果和下一步。
 
 ## 可编辑设计
@@ -21,9 +24,10 @@
 - [FigJam：Daily Record · Product Discovery v1](https://www.figma.com/board/QPalmez5kHyjeaLXeJeZ6y)
   - 产品愿景、研究证据、MVP、状态语义、KPI、决策清单。
   - 同一画布内包含可编辑的核心记录流程图。
-- Canva 产品一页图：已生成候选，选定视觉方向后再固化为正式设计并补充永久链接。
+- [Canva：产品发现一页图（可编辑）](https://www.canva.com/d/KznYpPjwrrcB0Vx)
+  - 单页产品发现摘要；用于对外沟通，仓库 Markdown 仍是详细规则的事实来源。
 - [Figma：Daily Record · Low Fidelity Prototype v1](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
-  - 原型文件已建立；等待三套视觉方向选型后再创建四个界面，避免在视觉目标未确定时反复返工。
+  - 原型工作区已建立；当前 Figma Starter MCP 写入额度已到上限，评审基线暂以仓库[视觉原型 v1](PROTOTYPE_V1.md)为准。
 
 ## 决策优先级
 

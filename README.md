@@ -39,6 +39,9 @@
 - [用户故事与验收](docs/product/USER_STORIES_AND_ACCEPTANCE.md)
 - [信息架构](docs/product/INFORMATION_ARCHITECTURE.md)
 - [KPI 框架](docs/product/KPI_FRAMEWORK.md)
+- [视觉原型 v1](docs/product/PROTOTYPE_V1.md)
+- [可扩展日历标记](docs/product/SCALABLE_CALENDAR_MARKERS.md)
+- [产品交付 Backlog](docs/product/PRODUCT_BACKLOG.md)
 - [产品需求](docs/PRODUCT.md)
 - [版本路线图](docs/ROADMAP.md)
 - [系统架构](docs/ARCHITECTURE.md)
@@ -59,7 +62,9 @@
 - [x] 创建 Android 工程骨架
 - [x] 完成 Product Discovery v1、开源调研、信息架构和 KPI 基线
 - [x] 创建 FigJam 产品规划板与核心记录流程
-- [ ] 从三套视觉方向中选择一套并完成 Figma 低保真原型
+- [x] 选择暖色纸感日志方向并完成五张视觉原型
+- [x] 将手冲图标统一为飞机，并定义 2/4/8+ 活动标记规则
+- [ ] 将仓库视觉稿迁移为 Figma 原生可编辑组件（待 Starter MCP 额度恢复）
 - [ ] 确认正式产品名称和云端部署区域
 - [ ] 实现本地 MVP
 - [ ] 实现统计
