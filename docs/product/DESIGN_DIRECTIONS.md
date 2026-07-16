@@ -1,6 +1,6 @@
 # 视觉方向与原型决策
 
-状态：方向 1 已选定；语义一致性待修订
+状态：方向 1 已选定并完成 Figma 原生落地
 更新时间：2026-07-16
 
 ## 已选方向：暖色纸感日志
@@ -40,8 +40,11 @@
 - [活动管理](assets/prototype-v1/04-activity-management.png)
 - [可扩展标记系统](assets/prototype-v1/05-scalable-marker-system.png)
 - [Figma 原型工作区](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
+- [Figma 设计系统与 Android 交接](FIGMA_DESIGN_SYSTEM.md)
 
-Figma 教育权限正在审核，当前可审查视觉稿以仓库 PNG 为结构参考。迁移前需先按[P0 原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)修正颜色语义、空日期、精确输入和反馈状态；这不阻塞数据模型 Issue #5，但会阻塞把旧日历与状态视觉直接实现进 Android。
+Figma 教育权限已生效。原生设计系统已修正颜色语义、空日期、精确输入、保存失败、撤销和 TalkBack 状态，并建立 51 个 Android-ready 变量、7 个组件集、5 张主页面和 5 张异常/无障碍页面。旧 PNG 只保留为历史结构参考，Android UI 以[Figma 设计系统与交接](FIGMA_DESIGN_SYSTEM.md)为视觉事实源。
+
+Figma Make 没有参与正式决策：本轮 Chrome 页面交互超时且随后达到 Education MCP 调用上限，未生成或覆盖任何原生稿。未来如继续使用 Make，只能生成独立探索方向，经选择后再人工迁移到正式组件。
 
 ## 原型走查任务
 

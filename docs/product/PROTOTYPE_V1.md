@@ -1,6 +1,6 @@
 # 视觉原型 v1
 
-状态：结构可评审；颜色语义与空状态待修订
+状态：Figma 原生设计系统已完成；等待 5 人可用性测试
 更新时间：2026-07-16
 
 ## 1. 月历概览
@@ -21,7 +21,7 @@
 
 验证点：周/月/年/全部历史周期；选择“手冲”后只展示手冲总次数、手冲天数和记录日均；趋势图为辅助，不展示无分母的完成率。
 
-已知数据债务：当前 PNG 的月次数合计为 118、月天数合计为 78，与汇总卡 128 / 74 不一致；画面还需明确演示参考日期。修订后月表、汇总卡和趋势图必须使用同一固定数据集，才能作为统计实现与可用性测试基线，详见[#14](https://github.com/LitaoG/daily-record-app/issues/14)。
+旧 PNG 的月次数合计为 118、月天数合计为 78，只保留为历史结构参考。Figma v1 已用同一 fixture 统一汇总卡、月表和趋势：128 次、74 天、记录日均 1.7；11—12 月保持空值且不预测未来。详见[#14](https://github.com/LitaoG/daily-record-app/issues/14)与[Figma 设计系统交接](FIGMA_DESIGN_SYSTEM.md)。
 
 ## 4. 活动管理
 
@@ -35,15 +35,16 @@
 
 验证点：一日期一胶囊、最多 3 色段、总活动数、单活动筛选和不只靠颜色的四状态编码。
 
-已知设计债务：当前图片把部分色段解释为状态色，且手冲在不同页面的活动色不一致。后续必须以[P0 原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)为准：活动颜色只表达身份，状态使用符号、文字、轮廓或纹理；空日期不显示 `0` 胶囊。
+旧 PNG 的颜色语义债务已在 Figma v1 中修复：活动颜色只表达身份，状态使用符号、文字和轮廓；空日期不显示 `0` 胶囊。旧图继续作为历史结构参考，正式 Android UI 交接以[Figma 设计系统交接](FIGMA_DESIGN_SYSTEM.md)为准。
 
 ## 设计协作入口
 
 - [FigJam 产品发现板](https://www.figma.com/board/QPalmez5kHyjeaLXeJeZ6y)
 - [Figma 可编辑原型工作区](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
+- [Figma 设计系统与 Android 交接](FIGMA_DESIGN_SYSTEM.md)
 - [Canva 产品发现一页图](https://www.canva.com/d/XEOO0XaHd3IjtC_)
 
-Figma 教育权限正在审核，暂未把仓库视觉稿转换为 Figma 原生可编辑图层。仓库 PNG 只作为结构与视觉方向参考，业务规则以 Markdown 和 ADR 为事实来源；迁移前先修复上述设计债务，再建立原生组件和变量。
+Figma 教育权限已经生效，原生变量、文本/阴影样式、组件集、五张主页面、五张异常/无障碍页面和核心原型交互已完成。业务规则仍以 Markdown 和 ADR 为事实来源，Figma 是视觉与交互实现基线。
 
 ## 评审结论门槛
 

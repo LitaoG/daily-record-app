@@ -15,6 +15,7 @@
 - [KPI 框架](KPI_FRAMEWORK.md)：北极星候选、驱动指标、质量护栏和隐私约束。
 - [设计方向](DESIGN_DIRECTIONS.md)：已选暖色纸感日志、飞机图标和视觉约束。
 - [视觉原型 v1](PROTOTYPE_V1.md)：月历、日期详情、统计、活动管理和标记系统五张评审稿。
+- [Figma 设计系统与 Android 交接](FIGMA_DESIGN_SYSTEM.md)：原生变量、组件、页面、交互、状态、无障碍与结构 QA。
 - [可扩展日历标记](SCALABLE_CALENDAR_MARKERS.md)：2/4/8+ 活动显示、状态与无障碍规则。
 - [产品 Backlog](PRODUCT_BACKLOG.md)：Now/Next/Later、里程碑和完成证据。
 - [开发准备度基线](IMPLEMENTATION_READINESS.md)：P0 冻结范围、数据契约、依赖边界、实现顺序和进入开发门槛。
@@ -33,7 +34,7 @@
 - [Canva：产品发现一页图（可编辑）](https://www.canva.com/d/XEOO0XaHd3IjtC_)
   - 单页产品发现摘要；用于对外沟通，仓库 Markdown 仍是详细规则的事实来源。
 - [Figma：Daily Record · Low Fidelity Prototype v1](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
-  - 原型工作区已建立；教育权限审核中。评审以仓库[视觉原型 v1](PROTOTYPE_V1.md)和[P0 原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)为准，迁移前先修复已知语义问题。
+  - 教育权限已生效；原生变量、组件、主页面、异常/无障碍状态和核心交互已完成。视觉交接见[Figma 设计系统](FIGMA_DESIGN_SYSTEM.md)，旧 PNG 只保留为历史结构参考。
 
 ## 决策优先级
 

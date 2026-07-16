@@ -8,12 +8,12 @@
 | 优先级 | 工作包 | 完成证据 |
 |---|---|---|
 | M0 | 开发准备度基线 | P0 范围、数据与统计契约、依赖边界、实现顺序和进入开发门槛均可审查 |
-| M0 | 原型语义一致性（[#12](https://github.com/LitaoG/daily-record-app/issues/12)） | 活动身份色跨屏一致；状态不复用活动色；空日期、失败和撤销规则明确 |
+| M0 | 原型语义一致性（[#12](https://github.com/LitaoG/daily-record-app/issues/12)） | **设计完成**：活动身份色跨屏一致；状态不复用活动色；空日期、失败和撤销状态已进入 Figma 原生组件 |
 | M0 | 发现研究（[#13](https://github.com/LitaoG/daily-record-app/issues/13)） | 至少 5 名目标用户验证混合计量、月历回看、状态和本地优先假设 |
 | P0 | 可扩展日历标记 | 0/2/4/8+ 活动压力测试通过，颜色不是唯一编码 |
 | P0 | 日期快速记录 | 手冲次数、健身状态、时长型活动共用一种详情结构；常用路径 ≤ 3 次点击 |
 | P0 | 通用活动与记录模型 | 新活动只新增配置和记录，不新增专属表/专属导航 |
-| P0 | 精确统计（[#14](https://github.com/LitaoG/daily-record-app/issues/14)、[#7](https://github.com/LitaoG/daily-record-app/issues/7)） | 周/月/年/全部均有精确表格；固定数据集的卡片、表格、趋势和日均完全一致 |
+| P0 | 精确统计（[#14](https://github.com/LitaoG/daily-record-app/issues/14)、[#7](https://github.com/LitaoG/daily-record-app/issues/7)） | **Figma fixture 完成**：128/74/1.7 与 1—10 月数据一致；Android 查询和测试待 #7 实现 |
 | P0 | 本地可靠性 | Room 迁移测试、固定统计数据集 100% 正确、不可恢复数据丢失为 0 |
 | P0 | 5 人原型测试（[#8](https://github.com/LitaoG/daily-record-app/issues/8)） | 记录、状态理解、4/8+ 活动识别、统计理解均有观察记录 |
 
@@ -53,7 +53,7 @@
 
 详细边界与门槛见[开发准备度基线](IMPLEMENTATION_READINESS.md)。
 
-数据模型 #5 可以与研究并行；日期详情 #6 和日历 #4 的视觉实现必须先关闭[原型审计](UX_AUDIT_AND_OPTIMIZATION.md)中的阻断项。
+数据模型 #5 可以与研究并行；[原型审计](UX_AUDIT_AND_OPTIMIZATION.md)中的 Figma 设计阻断项已关闭，日期详情 #6 与日历 #4 可按[Figma 交接](FIGMA_DESIGN_SYSTEM.md)实现并继续接受 5 人测试反馈。
 
 ## 里程碑门槛
 

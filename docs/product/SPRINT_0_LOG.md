@@ -23,7 +23,13 @@
 | 视觉 | 用户选择暖色纸感日志 | 手冲图标冻结为飞机；旧的双点方案废弃 |
 | 标记系统 | 对 0/2/4/8+ 活动做压力设计 | 一日期一汇总胶囊、最多 3 色段、完整活动数 |
 | 视觉原型 | 生成月历、日期详情、统计、活动管理和组件规范 | [仓库原型入口](PROTOTYPE_V1.md) |
-| Figma 原型 | 建立独立可编辑原型文件 | [打开工作区](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)；教育权限审核中，通过后迁移为原生图层 |
+| Figma 原型 | 建立独立可编辑原型文件 | [打开工作区](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)；教育权限已生效，原生设计系统与交互完成 |
+| Figma Foundations | 建立 Android-ready 变量与样式 | 5 个集合、51 个变量、7 个文本样式、2 个阴影样式；变量均有 Android code syntax |
+| Figma Components | 建立可扩展组件契约 | 7 个组件集 + 活动筛选组件，覆盖日期汇总、四状态、三计量类型、指标、周期和导航 |
+| Figma Screens | 迁移并优化五张主页面 | 月历、日期详情、统计、活动管理、标记系统均为 390×844；核心跳转共 19 个 reactions |
+| 状态与无障碍 | 补齐非理想路径 | 空态、精确输入、撤销、保存失败、200% 字号和 TalkBack 示例完成 |
+| Figma QA | 执行结构与数据复核 | 无缺失字体/可见溢出；统计 128/74/1.7，未来月份空值且无预测；单活动统计未混入健身 |
+| Figma Make | 尝试独立视觉探索 | Chrome 页面交互超时，随后达到 Education MCP 本轮调用上限；未生成或覆盖正式原生稿 |
 | 指标 | 增加多活动可读性指标 | 4/8+ 汇总数与单活动筛选识别正确率目标均为 90% |
 | 统计复核 | 修正单活动筛选混入健身指标的问题 | “手冲”视图只保留手冲指标，并校验月表合计等于年度总次数 |
 | 开发准备度 | 冻结 P0 边界、基础类型、依赖候选、实现顺序和 Figma 后续流程 | [开发准备度基线](IMPLEMENTATION_READINESS.md)成为进入本地 MVP 的交接清单 |
@@ -52,4 +58,4 @@
 
 ## 下一迭代入口
 
-先按[发现研究计划](DISCOVERY_RESEARCH_PLAN.md)和[5 人可用性测试计划](USABILITY_TEST_PLAN.md)验证问题与任务；关闭[原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)中的阻断项后，再迁移 Figma 原生组件。本地实现从 Issue #5 开始，Figma 不阻塞数据模型准备。
+Figma 原生迁移与结构 QA 已完成。下一步按[发现研究计划](DISCOVERY_RESEARCH_PLAN.md)和[5 人可用性测试计划](USABILITY_TEST_PLAN.md)验证任务；Android 实现仍按 #5 → #6 → #4 → #7 推进，Draft PR 在用户测试门槛达到前保持 Draft。
