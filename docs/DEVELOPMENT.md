@@ -2,7 +2,7 @@
 
 ## 开发环境
 
-正式创建工程前检查：
+当前工程基线：
 
 - Android Studio 稳定版。
 - IDE 内置 JDK 与 Android Gradle Plugin 兼容。
@@ -11,11 +11,11 @@
 - Git 和 GitHub 访问。
 - 确认 BIOS 虚拟化；资源不足时优先使用真机。
 
-初始建议 `minSdk 26`，最终值在设备覆盖需求和后端 SDK 选型后写入决策记录。`compileSdk` 和 `targetSdk` 使用创建工程时适合发布的最新稳定版本。
+`minSdk 26`、`namespace` 和 `applicationId` 已由 ADR-009 接受。`compileSdk` 和 `targetSdk` 的升级通过独立工程 PR 验证，不由产品文档临时改变。
 
 ## 本地命令基线
 
-工程建立后 README 应补充准确命令，预计至少包括：
+README 与 CI 应持续维护以下准确命令：
 
 ```bash
 ./gradlew assembleDebug

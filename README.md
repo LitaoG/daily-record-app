@@ -9,7 +9,7 @@
 - 在日历上用不同颜色展示不同活动。
 - 快速记录某天是否完成以及完成次数。
 - 分别计算总次数、总活动天数，以及周、月、年维度统计。
-- 支持离线记录，登录后可以跨设备同步。
+- P0 支持完全离线记录；账户与跨设备同步在本地 MVP 稳定后进入后续阶段。
 - 默认重视隐私，不在公开仓库提交用户数据或服务端密钥。
 - 用通用活动模型承载新功能，降低未来扩展成本。
 
@@ -17,9 +17,9 @@
 
 1. 日历：查看月份、日期颜色和当日记录。
 2. 快速记录：完成、未完成、跳过、增加或调整次数。
-3. 统计：总计、周表、月表、年表、趋势图和热力图。
+3. 统计：P0 提供总计与周/月/年/全部历史精确表；高级趋势图和热力图后置。
 4. 活动管理：创建、编辑、排序、归档活动。
-5. 账户与设置：登录、同步、隐私锁、导入导出和主题设置。
+5. 设置：P0 提供本地偏好与数据说明；登录、同步、隐私锁、导入导出和主题设置后置。
 
 ## 技术方向
 
@@ -43,6 +43,11 @@
 - [可扩展日历标记](docs/product/SCALABLE_CALENDAR_MARKERS.md)
 - [产品交付 Backlog](docs/product/PRODUCT_BACKLOG.md)
 - [开发准备度基线](docs/product/IMPLEMENTATION_READINESS.md)
+- [产品经理交付完整性审计](docs/product/PRODUCT_MANAGEMENT_AUDIT.md)
+- [P0 原型体验审计](docs/product/UX_AUDIT_AND_OPTIMIZATION.md)
+- [发现研究计划](docs/product/DISCOVERY_RESEARCH_PLAN.md)
+- [5 人可用性测试计划](docs/product/USABILITY_TEST_PLAN.md)
+- [产品风险登记表](docs/product/PRODUCT_RISK_REGISTER.md)
 - [产品需求](docs/PRODUCT.md)
 - [版本路线图](docs/ROADMAP.md)
 - [系统架构](docs/ARCHITECTURE.md)
@@ -65,7 +70,7 @@
 - [x] 创建 FigJam 产品规划板与核心记录流程
 - [x] 选择暖色纸感日志方向并完成五张视觉原型
 - [x] 将手冲图标统一为飞机，并定义 2/4/8+ 活动标记规则
-- [ ] 将仓库视觉稿迁移为 Figma 原生可编辑组件（待 Starter MCP 额度恢复）
+- [ ] 修复原型颜色语义、空状态与输入反馈，再迁移为 Figma 原生组件（教育权限审核中）
 - [ ] 确认正式产品名称和云端部署区域
 - [ ] 实现本地 MVP
 - [ ] 实现统计
