@@ -40,7 +40,7 @@
 | activityId | Activity ID |
 | localDate | `YYYY-MM-DD` 语义日期 |
 | status | `UNSET`、`DONE`、`MISSED`、`SKIPPED` |
-| quantity | 非负数；次数型 MVP 使用整数 |
+| quantity | 可为空的非负数；次数型 MVP 使用整数 |
 | note | 可选私人备注 |
 | colorOverrideArgb | 可选的当天颜色覆盖；MVP 是否开放由产品决策决定 |
 | timezoneId | 写入时的 IANA 时区 |
@@ -52,9 +52,10 @@
 
 约束建议：
 
-- `quantity >= 0`。
+- quantity 非空时必须满足 `quantity >= 0`。
 - BOOLEAN 活动的 `DONE` 表示完成；quantity 可统一映射为 1，但业务含义以 status 为准。
-- COUNT 活动 quantity 大于 0 时通常推导为 DONE。
+- COUNT 活动 quantity 大于 0 时状态必须为 `DONE`；quantity 为 0 时状态必须为 `MISSED`。
+- `UNSET` 与 `SKIPPED` 的 quantity 为空；清除记录会回到 `UNSET`。
 - `UNSET` 表示没有明确记录，不等同于 `MISSED`。
 
 ## 4. CalendarMarker

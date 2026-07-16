@@ -34,6 +34,11 @@
 
 ## 项目文档
 
+- [产品发现 v1](docs/product/README.md)
+- [开源调研](docs/product/RESEARCH_OPEN_SOURCE.md)
+- [用户故事与验收](docs/product/USER_STORIES_AND_ACCEPTANCE.md)
+- [信息架构](docs/product/INFORMATION_ARCHITECTURE.md)
+- [KPI 框架](docs/product/KPI_FRAMEWORK.md)
 - [产品需求](docs/PRODUCT.md)
 - [版本路线图](docs/ROADMAP.md)
 - [系统架构](docs/ARCHITECTURE.md)
@@ -52,6 +57,9 @@
 - [x] 确认技术项目名、包名和最低 Android 版本
 - [x] 检查本机 Android Studio、SDK、JDK 和测试设备
 - [x] 创建 Android 工程骨架
+- [x] 完成 Product Discovery v1、开源调研、信息架构和 KPI 基线
+- [x] 创建 FigJam 产品规划板与核心记录流程
+- [ ] 从三套视觉方向中选择一套并完成 Figma 低保真原型
 - [ ] 确认正式产品名称和云端部署区域
 - [ ] 实现本地 MVP
 - [ ] 实现统计
