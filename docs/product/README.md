@@ -22,7 +22,8 @@
   - 产品愿景、研究证据、MVP、状态语义、KPI、决策清单。
   - 同一画布内包含可编辑的核心记录流程图。
 - Canva 产品一页图：已生成候选，选定视觉方向后再固化为正式设计并补充永久链接。
-- Figma 低保真原型：等待三套视觉方向选型后创建，避免在视觉目标未确定时反复返工。
+- [Figma：Daily Record · Low Fidelity Prototype v1](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
+  - 原型文件已建立；等待三套视觉方向选型后再创建四个界面，避免在视觉目标未确定时反复返工。
 
 ## 决策优先级
 

@@ -43,6 +43,8 @@
 
 ## 选定后的低保真产出
 
+原型文件：[Daily Record · Low Fidelity Prototype v1](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
+
 用户选择方向后，在同一 Figma 文件创建四个可点击画面：
 
 1. 月历首页。

@@ -21,6 +21,7 @@
 | FigJam | 创建产品发现板和可编辑核心流程 | [打开画布](https://www.figma.com/board/QPalmez5kHyjeaLXeJeZ6y) |
 | Canva | 生成产品一页图候选 | 待视觉方向选择后固化正式版本 |
 | 视觉 | 定义三套独立方向和选择标准 | 待用户选择 1/2/3 |
+| Figma 原型 | 建立独立低保真原型文件 | [打开原型文件](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)，待选型后绘制四屏 |
 
 ## 本轮已冻结的决策
 
