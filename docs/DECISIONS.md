@@ -58,9 +58,16 @@
 - 影响：密钥恢复、多设备加入、导入导出和搜索方案都会改变。
 - 确认条件：在实现云端 schema 前决定。
 
+## ADR-009：Android 工程标识
+
+- 状态：Accepted
+- 决策：技术项目名使用 `DailyRecord`，Android `namespace` 与 `applicationId` 使用 `io.github.litaog.dailyrecord`，初始 `minSdk` 使用 26。
+- 原因：包名与 GitHub 所有者命名空间一致且全局辨识度高；技术标识不绑定后续可调整的产品展示名称。
+- 后果：发布到应用商店后不再修改 `applicationId`；展示名称可通过资源和本地化独立演进。
+
 ## 待补充决策
 
-- 正式名称和包名。
+- 正式产品展示名称。
 - 日期任意颜色与活动颜色的关系。
 - 登录方式。
 - 周目标、完成率和连续天数规则。
