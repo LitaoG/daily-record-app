@@ -17,6 +17,7 @@
 - [视觉原型 v1](PROTOTYPE_V1.md)：月历、日期详情、统计、活动管理和标记系统五张评审稿。
 - [可扩展日历标记](SCALABLE_CALENDAR_MARKERS.md)：2/4/8+ 活动显示、状态与无障碍规则。
 - [产品 Backlog](PRODUCT_BACKLOG.md)：Now/Next/Later、里程碑和完成证据。
+- [开发准备度基线](IMPLEMENTATION_READINESS.md)：P0 冻结范围、数据契约、依赖边界、实现顺序和进入开发门槛。
 - [Sprint 0 记录](SPRINT_0_LOG.md)：本次一小时产品发现任务的操作记录、结果和下一步。
 
 ## 可编辑设计

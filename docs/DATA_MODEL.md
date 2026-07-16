@@ -20,7 +20,7 @@
 | name | 用户可编辑名称 |
 | iconKey | 应用内图标标识，不保存 Android 资源 ID |
 | colorArgb | 活动主题色 |
-| measurementType | `BOOLEAN`、`COUNT`，未来可增加 `DURATION`、`DECIMAL` |
+| measurementType | P0 固定为 `BOOLEAN`、`COUNT`、`DURATION` |
 | unit | 次、分钟、千米等，可为空 |
 | sortOrder | 快速记录和列表排序 |
 | isArchived | 是否归档 |
@@ -42,7 +42,6 @@
 | status | `UNSET`、`DONE`、`MISSED`、`SKIPPED` |
 | quantity | 可为空的非负数；次数型 MVP 使用整数 |
 | note | 可选私人备注 |
-| colorOverrideArgb | 可选的当天颜色覆盖；MVP 是否开放由产品决策决定 |
 | timezoneId | 写入时的 IANA 时区 |
 | occurredAt | 最近一次实际记录时间，可为空 |
 | createdAt / updatedAt / deletedAt | 同步字段 |
@@ -55,12 +54,13 @@
 - quantity 非空时必须满足 `quantity >= 0`。
 - BOOLEAN 活动的 `DONE` 表示完成；quantity 可统一映射为 1，但业务含义以 status 为准。
 - COUNT 活动 quantity 大于 0 时状态必须为 `DONE`；quantity 为 0 时状态必须为 `MISSED`。
+- DURATION 活动使用非负整数分钟；大于 0 时为 `DONE`，等于 0 时为 `MISSED`。
 - `UNSET` 与 `SKIPPED` 的 quantity 为空；清除记录会回到 `UNSET`。
 - `UNSET` 表示没有明确记录，不等同于 `MISSED`。
 
 ## 4. CalendarMarker
 
-可选扩展，用于与活动无关的日期标签。如果产品决定所有颜色必须来源于活动，MVP 不创建此表。
+可选扩展，用于与活动无关的日期标签。P0 已决定所有颜色来源于活动，因此不创建此表；只有后续用户研究证明存在独立日期标签需求时才通过迁移加入。
 
 | 字段 | 说明 |
 |---|---|
@@ -109,6 +109,7 @@ Outbox 与业务写入必须处于同一 Room 事务中。
 
 - Schema 导出文件纳入版本控制。
 - 每次 schema 变化提供显式迁移。
+- P0 不包含 `DailyRecord.colorOverrideArgb` 或 `CalendarMarker` 表；后续只有在研究证明独立日期标记有价值时才通过显式迁移加入。
 - 禁止默认使用 destructive migration。
 - 新增计量方式时优先增加类型和校验，不改变旧记录含义。
 - 如果未来需要记录每次行为的具体时间，可新增 `ActivityEvent`，并继续保留 `DailyRecord` 作为可重建聚合或缓存。

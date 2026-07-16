@@ -42,6 +42,7 @@
 - [视觉原型 v1](docs/product/PROTOTYPE_V1.md)
 - [可扩展日历标记](docs/product/SCALABLE_CALENDAR_MARKERS.md)
 - [产品交付 Backlog](docs/product/PRODUCT_BACKLOG.md)
+- [开发准备度基线](docs/product/IMPLEMENTATION_READINESS.md)
 - [产品需求](docs/PRODUCT.md)
 - [版本路线图](docs/ROADMAP.md)
 - [系统架构](docs/ARCHITECTURE.md)

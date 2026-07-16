@@ -21,7 +21,17 @@
 | [RoutineTracker](https://github.com/DanielRendox/RoutineTracker) | 清晰的日期议程、灵活计划、完成/失败反馈 | 偏计划执行，和本项目的“快速事实记录”不同 | GPL-3.0，只借鉴信息组织 |
 | [Trakit](https://github.com/tylxr59/Trakit) | Material 3、GitHub 风格色块日历、自托管方向 | 项目体量和用户验证不足，不能作为成熟基准 | MIT，可作方向参考 |
 
-## 3. 真实 Issue 证据
+## 3. 实现依赖候选
+
+| 项目 | 可复用能力 | 当前决策 | 许可证结论 |
+|---|---|---|---|
+| [Kizitonwose Calendar](https://github.com/kizitonwose/Calendar) | Compose 月/周/年日历、自定义日期格、一周起始日、热力图 | P0 日历候选；先用 0/2/4/8+ 汇总胶囊做技术验证，不在产品发现阶段加入 Gradle | MIT，可直接依赖并保留许可证说明 |
+| [Vico](https://github.com/patrykandpatrick/vico) | Compose 折线图、柱状图与标记 | P1 高级统计候选；精确表格先于图表 | Apache-2.0，与本仓库许可证方向一致 |
+| [Now in Android](https://github.com/android/nowinandroid) | UI/Data 分层、Room、Flow、WorkManager、离线优先与测试结构 | 只借鉴架构模式，不整仓搬运 | Apache-2.0，可参考实现并保留出处 |
+
+完整采用边界与进入开发门槛见[开发准备度基线](IMPLEMENTATION_READINESS.md)。
+
+## 4. 真实 Issue 证据
 
 ### 周期语义不能伪装成单日状态
 
@@ -58,7 +68,7 @@
 
 产品结论：首版无登录可用；应用锁、导出和同步安全进入明确路线图；默认遥测不采集活动名称、备注或记录数值。
 
-## 4. 采用与拒绝
+## 5. 采用与拒绝
 
 ### 采用
 
