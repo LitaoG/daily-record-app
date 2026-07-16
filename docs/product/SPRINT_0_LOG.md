@@ -19,15 +19,16 @@
 | 架构 | 定义 4 个底部导航、页面职责和核心路径 | 月历确定为默认主入口 |
 | 指标 | 设计北极星、激活、驱动指标和质量护栏 | 遥测默认不采集活动内容 |
 | FigJam | 创建产品发现板和可编辑核心流程 | [打开画布](https://www.figma.com/board/QPalmez5kHyjeaLXeJeZ6y) |
-| Canva | 固化产品一页图候选 | [打开可编辑设计](https://www.canva.com/d/KznYpPjwrrcB0Vx) |
+| Canva | 保存修正版产品一页图 | [打开可编辑设计](https://www.canva.com/d/XEOO0XaHd3IjtC_)；已同步汇总胶囊和周/月/年/全部历史统计 |
 | 视觉 | 用户选择暖色纸感日志 | 手冲图标冻结为飞机；旧的双点方案废弃 |
 | 标记系统 | 对 0/2/4/8+ 活动做压力设计 | 一日期一汇总胶囊、最多 3 色段、完整活动数 |
 | 视觉原型 | 生成月历、日期详情、统计、活动管理和组件规范 | [仓库原型入口](PROTOTYPE_V1.md) |
-| Figma 原型 | 建立独立可编辑原型文件 | [打开工作区](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)；Starter MCP 写入额度已满，待恢复后迁移为原生图层 |
+| Figma 原型 | 建立独立可编辑原型文件 | [打开工作区](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)；教育权限审核中，通过后迁移为原生图层 |
 | 指标 | 增加多活动可读性指标 | 4/8+ 汇总数与单活动筛选识别正确率目标均为 90% |
 | 统计复核 | 修正单活动筛选混入健身指标的问题 | “手冲”视图只保留手冲指标，并校验月表合计等于年度总次数 |
 | 开发准备度 | 冻结 P0 边界、基础类型、依赖候选、实现顺序和 Figma 后续流程 | [开发准备度基线](IMPLEMENTATION_READINESS.md)成为进入本地 MVP 的交接清单 |
 | Git 对齐 | 备份本地 `96607db` 并将工作分支安全对齐远端最终 head | 保留 `backup/product-discovery-local-96607db`，未使用 hard reset 或强推 |
+| 产品深审 | 审计范围、五张原型、KPI、风险、研究和测试准备度 | 建立 PM 完整性审计、UX 审计、发现研究计划、可用性测试计划和风险登记表 |
 
 ## 本轮已冻结的决策
 
@@ -51,4 +52,4 @@
 
 ## 下一迭代入口
 
-先按[开发准备度基线](IMPLEMENTATION_READINESS.md)和[视觉原型 v1](PROTOTYPE_V1.md)完成 5 人任务走查；Figma 教育权限通过后迁移为原生组件。本地实现从 Issue #5 开始，Figma 不阻塞数据模型准备。
+先按[发现研究计划](DISCOVERY_RESEARCH_PLAN.md)和[5 人可用性测试计划](USABILITY_TEST_PLAN.md)验证问题与任务；关闭[原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)中的阻断项后，再迁移 Figma 原生组件。本地实现从 Issue #5 开始，Figma 不阻塞数据模型准备。

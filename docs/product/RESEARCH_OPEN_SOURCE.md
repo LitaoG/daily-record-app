@@ -58,9 +58,11 @@
 
 - Track & Graph [#101](https://github.com/SamAmco/track-and-graph/issues/101) 与 [#258](https://github.com/SamAmco/track-and-graph/issues/258)：用户持续要求日历和热力图。
 - Track & Graph [#333](https://github.com/SamAmco/track-and-graph/issues/333)：格式变化导致输入区域拥挤。
+- Track & Graph [#142](https://github.com/SamAmco/track-and-graph/issues/142)：输入数值时缺少当前活动的说明与上下文。
+- Track & Graph [#240](https://github.com/SamAmco/track-and-graph/issues/240) 与 [#242](https://github.com/SamAmco/track-and-graph/issues/242)：修改日期时间会打断输入，连续补录历史记录时上下文容易被重置。
 - RoutineTracker [#13](https://github.com/DanielRendox/RoutineTracker/issues/13)：无法直接重命名导致只能删除重建。
 
-产品结论：月历是主入口；常用输入保持大触控区；活动必须可编辑并优先归档而非删除。
+产品结论：月历是主入口；输入时持续显示活动和所选日期；步进与精确输入都必须明确可达；补录过程中不能擅自跳回今天；活动必须可编辑并优先归档而非删除。
 
 ### 隐私本身是产品价值
 

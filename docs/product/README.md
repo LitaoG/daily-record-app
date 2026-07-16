@@ -18,6 +18,11 @@
 - [可扩展日历标记](SCALABLE_CALENDAR_MARKERS.md)：2/4/8+ 活动显示、状态与无障碍规则。
 - [产品 Backlog](PRODUCT_BACKLOG.md)：Now/Next/Later、里程碑和完成证据。
 - [开发准备度基线](IMPLEMENTATION_READINESS.md)：P0 冻结范围、数据契约、依赖边界、实现顺序和进入开发门槛。
+- [产品经理交付完整性审计](PRODUCT_MANAGEMENT_AUDIT.md)：现阶段应完成的工作、缺口和阶段门槛。
+- [P0 原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)：五张视觉基线的阻断问题与优化清单。
+- [发现研究计划](DISCOVERY_RESEARCH_PLAN.md)：验证目标用户、问题和核心假设。
+- [5 人可用性测试计划](USABILITY_TEST_PLAN.md)：任务、记录表、严重度和通过门槛。
+- [产品风险登记表](PRODUCT_RISK_REGISTER.md)：里程碑风险、触发器和缓解动作。
 - [Sprint 0 记录](SPRINT_0_LOG.md)：本次一小时产品发现任务的操作记录、结果和下一步。
 
 ## 可编辑设计
@@ -25,10 +30,10 @@
 - [FigJam：Daily Record · Product Discovery v1](https://www.figma.com/board/QPalmez5kHyjeaLXeJeZ6y)
   - 产品愿景、研究证据、MVP、状态语义、KPI、决策清单。
   - 同一画布内包含可编辑的核心记录流程图。
-- [Canva：产品发现一页图（可编辑）](https://www.canva.com/d/KznYpPjwrrcB0Vx)
+- [Canva：产品发现一页图（可编辑）](https://www.canva.com/d/XEOO0XaHd3IjtC_)
   - 单页产品发现摘要；用于对外沟通，仓库 Markdown 仍是详细规则的事实来源。
 - [Figma：Daily Record · Low Fidelity Prototype v1](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
-  - 原型工作区已建立；当前 Figma Starter MCP 写入额度已到上限，评审基线暂以仓库[视觉原型 v1](PROTOTYPE_V1.md)为准。
+  - 原型工作区已建立；教育权限审核中。评审以仓库[视觉原型 v1](PROTOTYPE_V1.md)和[P0 原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)为准，迁移前先修复已知语义问题。
 
 ## 决策优先级
 

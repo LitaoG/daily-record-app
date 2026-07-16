@@ -1,6 +1,6 @@
 # 视觉方向与原型决策
 
-状态：方向 1 已选定
+状态：方向 1 已选定；语义一致性待修订
 更新时间：2026-07-16
 
 ## 已选方向：暖色纸感日志
@@ -41,7 +41,7 @@
 - [可扩展标记系统](assets/prototype-v1/05-scalable-marker-system.png)
 - [Figma 原型工作区](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
 
-Figma Starter 账户的 MCP 写入额度在本轮已到上限，因此当前可审查视觉稿以仓库 PNG 为准，Figma 工作区保留为下一次额度恢复后的可编辑组件化入口。该限制不影响产品规格、验收标准和后续 Android 实现。
+Figma 教育权限正在审核，当前可审查视觉稿以仓库 PNG 为结构参考。迁移前需先按[P0 原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)修正颜色语义、空日期、精确输入和反馈状态；这不阻塞数据模型 Issue #5，但会阻塞把旧日历与状态视觉直接实现进 Android。
 
 ## 原型走查任务
 
