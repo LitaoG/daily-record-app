@@ -26,6 +26,15 @@ README 与 CI 应持续维护以下准确命令：
 
 Windows 可使用 `gradlew.bat`。
 
+数据模型阶段的完整验证命令：
+
+```powershell
+.\gradlew.bat clean testDebugUnitTest lintDebug assembleDebugAndroidTest --no-parallel
+.\gradlew.bat connectedDebugAndroidTest --no-parallel
+```
+
+第二条命令需要 Android Studio Device Manager 中至少一台已启动的模拟器或已连接真机。数据库测试覆盖 Room v1 schema、DAO/Repository、归档与软删除、同日唯一记录、三种计量类型，以及 128 次/74 天固定数据集。
+
 ## 测试层级
 
 ### 单元测试

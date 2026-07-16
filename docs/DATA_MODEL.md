@@ -2,6 +2,15 @@
 
 本文档描述逻辑模型。实际 Room Entity 和远端表名可在实现阶段调整，但语义必须保持一致。
 
+## 当前实现基线
+
+- Room schema 版本：`1`。
+- Schema 文件：`app/schemas/io.github.litaog.dailyrecord.core.database.DailyRecordDatabase/1.json`，必须纳入版本控制。
+- 通用领域模型位于 `core/model`；Room 与 DAO 位于 `core/database`；UI 只通过 `core/data` 中的 Repository 接口访问数据。
+- 当前只建立 `activities` 和 `daily_records` 两张 P0 核心表；没有手冲、健身专属列，也没有提前加入云同步 Outbox。
+- 首版没有旧 schema，因此迁移列表为空；从版本 2 开始，每次 schema 变化必须增加显式迁移或可审查的 AutoMigration，并保留从最早版本升级的设备测试。
+- Room 使用稳定版 `2.8.4` 与 KSP2；禁止配置 destructive migration。
+
 ## 1. UserProfile
 
 | 字段 | 说明 |
@@ -113,4 +122,13 @@ Outbox 与业务写入必须处于同一 Room 事务中。
 - 禁止默认使用 destructive migration。
 - 新增计量方式时优先增加类型和校验，不改变旧记录含义。
 - 如果未来需要记录每次行为的具体时间，可新增 `ActivityEvent`，并继续保留 `DailyRecord` 作为可重建聚合或缓存。
+
+## 9. 已自动验证的契约
+
+- 新增第 7 个活动只新增数据，数据库版本仍为 1。
+- `(ownerId, activityId, localDate)` 保持唯一；同日再次保存会更新原聚合记录。
+- COUNT/DURATION 大于 0 自动归一为 `DONE`，等于 0 自动归一为 `MISSED`；清除操作写入软删除并在读取时表现为 `UNSET`。
+- 归档活动不会删除历史记录，且默认活动列表不再显示该活动。
+- 活动产生任何历史记录后不能直接修改 measurementType。
+- 固定年度 fixture 可完整保存 128 次、74 天，并得到记录日均 1.7；11—12 月没有伪造记录。
 
