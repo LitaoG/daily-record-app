@@ -5,6 +5,13 @@ build/
 # Local configuration file (sdk path, etc)
 local.properties
 
+# Local environment and secret configuration
+.env
+.env.*
+!.env.example
+secrets.properties
+keystore.properties
+
 # Log/OS Files
 *.log
 
@@ -23,9 +30,12 @@ misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
 
-# Keystore files
+# Keystore and private key files
 *.jks
 *.keystore
+*.p12
+*.pfx
+*.pem
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
