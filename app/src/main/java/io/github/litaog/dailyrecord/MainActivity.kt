@@ -4,44 +4,22 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
+import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
+import io.github.litaog.dailyrecord.ui.HandBrewApp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 
 class MainActivity : ComponentActivity() {
+    private val database by lazy { DailyRecordDatabase.create(applicationContext) }
+    private val repository by lazy { RoomHandBrewRecordRepository(database) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             DailyRecordTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                HandBrewApp(repository = repository)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DailyRecordTheme {
-        Greeting("Android")
     }
 }

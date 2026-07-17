@@ -1,0 +1,412 @@
+package io.github.litaog.dailyrecord.ui.components
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.ui.TopDestination
+import io.github.litaog.dailyrecord.ui.theme.Ink500
+import io.github.litaog.dailyrecord.ui.theme.Ink700
+import io.github.litaog.dailyrecord.ui.theme.Ink900
+import io.github.litaog.dailyrecord.ui.theme.Neutral300
+import io.github.litaog.dailyrecord.ui.theme.Paper0
+import io.github.litaog.dailyrecord.ui.theme.Paper100
+import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.White
+
+enum class StatisticsPeriod(val label: String) {
+    Week("周"),
+    Month("月"),
+    Year("年"),
+    All("全部"),
+}
+
+@Composable
+internal fun HandBrewBottomBar(
+    selected: TopDestination,
+    onSelected: (TopDestination) -> Unit,
+) {
+    Surface(
+        modifier = Modifier.navigationBarsPadding(),
+        color = Paper0,
+        shadowElevation = 8.dp,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            BottomDestination(
+                label = "日历",
+                selected = selected == TopDestination.Calendar,
+                modifier = Modifier.weight(1f),
+                onClick = { onSelected(TopDestination.Calendar) },
+                icon = { color -> CalendarGlyph(color) },
+            )
+            BottomDestination(
+                label = "统计",
+                selected = selected == TopDestination.Statistics,
+                modifier = Modifier.weight(1f),
+                onClick = { onSelected(TopDestination.Statistics) },
+                icon = { color -> StatisticsGlyph(color) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomDestination(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    icon: @Composable (Color) -> Unit,
+) {
+    val contentColor = if (selected) White else Ink700
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) Terracotta500 else Color.Transparent)
+            .clickable(onClick = onClick)
+            .semantics {
+                this.selected = selected
+                role = Role.Tab
+                contentDescription = label + "，" + if (selected) "已选择" else "未选择"
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        icon(contentColor)
+        Text(text = label, color = contentColor, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+fun CalendarGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier.size(24.dp)) {
+        val stroke = 2.dp.toPx()
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(size.width * .18f, size.height * .22f),
+            size = Size(size.width * .64f, size.height * .62f),
+            cornerRadius = CornerRadius(2.dp.toPx()),
+            style = Stroke(stroke),
+        )
+        drawLine(color, Offset(size.width * .18f, size.height * .40f), Offset(size.width * .82f, size.height * .40f), stroke)
+        drawLine(color, Offset(size.width * .34f, size.height * .12f), Offset(size.width * .34f, size.height * .30f), stroke, StrokeCap.Round)
+        drawLine(color, Offset(size.width * .66f, size.height * .12f), Offset(size.width * .66f, size.height * .30f), stroke, StrokeCap.Round)
+    }
+}
+
+@Composable
+fun StatisticsGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier.size(24.dp)) {
+        val barWidth = size.width * .16f
+        drawRoundRect(color, Offset(size.width * .18f, size.height * .48f), Size(barWidth, size.height * .34f))
+        drawRoundRect(color, Offset(size.width * .42f, size.height * .25f), Size(barWidth, size.height * .57f))
+        drawRoundRect(color, Offset(size.width * .66f, size.height * .58f), Size(barWidth, size.height * .24f))
+    }
+}
+
+@Composable
+fun PlaneIcon(color: Color = Terracotta500, modifier: Modifier = Modifier) {
+    Canvas(modifier.size(36.dp)) {
+        val path = Path().apply {
+            moveTo(size.width * .50f, size.height * .06f)
+            lineTo(size.width * .58f, size.height * .42f)
+            lineTo(size.width * .90f, size.height * .62f)
+            lineTo(size.width * .90f, size.height * .72f)
+            lineTo(size.width * .58f, size.height * .62f)
+            lineTo(size.width * .58f, size.height * .86f)
+            lineTo(size.width * .70f, size.height * .94f)
+            lineTo(size.width * .70f, size.height)
+            lineTo(size.width * .50f, size.height * .94f)
+            lineTo(size.width * .30f, size.height)
+            lineTo(size.width * .30f, size.height * .94f)
+            lineTo(size.width * .42f, size.height * .86f)
+            lineTo(size.width * .42f, size.height * .62f)
+            lineTo(size.width * .10f, size.height * .72f)
+            lineTo(size.width * .10f, size.height * .62f)
+            lineTo(size.width * .42f, size.height * .42f)
+            close()
+        }
+        drawPath(path, color)
+    }
+}
+
+@Composable
+fun PeriodTabs(
+    selected: StatisticsPeriod,
+    onSelected: (StatisticsPeriod) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Paper0)
+            .border(1.dp, Neutral300, RoundedCornerShape(16.dp))
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        StatisticsPeriod.entries.forEach { period ->
+            val active = period == selected
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(CircleShape)
+                    .background(if (active) Terracotta500 else Color.Transparent)
+                    .clickable { onSelected(period) }
+                    .semantics {
+                        this.selected = active
+                        role = Role.Tab
+                        contentDescription = period.label + "统计，" + if (active) "已选择" else "未选择"
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = period.label,
+                    color = if (active) White else Ink700,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MetricCard(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.height(112.dp),
+        color = Paper0,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Neutral300),
+        shadowElevation = 4.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(Terracotta500))
+                Spacer(Modifier.width(7.dp))
+                Text(text = label, color = Ink700, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            }
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = value,
+                    color = Ink900,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.width(3.dp))
+                Text(
+                    text = unit,
+                    color = Ink500,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(bottom = 4.dp),
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun BrewCountControl(
+    count: Int,
+    enabled: Boolean,
+    hasRecord: Boolean,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.width(288.dp).height(72.dp),
+        color = if (enabled) Paper0 else Paper100,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Neutral300),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            CountButton("−", "减少一次", enabled && count > 0, false, onDecrease)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = if (enabled) count.toString() else "—",
+                    color = if (enabled) Ink900 else Ink500,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = when {
+                        !enabled -> "未来日期"
+                        !hasRecord -> "尚未保存"
+                        count == 0 -> "明确没冲"
+                        else -> "今天已冲"
+                    },
+                    color = Ink500,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+            CountButton("＋", "增加一次", enabled, true, onIncrease)
+        }
+    }
+}
+
+@Composable
+private fun CountButton(
+    symbol: String,
+    description: String,
+    enabled: Boolean,
+    primary: Boolean,
+    onClick: () -> Unit,
+) {
+    val background = when {
+        !enabled -> Paper100
+        primary -> Terracotta500
+        else -> Color(0xFFFFE7DE)
+    }
+    val content = when {
+        !enabled -> Ink500
+        primary -> White
+        else -> Terracotta500
+    }
+    Box(
+        modifier = Modifier
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(background)
+            .clickable(enabled = enabled, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = symbol, color = content, style = MaterialTheme.typography.titleLarge)
+    }
+}
+
+@Composable
+fun PrimaryActionButton(
+    label: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .height(52.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (enabled) Terracotta500 else Paper100)
+            .clickable(enabled = enabled, onClick = onClick)
+            .semantics { role = Role.Button; contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = label, color = if (enabled) White else Ink500, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+fun OutlineActionButton(
+    label: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .height(52.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Paper0)
+            .border(1.dp, if (enabled) Terracotta500 else Neutral300, RoundedCornerShape(16.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .semantics { role = Role.Button; contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = label, color = if (enabled) Terracotta500 else Ink500, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+fun StatisticRow(
+    label: String,
+    countText: String,
+    daysText: String,
+    future: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (future) Paper100 else Paper0)
+            .border(1.dp, Neutral300, RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = if (future) Ink500 else Ink900,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = countText,
+            color = if (future) Ink500 else Ink700,
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(74.dp),
+        )
+        Text(
+            text = daysText,
+            color = if (future) Ink500 else Ink700,
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(74.dp),
+        )
+    }
+}
