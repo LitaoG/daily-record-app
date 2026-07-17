@@ -1,6 +1,6 @@
 # Figma：仅手冲 v2 执行计划
 
-状态：Phase 4 完成，进入 Android Compose 实现
+状态：Figma v2 与 Android Compose 实现完成，进入用户验收
 Run ID：`hand-brew-v2-20260717`  
 目标文件：<https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw>
 
@@ -113,3 +113,11 @@ Run ID：`hand-brew-v2-20260717`
 - 两边都缺少：可运行的月历、日期记录面板、统计屏幕与 UI 测试。
 - 必须移除的旧概念：活动颜色、多活动汇总胶囊、活动筛选器、活动管理、健身指标、DONE/MISSED/SKIPPED。
 - 质量门槛：触控目标至少 48dp；颜色不是唯一状态表达；支持 TalkBack 和 200% 字体；统计明细加总必须等于汇总。
+
+## 8. Android 实现与验收
+
+- Compose 已实现月历、日期记录、周/月/年/全部历史统计和双入口底部导航。
+- UI 使用真实 Room Flow 数据，不包含演示数据或其他活动入口。
+- API 34 模拟器完成 1 次保存、0 次保存、清除记录和四周期统计同步的真实交互验收。
+- `testDebugUnitTest`、`lintDebug`、Debug APK、AndroidTest APK 与 8 个设备测试全部通过。
+- Figma 与 Android 对照截图保存在 `assets/hand-brew-v2/`。

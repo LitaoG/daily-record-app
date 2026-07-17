@@ -1,8 +1,8 @@
 {
   "runId": "hand-brew-v2-20260717",
   "fileKey": "PMtsNNL81BHl9HyJYhjbdw",
-  "phase": "android-ui",
-  "step": "compose-implementation",
+  "phase": "complete",
+  "step": "user-acceptance",
   "entities": {
     "collections": {
       "HB2 Primitives": "VariableCollectionId:47:2",
@@ -112,10 +112,7 @@
       "StatesAndAccessibility": "79:2"
     }
   },
-  "pendingValidations": [
-    "android:compose-ui",
-    "android:device-visual-qa"
-  ],
+  "pendingValidations": [],
   "completedSteps": [
     "P0.a",
     "P0.b",
@@ -153,6 +150,12 @@
     "P4.f",
     "P4.g",
     "P4.h",
-    "P4.i"
+    "P4.i",
+    "P5.a:compose-ui",
+    "P5.b:room-flow-integration",
+    "P5.c:unit-lint-build",
+    "P5.d:device-tests-8-of-8",
+    "P5.e:device-visual-qa",
+    "P5.f:core-path-manual-qa"
   ]
 }

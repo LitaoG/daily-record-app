@@ -72,3 +72,10 @@
 - `connectedDebugAndroidTest`：Pixel API 34 上 8/8 通过。
 - 模拟器真实路径：保存 1 次、保存 0 次、清除 0 次记录、周/月/年/全部统计同步，全部通过。
 - 1 次记录后月历与四周期统计均为 1 次/1 天；0 次记录不增加汇总，清除后恢复未填写。
+
+## 阶段 7：交付资产收口
+
+- 产品契约、架构、统计口径、UI 说明、路线图和 Backlog 已与当前 Compose 行为对齐。
+- Figma v2 四张总览与 API 34 日历/统计截图纳入 `assets/hand-brew-v2/`。
+- 旧 `figma-v1/` 与 `prototype-v1/` 明确降级为历史审计资产。
+- Figma 执行账本标记为完成，下一步为用户 Android Studio/实体设备验收。

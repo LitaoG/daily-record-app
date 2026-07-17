@@ -11,14 +11,13 @@
 
 ```mermaid
 flowchart LR
-    UI[Compose 日历与统计] --> VM[ViewModel]
-    VM --> REPO[HandBrewRecordRepository]
+    UI[Compose HandBrewApp] --> REPO[HandBrewRecordRepository]
     REPO --> ROOM[Room hand_brew_records]
     ROOM --> FLOW[Flow]
-    FLOW --> VM
+    FLOW --> UI
 ```
 
-UI 不直接访问 DAO。ViewModel 暴露不可变状态并把保存、清除、周期切换转交给 Repository。Repository 负责同日 upsert、范围校验和数据映射；DAO 负责日期范围和统计查询。
+UI 不直接访问 DAO。`HandBrewApp` 订阅 Repository 暴露的 Flow，并把不可变记录列表传给日历、记录与统计屏幕；保存和清除也只调用 Repository。Repository 负责同日 upsert、范围校验和数据映射；DAO 负责日期范围和统计查询。当前 UI 状态很小，先使用 Compose 可保存状态；只有状态复杂度证明需要时才引入 ViewModel。
 
 ## 包结构
 
@@ -28,8 +27,12 @@ app
    ├─ core:model       HandBrewRecord / HandBrewSummary
    ├─ core:database    Room entity / DAO / migration
    ├─ core:data        repository interface / implementation
-   ├─ feature:calendar
-   └─ feature:statistics
+   └─ ui
+      ├─ calendar      CalendarScreen
+      ├─ record        RecordScreen
+      ├─ statistics    StatisticsScreen / StatisticsModels
+      ├─ components    shared Compose components
+      └─ theme         Figma token mapping
 ```
 
 早期保持单一 Gradle 模块；只有构建时间或团队规模证明需要时才拆物理模块。
