@@ -1,6 +1,6 @@
 # 参与贡献
 
-感谢参与 Daily Record App。当前项目优先保证数据正确、离线可用、隐私安全和未来可扩展。
+感谢参与“手冲日历”。当前项目只记录手冲次数，优先保证数据正确、离线可用、隐私安全和交互简单；不得预先建立其他活动或通用记录抽象。
 
 ## 工作流程
 
@@ -19,22 +19,22 @@
 
 提交信息使用简短祈使句，例如：
 
-- `Add calendar activity markers`
-- `Define monthly statistics queries`
+- `Add hand-brew calendar states`
+- `Define monthly brew statistics`
 - `Fix week boundary calculation`
 
 ## 代码要求
 
 - Kotlin 代码遵循官方 Kotlin 风格。
 - Compose UI 使用状态提升和单向数据流。
-- ViewModel 不持有 Activity、Fragment 或 View 引用。
 - Repository 是 UI/领域层访问数据的唯一入口。
-- 日期计算显式使用 `LocalDate`、时区和用户的周起始设置。
+- 日期计算显式使用 `LocalDate`；周固定从星期一开始。
+- 不引入 `Activity`、`MeasurementType`、活动筛选或未来活动扩展点。
 - 不允许用数据库清空重建代替正式迁移。
 
 ## 测试要求
 
-- 统计公式、日期边界和同步冲突逻辑需要单元测试。
+- 统计公式、日期边界、0 次与未填写语义需要单元测试。
 - Room schema 变化需要迁移测试。
 - 关键用户流程需要 Compose UI 测试。
 - PR 中列出已运行的命令和结果。

@@ -21,6 +21,9 @@ import io.github.litaog.dailyrecord.ui.theme.Paper50
 import java.time.LocalDate
 import java.time.YearMonth
 
+private val EarliestSupportedDate: LocalDate = LocalDate.of(1970, 1, 1)
+private val EarliestSupportedMonth: YearMonth = YearMonth.from(EarliestSupportedDate)
+
 internal enum class TopDestination {
     Calendar,
     Statistics,
@@ -39,7 +42,7 @@ fun HandBrewApp(
     val selectedDate = selectedDateText?.let(LocalDate::parse)
     val displayedMonth = YearMonth.parse(displayedMonthText)
     val recordsFlow = remember(repository, today) {
-        repository.observeRecords(LocalDate.of(1970, 1, 1), today.plusDays(1))
+        repository.observeRecords(EarliestSupportedDate, today.plusDays(1))
     }
     val allRecords by recordsFlow.collectAsState(initial = emptyList())
 
@@ -74,8 +77,12 @@ fun HandBrewApp(
                 month = displayedMonth,
                 today = today,
                 records = allRecords,
+                earliestMonth = EarliestSupportedMonth,
                 modifier = Modifier.padding(contentPadding),
-                onPreviousMonth = { displayedMonthText = displayedMonth.minusMonths(1).toString() },
+                onPreviousMonth = {
+                    val previous = displayedMonth.minusMonths(1)
+                    if (!previous.isBefore(EarliestSupportedMonth)) displayedMonthText = previous.toString()
+                },
                 onNextMonth = {
                     val next = displayedMonth.plusMonths(1)
                     if (!next.isAfter(YearMonth.from(today))) displayedMonthText = next.toString()

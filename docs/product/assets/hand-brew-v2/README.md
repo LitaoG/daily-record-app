@@ -6,7 +6,9 @@
 - `04-figma-states-accessibility.png`：空数据、0 次、高次数、未来日期与 200% 字体状态。
 - `05-android-calendar-api34.png`：API 34 模拟器真实 Room 数据日历。
 - `06-android-statistics-api34.png`：API 34 模拟器真实统计页。
+- `07-android-splash-api34.png`：陶土橙飞机启动图标与暖纸色启动画面。
+- `08-android-calendar-final-api34.png`：依赖升级、模板清理后的最终 API 34 月历。
 
 Figma 文件：<https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw>
 
-同级 `figma-v1/` 与 `prototype-v1/` 仅为早期多活动方案的历史审计资产，不是当前实现事实来源。
+早期多活动图片已从当前分支删除，只能通过 Git 历史审计。

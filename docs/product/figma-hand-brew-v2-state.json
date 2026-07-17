@@ -110,6 +110,15 @@
       "StatsYear": "70:11",
       "StatsAll": "70:13",
       "StatesAndAccessibility": "79:2"
+    },
+    "cleanup": {
+      "removedLegacyPages": [
+        "0:1",
+        "7:2",
+        "7:3",
+        "7:5"
+      ],
+      "remainingPageCount": 14
     }
   },
   "pendingValidations": [],
@@ -156,6 +165,9 @@
     "P5.c:unit-lint-build",
     "P5.d:device-tests-8-of-8",
     "P5.e:device-visual-qa",
-    "P5.f:core-path-manual-qa"
+    "P5.f:core-path-manual-qa",
+    "P6.a:remove-legacy-figma-pages",
+    "P6.b:remove-legacy-png-assets",
+    "P6.c:replace-template-launcher-assets"
   ]
 }

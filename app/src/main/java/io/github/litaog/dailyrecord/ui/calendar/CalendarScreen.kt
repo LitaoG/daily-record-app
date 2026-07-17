@@ -50,6 +50,7 @@ fun CalendarScreen(
     month: YearMonth,
     today: LocalDate,
     records: List<HandBrewRecord>,
+    earliestMonth: YearMonth = YearMonth.of(1970, 1),
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
@@ -63,6 +64,7 @@ fun CalendarScreen(
     val first = month.atDay(1)
     val gridStart = first.minusDays((first.dayOfWeek.value - 1).toLong())
     val gridDates = List(42) { gridStart.plusDays(it.toLong()) }
+    val canGoPrevious = month > earliestMonth
     val canGoNext = month < YearMonth.from(today)
 
     Column(
@@ -72,7 +74,7 @@ fun CalendarScreen(
             .padding(horizontal = 15.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        MonthHeader(month, canGoNext, onPreviousMonth, onNextMonth, onToday)
+        MonthHeader(month, canGoPrevious, canGoNext, onPreviousMonth, onNextMonth, onToday)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -112,6 +114,7 @@ fun CalendarScreen(
                         CalendarDayCell(
                             date = date,
                             month = month,
+                            earliestDate = earliestMonth.atDay(1),
                             today = today,
                             record = recordsByDate[date],
                             modifier = Modifier.weight(1f),
@@ -143,6 +146,7 @@ fun CalendarScreen(
 @Composable
 private fun MonthHeader(
     month: YearMonth,
+    canGoPrevious: Boolean,
     canGoNext: Boolean,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
@@ -152,7 +156,7 @@ private fun MonthHeader(
         modifier = Modifier.fillMaxWidth().height(52.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MonthArrow("‹", "上个月", true, onPreviousMonth)
+        MonthArrow("‹", "上个月", canGoPrevious, onPreviousMonth)
         Text(
             text = month.year.toString() + "年 " + month.monthValue + "月",
             modifier = Modifier.weight(1f),
@@ -201,16 +205,18 @@ private fun MonthArrow(
 private fun CalendarDayCell(
     date: LocalDate,
     month: YearMonth,
+    earliestDate: LocalDate,
     today: LocalDate,
     record: HandBrewRecord?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val unsupported = date < earliestDate
     val future = date > today
     val outsideMonth = YearMonth.from(date) != month
     val count = record?.brewCount
     val background = when {
-        future -> Paper100
+        unsupported || future -> Paper100
         record == null -> Paper0
         count == 0 -> Neutral300
         count == 1 -> Terracotta400
@@ -219,6 +225,7 @@ private fun CalendarDayCell(
     }
     val contentColor = if ((count ?: 0) >= 2) White else Ink900
     val status = when {
+        unsupported -> "不可用"
         future -> "未来"
         record == null -> "未填"
         count == 0 -> "0次"
@@ -228,6 +235,7 @@ private fun CalendarDayCell(
         else -> "9+次"
     }
     val semanticStatus = when {
+        unsupported -> "超出支持范围，不可记录"
         future -> "未来日期，不可记录"
         record == null -> "未填写"
         count == 0 -> "明确记录 0 次手冲"
@@ -242,7 +250,7 @@ private fun CalendarDayCell(
             .clip(RoundedCornerShape(16.dp))
             .background(background)
             .border(if (date == today) 2.dp else 1.dp, todayBorder, RoundedCornerShape(16.dp))
-            .clickable(enabled = !future, onClick = onClick)
+            .clickable(enabled = !future && !unsupported, onClick = onClick)
             .semantics {
                 role = Role.Button
                 contentDescription = date.year.toString() + "年" + date.monthValue + "月" +

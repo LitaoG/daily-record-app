@@ -148,7 +148,7 @@ fun StatisticsGlyph(color: Color, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun PlaneIcon(color: Color = Terracotta500, modifier: Modifier = Modifier) {
+fun PlaneIcon(modifier: Modifier = Modifier, color: Color = Terracotta500) {
     Canvas(modifier.size(36.dp)) {
         val path = Path().apply {
             moveTo(size.width * .50f, size.height * .06f)
@@ -332,9 +332,9 @@ private fun CountButton(
 @Composable
 fun PrimaryActionButton(
     label: String,
-    enabled: Boolean = true,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Box(
         modifier = modifier
@@ -352,9 +352,9 @@ fun PrimaryActionButton(
 @Composable
 fun OutlineActionButton(
     label: String,
-    enabled: Boolean = true,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Box(
         modifier = modifier

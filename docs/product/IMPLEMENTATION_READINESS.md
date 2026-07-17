@@ -29,6 +29,6 @@
 
 - 当前展示名称固定为“手冲日历”；技术包名保持 `io.github.litaog.dailyrecord`，避免无必要迁移。
 - Figma v2、Compose 日历/记录/统计、Room 持久化、单元测试、Lint、API 34 设备测试与手动核心路径验收均已完成。
-- 当前事实资产位于 `assets/hand-brew-v2/`；`figma-v1/` 与 `prototype-v1/` 仅作历史审计，不再指导实现。
+- 当前事实资产只保留在 `assets/hand-brew-v2/`；旧多活动 PNG 已从当前分支删除，仍可通过 Git 历史审计。
 - GitHub 连接暂不可用；本地分支与提交作为唯一变更记录，恢复后再推送。
 - 发布前仍需五人可用性测试、至少一台实体设备回归、正式名称/图标/隐私说明与签名 AAB。
