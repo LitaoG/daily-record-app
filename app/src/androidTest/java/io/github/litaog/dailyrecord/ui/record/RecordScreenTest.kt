@@ -86,7 +86,7 @@ class RecordScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("增加一次").performClick()
-        composeRule.onNodeWithContentDescription("返回日历").performClick()
+        composeRule.runOnIdle { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.onNodeWithText("放弃未保存的修改？").assertIsDisplayed()
         composeRule.onNodeWithText("继续编辑").performClick()
         assertEquals(0, backCalls)
@@ -94,6 +94,18 @@ class RecordScreenTest {
         composeRule.onNodeWithContentDescription("返回日历").performClick()
         composeRule.onNodeWithText("放弃修改").performClick()
         assertEquals(1, backCalls)
+    }
+
+    @Test
+    fun countControlsStopAtZeroAndRecoverAfterIncrement() {
+        val repository = FakeHandBrewRecordRepository()
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("减少一次").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithContentDescription("减少一次").assertIsEnabled().performClick()
+        composeRule.onNodeWithContentDescription("减少一次").assertIsNotEnabled()
     }
 
     @Test
@@ -105,6 +117,19 @@ class RecordScreenTest {
         composeRule.onNodeWithContentDescription("保存记录").performClick()
         composeRule.onNodeWithText("保存失败，请重试").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("保存记录").assertIsEnabled()
+    }
+
+    @Test
+    fun failedClearKeepsRecordAndRestoresControls() {
+        val repository = FakeHandBrewRecordRepository(listOf(record(today, 2))).apply { failClear = true }
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("清除记录").performClick()
+        composeRule.onNodeWithText("确认清除").performClick()
+        composeRule.onNodeWithText("清除失败，请重试").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("清除记录").assertIsEnabled()
+        composeRule.onNodeWithText("已记录 · 2 次").assertIsDisplayed()
     }
 
     private fun setRecordContent(

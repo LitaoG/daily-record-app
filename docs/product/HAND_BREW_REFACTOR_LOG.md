@@ -115,7 +115,7 @@
 ## 阶段 10 验证结果
 
 - `testDebugUnitTest`、`lintDebug`、`assembleDebug`、`assembleDebugAndroidTest`、`assembleRelease`：通过。
-- `connectedDebugAndroidTest`：Pixel API 34 上 15/15 通过，其中 7 项为本轮新增 UI 交互回归。
+- `connectedDebugAndroidTest`：Pixel API 34 上 18/18 通过，其中 10 项为本轮新增 UI 交互回归。
 - 正常字号真实渲染检查：月切换箭头、记录页矢量控件、按钮状态和统计布局均无裁切。
 - 系统字体调至 200% 后真实检查：月份标题分行、日期格增高、统计卡纵向排列，页面可滚动且主导航仍可点击。
 - 验收截图：`10-android-record-hardened-api34.png` 与 `11-android-statistics-font200-api34.png`。

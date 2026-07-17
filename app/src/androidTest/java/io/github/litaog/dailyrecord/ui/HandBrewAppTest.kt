@@ -2,6 +2,7 @@ package io.github.litaog.dailyrecord.ui
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -42,6 +43,24 @@ class HandBrewAppTest {
         composeRule.onNodeWithTag("record_screen").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("返回日历").performClick()
         composeRule.onNodeWithText("2026年 6月").assertIsDisplayed()
+    }
+
+    @Test
+    fun monthControlsHandleRepeatedClicksAndReturnToToday() {
+        setAppContent()
+
+        composeRule.onNodeWithContentDescription("上个月").performClick()
+        composeRule.onNodeWithContentDescription("上个月").performClick()
+        composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("下个月").performClick()
+        composeRule.onNodeWithContentDescription("下个月").performClick()
+        composeRule.onNodeWithText("2026年 7月").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("下个月").assertIsNotEnabled()
+
+        composeRule.onNodeWithContentDescription("上个月").performClick()
+        composeRule.onNodeWithContentDescription("回到今天").performClick()
+        composeRule.onNodeWithText("2026年 7月").assertIsDisplayed()
     }
 
     private fun setAppContent() {
