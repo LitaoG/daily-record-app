@@ -1,6 +1,6 @@
 # Figma：仅手冲 v2 执行计划
 
-状态：Phase 0 完成，等待写入批准  
+状态：Phase 2 完成，进入组件库构建
 Run ID：`hand-brew-v2-20260717`  
 目标文件：<https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw>
 
@@ -113,4 +113,3 @@ Run ID：`hand-brew-v2-20260717`
 - 两边都缺少：可运行的月历、日期记录面板、统计屏幕与 UI 测试。
 - 必须移除的旧概念：活动颜色、多活动汇总胶囊、活动筛选器、活动管理、健身指标、DONE/MISSED/SKIPPED。
 - 质量门槛：触控目标至少 48dp；颜色不是唯一状态表达；支持 TalkBack 和 200% 字体；统计明细加总必须等于汇总。
-
