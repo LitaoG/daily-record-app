@@ -1,45 +1,14 @@
-# 产品发现索引
+# 手冲日历产品交付索引
 
-状态：Product Discovery v1
-更新时间：2026-07-16
-对应分支：`agent/product-discovery-v1`
+- [产品契约](../PRODUCT.md)
+- [界面与交互](../UI_UX.md)
+- [统计口径](../STATISTICS.md)
+- [实现准备度](IMPLEMENTATION_READINESS.md)
+- [开发 Backlog](PRODUCT_BACKLOG.md)
+- [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)
+- [Figma 设计系统](FIGMA_DESIGN_SYSTEM.md)
+- [可用性测试](USABILITY_TEST_PLAN.md)
+- [开源借鉴边界](RESEARCH_OPEN_SOURCE.md)
+- [重构日志](HAND_BREW_REFACTOR_LOG.md)
 
-本目录记录 Daily Record 在进入业务代码前的产品决策、证据、验收口径和设计链接。详细统计、数据结构与工程架构仍分别以仓库根目录下的专项文档为准。
-
-## 本轮产出
-
-- [产品策略](PRODUCT_STRATEGY_V1.md)：愿景、目标用户、MVP 边界、阶段顺序和产品原则。
-- [开源调研](RESEARCH_OPEN_SOURCE.md)：可借鉴模式、许可证边界和真实 Issue 证据。
-- [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)：P0 用户故事、状态规则和逐项验收标准。
-- [信息架构](INFORMATION_ARCHITECTURE.md)：导航、页面职责、核心记录流程和内容层级。
-- [KPI 框架](KPI_FRAMEWORK.md)：北极星候选、驱动指标、质量护栏和隐私约束。
-- [设计方向](DESIGN_DIRECTIONS.md)：已选暖色纸感日志、飞机图标和视觉约束。
-- [视觉原型 v1](PROTOTYPE_V1.md)：月历、日期详情、统计、活动管理和标记系统五张评审稿。
-- [Figma 设计系统与 Android 交接](FIGMA_DESIGN_SYSTEM.md)：原生变量、组件、页面、交互、状态、无障碍与结构 QA。
-- [可扩展日历标记](SCALABLE_CALENDAR_MARKERS.md)：2/4/8+ 活动显示、状态与无障碍规则。
-- [产品 Backlog](PRODUCT_BACKLOG.md)：Now/Next/Later、里程碑和完成证据。
-- [开发准备度基线](IMPLEMENTATION_READINESS.md)：P0 冻结范围、数据契约、依赖边界、实现顺序和进入开发门槛。
-- [产品经理交付完整性审计](PRODUCT_MANAGEMENT_AUDIT.md)：现阶段应完成的工作、缺口和阶段门槛。
-- [P0 原型体验审计](UX_AUDIT_AND_OPTIMIZATION.md)：五张视觉基线的阻断问题与优化清单。
-- [发现研究计划](DISCOVERY_RESEARCH_PLAN.md)：验证目标用户、问题和核心假设。
-- [5 人可用性测试计划](USABILITY_TEST_PLAN.md)：任务、记录表、严重度和通过门槛。
-- [产品风险登记表](PRODUCT_RISK_REGISTER.md)：里程碑风险、触发器和缓解动作。
-- [Sprint 0 记录](SPRINT_0_LOG.md)：本次一小时产品发现任务的操作记录、结果和下一步。
-
-## 可编辑设计
-
-- [FigJam：Daily Record · Product Discovery v1](https://www.figma.com/board/QPalmez5kHyjeaLXeJeZ6y)
-  - 产品愿景、研究证据、MVP、状态语义、KPI、决策清单。
-  - 同一画布内包含可编辑的核心记录流程图。
-- [Canva：产品发现一页图（可编辑）](https://www.canva.com/d/XEOO0XaHd3IjtC_)
-  - 单页产品发现摘要；用于对外沟通，仓库 Markdown 仍是详细规则的事实来源。
-- [Figma：Daily Record · Low Fidelity Prototype v1](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
-  - 教育权限已生效；原生变量、组件、主页面、异常/无障碍状态和核心交互已完成。视觉交接见[Figma 设计系统](FIGMA_DESIGN_SYSTEM.md)，旧 PNG 只保留为历史结构参考。
-
-## 决策优先级
-
-1. 先把“记录是否正确”做完，再增加图表丰富度。
-2. 先离线 MVP，再加入账户与同步。
-3. `UNSET`、`DONE`、`MISSED`、`SKIPPED` 必须明确区分。
-4. 颜色服务于活动辨识，不能成为唯一的信息载体。
-5. 未定义目标分母前，不展示完成率和连续天数。
+旧“通用活动记录器”产品包已从当前分支移除，仍可通过 Git 历史审计。
