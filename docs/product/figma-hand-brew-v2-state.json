@@ -1,0 +1,30 @@
+{
+  "runId": "hand-brew-v2-20260717",
+  "fileKey": "PMtsNNL81BHl9HyJYhjbdw",
+  "phase": "phase0",
+  "step": "approval-checkpoint",
+  "entities": {
+    "collections": {},
+    "variables": {},
+    "styles": {},
+    "pages": {},
+    "components": {},
+    "screens": {}
+  },
+  "pendingValidations": [
+    "phase1:variables",
+    "phase1:styles",
+    "phase2:foundations-screenshot",
+    "phase3:components",
+    "phase4:screens",
+    "phase4:accessibility"
+  ],
+  "completedSteps": [
+    "P0.a",
+    "P0.b",
+    "P0.c",
+    "P0.d",
+    "P0.e",
+    "P0.f"
+  ]
+}
