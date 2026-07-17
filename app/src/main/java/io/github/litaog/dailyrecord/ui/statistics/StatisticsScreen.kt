@@ -24,12 +24,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.ui.components.MetricCard
 import io.github.litaog.dailyrecord.ui.components.PeriodTabs
+import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.StatisticRow
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -47,10 +49,13 @@ fun StatisticsScreen(
     today: LocalDate,
     records: List<HandBrewRecord>,
     modifier: Modifier = Modifier,
+    onOpenCalendar: () -> Unit = {},
 ) {
     var periodName by rememberSaveable { mutableStateOf(StatisticsPeriod.Week.name) }
-    val period = StatisticsPeriod.valueOf(periodName)
+    val period = StatisticsPeriod.entries.firstOrNull { it.name == periodName }
+        ?: StatisticsPeriod.Week
     val model = remember(period, today, records) { buildStatistics(period, today, records) }
+    val useHorizontalMetrics = LocalDensity.current.fontScale < 1.4f
 
     LazyColumn(
         modifier = modifier.fillMaxSize().testTag("statistics_screen"),
@@ -92,18 +97,31 @@ fun StatisticsScreen(
             }
         }
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-            ) {
-                MetricCard("手冲总次数", model.summary.totalCount.toString(), "次", Modifier.weight(1f))
-                MetricCard("手冲天数", model.summary.brewDays.toString(), "天", Modifier.weight(1f))
-                MetricCard(
-                    "记录日均",
-                    String.format(Locale.US, "%.1f", model.summary.average),
-                    "次/天",
-                    Modifier.weight(1f),
-                )
+            if (useHorizontalMetrics) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                ) {
+                    MetricCard("手冲总次数", model.summary.totalCount.toString(), "次", Modifier.weight(1f))
+                    MetricCard("手冲天数", model.summary.brewDays.toString(), "天", Modifier.weight(1f))
+                    MetricCard(
+                        "记录日均",
+                        String.format(Locale.US, "%.1f", model.summary.average),
+                        "次/天",
+                        Modifier.weight(1f),
+                    )
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MetricCard("手冲总次数", model.summary.totalCount.toString(), "次", Modifier.fillMaxWidth())
+                    MetricCard("手冲天数", model.summary.brewDays.toString(), "天", Modifier.fillMaxWidth())
+                    MetricCard(
+                        "记录日均",
+                        String.format(Locale.US, "%.1f", model.summary.average),
+                        "次/天",
+                        Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
         item {
@@ -116,7 +134,7 @@ fun StatisticsScreen(
             }
         }
         if (model.details.isEmpty()) {
-            item { EmptyStatistics() }
+            item { EmptyStatistics(onOpenCalendar) }
         } else {
             items(model.details, key = { it.label }) { detail ->
                 StatisticRow(
@@ -156,7 +174,7 @@ fun StatisticsScreen(
 }
 
 @Composable
-private fun EmptyStatistics() {
+private fun EmptyStatistics(onOpenCalendar: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -175,6 +193,11 @@ private fun EmptyStatistics() {
             "回到日历选择日期，保存第一条记录。",
             color = Ink700,
             style = MaterialTheme.typography.bodyMedium,
+        )
+        PrimaryActionButton(
+            label = "去日历记录",
+            onClick = onOpenCalendar,
+            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
         )
     }
 }

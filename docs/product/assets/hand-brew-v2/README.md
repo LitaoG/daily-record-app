@@ -9,6 +9,8 @@
 - `07-android-splash-api34.png`：陶土橙飞机启动图标与暖纸色启动画面。
 - `08-android-calendar-final-api34.png`：依赖升级、模板清理后的最终 API 34 月历。
 - `09-canva-product-overview.png`：正式保存的一页式手冲日历产品概览。
+- `10-android-record-hardened-api34.png`：加载保护、矢量控件与防误触确认完成后的日期记录页。
+- `11-android-statistics-font200-api34.png`：系统字体 200% 下自动纵向排列的统计指标与可滚动明细。
 
 Figma 文件：<https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw>
 

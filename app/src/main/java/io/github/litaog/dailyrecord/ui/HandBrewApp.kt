@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -38,17 +37,20 @@ fun HandBrewApp(
     var selectedDateText by rememberSaveable { mutableStateOf<String?>(null) }
     var displayedMonthText by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
 
-    val destination = TopDestination.valueOf(destinationName)
-    val selectedDate = selectedDateText?.let(LocalDate::parse)
-    val displayedMonth = YearMonth.parse(displayedMonthText)
+    val currentMonth = YearMonth.from(today)
+    val destination = TopDestination.entries.firstOrNull { it.name == destinationName }
+        ?: TopDestination.Calendar
+    val selectedDate = selectedDateText
+        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        ?.takeIf { it in EarliestSupportedDate..today }
+    val displayedMonth = runCatching { YearMonth.parse(displayedMonthText) }
+        .getOrDefault(currentMonth)
+        .takeIf { it in EarliestSupportedMonth..currentMonth }
+        ?: currentMonth
     val recordsFlow = remember(repository, today) {
         repository.observeRecords(EarliestSupportedDate, today.plusDays(1))
     }
     val allRecords by recordsFlow.collectAsState(initial = emptyList())
-
-    BackHandler(enabled = selectedDate != null) {
-        selectedDateText = null
-    }
 
     if (selectedDate != null) {
         RecordScreen(
@@ -80,21 +82,29 @@ fun HandBrewApp(
                 earliestMonth = EarliestSupportedMonth,
                 modifier = Modifier.padding(contentPadding),
                 onPreviousMonth = {
-                    val previous = displayedMonth.minusMonths(1)
+                    val previous = runCatching { YearMonth.parse(displayedMonthText) }
+                        .getOrDefault(displayedMonth)
+                        .minusMonths(1)
                     if (!previous.isBefore(EarliestSupportedMonth)) displayedMonthText = previous.toString()
                 },
                 onNextMonth = {
-                    val next = displayedMonth.plusMonths(1)
-                    if (!next.isAfter(YearMonth.from(today))) displayedMonthText = next.toString()
+                    val next = runCatching { YearMonth.parse(displayedMonthText) }
+                        .getOrDefault(displayedMonth)
+                        .plusMonths(1)
+                    if (!next.isAfter(currentMonth)) displayedMonthText = next.toString()
                 },
-                onToday = { displayedMonthText = YearMonth.from(today).toString() },
-                onDateSelected = { selectedDateText = it.toString() },
+                onToday = { displayedMonthText = currentMonth.toString() },
+                onDateSelected = {
+                    displayedMonthText = YearMonth.from(it).toString()
+                    selectedDateText = it.toString()
+                },
             )
 
             TopDestination.Statistics -> StatisticsScreen(
                 today = today,
                 records = allRecords,
                 modifier = Modifier.padding(contentPadding),
+                onOpenCalendar = { destinationName = TopDestination.Calendar.name },
             )
         }
     }

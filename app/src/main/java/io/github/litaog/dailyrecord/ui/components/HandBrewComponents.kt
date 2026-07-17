@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -106,7 +106,7 @@ private fun BottomDestination(
             .fillMaxHeight()
             .clip(RoundedCornerShape(16.dp))
             .background(if (selected) Terracotta500 else Color.Transparent)
-            .clickable(onClick = onClick)
+            .clickable(role = Role.Tab, onClick = onClick)
             .semantics {
                 this.selected = selected
                 role = Role.Tab
@@ -144,6 +144,27 @@ fun StatisticsGlyph(color: Color, modifier: Modifier = Modifier) {
         drawRoundRect(color, Offset(size.width * .18f, size.height * .48f), Size(barWidth, size.height * .34f))
         drawRoundRect(color, Offset(size.width * .42f, size.height * .25f), Size(barWidth, size.height * .57f))
         drawRoundRect(color, Offset(size.width * .66f, size.height * .58f), Size(barWidth, size.height * .24f))
+    }
+}
+
+@Composable
+fun BackChevronIcon(modifier: Modifier = Modifier, color: Color = Ink900) {
+    Canvas(modifier.size(20.dp)) {
+        val stroke = 2.4.dp.toPx()
+        drawLine(
+            color,
+            Offset(size.width * .62f, size.height * .18f),
+            Offset(size.width * .36f, size.height * .50f),
+            stroke,
+            StrokeCap.Round,
+        )
+        drawLine(
+            color,
+            Offset(size.width * .36f, size.height * .50f),
+            Offset(size.width * .62f, size.height * .82f),
+            stroke,
+            StrokeCap.Round,
+        )
     }
 }
 
@@ -197,7 +218,7 @@ fun PeriodTabs(
                     .fillMaxHeight()
                     .clip(CircleShape)
                     .background(if (active) Terracotta500 else Color.Transparent)
-                    .clickable { onSelected(period) }
+                    .clickable(role = Role.Tab) { onSelected(period) }
                     .semantics {
                         this.selected = active
                         role = Role.Tab
@@ -218,7 +239,7 @@ fun PeriodTabs(
 @Composable
 fun MetricCard(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.height(112.dp),
+        modifier = modifier.heightIn(min = 112.dp),
         color = Paper0,
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, Neutral300),
@@ -263,17 +284,17 @@ fun BrewCountControl(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.width(288.dp).height(72.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = 84.dp),
         color = if (enabled) Paper0 else Paper100,
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, Neutral300),
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            CountButton("−", "减少一次", enabled && count > 0, false, onDecrease)
+            CountButton("减少一次", enabled && count > 0, false, onDecrease)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = if (enabled) count.toString() else "—",
@@ -286,20 +307,19 @@ fun BrewCountControl(
                         !enabled -> "未来日期"
                         !hasRecord -> "尚未保存"
                         count == 0 -> "明确没冲"
-                        else -> "今天已冲"
+                        else -> "已手冲"
                     },
                     color = Ink500,
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
-            CountButton("＋", "增加一次", enabled, true, onIncrease)
+            CountButton("增加一次", enabled && count < Int.MAX_VALUE, true, onIncrease)
         }
     }
 }
 
 @Composable
 private fun CountButton(
-    symbol: String,
     description: String,
     enabled: Boolean,
     primary: Boolean,
@@ -321,11 +341,29 @@ private fun CountButton(
             .size(48.dp)
             .clip(CircleShape)
             .background(background)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = symbol, color = content, style = MaterialTheme.typography.titleLarge)
+        Canvas(Modifier.size(20.dp)) {
+            val stroke = 2.5.dp.toPx()
+            drawLine(
+                color = content,
+                start = Offset(2.dp.toPx(), size.height / 2f),
+                end = Offset(size.width - 2.dp.toPx(), size.height / 2f),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round,
+            )
+            if (primary) {
+                drawLine(
+                    color = content,
+                    start = Offset(size.width / 2f, 2.dp.toPx()),
+                    end = Offset(size.width / 2f, size.height - 2.dp.toPx()),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round,
+                )
+            }
+        }
     }
 }
 
@@ -341,7 +379,7 @@ fun PrimaryActionButton(
             .height(52.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(if (enabled) Terracotta500 else Paper100)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { role = Role.Button; contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
@@ -362,7 +400,7 @@ fun OutlineActionButton(
             .clip(RoundedCornerShape(16.dp))
             .background(Paper0)
             .border(1.dp, if (enabled) Terracotta500 else Neutral300, RoundedCornerShape(16.dp))
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { role = Role.Button; contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
@@ -381,11 +419,11 @@ fun StatisticRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .heightIn(min = 56.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(if (future) Paper100 else Paper0)
             .border(1.dp, Neutral300, RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(

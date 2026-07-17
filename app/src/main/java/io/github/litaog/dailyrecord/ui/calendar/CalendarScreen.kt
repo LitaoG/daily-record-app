@@ -2,6 +2,7 @@ package io.github.litaog.dailyrecord.ui.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -24,6 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -66,6 +72,9 @@ fun CalendarScreen(
     val gridDates = List(42) { gridStart.plusDays(it.toLong()) }
     val canGoPrevious = month > earliestMonth
     val canGoNext = month < YearMonth.from(today)
+    val fontScale = LocalDensity.current.fontScale
+    val largeText = fontScale >= 1.4f
+    val dayCellHeight = if (largeText) 68.dp else 56.dp
 
     Column(
         modifier = modifier
@@ -78,7 +87,7 @@ fun CalendarScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp)
+                .heightIn(min = if (largeText) 56.dp else 44.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(Terracotta400)
                 .padding(horizontal = 16.dp),
@@ -117,6 +126,8 @@ fun CalendarScreen(
                             earliestDate = earliestMonth.atDay(1),
                             today = today,
                             record = recordsByDate[date],
+                            cellHeight = dayCellHeight,
+                            largeText = largeText,
                             modifier = Modifier.weight(1f),
                             onClick = { onDateSelected(date) },
                         )
@@ -152,17 +163,26 @@ private fun MonthHeader(
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
 ) {
+    val fontScale = LocalDensity.current.fontScale
+    val largeText = fontScale >= 1.4f
     Row(
-        modifier = Modifier.fillMaxWidth().height(52.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = if (largeText) 108.dp else 52.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MonthArrow("‹", "上个月", canGoPrevious, onPreviousMonth)
         Text(
-            text = month.year.toString() + "年 " + month.monthValue + "月",
+            text = if (largeText) {
+                month.year.toString() + "年\n" + month.monthValue + "月"
+            } else {
+                month.year.toString() + "年 " + month.monthValue + "月"
+            },
             modifier = Modifier.weight(1f),
             color = Ink900,
-            style = MaterialTheme.typography.headlineLarge,
+            style = if (largeText) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
             textAlign = TextAlign.Center,
+            maxLines = if (largeText) 2 else 1,
         )
         MonthArrow("›", "下个月", canGoNext, onNextMonth)
         Box(
@@ -171,7 +191,7 @@ private fun MonthHeader(
                 .clip(CircleShape)
                 .background(Paper0)
                 .border(1.dp, Neutral300, CircleShape)
-                .clickable(onClick = onToday)
+                .clickable(role = Role.Button, onClick = onToday)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
                 .semantics { role = Role.Button; contentDescription = "回到今天" },
             contentAlignment = Alignment.Center,
@@ -192,12 +212,36 @@ private fun MonthArrow(
         modifier = Modifier
             .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             .clip(CircleShape)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .alpha(if (enabled) 1f else .3f)
             .semantics { role = Role.Button; contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Text(symbol, color = Ink900, style = MaterialTheme.typography.headlineMedium)
+        ChevronGlyph(forward = symbol == "›", color = Ink900)
+    }
+}
+
+@Composable
+private fun ChevronGlyph(forward: Boolean, color: androidx.compose.ui.graphics.Color) {
+    Canvas(Modifier.size(18.dp)) {
+        val direction = if (forward) 1f else -1f
+        val centerX = size.width / 2f
+        val offset = 4.dp.toPx() * direction
+        val stroke = 2.4.dp.toPx()
+        drawLine(
+            color,
+            Offset(centerX - offset, size.height * .24f),
+            Offset(centerX + offset, size.height * .50f),
+            stroke,
+            StrokeCap.Round,
+        )
+        drawLine(
+            color,
+            Offset(centerX + offset, size.height * .50f),
+            Offset(centerX - offset, size.height * .76f),
+            stroke,
+            StrokeCap.Round,
+        )
     }
 }
 
@@ -208,6 +252,8 @@ private fun CalendarDayCell(
     earliestDate: LocalDate,
     today: LocalDate,
     record: HandBrewRecord?,
+    cellHeight: androidx.compose.ui.unit.Dp,
+    largeText: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -245,12 +291,12 @@ private fun CalendarDayCell(
 
     Column(
         modifier = modifier
-            .height(56.dp)
+            .height(cellHeight)
             .alpha(if (outsideMonth) .38f else 1f)
             .clip(RoundedCornerShape(16.dp))
             .background(background)
             .border(if (date == today) 2.dp else 1.dp, todayBorder, RoundedCornerShape(16.dp))
-            .clickable(enabled = !future && !unsupported, onClick = onClick)
+            .clickable(enabled = !future && !unsupported, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
                 contentDescription = date.year.toString() + "年" + date.monthValue + "月" +
@@ -262,11 +308,11 @@ private fun CalendarDayCell(
         Text(
             text = date.dayOfMonth.toString(),
             color = if (date == today && count == null) Terracotta500 else contentColor,
-            style = MaterialTheme.typography.labelLarge,
+            style = if (largeText) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Medium,
         )
         Text(
-            text = if (date == today && !future) "$status·今" else status,
+            text = if (date == today && !future && !largeText) "$status·今" else status,
             color = if (date == today && count == null) Terracotta500 else contentColor,
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
