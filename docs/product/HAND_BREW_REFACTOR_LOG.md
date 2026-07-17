@@ -40,3 +40,11 @@
 - 完成 Cover、开始使用和基础规范页；颜色、间距、圆角均绑定真实变量。
 - 视觉检查已修复长页面 1px 高度、圆角样本裁切和系统彩色 Emoji 问题。
 - 新页面不引用健身、活动管理、活动筛选、多活动颜色或通用状态枚举。
+
+## 阶段 4：Figma 组件库
+
+- 完成 CalendarDay、BrewCountControl、PeriodTabs、MetricCard、StatisticsRow、ActionButton 和 BottomNavigation。
+- 共 30 个变体；组件属性轴、变体数量、变量绑定和命名均通过结构校验。
+- CalendarDay 同时用数字、文字和颜色表达未填、0、具体次数、今天、选中与未来状态。
+- BottomNavigation 只保留日历和统计，并将选中态修正为深陶土橙底与白色内容。
+- 逐页截图检查已通过，HB2 页面词汇审计无旧多活动概念。
