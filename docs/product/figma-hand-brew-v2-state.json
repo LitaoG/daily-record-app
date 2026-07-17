@@ -1,8 +1,8 @@
 {
   "runId": "hand-brew-v2-20260717",
   "fileKey": "PMtsNNL81BHl9HyJYhjbdw",
-  "phase": "phase4",
-  "step": "product-screens-and-accessibility",
+  "phase": "android-ui",
+  "step": "compose-implementation",
   "entities": {
     "collections": {
       "HB2 Primitives": "VariableCollectionId:47:2",
@@ -102,11 +102,19 @@
       "HB2/ActionButton": "65:129",
       "HB2/BottomNavigation": "66:135"
     },
-    "screens": {}
+    "screens": {
+      "Calendar": "70:3",
+      "Record": "70:5",
+      "StatsWeek": "70:7",
+      "StatsMonth": "70:9",
+      "StatsYear": "70:11",
+      "StatsAll": "70:13",
+      "StatesAndAccessibility": "79:2"
+    }
   },
   "pendingValidations": [
-    "phase4:screens",
-    "phase4:accessibility"
+    "android:compose-ui",
+    "android:device-visual-qa"
   ],
   "completedSteps": [
     "P0.a",
@@ -136,6 +144,15 @@
     "P3.f",
     "P3.g",
     "P3.h",
-    "P3.i"
+    "P3.i",
+    "P4.a",
+    "P4.b",
+    "P4.c",
+    "P4.d",
+    "P4.e",
+    "P4.f",
+    "P4.g",
+    "P4.h",
+    "P4.i"
   ]
 }
