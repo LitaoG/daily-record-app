@@ -12,6 +12,17 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+private const val FIELD_ID = "id"
+private const val FIELD_LOCAL_DATE = "localDate"
+private const val FIELD_BREW_COUNT = "brewCount"
+private const val FIELD_CREATED_AT = "createdAtMillis"
+private const val FIELD_CLIENT_UPDATED_AT = "clientUpdatedAtMillis"
+private const val FIELD_DELETED = "deleted"
+private const val FIELD_REVISION = "revision"
+private const val FIELD_SCHEMA_VERSION = "schemaVersion"
+private const val FIELD_SERVER_UPDATED_AT = "serverUpdatedAt"
+internal const val MAX_SUPPORTED_EPOCH_MILLIS = 253_402_300_799_999L
+
 internal class FirebaseHandBrewRemoteDataSource(
     private val firestore: FirebaseFirestore,
 ) : HandBrewRemoteDataSource {
@@ -88,36 +99,37 @@ internal class FirebaseHandBrewRemoteDataSource(
         .document(ownerId)
         .collection("handBrewRecords")
 
-    private fun DocumentSnapshot.toRemoteRecord(): RemoteHandBrewRecord {
-        val dateText = requireNotNull(getString(FIELD_LOCAL_DATE))
-        require(id == dateText) { "Document id and localDate must match" }
-        val count = requireNotNull(getLong(FIELD_BREW_COUNT))
-        require(count in 0..Int.MAX_VALUE.toLong()) { "brewCount is out of range" }
-        val revision = requireNotNull(getLong(FIELD_REVISION))
-        require(revision >= 1) { "revision must be positive" }
-        val createdAt = Instant.ofEpochMilli(requireNotNull(getLong(FIELD_CREATED_AT)))
-        val updatedAt = Instant.ofEpochMilli(requireNotNull(getLong(FIELD_CLIENT_UPDATED_AT)))
-        require(!updatedAt.isBefore(createdAt)) { "clientUpdatedAt must not precede createdAt" }
-        return RemoteHandBrewRecord(
-            id = requireNotNull(getString(FIELD_ID)),
-            localDate = LocalDate.parse(dateText),
-            brewCount = count.toInt(),
-            createdAt = createdAt,
-            clientUpdatedAt = updatedAt,
-            deleted = requireNotNull(getBoolean(FIELD_DELETED)),
-            revision = revision,
-        )
-    }
+    private fun DocumentSnapshot.toRemoteRecord() = parseRemoteHandBrewRecord(
+        documentId = id,
+        values = requireNotNull(data) { "Cloud record has no data" },
+    )
+}
 
-    private companion object {
-        const val FIELD_ID = "id"
-        const val FIELD_LOCAL_DATE = "localDate"
-        const val FIELD_BREW_COUNT = "brewCount"
-        const val FIELD_CREATED_AT = "createdAtMillis"
-        const val FIELD_CLIENT_UPDATED_AT = "clientUpdatedAtMillis"
-        const val FIELD_DELETED = "deleted"
-        const val FIELD_REVISION = "revision"
-        const val FIELD_SCHEMA_VERSION = "schemaVersion"
-        const val FIELD_SERVER_UPDATED_AT = "serverUpdatedAt"
+internal fun parseRemoteHandBrewRecord(
+    documentId: String,
+    values: Map<String, Any?>,
+): RemoteHandBrewRecord {
+    val dateText = requireNotNull(values[FIELD_LOCAL_DATE] as? String)
+    require(documentId == dateText) { "Document id and localDate must match" }
+    val count = requireNotNull(values[FIELD_BREW_COUNT] as? Long)
+    require(count in 0..Int.MAX_VALUE.toLong()) { "brewCount is out of range" }
+    val revision = requireNotNull(values[FIELD_REVISION] as? Long)
+    require(revision >= 1) { "revision must be positive" }
+    val createdAtMillis = requireNotNull(values[FIELD_CREATED_AT] as? Long)
+    require(createdAtMillis in 0..MAX_SUPPORTED_EPOCH_MILLIS) {
+        "createdAtMillis is out of range"
     }
+    val updatedAtMillis = requireNotNull(values[FIELD_CLIENT_UPDATED_AT] as? Long)
+    require(updatedAtMillis in createdAtMillis..MAX_SUPPORTED_EPOCH_MILLIS) {
+        "clientUpdatedAtMillis is out of range"
+    }
+    return RemoteHandBrewRecord(
+        id = requireNotNull(values[FIELD_ID] as? String),
+        localDate = LocalDate.parse(dateText),
+        brewCount = count.toInt(),
+        createdAt = Instant.ofEpochMilli(createdAtMillis),
+        clientUpdatedAt = Instant.ofEpochMilli(updatedAtMillis),
+        deleted = requireNotNull(values[FIELD_DELETED] as? Boolean),
+        revision = revision,
+    )
 }

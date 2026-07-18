@@ -64,6 +64,14 @@ try {
     }),
   );
   await assertFails(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-21"), {
+      ...validRecord,
+      localDate: "2026-07-21",
+      createdAtMillis: 253402300800000,
+      clientUpdatedAtMillis: 253402300800000,
+    }),
+  );
+  await assertFails(
     setDoc(doc(userA, "users/user-a/handBrewRecords/not-a-date"), {
       ...validRecord,
       localDate: "not-a-date",

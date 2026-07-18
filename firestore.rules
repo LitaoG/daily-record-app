@@ -24,8 +24,10 @@ service cloud.firestore {
         && request.resource.data.brewCount <= 2147483647
         && request.resource.data.createdAtMillis is int
         && request.resource.data.createdAtMillis >= 0
+        && request.resource.data.createdAtMillis <= 253402300799999
         && request.resource.data.clientUpdatedAtMillis is int
         && request.resource.data.clientUpdatedAtMillis >= request.resource.data.createdAtMillis
+        && request.resource.data.clientUpdatedAtMillis <= 253402300799999
         && request.resource.data.deleted is bool
         && request.resource.data.revision is int
         && request.resource.data.revision >= 1
