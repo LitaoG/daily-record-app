@@ -157,8 +157,15 @@ fun StatisticsScreen(
             items(model.details, key = { it.label }) { detail ->
                 StatisticRow(
                     label = detail.label,
-                    countText = detail.count?.let { "$it 次" } ?: "—",
-                    daysText = detail.days?.let { "$it 天" } ?: "—",
+                    countText = when {
+                        detail.future -> "—"
+                        !detail.recorded -> "未填写"
+                        else -> "${detail.count} 次"
+                    },
+                    daysText = when {
+                        detail.future || !detail.recorded -> "—"
+                        else -> "${detail.days} 天"
+                    },
                     future = detail.future,
                 )
             }

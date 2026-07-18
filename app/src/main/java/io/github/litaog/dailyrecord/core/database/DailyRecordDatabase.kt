@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [
         HandBrewRecordEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
@@ -67,7 +67,49 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `hand_brew_records_v3` (
+                        `id` TEXT NOT NULL,
+                        `local_date` TEXT NOT NULL,
+                        `owner_id` TEXT NOT NULL DEFAULT '__local__',
+                        `brew_count` INTEGER NOT NULL DEFAULT 0,
+                        `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        `is_deleted` INTEGER NOT NULL DEFAULT 0,
+                        `sync_state` TEXT NOT NULL DEFAULT 'PENDING',
+                        `remote_revision` INTEGER NOT NULL DEFAULT 0,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `hand_brew_records_v3` (
+                        `id`, `local_date`, `owner_id`, `brew_count`, `created_at`,
+                        `updated_at`, `is_deleted`, `sync_state`, `remote_revision`
+                    )
+                    SELECT `id`, `local_date`, '__local__', `brew_count`, `created_at`,
+                           `updated_at`, 0, 'PENDING', 0
+                    FROM `hand_brew_records`
+                    """.trimIndent(),
+                )
+                db.execSQL("DROP TABLE `hand_brew_records`")
+                db.execSQL("ALTER TABLE `hand_brew_records_v3` RENAME TO `hand_brew_records`")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_hand_brew_records_owner_id_local_date` " +
+                        "ON `hand_brew_records` (`owner_id`, `local_date`)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_hand_brew_records_owner_id_sync_state` " +
+                        "ON `hand_brew_records` (`owner_id`, `sync_state`)",
+                )
+            }
+        }
+
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 
         fun create(context: Context): DailyRecordDatabase = Room.databaseBuilder(
             context.applicationContext,

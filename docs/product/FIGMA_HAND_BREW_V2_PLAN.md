@@ -16,7 +16,7 @@ Run ID：`hand-brew-v2-20260717`
 
 ### Android 代码
 
-- Room v2 与 Repository 已经是仅手冲模型。
+- Room v3 与 Repository 已经是仅手冲模型；新增字段只用于账号隔离和同步，不引入通用活动。
 - 可见 UI 仍是 Android Studio 模板 `Hello Android`。
 - Compose 主题仍是模板紫色、动态取色和默认字体；这些不是已确认的产品视觉事实。
 - 代码库没有 Code Connect 文件，也没有可复用的 Compose 业务组件。

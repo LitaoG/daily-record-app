@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -55,13 +56,13 @@ fun CalendarScreen(
     focusedDate: LocalDate,
     today: LocalDate,
     records: List<HandBrewRecord>,
+    modifier: Modifier = Modifier,
     earliestMonth: YearMonth = YearMonth.of(1970, 1),
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
     onOpenDatePicker: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val monthRecords = records.filter { YearMonth.from(it.localDate) == month }
     val recordsByDate = monthRecords.associateBy { it.localDate }
@@ -79,6 +80,7 @@ fun CalendarScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .testTag("calendar_screen")
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 15.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),

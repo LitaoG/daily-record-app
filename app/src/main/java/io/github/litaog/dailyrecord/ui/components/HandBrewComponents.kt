@@ -387,7 +387,7 @@ fun PrimaryActionButton(
 ) {
     Box(
         modifier = modifier
-            .height(52.dp)
+            .heightIn(min = 52.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(if (enabled) Terracotta500 else Paper100)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
@@ -407,7 +407,7 @@ fun OutlineActionButton(
 ) {
     Box(
         modifier = modifier
-            .height(52.dp)
+            .heightIn(min = 52.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Paper0)
             .border(1.dp, if (enabled) Terracotta500 else Neutral300, RoundedCornerShape(16.dp))
@@ -434,7 +434,10 @@ fun StatisticRow(
             .clip(RoundedCornerShape(12.dp))
             .background(if (future) Paper100 else Paper0)
             .border(1.dp, Neutral300, RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "$label，$countText，$daysText"
+            },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -448,14 +451,14 @@ fun StatisticRow(
             color = if (future) Ink500 else Ink700,
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.End,
-            modifier = Modifier.width(74.dp),
+            modifier = Modifier.weight(.8f),
         )
         Text(
             text = daysText,
             color = if (future) Ink500 else Ink700,
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.End,
-            modifier = Modifier.width(74.dp),
+            modifier = Modifier.weight(.8f),
         )
     }
 }

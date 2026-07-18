@@ -159,13 +159,17 @@ fun RecordScreen(
                             scope.launch {
                                 try {
                                     val now = Instant.now()
+                                    val safeUpdatedAt = currentRecord?.updatedAt
+                                        ?.plusMillis(1)
+                                        ?.takeIf { it.isAfter(now) }
+                                        ?: now
                                     repository.saveRecord(
                                         HandBrewRecord(
                                             id = currentRecord?.id ?: UUID.randomUUID().toString(),
                                             localDate = date,
                                             brewCount = currentDraftCount,
                                             createdAt = currentRecord?.createdAt ?: now,
-                                            updatedAt = now,
+                                            updatedAt = safeUpdatedAt,
                                         ),
                                     )
                                     saving = false
@@ -254,7 +258,9 @@ fun RecordScreen(
                 enabled = editable && dataReady && draftInitialized && !saving,
                 hasRecord = record != null,
                 onDecrease = { draftCount = (draftCount - 1).coerceAtLeast(0) },
-                onIncrease = { draftCount += 1 },
+                onIncrease = {
+                    if (draftCount < Int.MAX_VALUE) draftCount += 1
+                },
             )
             Column(
                 modifier = Modifier
@@ -272,7 +278,7 @@ fun RecordScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .heightIn(min = 56.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Paper100)
                     .padding(horizontal = 16.dp),

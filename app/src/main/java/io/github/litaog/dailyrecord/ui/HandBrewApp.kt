@@ -12,6 +12,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
+import io.github.litaog.dailyrecord.core.sync.SyncStatus
+import io.github.litaog.dailyrecord.ui.account.AccountDialog
+import io.github.litaog.dailyrecord.ui.account.AccountTopBar
+import io.github.litaog.dailyrecord.ui.account.LocalAccountTopBar
 import io.github.litaog.dailyrecord.ui.calendar.CalendarScreen
 import io.github.litaog.dailyrecord.ui.components.HandBrewBottomBar
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
@@ -33,33 +37,40 @@ internal enum class TopDestination {
 @Composable
 fun HandBrewApp(
     repository: HandBrewRecordRepository,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate? = null,
+    accountEmail: String? = null,
+    syncStatus: SyncStatus = SyncStatus.NotConfigured,
+    onSyncNow: () -> Unit = {},
+    onSignOut: () -> Unit = {},
+    onSignIn: (() -> Unit)? = null,
 ) {
+    val effectiveToday = today ?: rememberCurrentDate()
     var destinationName by rememberSaveable { mutableStateOf(TopDestination.Calendar.name) }
     var selectedDateText by rememberSaveable { mutableStateOf<String?>(null) }
-    var browseDateText by rememberSaveable { mutableStateOf(today.toString()) }
+    var browseDateText by rememberSaveable { mutableStateOf(effectiveToday.toString()) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
+    var showAccountDialog by rememberSaveable { mutableStateOf(false) }
 
-    val currentMonth = YearMonth.from(today)
+    val currentMonth = YearMonth.from(effectiveToday)
     val destination = TopDestination.entries.firstOrNull { it.name == destinationName }
         ?: TopDestination.Calendar
     val selectedDate = selectedDateText
         ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-        ?.takeIf { it in EarliestSupportedDate..today }
+        ?.takeIf { it in EarliestSupportedDate..effectiveToday }
     val browseDate = runCatching { LocalDate.parse(browseDateText) }
-        .getOrDefault(today)
-        .takeIf { it in EarliestSupportedDate..today }
-        ?: today
+        .getOrDefault(effectiveToday)
+        .takeIf { it in EarliestSupportedDate..effectiveToday }
+        ?: effectiveToday
     val displayedMonth = YearMonth.from(browseDate)
-    val recordsFlow = remember(repository, today) {
-        repository.observeRecords(EarliestSupportedDate, today.plusDays(1))
+    val recordsFlow = remember(repository, effectiveToday) {
+        repository.observeRecords(EarliestSupportedDate, effectiveToday.plusDays(1))
     }
     val allRecords by recordsFlow.collectAsState(initial = emptyList())
 
     if (selectedDate != null) {
         RecordScreen(
             date = selectedDate,
-            today = today,
+            today = effectiveToday,
             repository = repository,
             monthRecords = allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) },
             onBack = { selectedDateText = null },
@@ -71,6 +82,13 @@ fun HandBrewApp(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Paper50,
+        topBar = {
+            if (accountEmail != null) {
+                AccountTopBar(status = syncStatus, onClick = { showAccountDialog = true })
+            } else if (onSignIn != null) {
+                LocalAccountTopBar(onClick = onSignIn)
+            }
+        },
         bottomBar = {
             HandBrewBottomBar(
                 selected = destination,
@@ -82,7 +100,7 @@ fun HandBrewApp(
             TopDestination.Calendar -> CalendarScreen(
                 month = displayedMonth,
                 focusedDate = browseDate,
-                today = today,
+                today = effectiveToday,
                 records = allRecords,
                 earliestMonth = EarliestSupportedMonth,
                 modifier = Modifier.padding(contentPadding),
@@ -93,7 +111,7 @@ fun HandBrewApp(
                             browseDate,
                             months = -1,
                             earliestDate = EarliestSupportedDate,
-                            latestDate = today,
+                            latestDate = effectiveToday,
                         ).toString()
                     }
                 },
@@ -104,11 +122,11 @@ fun HandBrewApp(
                             browseDate,
                             months = 1,
                             earliestDate = EarliestSupportedDate,
-                            latestDate = today,
+                            latestDate = effectiveToday,
                         ).toString()
                     }
                 },
-                onToday = { browseDateText = today.toString() },
+                onToday = { browseDateText = effectiveToday.toString() },
                 onOpenDatePicker = { showDatePicker = true },
                 onDateSelected = {
                     browseDateText = it.toString()
@@ -117,7 +135,7 @@ fun HandBrewApp(
             )
 
             TopDestination.Statistics -> StatisticsScreen(
-                today = today,
+                today = effectiveToday,
                 anchorDate = browseDate,
                 earliestDate = EarliestSupportedDate,
                 records = allRecords,
@@ -133,12 +151,22 @@ fun HandBrewApp(
         DateNavigationDialog(
             initialDate = browseDate,
             earliestDate = EarliestSupportedDate,
-            latestDate = today,
+            latestDate = effectiveToday,
             onDismiss = { showDatePicker = false },
             onDateSelected = {
                 browseDateText = it.toString()
                 showDatePicker = false
             },
+        )
+    }
+
+    if (showAccountDialog && accountEmail != null) {
+        AccountDialog(
+            email = accountEmail,
+            status = syncStatus,
+            onSyncNow = onSyncNow,
+            onSignOut = onSignOut,
+            onDismiss = { showAccountDialog = false },
         )
     }
 }

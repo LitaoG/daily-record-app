@@ -8,6 +8,8 @@ import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import java.time.Instant
 import java.time.LocalDate
+import java.time.Clock
+import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -116,6 +118,34 @@ class RoomHandBrewRecordRepositoryTest {
         assertThrows(IllegalArgumentException::class.java) {
             repository.observeSummary(date, date.minusDays(1))
         }
+    }
+
+    @Test
+    fun deviceClockRollbackCannotMakeEditsOlderThanStoredRecord() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        val first = repository.saveRecord(
+            record("clock-record", date, 1).copy(updatedAt = now.plusSeconds(20)),
+        )
+        val rollbackRepository = RoomHandBrewRecordRepository(
+            database = database,
+            clock = Clock.fixed(now.minusSeconds(60), ZoneOffset.UTC),
+        )
+
+        val saved = rollbackRepository.saveRecord(
+            HandBrewRecord(
+                id = "replacement-id",
+                localDate = date,
+                brewCount = 2,
+                createdAt = now.minusSeconds(10),
+                updatedAt = now.minusSeconds(5),
+            ),
+        )
+        assertTrue(saved.updatedAt.isAfter(first.updatedAt))
+
+        assertTrue(rollbackRepository.clearRecord(date))
+        val tombstone = database.handBrewRecordDao()
+            .getByDate(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID, date)
+        assertTrue(requireNotNull(tombstone).updatedAt.isAfter(saved.updatedAt))
     }
 
     private fun record(id: String, date: LocalDate, count: Int) = HandBrewRecord(

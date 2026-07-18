@@ -5,7 +5,9 @@ import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import java.time.Instant
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StatisticsModelsTest {
@@ -30,8 +32,27 @@ class StatisticsModelsTest {
         assertEquals(4, model.summary.brewDays)
         assertEquals(0, model.details[1].count)
         assertEquals(0, model.details[1].days)
+        assertTrue(model.details[1].recorded)
         assertNull(model.details[5].count)
         assertNull(model.details[6].days)
+        assertTrue(model.details[5].future)
+        assertFalse(model.details[5].recorded)
+    }
+
+    @Test
+    fun pastUnfilledDayIsNotReportedAsExplicitZero() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Week,
+            anchorDate = today,
+            today = today,
+            records = listOf(record(LocalDate.of(2026, 7, 14), 0)),
+        )
+
+        assertEquals(0, model.details[0].count)
+        assertFalse(model.details[0].recorded)
+        assertFalse(model.details[0].future)
+        assertEquals(0, model.details[1].count)
+        assertTrue(model.details[1].recorded)
     }
 
     @Test
@@ -95,6 +116,33 @@ class StatisticsModelsTest {
         assertEquals(2, model.details.sumOf { it.days ?: 0 })
         assertEquals("第1周 1–3日", model.details.first().label)
         assertEquals("第5周 25–31日", model.details.last().label)
+    }
+
+    @Test
+    fun changingMonthRebuildsWeeklyDetailsWithoutKeepingPreviousMonth() {
+        val records = listOf(
+            record(LocalDate.of(2026, 5, 4), 2),
+            record(LocalDate.of(2026, 6, 8), 7),
+        )
+
+        val may = buildStatistics(
+            StatisticsPeriod.Month,
+            LocalDate.of(2026, 5, 17),
+            today,
+            records,
+        )
+        val june = buildStatistics(
+            StatisticsPeriod.Month,
+            LocalDate.of(2026, 6, 17),
+            today,
+            records,
+        )
+
+        assertEquals(2, may.summary.totalCount)
+        assertEquals(2, may.details.sumOf { it.count ?: 0 })
+        assertEquals(7, june.summary.totalCount)
+        assertEquals(7, june.details.sumOf { it.count ?: 0 })
+        assertFalse(june.details.any { it.count == 2 })
     }
 
     @Test

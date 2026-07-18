@@ -23,7 +23,7 @@ class DatabaseSchemaTest {
 
     @Test
     @Throws(IOException::class)
-    fun versionOneHandBrewDataMigratesToDedicatedVersionTwoTable() = runBlocking {
+    fun versionOneHandBrewDataMigratesThroughCurrentSchema() = runBlocking {
         migrationHelper.createDatabase(TEST_DATABASE, 1).apply {
             execSQL(
                 """
@@ -72,10 +72,12 @@ class DatabaseSchemaTest {
 
         try {
             val migrated = database.handBrewRecordDao()
-                .getByDate(java.time.LocalDate.of(2026, 7, 16))
+                .getByDate(LOCAL_OWNER_ID, java.time.LocalDate.of(2026, 7, 16))
             assertNotNull(migrated)
             assertEquals(3, migrated?.brewCount)
-            assertEquals(2, database.openHelper.readableDatabase.version)
+            assertEquals(LOCAL_OWNER_ID, migrated?.ownerId)
+            assertEquals(SYNC_PENDING, migrated?.syncState)
+            assertEquals(3, database.openHelper.readableDatabase.version)
 
             database.openHelper.readableDatabase.query(
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_activities_v1'",
@@ -88,7 +90,44 @@ class DatabaseSchemaTest {
         }
     }
 
+    @Test
+    @Throws(IOException::class)
+    fun versionTwoRecordsGainPendingSyncMetadataWithoutDataLoss() = runBlocking {
+        migrationHelper.createDatabase(V2_TEST_DATABASE, 2).apply {
+            execSQL(
+                """
+                INSERT INTO hand_brew_records (
+                    id, local_date, brew_count, created_at, updated_at
+                ) VALUES ('old-local', '2024-02-29', 4, 1000, 2000)
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        val database = Room.databaseBuilder(
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            DailyRecordDatabase::class.java,
+            V2_TEST_DATABASE,
+        ).addMigrations(*DailyRecordDatabase.MIGRATIONS).build()
+
+        try {
+            val migrated = database.handBrewRecordDao().getByDate(
+                LOCAL_OWNER_ID,
+                java.time.LocalDate.of(2024, 2, 29),
+            )
+            assertNotNull(migrated)
+            assertEquals(4, migrated?.brewCount)
+            assertEquals(false, migrated?.isDeleted)
+            assertEquals(SYNC_PENDING, migrated?.syncState)
+            assertEquals(0L, migrated?.remoteRevision)
+            assertEquals(3, database.openHelper.readableDatabase.version)
+        } finally {
+            database.close()
+        }
+    }
+
     private companion object {
         const val TEST_DATABASE = "migration-test.db"
+        const val V2_TEST_DATABASE = "migration-v2-test.db"
     }
 }

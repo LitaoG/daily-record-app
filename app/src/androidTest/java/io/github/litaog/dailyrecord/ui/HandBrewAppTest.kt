@@ -8,10 +8,13 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
+import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertTrue
 
 class HandBrewAppTest {
     @get:Rule
@@ -29,8 +32,9 @@ class HandBrewAppTest {
         }
 
         composeRule.onNodeWithContentDescription("全部统计，未选择").performClick()
-        composeRule.onNodeWithText("去日历记录").performClick()
-        composeRule.onNodeWithText("2026年 7月").assertIsDisplayed()
+        composeRule.onNodeWithText("去日历记录").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag("calendar_screen").assertIsDisplayed()
+        assertMonth(2026, 7)
     }
 
     @Test
@@ -42,7 +46,7 @@ class HandBrewAppTest {
             .performClick()
         composeRule.onNodeWithTag("record_screen").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("返回日历").performClick()
-        composeRule.onNodeWithText("2026年 6月").assertIsDisplayed()
+        assertMonth(2026, 6)
     }
 
     @Test
@@ -51,16 +55,16 @@ class HandBrewAppTest {
 
         composeRule.onNodeWithContentDescription("上个月").performClick()
         composeRule.onNodeWithContentDescription("上个月").performClick()
-        composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
+        assertMonth(2026, 5)
 
         composeRule.onNodeWithContentDescription("下个月").performClick()
         composeRule.onNodeWithContentDescription("下个月").performClick()
-        composeRule.onNodeWithText("2026年 7月").assertIsDisplayed()
+        assertMonth(2026, 7)
         composeRule.onNodeWithContentDescription("下个月").assertIsNotEnabled()
 
         composeRule.onNodeWithContentDescription("上个月").performClick()
         composeRule.onNodeWithContentDescription("回到今天").performClick()
-        composeRule.onNodeWithText("2026年 7月").assertIsDisplayed()
+        assertMonth(2026, 7)
     }
 
     @Test
@@ -72,7 +76,7 @@ class HandBrewAppTest {
             .performClick()
         composeRule.onNodeWithText("选择要查看的年份和日期").assertIsDisplayed()
         composeRule.onNodeWithText("取消").performClick()
-        composeRule.onNodeWithText("2026年 7月").assertIsDisplayed()
+        assertMonth(2026, 7)
     }
 
     @Test
@@ -91,6 +95,45 @@ class HandBrewAppTest {
         composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
     }
 
+    @Test
+    fun accountDialogShowsSyncStateAndConfirmsSignOut() {
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    accountEmail = "brew@example.com",
+                    syncStatus = SyncStatus.UpToDate,
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("账号与云同步，云端已同步").performClick()
+        composeRule.onNodeWithText("brew@example.com").assertIsDisplayed()
+        composeRule.onNodeWithText("退出登录").performClick()
+        composeRule.onNodeWithText("确认退出登录？").assertIsDisplayed()
+        composeRule.onNodeWithText("取消").performClick()
+        composeRule.onNodeWithText("账号与云同步").assertIsDisplayed()
+    }
+
+    @Test
+    fun localModeOffersLoginWithoutBlockingCalendar() {
+        var requestedSignIn = false
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    onSignIn = { requestedSignIn = true },
+                )
+            }
+        }
+
+        assertMonth(2026, 7)
+        composeRule.onNodeWithContentDescription("登录账号并开启云同步").performClick()
+        assertTrue(requestedSignIn)
+    }
+
     private fun setAppContent() {
         composeRule.setContent {
             DailyRecordTheme {
@@ -101,5 +144,12 @@ class HandBrewAppTest {
             }
         }
         composeRule.waitForIdle()
+    }
+
+    private fun assertMonth(year: Int, month: Int) {
+        composeRule
+            .onNodeWithContentDescription("选择年份和日期，当前${year}年${month}月")
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 }

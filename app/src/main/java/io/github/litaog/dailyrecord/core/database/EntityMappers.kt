@@ -10,10 +10,18 @@ internal fun HandBrewRecordEntity.asExternalModel(): HandBrewRecord = HandBrewRe
     updatedAt = updatedAt,
 )
 
-internal fun HandBrewRecord.asEntity(): HandBrewRecordEntity = HandBrewRecordEntity(
+internal fun HandBrewRecord.asEntity(
+    ownerId: String = LOCAL_OWNER_ID,
+    syncState: String = SYNC_PENDING,
+    remoteRevision: Long = 0,
+): HandBrewRecordEntity = HandBrewRecordEntity(
     id = id,
     localDate = localDate,
+    ownerId = ownerId,
     brewCount = brewCount,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    isDeleted = false,
+    syncState = syncState,
+    remoteRevision = remoteRevision,
 )

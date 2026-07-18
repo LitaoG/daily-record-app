@@ -17,10 +17,9 @@ data class StatisticsDetail(
     val label: String,
     val count: Int?,
     val days: Int?,
-) {
-    val future: Boolean
-        get() = count == null || days == null
-}
+    val future: Boolean = false,
+    val recorded: Boolean = true,
+)
 
 data class StatisticsUiModel(
     val title: String,
@@ -57,13 +56,20 @@ private fun buildWeek(
     val details = (0L..6L).map { offset ->
         val date = start.plusDays(offset)
         if (date > today) {
-            StatisticsDetail(weekdayName(date) + " " + date.dayOfMonth + "日", null, null)
+            StatisticsDetail(
+                label = weekdayName(date) + " " + date.dayOfMonth + "日",
+                count = null,
+                days = null,
+                future = true,
+                recorded = false,
+            )
         } else {
             val record = rangeRecords.firstOrNull { it.localDate == date }
             StatisticsDetail(
                 label = weekdayName(date) + " " + date.dayOfMonth + "日",
                 count = record?.brewCount ?: 0,
                 days = if ((record?.brewCount ?: 0) > 0) 1 else 0,
+                recorded = record != null,
             )
         }
     }
@@ -94,11 +100,26 @@ private fun buildMonth(
             val bucketStart = maxOf(weekStart, start)
             val bucketEnd = minOf(weekEnd, end)
             if (bucketStart > today) {
-                add(StatisticsDetail(monthWeekLabel(index, bucketStart, bucketEnd), null, null))
+                add(
+                    StatisticsDetail(
+                        label = monthWeekLabel(index, bucketStart, bucketEnd),
+                        count = null,
+                        days = null,
+                        future = true,
+                        recorded = false,
+                    ),
+                )
             } else {
                 val bucketRecords = rangeRecords.filter { it.localDate in bucketStart..minOf(bucketEnd, today) }
                 val summary = summaryOf(bucketRecords)
-                add(StatisticsDetail(monthWeekLabel(index, bucketStart, bucketEnd), summary.totalCount, summary.brewDays))
+                add(
+                    StatisticsDetail(
+                        label = monthWeekLabel(index, bucketStart, bucketEnd),
+                        count = summary.totalCount,
+                        days = summary.brewDays,
+                        recorded = bucketRecords.isNotEmpty(),
+                    ),
+                )
             }
             weekStart = weekStart.plusDays(7)
             index += 1
@@ -124,11 +145,22 @@ private fun buildYear(
     val details = (1..12).map { monthNumber ->
         val month = YearMonth.of(anchorDate.year, monthNumber)
         if (month.atDay(1) > today) {
-            StatisticsDetail(monthNumber.toString() + "月", null, null)
+            StatisticsDetail(
+                label = monthNumber.toString() + "月",
+                count = null,
+                days = null,
+                future = true,
+                recorded = false,
+            )
         } else {
             val monthRecords = rangeRecords.filter { YearMonth.from(it.localDate) == month }
             val summary = summaryOf(monthRecords)
-            StatisticsDetail(monthNumber.toString() + "月", summary.totalCount, summary.brewDays)
+            StatisticsDetail(
+                label = monthNumber.toString() + "月",
+                count = summary.totalCount,
+                days = summary.brewDays,
+                recorded = monthRecords.isNotEmpty(),
+            )
         }
     }
     return StatisticsUiModel(
