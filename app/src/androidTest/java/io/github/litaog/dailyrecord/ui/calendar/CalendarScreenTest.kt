@@ -22,11 +22,13 @@ class CalendarScreenTest {
             DailyRecordTheme {
                 CalendarScreen(
                     month = YearMonth.of(2026, 7),
+                    focusedDate = today,
                     today = today,
                     records = listOf(record(LocalDate.of(2026, 7, 16), 0)),
                     onPreviousMonth = {},
                     onNextMonth = {},
                     onToday = {},
+                    onOpenDatePicker = {},
                     onDateSelected = {},
                 )
             }
@@ -48,11 +50,13 @@ class CalendarScreenTest {
             DailyRecordTheme {
                 CalendarScreen(
                     month = YearMonth.of(1970, 1),
+                    focusedDate = LocalDate.of(1970, 1, 1),
                     today = today,
                     records = emptyList(),
                     onPreviousMonth = {},
                     onNextMonth = {},
                     onToday = {},
+                    onOpenDatePicker = {},
                     onDateSelected = {},
                 )
             }

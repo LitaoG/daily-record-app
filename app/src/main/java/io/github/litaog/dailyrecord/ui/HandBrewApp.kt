@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.ui.calendar.CalendarScreen
 import io.github.litaog.dailyrecord.ui.components.HandBrewBottomBar
+import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
+import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
 import io.github.litaog.dailyrecord.ui.record.RecordScreen
 import io.github.litaog.dailyrecord.ui.statistics.StatisticsScreen
 import io.github.litaog.dailyrecord.ui.theme.Paper50
@@ -35,7 +37,8 @@ fun HandBrewApp(
 ) {
     var destinationName by rememberSaveable { mutableStateOf(TopDestination.Calendar.name) }
     var selectedDateText by rememberSaveable { mutableStateOf<String?>(null) }
-    var displayedMonthText by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
+    var browseDateText by rememberSaveable { mutableStateOf(today.toString()) }
+    var showDatePicker by rememberSaveable { mutableStateOf(false) }
 
     val currentMonth = YearMonth.from(today)
     val destination = TopDestination.entries.firstOrNull { it.name == destinationName }
@@ -43,10 +46,11 @@ fun HandBrewApp(
     val selectedDate = selectedDateText
         ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
         ?.takeIf { it in EarliestSupportedDate..today }
-    val displayedMonth = runCatching { YearMonth.parse(displayedMonthText) }
-        .getOrDefault(currentMonth)
-        .takeIf { it in EarliestSupportedMonth..currentMonth }
-        ?: currentMonth
+    val browseDate = runCatching { LocalDate.parse(browseDateText) }
+        .getOrDefault(today)
+        .takeIf { it in EarliestSupportedDate..today }
+        ?: today
+    val displayedMonth = YearMonth.from(browseDate)
     val recordsFlow = remember(repository, today) {
         repository.observeRecords(EarliestSupportedDate, today.plusDays(1))
     }
@@ -77,35 +81,64 @@ fun HandBrewApp(
         when (destination) {
             TopDestination.Calendar -> CalendarScreen(
                 month = displayedMonth,
+                focusedDate = browseDate,
                 today = today,
                 records = allRecords,
                 earliestMonth = EarliestSupportedMonth,
                 modifier = Modifier.padding(contentPadding),
                 onPreviousMonth = {
-                    val previous = runCatching { YearMonth.parse(displayedMonthText) }
-                        .getOrDefault(displayedMonth)
-                        .minusMonths(1)
-                    if (!previous.isBefore(EarliestSupportedMonth)) displayedMonthText = previous.toString()
+                    val previous = displayedMonth.minusMonths(1)
+                    if (!previous.isBefore(EarliestSupportedMonth)) {
+                        browseDateText = shiftMonthAnchor(
+                            browseDate,
+                            months = -1,
+                            earliestDate = EarliestSupportedDate,
+                            latestDate = today,
+                        ).toString()
+                    }
                 },
                 onNextMonth = {
-                    val next = runCatching { YearMonth.parse(displayedMonthText) }
-                        .getOrDefault(displayedMonth)
-                        .plusMonths(1)
-                    if (!next.isAfter(currentMonth)) displayedMonthText = next.toString()
+                    val next = displayedMonth.plusMonths(1)
+                    if (!next.isAfter(currentMonth)) {
+                        browseDateText = shiftMonthAnchor(
+                            browseDate,
+                            months = 1,
+                            earliestDate = EarliestSupportedDate,
+                            latestDate = today,
+                        ).toString()
+                    }
                 },
-                onToday = { displayedMonthText = currentMonth.toString() },
+                onToday = { browseDateText = today.toString() },
+                onOpenDatePicker = { showDatePicker = true },
                 onDateSelected = {
-                    displayedMonthText = YearMonth.from(it).toString()
+                    browseDateText = it.toString()
                     selectedDateText = it.toString()
                 },
             )
 
             TopDestination.Statistics -> StatisticsScreen(
                 today = today,
+                anchorDate = browseDate,
+                earliestDate = EarliestSupportedDate,
                 records = allRecords,
                 modifier = Modifier.padding(contentPadding),
+                onAnchorDateChanged = { browseDateText = it.toString() },
+                onOpenDatePicker = { showDatePicker = true },
                 onOpenCalendar = { destinationName = TopDestination.Calendar.name },
             )
         }
+    }
+
+    if (showDatePicker) {
+        DateNavigationDialog(
+            initialDate = browseDate,
+            earliestDate = EarliestSupportedDate,
+            latestDate = today,
+            onDismiss = { showDatePicker = false },
+            onDateSelected = {
+                browseDateText = it.toString()
+                showDatePicker = false
+            },
+        )
     }
 }

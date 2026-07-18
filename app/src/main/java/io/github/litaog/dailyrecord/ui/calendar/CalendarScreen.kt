@@ -2,7 +2,6 @@ package io.github.litaog.dailyrecord.ui.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -27,17 +25,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.theme.Ink500
 import io.github.litaog.dailyrecord.ui.theme.Ink700
 import io.github.litaog.dailyrecord.ui.theme.Ink900
@@ -54,12 +52,14 @@ import java.time.YearMonth
 @Composable
 fun CalendarScreen(
     month: YearMonth,
+    focusedDate: LocalDate,
     today: LocalDate,
     records: List<HandBrewRecord>,
     earliestMonth: YearMonth = YearMonth.of(1970, 1),
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
+    onOpenDatePicker: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -83,7 +83,15 @@ fun CalendarScreen(
             .padding(horizontal = 15.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        MonthHeader(month, canGoPrevious, canGoNext, onPreviousMonth, onNextMonth, onToday)
+        MonthHeader(
+            month = month,
+            canGoPrevious = canGoPrevious,
+            canGoNext = canGoNext,
+            onPreviousMonth = onPreviousMonth,
+            onNextMonth = onNextMonth,
+            onToday = onToday,
+            onOpenDatePicker = onOpenDatePicker,
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,6 +133,7 @@ fun CalendarScreen(
                             month = month,
                             earliestDate = earliestMonth.atDay(1),
                             today = today,
+                            focused = date == focusedDate,
                             record = recordsByDate[date],
                             cellHeight = dayCellHeight,
                             largeText = largeText,
@@ -162,6 +171,7 @@ private fun MonthHeader(
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
+    onOpenDatePicker: () -> Unit,
 ) {
     val fontScale = LocalDensity.current.fontScale
     val largeText = fontScale >= 1.4f
@@ -171,20 +181,39 @@ private fun MonthHeader(
             .heightIn(min = if (largeText) 108.dp else 52.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MonthArrow("‹", "上个月", canGoPrevious, onPreviousMonth)
-        Text(
-            text = if (largeText) {
-                month.year.toString() + "年\n" + month.monthValue + "月"
-            } else {
-                month.year.toString() + "年 " + month.monthValue + "月"
-            },
-            modifier = Modifier.weight(1f),
-            color = Ink900,
-            style = if (largeText) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
-            textAlign = TextAlign.Center,
-            maxLines = if (largeText) 2 else 1,
-        )
-        MonthArrow("›", "下个月", canGoNext, onNextMonth)
+        MonthArrow(forward = false, description = "上个月", enabled = canGoPrevious, onClick = onPreviousMonth)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .sizeIn(minHeight = 48.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .clickable(role = Role.Button, onClick = onOpenDatePicker)
+                .semantics {
+                    role = Role.Button
+                    contentDescription = "选择年份和日期，当前${month.year}年${month.monthValue}月"
+                },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = if (largeText) {
+                    month.year.toString() + "年\n" + month.monthValue + "月"
+                } else {
+                    month.year.toString() + "年 " + month.monthValue + "月"
+                },
+                color = Ink900,
+                style = if (largeText) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
+                textAlign = TextAlign.Center,
+                maxLines = if (largeText) 2 else 1,
+            )
+            Text(
+                text = "点此快速跳转",
+                color = Terracotta500,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center,
+            )
+        }
+        MonthArrow(forward = true, description = "下个月", enabled = canGoNext, onClick = onNextMonth)
         Box(
             modifier = Modifier
                 .padding(start = 6.dp)
@@ -203,7 +232,7 @@ private fun MonthHeader(
 
 @Composable
 private fun MonthArrow(
-    symbol: String,
+    forward: Boolean,
     description: String,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -217,31 +246,7 @@ private fun MonthArrow(
             .semantics { role = Role.Button; contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronGlyph(forward = symbol == "›", color = Ink900)
-    }
-}
-
-@Composable
-private fun ChevronGlyph(forward: Boolean, color: androidx.compose.ui.graphics.Color) {
-    Canvas(Modifier.size(18.dp)) {
-        val direction = if (forward) 1f else -1f
-        val centerX = size.width / 2f
-        val offset = 4.dp.toPx() * direction
-        val stroke = 2.4.dp.toPx()
-        drawLine(
-            color,
-            Offset(centerX - offset, size.height * .24f),
-            Offset(centerX + offset, size.height * .50f),
-            stroke,
-            StrokeCap.Round,
-        )
-        drawLine(
-            color,
-            Offset(centerX + offset, size.height * .50f),
-            Offset(centerX - offset, size.height * .76f),
-            stroke,
-            StrokeCap.Round,
-        )
+        ChevronIcon(forward = forward, color = Ink900)
     }
 }
 
@@ -251,6 +256,7 @@ private fun CalendarDayCell(
     month: YearMonth,
     earliestDate: LocalDate,
     today: LocalDate,
+    focused: Boolean,
     record: HandBrewRecord?,
     cellHeight: androidx.compose.ui.unit.Dp,
     largeText: Boolean,
@@ -287,7 +293,12 @@ private fun CalendarDayCell(
         count == 0 -> "明确记录 0 次手冲"
         else -> "手冲 $count 次"
     }
-    val todayBorder = if (date == today) Terracotta500 else Neutral300
+    val borderColor = when {
+        focused -> Terracotta600
+        date == today -> Terracotta500
+        else -> Neutral300
+    }
+    val borderWidth = if (focused || date == today) 2.dp else 1.dp
 
     Column(
         modifier = modifier
@@ -295,12 +306,13 @@ private fun CalendarDayCell(
             .alpha(if (outsideMonth) .38f else 1f)
             .clip(RoundedCornerShape(16.dp))
             .background(background)
-            .border(if (date == today) 2.dp else 1.dp, todayBorder, RoundedCornerShape(16.dp))
+            .border(borderWidth, borderColor, RoundedCornerShape(16.dp))
             .clickable(enabled = !future && !unsupported, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
+                selected = focused
                 contentDescription = date.year.toString() + "年" + date.monthValue + "月" +
-                    date.dayOfMonth + "日，" + semanticStatus
+                    date.dayOfMonth + "日，" + semanticStatus + if (focused) "，已选择" else ""
             },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

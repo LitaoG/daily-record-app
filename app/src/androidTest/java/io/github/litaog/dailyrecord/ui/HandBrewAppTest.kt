@@ -63,6 +63,34 @@ class HandBrewAppTest {
         composeRule.onNodeWithText("2026年 7月").assertIsDisplayed()
     }
 
+    @Test
+    fun tappingMonthTitleOpensFastDatePicker() {
+        setAppContent()
+
+        composeRule
+            .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
+            .performClick()
+        composeRule.onNodeWithText("选择要查看的年份和日期").assertIsDisplayed()
+        composeRule.onNodeWithText("取消").performClick()
+        composeRule.onNodeWithText("2026年 7月").assertIsDisplayed()
+    }
+
+    @Test
+    fun statisticsFollowHistoricalCalendarMonthAndKeepAnchorAcrossTabs() {
+        setAppContent()
+
+        composeRule.onNodeWithContentDescription("上个月").performClick()
+        composeRule.onNodeWithContentDescription("上个月").performClick()
+        composeRule.onNodeWithContentDescription("统计，未选择").performClick()
+        composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
+        composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("年统计，未选择").performClick()
+        composeRule.onNodeWithText("2026年").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
+        composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
+    }
+
     private fun setAppContent() {
         composeRule.setContent {
             DailyRecordTheme {

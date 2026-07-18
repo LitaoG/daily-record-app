@@ -32,47 +32,56 @@ data class StatisticsUiModel(
 
 fun buildStatistics(
     period: StatisticsPeriod,
+    anchorDate: LocalDate,
     today: LocalDate,
     records: List<HandBrewRecord>,
 ): StatisticsUiModel {
     val completedRecords = records.filter { it.localDate <= today }
+    val safeAnchor = anchorDate.coerceAtMost(today)
     return when (period) {
-        StatisticsPeriod.Week -> buildWeek(today, completedRecords)
-        StatisticsPeriod.Month -> buildMonth(today, completedRecords)
-        StatisticsPeriod.Year -> buildYear(today, completedRecords)
+        StatisticsPeriod.Week -> buildWeek(safeAnchor, today, completedRecords)
+        StatisticsPeriod.Month -> buildMonth(safeAnchor, today, completedRecords)
+        StatisticsPeriod.Year -> buildYear(safeAnchor, today, completedRecords)
         StatisticsPeriod.All -> buildAll(today, completedRecords)
     }
 }
 
-private fun buildWeek(today: LocalDate, records: List<HandBrewRecord>): StatisticsUiModel {
-    val start = today.minusDays((today.dayOfWeek.value - 1).toLong())
+private fun buildWeek(
+    anchorDate: LocalDate,
+    today: LocalDate,
+    records: List<HandBrewRecord>,
+): StatisticsUiModel {
+    val start = anchorDate.minusDays((anchorDate.dayOfWeek.value - 1).toLong())
     val end = start.plusDays(6)
     val rangeRecords = records.filter { it.localDate in start..end }
     val details = (0L..6L).map { offset ->
         val date = start.plusDays(offset)
         if (date > today) {
-            StatisticsDetail(weekdayName(date), null, null)
+            StatisticsDetail(weekdayName(date) + " " + date.dayOfMonth + "日", null, null)
         } else {
             val record = rangeRecords.firstOrNull { it.localDate == date }
             StatisticsDetail(
-                label = weekdayName(date),
+                label = weekdayName(date) + " " + date.dayOfMonth + "日",
                 count = record?.brewCount ?: 0,
                 days = if ((record?.brewCount ?: 0) > 0) 1 else 0,
             )
         }
     }
     return StatisticsUiModel(
-        title = start.monthValue.toString() + "月" + start.dayOfMonth + "日–" +
-            end.monthValue + "月" + end.dayOfMonth + "日",
-        status = "进行中",
+        title = dateRangeTitle(start, end),
+        status = if (end < today) "已结束" else "进行中",
         summary = summaryOf(rangeRecords),
         detailsTitle = "每日明细",
         details = details,
     )
 }
 
-private fun buildMonth(today: LocalDate, records: List<HandBrewRecord>): StatisticsUiModel {
-    val month = YearMonth.from(today)
+private fun buildMonth(
+    anchorDate: LocalDate,
+    today: LocalDate,
+    records: List<HandBrewRecord>,
+): StatisticsUiModel {
+    val month = YearMonth.from(anchorDate)
     val start = month.atDay(1)
     val end = month.atEndOfMonth()
     val rangeRecords = records.filter { it.localDate in start..end }
@@ -85,11 +94,11 @@ private fun buildMonth(today: LocalDate, records: List<HandBrewRecord>): Statist
             val bucketStart = maxOf(weekStart, start)
             val bucketEnd = minOf(weekEnd, end)
             if (bucketStart > today) {
-                add(StatisticsDetail("第" + index + "周", null, null))
+                add(StatisticsDetail(monthWeekLabel(index, bucketStart, bucketEnd), null, null))
             } else {
                 val bucketRecords = rangeRecords.filter { it.localDate in bucketStart..minOf(bucketEnd, today) }
                 val summary = summaryOf(bucketRecords)
-                add(StatisticsDetail("第" + index + "周", summary.totalCount, summary.brewDays))
+                add(StatisticsDetail(monthWeekLabel(index, bucketStart, bucketEnd), summary.totalCount, summary.brewDays))
             }
             weekStart = weekStart.plusDays(7)
             index += 1
@@ -97,19 +106,23 @@ private fun buildMonth(today: LocalDate, records: List<HandBrewRecord>): Statist
     }
     return StatisticsUiModel(
         title = month.year.toString() + "年 " + month.monthValue + "月",
-        status = "进行中",
+        status = if (end < today) "已结束" else "进行中",
         summary = summaryOf(rangeRecords),
         detailsTitle = "周明细",
         details = details,
     )
 }
 
-private fun buildYear(today: LocalDate, records: List<HandBrewRecord>): StatisticsUiModel {
-    val start = LocalDate.of(today.year, 1, 1)
-    val end = LocalDate.of(today.year, 12, 31)
+private fun buildYear(
+    anchorDate: LocalDate,
+    today: LocalDate,
+    records: List<HandBrewRecord>,
+): StatisticsUiModel {
+    val start = LocalDate.of(anchorDate.year, 1, 1)
+    val end = LocalDate.of(anchorDate.year, 12, 31)
     val rangeRecords = records.filter { it.localDate in start..end }
     val details = (1..12).map { monthNumber ->
-        val month = YearMonth.of(today.year, monthNumber)
+        val month = YearMonth.of(anchorDate.year, monthNumber)
         if (month.atDay(1) > today) {
             StatisticsDetail(monthNumber.toString() + "月", null, null)
         } else {
@@ -119,8 +132,12 @@ private fun buildYear(today: LocalDate, records: List<HandBrewRecord>): Statisti
         }
     }
     return StatisticsUiModel(
-        title = today.year.toString() + "年",
-        status = "截至 " + today.monthValue + "月" + today.dayOfMonth + "日",
+        title = anchorDate.year.toString() + "年",
+        status = if (anchorDate.year < today.year) {
+            "已结束"
+        } else {
+            "截至 " + today.monthValue + "月" + today.dayOfMonth + "日"
+        },
         summary = summaryOf(rangeRecords),
         detailsTitle = "月份明细",
         details = details,
@@ -160,4 +177,18 @@ private fun weekdayName(date: LocalDate): String = when (date.dayOfWeek.value) {
     5 -> "周五"
     6 -> "周六"
     else -> "周日"
+}
+
+private fun monthWeekLabel(
+    index: Int,
+    start: LocalDate,
+    end: LocalDate,
+): String = "第${index}周 ${start.dayOfMonth}–${end.dayOfMonth}日"
+
+private fun dateRangeTitle(start: LocalDate, end: LocalDate): String = if (start.year == end.year) {
+    start.year.toString() + "年 " + start.monthValue + "月" + start.dayOfMonth + "日–" +
+        end.monthValue + "月" + end.dayOfMonth + "日"
+} else {
+    start.year.toString() + "年" + start.monthValue + "月" + start.dayOfMonth + "日–" +
+        end.year + "年" + end.monthValue + "月" + end.dayOfMonth + "日"
 }

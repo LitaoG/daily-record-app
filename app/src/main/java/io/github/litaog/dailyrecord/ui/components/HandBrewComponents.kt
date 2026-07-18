@@ -148,24 +148,35 @@ fun StatisticsGlyph(color: Color, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun BackChevronIcon(modifier: Modifier = Modifier, color: Color = Ink900) {
+fun ChevronIcon(
+    forward: Boolean,
+    modifier: Modifier = Modifier,
+    color: Color = Ink900,
+) {
     Canvas(modifier.size(20.dp)) {
         val stroke = 2.4.dp.toPx()
+        val startX = if (forward) size.width * .38f else size.width * .62f
+        val middleX = if (forward) size.width * .64f else size.width * .36f
         drawLine(
             color,
-            Offset(size.width * .62f, size.height * .18f),
-            Offset(size.width * .36f, size.height * .50f),
+            Offset(startX, size.height * .18f),
+            Offset(middleX, size.height * .50f),
             stroke,
             StrokeCap.Round,
         )
         drawLine(
             color,
-            Offset(size.width * .36f, size.height * .50f),
-            Offset(size.width * .62f, size.height * .82f),
+            Offset(middleX, size.height * .50f),
+            Offset(startX, size.height * .82f),
             stroke,
             StrokeCap.Round,
         )
     }
+}
+
+@Composable
+fun BackChevronIcon(modifier: Modifier = Modifier, color: Color = Ink900) {
+    ChevronIcon(forward = false, modifier = modifier, color = color)
 }
 
 @Composable

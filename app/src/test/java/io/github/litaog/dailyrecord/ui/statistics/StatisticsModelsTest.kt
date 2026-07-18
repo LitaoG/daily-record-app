@@ -15,6 +15,7 @@ class StatisticsModelsTest {
     fun weekDistinguishesExplicitZeroAndFutureDays() {
         val model = buildStatistics(
             period = StatisticsPeriod.Week,
+            anchorDate = today,
             today = today,
             records = listOf(
                 record(LocalDate.of(2026, 7, 13), 1),
@@ -45,7 +46,7 @@ class StatisticsModelsTest {
             record(LocalDate.of(2026, 7, 9), 18),
         )
 
-        val model = buildStatistics(StatisticsPeriod.Year, today, records)
+        val model = buildStatistics(StatisticsPeriod.Year, today, today, records)
 
         assertEquals(128, model.summary.totalCount)
         assertEquals(7, model.summary.brewDays)
@@ -58,6 +59,7 @@ class StatisticsModelsTest {
         val model = buildStatistics(
             StatisticsPeriod.All,
             today,
+            today,
             listOf(
                 record(LocalDate.of(2024, 4, 3), 56),
                 record(LocalDate.of(2025, 2, 1), 142),
@@ -69,6 +71,67 @@ class StatisticsModelsTest {
         assertEquals(326, model.summary.totalCount)
         assertEquals(listOf("2026年", "2025年", "2024年"), model.details.map { it.label })
         assertEquals(326, model.details.sumOf { it.count ?: 0 })
+    }
+
+    @Test
+    fun historicalMonthUsesAnchorAndWeeklyDetailsReconcile() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Month,
+            anchorDate = LocalDate.of(2026, 5, 31),
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 5, 1), 2),
+                record(LocalDate.of(2026, 5, 10), 0),
+                record(LocalDate.of(2026, 5, 31), 3),
+                record(LocalDate.of(2026, 7, 1), 99),
+            ),
+        )
+
+        assertEquals("2026年 5月", model.title)
+        assertEquals("已结束", model.status)
+        assertEquals(5, model.summary.totalCount)
+        assertEquals(2, model.summary.brewDays)
+        assertEquals(5, model.details.sumOf { it.count ?: 0 })
+        assertEquals(2, model.details.sumOf { it.days ?: 0 })
+        assertEquals("第1周 1–3日", model.details.first().label)
+        assertEquals("第5周 25–31日", model.details.last().label)
+    }
+
+    @Test
+    fun historicalWeekUsesWeekContainingAnchorWithoutCurrentMonthLeakage() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Week,
+            anchorDate = LocalDate.of(2026, 5, 6),
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 5, 4), 1),
+                record(LocalDate.of(2026, 5, 6), 2),
+                record(LocalDate.of(2026, 5, 11), 50),
+                record(LocalDate.of(2026, 7, 17), 50),
+            ),
+        )
+
+        assertEquals("2026年 5月4日–5月10日", model.title)
+        assertEquals("已结束", model.status)
+        assertEquals(3, model.summary.totalCount)
+        assertEquals(2, model.summary.brewDays)
+        assertEquals("周三 6日", model.details[2].label)
+        assertEquals(3, model.details.sumOf { it.count ?: 0 })
+    }
+
+    @Test
+    fun pastYearContainsNoFuturePlaceholders() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2025, 7, 17),
+            today = today,
+            records = listOf(record(LocalDate.of(2025, 12, 31), 2)),
+        )
+
+        assertEquals("2025年", model.title)
+        assertEquals("已结束", model.status)
+        assertEquals(0, model.details.count { it.future })
+        assertEquals(2, model.details.sumOf { it.count ?: 0 })
     }
 
     private fun record(date: LocalDate, count: Int) = HandBrewRecord(
