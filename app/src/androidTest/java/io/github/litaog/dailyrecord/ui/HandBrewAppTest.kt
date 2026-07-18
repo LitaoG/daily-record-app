@@ -80,6 +80,21 @@ class HandBrewAppTest {
     }
 
     @Test
+    fun datePickerCanJumpDirectlyToAnotherYearAndDate() {
+        setAppContent()
+
+        composeRule
+            .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
+            .performClick()
+        composeRule.onNodeWithContentDescription("Switch to selecting a year").performClick()
+        composeRule.onNodeWithText("Navigate to year 2025").performClick()
+        composeRule.onNodeWithText("Thursday, July 3, 2025").performClick()
+        composeRule.onNodeWithText("查看此日期").performClick()
+
+        assertMonth(2025, 7)
+    }
+
+    @Test
     fun statisticsFollowHistoricalCalendarMonthAndKeepAnchorAcrossTabs() {
         setAppContent()
 
