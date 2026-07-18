@@ -66,7 +66,7 @@ fun CalendarScreen(
 ) {
     val monthRecords = records.filter { YearMonth.from(it.localDate) == month }
     val recordsByDate = monthRecords.associateBy { it.localDate }
-    val totalCount = monthRecords.sumOf { it.brewCount }
+    val totalCount = monthRecords.sumOf { it.brewCount.toLong() }
     val brewDays = monthRecords.count { it.brewCount > 0 }
     val first = month.atDay(1)
     val gridStart = first.minusDays((first.dayOfWeek.value - 1).toLong())

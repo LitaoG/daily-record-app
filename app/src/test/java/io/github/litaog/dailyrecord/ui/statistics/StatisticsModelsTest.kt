@@ -28,9 +28,9 @@ class StatisticsModelsTest {
             ),
         )
 
-        assertEquals(5, model.summary.totalCount)
+        assertEquals(5L, model.summary.totalCount)
         assertEquals(4, model.summary.brewDays)
-        assertEquals(0, model.details[1].count)
+        assertEquals(0L, model.details[1].count)
         assertEquals(0, model.details[1].days)
         assertTrue(model.details[1].recorded)
         assertNull(model.details[5].count)
@@ -48,10 +48,10 @@ class StatisticsModelsTest {
             records = listOf(record(LocalDate.of(2026, 7, 14), 0)),
         )
 
-        assertEquals(0, model.details[0].count)
+        assertEquals(0L, model.details[0].count)
         assertFalse(model.details[0].recorded)
         assertFalse(model.details[0].future)
-        assertEquals(0, model.details[1].count)
+        assertEquals(0L, model.details[1].count)
         assertTrue(model.details[1].recorded)
     }
 
@@ -69,9 +69,9 @@ class StatisticsModelsTest {
 
         val model = buildStatistics(StatisticsPeriod.Year, today, today, records)
 
-        assertEquals(128, model.summary.totalCount)
+        assertEquals(128L, model.summary.totalCount)
         assertEquals(7, model.summary.brewDays)
-        assertEquals(128, model.details.filterNot { it.future }.sumOf { it.count ?: 0 })
+        assertEquals(128L, model.details.filterNot { it.future }.sumOf { it.count ?: 0L })
         assertEquals(5, model.details.count { it.future })
     }
 
@@ -89,9 +89,9 @@ class StatisticsModelsTest {
             ),
         )
 
-        assertEquals(326, model.summary.totalCount)
+        assertEquals(326L, model.summary.totalCount)
         assertEquals(listOf("2026年", "2025年", "2024年"), model.details.map { it.label })
-        assertEquals(326, model.details.sumOf { it.count ?: 0 })
+        assertEquals(326L, model.details.sumOf { it.count ?: 0L })
     }
 
     @Test
@@ -110,9 +110,9 @@ class StatisticsModelsTest {
 
         assertEquals("2026年 5月", model.title)
         assertEquals("已结束", model.status)
-        assertEquals(5, model.summary.totalCount)
+        assertEquals(5L, model.summary.totalCount)
         assertEquals(2, model.summary.brewDays)
-        assertEquals(5, model.details.sumOf { it.count ?: 0 })
+        assertEquals(5L, model.details.sumOf { it.count ?: 0L })
         assertEquals(2, model.details.sumOf { it.days ?: 0 })
         assertEquals("第1周 1–3日", model.details.first().label)
         assertEquals("第5周 25–31日", model.details.last().label)
@@ -138,11 +138,11 @@ class StatisticsModelsTest {
             records,
         )
 
-        assertEquals(2, may.summary.totalCount)
-        assertEquals(2, may.details.sumOf { it.count ?: 0 })
-        assertEquals(7, june.summary.totalCount)
-        assertEquals(7, june.details.sumOf { it.count ?: 0 })
-        assertFalse(june.details.any { it.count == 2 })
+        assertEquals(2L, may.summary.totalCount)
+        assertEquals(2L, may.details.sumOf { it.count ?: 0L })
+        assertEquals(7L, june.summary.totalCount)
+        assertEquals(7L, june.details.sumOf { it.count ?: 0L })
+        assertFalse(june.details.any { it.count == 2L })
     }
 
     @Test
@@ -161,10 +161,10 @@ class StatisticsModelsTest {
 
         assertEquals("2026年 5月4日–5月10日", model.title)
         assertEquals("已结束", model.status)
-        assertEquals(3, model.summary.totalCount)
+        assertEquals(3L, model.summary.totalCount)
         assertEquals(2, model.summary.brewDays)
         assertEquals("周三 6日", model.details[2].label)
-        assertEquals(3, model.details.sumOf { it.count ?: 0 })
+        assertEquals(3L, model.details.sumOf { it.count ?: 0L })
     }
 
     @Test
@@ -179,7 +179,23 @@ class StatisticsModelsTest {
         assertEquals("2025年", model.title)
         assertEquals("已结束", model.status)
         assertEquals(0, model.details.count { it.future })
-        assertEquals(2, model.details.sumOf { it.count ?: 0 })
+        assertEquals(2L, model.details.sumOf { it.count ?: 0L })
+    }
+
+    @Test
+    fun totalsUseLongAndDoNotOverflowAcrossHighCountDays() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Month,
+            anchorDate = LocalDate.of(2026, 5, 17),
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 5, 4), Int.MAX_VALUE),
+                record(LocalDate.of(2026, 5, 5), Int.MAX_VALUE),
+            ),
+        )
+
+        assertEquals(4_294_967_294L, model.summary.totalCount)
+        assertEquals(4_294_967_294L, model.details.sumOf { it.count ?: 0L })
     }
 
     private fun record(date: LocalDate, count: Int) = HandBrewRecord(

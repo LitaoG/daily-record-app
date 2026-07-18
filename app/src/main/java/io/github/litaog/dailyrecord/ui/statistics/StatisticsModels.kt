@@ -6,7 +6,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 data class StatisticsSummary(
-    val totalCount: Int,
+    val totalCount: Long,
     val brewDays: Int,
 ) {
     val average: Double
@@ -15,7 +15,7 @@ data class StatisticsSummary(
 
 data class StatisticsDetail(
     val label: String,
-    val count: Int?,
+    val count: Long?,
     val days: Int?,
     val future: Boolean = false,
     val recorded: Boolean = true,
@@ -67,7 +67,7 @@ private fun buildWeek(
             val record = rangeRecords.firstOrNull { it.localDate == date }
             StatisticsDetail(
                 label = weekdayName(date) + " " + date.dayOfMonth + "日",
-                count = record?.brewCount ?: 0,
+                count = record?.brewCount?.toLong() ?: 0L,
                 days = if ((record?.brewCount ?: 0) > 0) 1 else 0,
                 recorded = record != null,
             )
@@ -197,7 +197,7 @@ private fun buildAll(today: LocalDate, records: List<HandBrewRecord>): Statistic
 }
 
 private fun summaryOf(records: List<HandBrewRecord>) = StatisticsSummary(
-    totalCount = records.sumOf { it.brewCount },
+    totalCount = records.sumOf { it.brewCount.toLong() },
     brewDays = records.count { it.brewCount > 0 },
 )
 

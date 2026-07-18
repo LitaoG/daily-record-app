@@ -118,7 +118,7 @@ fun RecordScreen(
         }
     }
 
-    val storedMonthCount = monthRecords.sumOf { it.brewCount }
+    val storedMonthCount = monthRecords.sumOf { it.brewCount.toLong() }
     val storedMonthDays = monthRecords.count { it.brewCount > 0 }
     val hasUnsavedChanges = dataReady && draftInitialized && draftCount != (record?.brewCount ?: 0)
     val requestBack = {
