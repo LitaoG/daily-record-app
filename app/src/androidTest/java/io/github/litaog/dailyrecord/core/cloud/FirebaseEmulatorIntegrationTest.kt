@@ -5,6 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
+import java.net.HttpURLConnection
+import java.net.URL
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -19,7 +21,9 @@ class FirebaseEmulatorIntegrationTest {
     @Test
     fun passwordAccountRestoresRecordAndRulesBlockOtherAccount() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        assertAuthEmulatorReachable()
         val services = FirebaseServices.create(context, emulatorHost = "10.0.2.2")
+        assertTrue("Emulator tests must never inherit production Firebase identity", !services.productionConfigured)
         services.authRepository.signOut()
         try {
             val suffix = UUID.randomUUID().toString().take(10)
@@ -68,6 +72,19 @@ class FirebaseEmulatorIntegrationTest {
             assertTrue("A different account must not read the first account", crossAccountRead.isFailure)
         } finally {
             services.authRepository.signOut()
+        }
+    }
+
+    private fun assertAuthEmulatorReachable() {
+        val connection = URL(
+            "http://10.0.2.2:9099/emulator/v1/projects/demo-daily-record-app/config",
+        ).openConnection() as HttpURLConnection
+        try {
+            connection.connectTimeout = 3_000
+            connection.readTimeout = 3_000
+            assertEquals(200, connection.responseCode)
+        } finally {
+            connection.disconnect()
         }
     }
 }

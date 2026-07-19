@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:android-connected": "firebase emulators:exec --project demo-daily-record-app --only auth,firestore \"gradlew.bat connectedDebugAndroidTest --no-parallel\"",
     "test:firestore-rules": "firebase emulators:exec --project demo-daily-record-app --only firestore \"node scripts/firestore-rules.test.mjs\""
   },
   "devDependencies": {

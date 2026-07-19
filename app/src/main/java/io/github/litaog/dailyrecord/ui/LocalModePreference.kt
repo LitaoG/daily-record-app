@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui
 
 import android.content.Context
+import androidx.core.content.edit
 
 /** Persists the user's explicit choice to use the app without signing in. */
 internal class LocalModePreference(context: Context) {
@@ -13,7 +14,7 @@ internal class LocalModePreference(context: Context) {
         get() = preferences.getBoolean(KEY_ENABLED, false)
 
     fun setEnabled(enabled: Boolean) {
-        preferences.edit().putBoolean(KEY_ENABLED, enabled).apply()
+        preferences.edit { putBoolean(KEY_ENABLED, enabled) }
     }
 
     private companion object {

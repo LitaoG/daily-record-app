@@ -10,6 +10,8 @@ import io.github.litaog.dailyrecord.core.auth.FirebaseAuthRepository
 import io.github.litaog.dailyrecord.core.sync.FirebaseHandBrewRemoteDataSource
 import io.github.litaog.dailyrecord.core.sync.HandBrewRemoteDataSource
 
+internal const val FIREBASE_EMULATOR_APP_NAME = "daily-record-emulator"
+
 internal data class FirebaseServices(
     val authRepository: AuthRepository,
     val remoteDataSource: HandBrewRemoteDataSource,
@@ -23,14 +25,12 @@ internal data class FirebaseServices(
             context: Context,
             emulatorHost: String? = null,
         ): FirebaseServices {
-            val app = FirebaseApp.initializeApp(context) ?: FirebaseApp.initializeApp(
-                context,
-                FirebaseOptions.Builder()
-                    .setApplicationId("1:1234567890:android:daily-record-demo")
-                    .setApiKey("demo-api-key")
-                    .setProjectId(DEMO_PROJECT_ID)
-                    .build(),
-            )
+            val app = if (emulatorHost == null) {
+                FirebaseApp.initializeApp(context) ?: FirebaseApp.initializeApp(context, demoOptions())
+            } else {
+                FirebaseApp.getApps(context).firstOrNull { it.name == FIREBASE_EMULATOR_APP_NAME }
+                    ?: FirebaseApp.initializeApp(context, demoOptions(), FIREBASE_EMULATOR_APP_NAME)
+            }
             val auth = FirebaseAuth.getInstance(app)
             val firestore = FirebaseFirestore.getInstance(app)
             if (emulatorHost != null) {
@@ -44,5 +44,11 @@ internal data class FirebaseServices(
                 currentUserId = { auth.currentUser?.uid },
             )
         }
+
+        private fun demoOptions() = FirebaseOptions.Builder()
+            .setApplicationId("1:1234567890:android:daily-record-demo")
+            .setApiKey("AIzaSyDUMMY0000000000000000000000000000")
+            .setProjectId(DEMO_PROJECT_ID)
+            .build()
     }
 }
