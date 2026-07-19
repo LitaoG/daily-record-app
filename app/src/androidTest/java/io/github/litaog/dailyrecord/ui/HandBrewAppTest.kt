@@ -74,7 +74,8 @@ class HandBrewAppTest {
         composeRule
             .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
             .performClick()
-        composeRule.onNodeWithText("选择要查看的年份和日期").assertIsDisplayed()
+        composeRule.onNodeWithTag("date_navigation_dialog").assertIsDisplayed()
+        composeRule.onNodeWithText("快速跳转").assertIsDisplayed()
         composeRule.onNodeWithText("取消").performClick()
         assertMonth(2026, 7)
     }
@@ -86,12 +87,23 @@ class HandBrewAppTest {
         composeRule
             .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
             .performClick()
-        composeRule.onNodeWithContentDescription("Switch to selecting a year").performClick()
-        composeRule.onNodeWithText("Navigate to year 2025").performClick()
-        composeRule.onNodeWithText("Thursday, July 3, 2025").performClick()
-        composeRule.onNodeWithText("查看此日期").performClick()
+        composeRule.onNodeWithContentDescription("切换年份，当前2026年").performClick()
+        composeRule.onNodeWithContentDescription("选择2025年").performClick()
+        composeRule.onNodeWithContentDescription("2025年7月3日，星期四").performClick()
+        composeRule.onNodeWithText("跳转到此日").performClick()
 
         assertMonth(2025, 7)
+    }
+
+    @Test
+    fun datePickerDisablesFutureDatesAndMonths() {
+        setAppContent()
+
+        composeRule
+            .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
+            .performClick()
+        composeRule.onNodeWithContentDescription("2026年7月18日，星期六").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("快速跳转下个月").assertIsNotEnabled()
     }
 
     @Test
@@ -124,10 +136,11 @@ class HandBrewAppTest {
         }
 
         composeRule.onNodeWithContentDescription("账号与云同步，云端已同步").performClick()
+        composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("brew@example.com").assertIsDisplayed()
         composeRule.onNodeWithText("退出登录").performClick()
         composeRule.onNodeWithText("确认退出登录？").assertIsDisplayed()
-        composeRule.onNodeWithText("取消").performClick()
+        composeRule.onNodeWithText("返回").performClick()
         composeRule.onNodeWithText("账号与云同步").assertIsDisplayed()
     }
 
