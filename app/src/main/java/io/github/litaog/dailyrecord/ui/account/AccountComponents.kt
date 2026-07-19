@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,6 +33,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
+import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
+import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
+import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
 import io.github.litaog.dailyrecord.ui.theme.Ink700
 import io.github.litaog.dailyrecord.ui.theme.Ink900
@@ -173,44 +176,86 @@ internal fun AccountDialog(
     onDismiss: () -> Unit,
 ) {
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
-    AlertDialog(
+    HandBrewDialog(
+        title = if (confirmSignOut) "确认退出登录？" else "账号与云同步",
+        subtitle = if (confirmSignOut) "云端数据会保留" else "换手机后仍可恢复手冲记录",
+        testTag = "account_sync_dialog",
         onDismissRequest = onDismiss,
-        title = { Text(if (confirmSignOut) "确认退出登录？" else "账号与云同步") },
-        text = {
-            if (confirmSignOut) {
-                Text("退出后云端记录不会删除；本机缓存仍按账号隔离，下次登录会继续同步。")
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(email, color = Ink900, style = MaterialTheme.typography.bodyLarge)
-                    Text(status.label(), color = status.color(), style = MaterialTheme.typography.labelLarge)
-                    Text(
-                        "本机修改先保存到 Room，断网时仍可记录；联网后自动上传并在其他手机恢复。",
-                        color = Ink700,
-                        style = MaterialTheme.typography.bodyMedium,
+    ) {
+        if (confirmSignOut) {
+            Text(
+                "退出后不会删除云端记录；本机缓存仍按账号隔离，下次登录会继续同步。",
+                color = Ink700,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 18.dp),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                OutlineActionButton("返回", { confirmSignOut = false }, Modifier.weight(1f))
+                DangerActionButton("确认退出", onSignOut, Modifier.weight(1f))
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 18.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                    .background(io.github.litaog.dailyrecord.ui.theme.Paper100)
+                    .border(
+                        1.dp,
+                        Neutral300,
+                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                     )
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(email, color = Ink900, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    androidx.compose.foundation.Canvas(Modifier.size(9.dp)) { drawCircle(status.color()) }
+                    Text(status.label(), color = Ink700, style = MaterialTheme.typography.labelLarge)
                 }
             }
-        },
-        confirmButton = {
-            if (confirmSignOut) {
-                TextButton(onClick = onSignOut) { Text("确认退出", color = MaterialTheme.colorScheme.error) }
-            } else {
-                TextButton(onClick = onSyncNow, enabled = status !is SyncStatus.Syncing) {
-                    Text("立即同步", color = Terracotta500)
-                }
+            Text(
+                "记录会先保存在本机，断网时照常使用；联网后自动上传，并可在其他手机登录恢复。",
+                color = Ink700,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 14.dp),
+            )
+            PrimaryActionButton(
+                label = if (status is SyncStatus.Syncing) "正在同步" else "立即同步",
+                onClick = onSyncNow,
+                enabled = status !is SyncStatus.Syncing,
+                modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+            )
+            OutlineActionButton("关闭", onDismiss, Modifier.fillMaxWidth().padding(top = 10.dp))
+            TextButton(
+                onClick = { confirmSignOut = true },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) {
+                Text("退出登录", color = MaterialTheme.colorScheme.error)
             }
-        },
-        dismissButton = {
-            if (confirmSignOut) {
-                TextButton(onClick = { confirmSignOut = false }) { Text("取消") }
-            } else {
-                Row {
-                    TextButton(onClick = { confirmSignOut = true }) { Text("退出登录") }
-                    TextButton(onClick = onDismiss) { Text("关闭") }
-                }
-            }
-        },
-    )
+        }
+    }
+}
+
+@Composable
+private fun DangerActionButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .heightIn(min = 52.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.error)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { role = Role.Button; contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = Paper0, style = MaterialTheme.typography.labelLarge)
+    }
 }
 
 internal fun SyncStatus.label(): String = when (this) {
