@@ -10,6 +10,7 @@
 - [可用性测试](USABILITY_TEST_PLAN.md)
 - [开源借鉴边界](RESEARCH_OPEN_SOURCE.md)
 - [重构日志](HAND_BREW_REFACTOR_LOG.md)
+- [运行时 UX 与统计验收](RUNTIME_UX_AUDIT.md)
 - [仅手冲 v2 设计与实现证据](assets/hand-brew-v2/README.md)
 - [Android Studio 人工验收清单](ANDROID_STUDIO_ACCEPTANCE.md)
 - [Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
