@@ -1,5 +1,6 @@
 package io.github.litaog.dailyrecord.ui.navigation
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -9,6 +10,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,7 +60,12 @@ internal fun DateNavigationDialog(
     ) {
         DatePicker(
             state = state,
-            title = { Text("选择要查看的年份和日期") },
+            title = {
+                Text(
+                    text = "选择要查看的年份和日期",
+                    modifier = Modifier.padding(start = 24.dp, top = 16.dp, end = 12.dp),
+                )
+            },
             showModeToggle = true,
         )
     }

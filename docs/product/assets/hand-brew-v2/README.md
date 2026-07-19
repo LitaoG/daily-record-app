@@ -11,6 +11,7 @@
 - `09-canva-product-overview.png`：正式保存的一页式手冲日历产品概览。
 - `10-android-record-hardened-api34.png`：加载保护、矢量控件与防误触确认完成后的日期记录页。
 - `11-android-statistics-font200-api34.png`：系统字体 200% 下自动纵向排列的统计指标与可滚动明细。
+- `12-android-date-picker-fixed-api34.png`：API 34 最新 Debug 包的历史日期选择器；自定义标题已恢复 Material 3 安全内边距，不再被圆角裁切。
 
 Figma 文件：<https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw>
 
