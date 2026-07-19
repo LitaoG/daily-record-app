@@ -45,6 +45,7 @@ service cloud.firestore {
         && request.resource.data.id == resource.data.id
         && request.resource.data.localDate == resource.data.localDate
         && request.resource.data.createdAtMillis == resource.data.createdAtMillis
+        && request.resource.data.clientUpdatedAtMillis > resource.data.clientUpdatedAtMillis
         && request.resource.data.revision == resource.data.revision + 1;
       allow delete: if false;
     }

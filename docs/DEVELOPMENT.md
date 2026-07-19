@@ -9,7 +9,7 @@
 - 生产登录联调需要本机私有的 `app/google-services.json`
 - Firestore 规则测试需要 Node.js/pnpm；仓库已锁定依赖版本
 
-GitHub 暂时不可连接时，使用本地分支和提交保留完整历史；连接恢复后直接推送，不复制或压平提交。
+GitHub `main` 是当前事实来源；功能分支通过 Pull Request、自动化检查和审查后合并，不复制或压平提交。
 
 ## 验证命令
 
@@ -20,6 +20,8 @@ pnpm test:firestore-rules
 ```
 
 `test:android-connected` 会以 demo 项目启动隔离的 Authentication 与 Firestore 模拟器，运行完整设备测试后自动关闭。测试前保持 Android 模拟器的全局 HTTP 代理为空；若本地 Firebase 探针返回 `502` 或 Auth 超时，先运行 `adb shell settings list global | Select-String proxy` 检查是否残留 `global_http_proxy_host` / `global_http_proxy_port`。
+
+Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm test:android-connected:unix`。
 
 ## 必测范围
 
@@ -34,7 +36,7 @@ pnpm test:firestore-rules
 - 邮箱密码校验、重复提交锁、旋转恢复和 200% 字体。
 - 本机模式跨冷启动保留；登录入口可显式退出本机模式。
 - 离线待同步、网络恢复、实时监听失败重连、迟到确认、多设备编辑/清除、不同账号隔离。
-- Firestore 规则的所有权、字段形状、非负次数、修订递增和禁止物理删除。
+- Firestore 规则的所有权、字段形状、非负次数、修订递增、客户端更新时间严格递增和禁止物理删除。
 
 ## Definition of Done
 

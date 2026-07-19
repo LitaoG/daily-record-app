@@ -1,5 +1,9 @@
 package io.github.litaog.dailyrecord.core.sync
 
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.firestore.FirebaseFirestoreException
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -30,11 +34,13 @@ internal class AccountSyncManager(
         val remoteJob = scope.launch {
             coordinator.observeRemote(ownerId)
                 .retryWhen { error, attempt ->
+                    val retryable = error.isRetryableRemoteObservation()
                     mutableStatus.value = if (networkAvailable.value) {
                         SyncStatus.Failed(error.userMessage())
                     } else {
                         SyncStatus.Offline
                     }
+                    if (!retryable) return@retryWhen false
                     networkAvailable.first { it }
                     delay(remoteRetryDelayMillis(attempt))
                     true
@@ -99,10 +105,31 @@ private fun remoteRetryDelayMillis(attempt: Long): Long {
     return (1_000L shl exponent).coerceAtMost(30_000L)
 }
 
+internal fun Throwable.isRetryableRemoteObservation(): Boolean =
+    generateSequence(this) { it.cause }.any { cause ->
+        cause is FirebaseNetworkException ||
+            cause is IOException ||
+            cause is FirebaseFirestoreException && cause.code in setOf(
+                FirebaseFirestoreException.Code.ABORTED,
+                FirebaseFirestoreException.Code.CANCELLED,
+                FirebaseFirestoreException.Code.DEADLINE_EXCEEDED,
+                FirebaseFirestoreException.Code.INTERNAL,
+                FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED,
+                FirebaseFirestoreException.Code.UNAVAILABLE,
+                FirebaseFirestoreException.Code.UNKNOWN,
+            )
+    }
+
 private fun Throwable.userMessage(): String = when {
-    generateSequence(this) { it.cause }.any { it is com.google.firebase.FirebaseNetworkException } ->
+    generateSequence(this) { it.cause }.any { it is FirebaseNetworkException } ->
         "网络连接不稳定，记录已保存在本机"
-    generateSequence(this) { it.cause }.any { it is com.google.firebase.auth.FirebaseAuthException } ->
+    generateSequence(this) { it.cause }.any {
+        it is FirebaseAuthException ||
+            it is FirebaseFirestoreException && it.code in setOf(
+                FirebaseFirestoreException.Code.PERMISSION_DENIED,
+                FirebaseFirestoreException.Code.UNAUTHENTICATED,
+            )
+    } ->
         "账号权限已失效，请退出后重新登录"
     else -> "暂时无法同步，记录已保存在本机"
 }

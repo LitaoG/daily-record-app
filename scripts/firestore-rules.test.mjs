@@ -104,6 +104,15 @@ try {
   await assertFails(
     setDoc(record, {
       ...validRecord,
+      brewCount: 4,
+      revision: 3,
+      clientUpdatedAtMillis: 1784160000500,
+      serverUpdatedAt: serverTimestamp(),
+    }),
+  );
+  await assertFails(
+    setDoc(record, {
+      ...validRecord,
       id: "replacement-id",
       brewCount: 4,
       revision: 3,
