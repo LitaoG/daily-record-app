@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.junit.After
@@ -163,6 +165,30 @@ class HandBrewSyncCoordinatorTest {
     }
 
     @Test
+    fun cancellingManualSyncIsNotConvertedIntoAFailureState() = runBlocking {
+        val remote = FakeRemoteDataSource()
+        val database = database()
+        val manager = AccountSyncManager(
+            ownerId = ownerId,
+            coordinator = coordinator(database, remote),
+            productionConfigured = true,
+        )
+
+        manager.syncNow()
+        assertEquals(SyncStatus.UpToDate, manager.status.value)
+        remote.fetchGate = kotlinx.coroutines.CompletableDeferred()
+
+        val job = launch { manager.syncNow() }
+        kotlinx.coroutines.withTimeout(5_000) {
+            while (remote.fetchCalls == 0) kotlinx.coroutines.yield()
+        }
+        job.cancelAndJoin()
+
+        assertTrue(job.isCancelled)
+        assertEquals(SyncStatus.UpToDate, manager.status.value)
+    }
+
+    @Test
     fun localRecordsCreatedAfterEarlierLoginMergeIntoNextSignedInAccount() = runBlocking {
         val remote = FakeRemoteDataSource()
         val database = database()
@@ -235,6 +261,7 @@ private class FakeRemoteDataSource(
     val observationAttempts = MutableStateFlow(0)
     var fetchCalls: Int = 0
         private set
+    var fetchGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
 
     override fun observe(ownerId: String): Flow<RemoteSnapshot> = flow {
         val attempt = observationAttempts.value + 1
@@ -247,6 +274,7 @@ private class FakeRemoteDataSource(
 
     override suspend fun fetch(ownerId: String): RemoteSnapshot {
         fetchCalls += 1
+        fetchGate?.await()
         return RemoteSnapshot(values.value.values.toList(), fromCache = false)
     }
 

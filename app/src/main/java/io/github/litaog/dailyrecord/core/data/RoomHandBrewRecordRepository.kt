@@ -9,6 +9,7 @@ import io.github.litaog.dailyrecord.core.model.HandBrewSummary
 import java.time.LocalDate
 import java.time.Clock
 import java.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -63,7 +64,7 @@ internal class RoomHandBrewRecordRepository(
             )
             saved
         }
-        onLocalChange()
+        notifyLocalChange()
         return saved
     }
 
@@ -79,8 +80,18 @@ internal class RoomHandBrewRecordRepository(
             )
             recordDao.markDeleted(ownerId, existing.id, updatedAt) == 1
         }
-        if (cleared) onLocalChange()
+        if (cleared) notifyLocalChange()
         return cleared
+    }
+
+    private fun notifyLocalChange() {
+        try {
+            onLocalChange()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            // Local persistence is the product guarantee; cloud scheduling is best effort.
+        }
     }
 
     private fun requireValidRange(startDate: LocalDate, endExclusive: LocalDate) {

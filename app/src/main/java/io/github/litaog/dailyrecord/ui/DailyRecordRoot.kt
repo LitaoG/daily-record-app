@@ -30,37 +30,42 @@ import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.ui.auth.AuthScreen
 import io.github.litaog.dailyrecord.ui.theme.Paper50
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 @Composable
 internal fun DailyRecordRoot(
     database: DailyRecordDatabase,
-    services: FirebaseServices,
+    servicesProvider: () -> FirebaseServices,
 ) {
     val context = LocalContext.current
     val localModePreference = remember(context) { LocalModePreference(context) }
     var continueOffline by rememberSaveable {
         mutableStateOf(localModePreference.isEnabled)
     }
+    if (continueOffline) {
+        LocalRoot(
+            database = database,
+            onSignIn = {
+                localModePreference.setEnabled(false)
+                continueOffline = false
+            },
+        )
+        return
+    }
+
+    val services = remember(servicesProvider) { servicesProvider() }
     val authState by services.authRepository.state.collectAsState(initial = AuthState.Loading)
     when (val state = authState) {
         AuthState.Loading -> LoadingRoot()
-        AuthState.SignedOut -> if (continueOffline) {
-            LocalRoot(
-                database = database,
-                onSignIn = {
-                    localModePreference.setEnabled(false)
-                    continueOffline = false
-                },
-            )
-        } else {
+        AuthState.SignedOut -> {
             AuthScreen(
                 productionConfigured = services.productionConfigured,
                 onSignIn = { email, password ->
-                    runCatching { services.authRepository.signIn(email, password) }.map { }
+                    authOperation { services.authRepository.signIn(email, password) }
                 },
                 onRegister = { email, password ->
-                    runCatching { services.authRepository.register(email, password) }.map { }
+                    authOperation { services.authRepository.register(email, password) }
                 },
                 onContinueOffline = {
                     localModePreference.setEnabled(true)
@@ -146,4 +151,13 @@ private fun LoadingRoot() {
     ) {
         CircularProgressIndicator(color = Terracotta500)
     }
+}
+
+private suspend fun <T> authOperation(operation: suspend () -> T): Result<Unit> = try {
+    operation()
+    Result.success(Unit)
+} catch (error: CancellationException) {
+    throw error
+} catch (error: Exception) {
+    Result.failure(error)
 }

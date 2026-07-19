@@ -1,7 +1,10 @@
 package io.github.litaog.dailyrecord.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -10,8 +13,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
+import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.AccountDialog
 import io.github.litaog.dailyrecord.ui.account.AccountTopBar
@@ -23,6 +31,7 @@ import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
 import io.github.litaog.dailyrecord.ui.record.RecordScreen
 import io.github.litaog.dailyrecord.ui.statistics.StatisticsScreen
 import io.github.litaog.dailyrecord.ui.theme.Paper50
+import io.github.litaog.dailyrecord.ui.theme.Terracotta500
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -65,7 +74,23 @@ fun HandBrewApp(
     val recordsFlow = remember(repository, effectiveToday) {
         repository.observeRecords(EarliestSupportedDate, effectiveToday.plusDays(1))
     }
-    val allRecords by recordsFlow.collectAsState(initial = emptyList())
+    val allRecordsState by recordsFlow.collectAsState<List<HandBrewRecord>, List<HandBrewRecord>?>(
+        initial = null,
+    )
+    if (allRecordsState == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Paper50)
+                .testTag("records_loading")
+                .semantics { contentDescription = "正在读取本机记录" },
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(color = Terracotta500)
+        }
+        return
+    }
+    val allRecords = allRecordsState.orEmpty()
 
     if (selectedDate != null) {
         RecordScreen(

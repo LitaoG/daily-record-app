@@ -256,12 +256,23 @@ private fun PeriodNavigator(
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = model.title,
-                    color = Ink900,
-                    style = MaterialTheme.typography.labelLarge,
-                    textAlign = TextAlign.Center,
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = model.title,
+                        color = Ink900,
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        text = "点此快速跳转",
+                        color = Terracotta500,
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
             PeriodArrow(
                 forward = true,

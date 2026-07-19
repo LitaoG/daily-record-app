@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
@@ -137,6 +138,7 @@ internal fun DateNavigationDialog(
 private fun SelectedDateSummary(date: LocalDate) {
     val locale = Locale.SIMPLIFIED_CHINESE
     val weekday = date.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+    val largeText = LocalDensity.current.fontScale >= 1.4f
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -147,12 +149,26 @@ private fun SelectedDateSummary(date: LocalDate) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text("已选择", color = Ink700, style = MaterialTheme.typography.labelSmall)
-        Text(
-            text = date.format(DateTimeFormatter.ofPattern("yyyy年M月d日")) + " · " + weekday,
-            color = Ink900,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        if (largeText) {
+            Text(
+                text = date.format(DateTimeFormatter.ofPattern("yyyy年M月d日")),
+                color = Ink900,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = weekday,
+                color = Ink700,
+                style = MaterialTheme.typography.labelMedium,
+            )
+        } else {
+            Text(
+                text = date.format(DateTimeFormatter.ofPattern("yyyy年M月d日")) + " · " + weekday,
+                color = Ink900,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 

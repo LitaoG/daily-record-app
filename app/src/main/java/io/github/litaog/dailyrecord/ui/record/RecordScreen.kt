@@ -95,6 +95,7 @@ fun RecordScreen(
     val record = loadedState?.record
     val dataReady = loadedState != null
     var draftCount by rememberSaveable(date.toString()) { mutableIntStateOf(0) }
+    var baselineCount by rememberSaveable(date.toString()) { mutableIntStateOf(0) }
     var draftInitialized by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var saving by remember(date) { mutableStateOf(false) }
     var showClearDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
@@ -105,8 +106,12 @@ fun RecordScreen(
     val editable = date <= today
 
     LaunchedEffect(dataReady, record?.id, record?.updatedAt) {
-        if (dataReady && !draftInitialized) {
-            draftCount = record?.brewCount ?: 0
+        if (dataReady) {
+            val latestCount = record?.brewCount ?: 0
+            if (!draftInitialized || draftCount == baselineCount) {
+                draftCount = latestCount
+            }
+            baselineCount = latestCount
             draftInitialized = true
         }
     }
@@ -120,7 +125,8 @@ fun RecordScreen(
 
     val storedMonthCount = monthRecords.sumOf { it.brewCount.toLong() }
     val storedMonthDays = monthRecords.count { it.brewCount > 0 }
-    val hasUnsavedChanges = dataReady && draftInitialized && draftCount != (record?.brewCount ?: 0)
+    val hasUnsavedChanges = dataReady && draftInitialized && draftCount != baselineCount
+    val canSave = dataReady && draftInitialized && (record == null || hasUnsavedChanges)
     val requestBack = {
         when {
             saving -> Unit
@@ -148,11 +154,12 @@ fun RecordScreen(
                         label = when {
                             !dataReady -> "正在读取…"
                             saving -> "正在保存…"
+                            !canSave && record != null -> "已保存"
                             else -> "保存记录"
                         },
-                        enabled = editable && dataReady && draftInitialized && !saving,
+                        enabled = editable && canSave && !saving,
                         onClick = {
-                            if (!editable || !dataReady || !draftInitialized || saving) return@PrimaryActionButton
+                            if (!editable || !canSave || saving) return@PrimaryActionButton
                             saving = true
                             val currentRecord = record
                             val currentDraftCount = draftCount

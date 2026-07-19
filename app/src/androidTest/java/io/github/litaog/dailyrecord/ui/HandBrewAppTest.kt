@@ -1,10 +1,12 @@
 package io.github.litaog.dailyrecord.ui
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -12,6 +14,7 @@ import androidx.compose.ui.test.performScrollTo
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import java.time.LocalDate
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.assertTrue
@@ -19,6 +22,27 @@ import org.junit.Assert.assertTrue
 class HandBrewAppTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    @Test
+    fun recordsLoadingStateDoesNotPretendTheDatabaseIsEmpty() {
+        val delayedRecords = MutableSharedFlow<List<io.github.litaog.dailyrecord.core.model.HandBrewRecord>>(
+            extraBufferCapacity = 1,
+        )
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(recordsFlowOverride = delayedRecords),
+                    today = LocalDate.of(2026, 7, 17),
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("records_loading").assertIsDisplayed()
+        composeRule.onAllNodesWithText("0 次 · 0 天").assertCountEquals(0)
+
+        composeRule.runOnIdle { delayedRecords.tryEmit(emptyList()) }
+        composeRule.onNodeWithTag("calendar_screen").assertIsDisplayed()
+    }
 
     @Test
     fun navigationAndAllStatisticsTabsRemainClickable() {

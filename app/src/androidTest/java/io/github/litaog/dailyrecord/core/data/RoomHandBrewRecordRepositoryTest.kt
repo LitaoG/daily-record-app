@@ -148,6 +148,22 @@ class RoomHandBrewRecordRepositoryTest {
         assertTrue(requireNotNull(tombstone).updatedAt.isAfter(saved.updatedAt))
     }
 
+    @Test
+    fun syncSchedulingFailureDoesNotTurnACommittedLocalWriteIntoAUiFailure() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        val localFirstRepository = RoomHandBrewRecordRepository(
+            database = database,
+            onLocalChange = { error("simulated WorkManager scheduling failure") },
+        )
+
+        val saved = localFirstRepository.saveRecord(record("local-first", date, 2))
+        assertEquals(2, saved.brewCount)
+        assertEquals(2, localFirstRepository.observeRecord(date).first()?.brewCount)
+
+        assertTrue(localFirstRepository.clearRecord(date))
+        assertEquals(null, localFirstRepository.observeRecord(date).first())
+    }
+
     private fun record(id: String, date: LocalDate, count: Int) = HandBrewRecord(
         id = id,
         localDate = date,
