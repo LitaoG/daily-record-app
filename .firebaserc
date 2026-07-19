@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "demo-daily-record-app",
+    "production": "daily-record-hand-brew"
+  }
+}

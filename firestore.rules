@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedInAs(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function hasValidRecordShape(date) {
+      return request.resource.data.keys().hasOnly([
+          'id', 'localDate', 'brewCount', 'createdAtMillis',
+          'clientUpdatedAtMillis', 'deleted', 'revision',
+          'schemaVersion', 'serverUpdatedAt'
+        ])
+        && request.resource.data.id is string
+        && request.resource.data.id.size() > 0
+        && request.resource.data.id.size() <= 160
+        && request.resource.data.localDate == date
+        && request.resource.data.localDate is string
+        && request.resource.data.localDate.size() == 10
+        && request.resource.data.localDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.brewCount is int
+        && request.resource.data.brewCount >= 0
+        && request.resource.data.brewCount <= 2147483647
+        && request.resource.data.createdAtMillis is int
+        && request.resource.data.createdAtMillis >= 0
+        && request.resource.data.createdAtMillis <= 253402300799999
+        && request.resource.data.clientUpdatedAtMillis is int
+        && request.resource.data.clientUpdatedAtMillis >= request.resource.data.createdAtMillis
+        && request.resource.data.clientUpdatedAtMillis <= 253402300799999
+        && request.resource.data.deleted is bool
+        && request.resource.data.revision is int
+        && request.resource.data.revision >= 1
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.serverUpdatedAt == request.time;
+    }
+
+    match /users/{userId}/handBrewRecords/{date} {
+      allow read: if signedInAs(userId);
+      allow create: if signedInAs(userId)
+        && hasValidRecordShape(date)
+        && request.resource.data.revision == 1;
+      allow update: if signedInAs(userId)
+        && hasValidRecordShape(date)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.localDate == resource.data.localDate
+        && request.resource.data.createdAtMillis == resource.data.createdAtMillis
+        && request.resource.data.clientUpdatedAtMillis > resource.data.clientUpdatedAtMillis
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
+    }
+  }
+}

@@ -1,89 +1,47 @@
 # 开发、测试与发布
 
-## 开发环境
+## 环境
 
-正式创建工程前检查：
+- Android Studio 稳定版与内置 JDK
+- Android SDK / Platform Tools
+- `minSdk 26`，`compileSdk` 与 `targetSdk` 由工程配置管理
+- 至少一台模拟器或真机
+- 生产登录联调需要本机私有的 `app/google-services.json`
+- Firestore 规则测试需要 Node.js/pnpm；仓库已锁定依赖版本
 
-- Android Studio 稳定版。
-- IDE 内置 JDK 与 Android Gradle Plugin 兼容。
-- Android SDK、Platform Tools 和 Build Tools。
-- 至少一个模拟器或 Android 真机。
-- Git 和 GitHub 访问。
-- 确认 BIOS 虚拟化；资源不足时优先使用真机。
+GitHub `main` 是当前事实来源；功能分支通过 Pull Request、自动化检查和审查后合并，不复制或压平提交。
 
-初始建议 `minSdk 26`，最终值在设备覆盖需求和后端 SDK 选型后写入决策记录。`compileSdk` 和 `targetSdk` 使用创建工程时适合发布的最新稳定版本。
+## 验证命令
 
-## 本地命令基线
-
-工程建立后 README 应补充准确命令，预计至少包括：
-
-```bash
-./gradlew assembleDebug
-./gradlew testDebugUnitTest
-./gradlew lintDebug
-./gradlew connectedDebugAndroidTest
+```powershell
+.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest assembleRelease --no-parallel
+pnpm test:android-connected
+pnpm test:firestore-rules
 ```
 
-Windows 可使用 `gradlew.bat`。
+`test:android-connected` 会以 demo 项目启动隔离的 Authentication 与 Firestore 模拟器，运行完整设备测试后自动关闭。测试前保持 Android 模拟器的全局 HTTP 代理为空；若本地 Firebase 探针返回 `502` 或 Auth 超时，先运行 `adb shell settings list global | Select-String proxy` 检查是否残留 `global_http_proxy_host` / `global_http_proxy_port`。
 
-## 测试层级
+Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm test:android-connected:unix`。
 
-### 单元测试
+## 必测范围
 
-- 日期范围和周起始。
-- 总次数、总天数和周期聚合。
-- ViewModel 状态变化。
-- 同步冲突和退避策略。
-
-### 数据库测试
-
-- DAO 查询。
-- 唯一约束。
-- 每个 Room 版本迁移到最新版本。
-- 软删除和归档后的统计。
-
-### UI 测试
-
-- 创建活动。
-- 选择日期并增加次数。
-- 完成/未完成/跳过。
-- 月份切换和筛选。
-- 统计表和空状态。
-
-### 端到端测试
-
-- 游客使用后登录合并。
-- 两台设备离线修改后同步。
-- 卸载/重装和登录恢复。
-- 网络中断、令牌过期和服务端拒绝。
-
-## CI
-
-第一阶段 GitHub Actions 执行：
-
-- Gradle Wrapper 校验。
-- Debug 编译。
-- 单元测试。
-- Android lint。
-- 格式或静态分析。
-
-发布阶段增加签名构建、依赖安全检查和测试报告。Fork PR 不应获得生产 Secrets。
-
-## 发布
-
-- Debug、staging 和 release 环境分离。
-- 包名、后端 URL 和功能开关通过构建配置注入。
-- Release 使用受保护的签名凭据。
-- 生成 AAB 前记录版本号和变更日志。
-- 发布候选必须从干净 checkout 可复现构建。
+- `HandBrewRecord` 非负次数和时间约束。
+- 同一本地日期唯一、重复保存沿用 ID。
+- 0 次、未填写和清除语义。
+- 周/月/年/全部历史统计一致性。
+- 128 次、74 天固定数据集。
+- Room v1→v2→v3 和 v2→v3 迁移、legacy 表保留与本机 owner 迁移。
+- 空数据、闰年、月末、跨年周、未来日期。
+- 年月标题快速跳转、日历/统计共享锚点、月份切换后周明细不串月。
+- 邮箱密码校验、重复提交锁、旋转恢复和 200% 字体。
+- 本机模式跨冷启动保留；登录入口可显式退出本机模式。
+- 离线待同步、网络恢复、实时监听失败重连、迟到确认、多设备编辑/清除、不同账号隔离。
+- Firestore 规则的所有权、字段形状、非负次数、修订递增、客户端更新时间严格递增和禁止物理删除。
 
 ## Definition of Done
 
-- 验收条件满足。
-- 自动化测试覆盖关键规则。
-- lint 和构建通过。
-- Room 变化具备迁移测试。
-- 文档更新。
-- 无密钥、真实数据或无关文件。
-- PR 描述包含验证结果和剩余风险。
-
+- 产品契约、代码、Figma 和测试一致。
+- 单元测试、Lint、Debug/Release 构建、设备数据库/Compose 测试和规则测试通过。
+- 全文审计没有活动管理、健身或未来活动扩展的有效承诺。
+- 本地提交说明变更、用户影响、验证结果和剩余风险。
+- 不包含 `google-services.json`、服务账号、真实数据库、APK/AAB 或账号口令。

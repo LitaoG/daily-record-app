@@ -1,6 +1,12 @@
 # Gradle files
 .gradle/
+.kotlin/
 build/
+node_modules/
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
 # Local configuration file (sdk path, etc)
 local.properties

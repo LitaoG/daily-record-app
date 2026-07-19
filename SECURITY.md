@@ -10,17 +10,18 @@
 
 - 数据库管理员密钥、服务账号私钥或 GitHub Token。
 - Android 签名文件及其密码。
-- 真实 `.env`、`local.properties`、生产配置。
+- 真实 `.env`、`local.properties`、`google-services.json` 或服务账号配置。
 - 真实用户记录、导出文件、数据库快照或含隐私的崩溃日志。
 
-客户端必须使用可公开的受限配置；具备绕过行级权限能力的密钥只能存在于受控服务端。即使密钥已从最新提交删除，也必须按泄露处理并立即轮换，因为它可能仍存在于 Git 历史中。
+Android Firebase 客户端配置本身不是管理员凭据，但仍不进入此仓库；真正的安全边界是 Firebase Authentication、Firestore Security Rules 和后续发布阶段的 App Check。具备绕过规则能力的服务账号私钥只能存在于受控服务端。即使密钥已从最新提交删除，也必须按泄露处理并立即轮换，因为它可能仍存在于 Git 历史中。
 
 ## 应用安全基线
 
-- 所有云端数据按用户隔离并在服务端执行权限校验。
-- 网络传输仅使用 TLS。
-- 登录令牌存储在平台安全存储中。
-- 支持应用锁和系统生物识别重新授权。
-- 提供账户数据导出和删除流程。
-- 日志不得输出记录内容、访问令牌或完整用户标识。
+- 只启用 Firebase 邮箱密码登录和 Cloud Firestore；不启用短信登录、广告或业务分析 SDK。
+- 手冲记录只通过 Repository 访问 Room；UI 不直接读取 Firestore。
+- Firestore 路径按 Firebase UID 隔离，规则校验所有权、字段白名单、修订递增和禁止物理删除。
+- 系统云备份与设备迁移关闭，避免个人记录被隐式复制。
+- 日志不得输出手冲记录内容或完整数据库行。
+- Room schema 变化必须使用显式迁移；禁止 destructive migration。
+- 发布前必须完成 App Check、隐私政策、账号/云数据删除流程、正式签名与生产规则回归；调试阶段不得提前强制 App Check 导致 Android Studio 构建不可用。
 
