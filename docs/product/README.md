@@ -11,6 +11,7 @@
 - [开源借鉴边界](RESEARCH_OPEN_SOURCE.md)
 - [重构日志](HAND_BREW_REFACTOR_LOG.md)
 - [仅手冲 v2 设计与实现证据](assets/hand-brew-v2/README.md)
+- [Android Studio 人工验收清单](ANDROID_STUDIO_ACCEPTANCE.md)
 - [Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
 
 旧“通用活动记录器”产品包已从当前分支移除，仍可通过 Git 历史审计。
