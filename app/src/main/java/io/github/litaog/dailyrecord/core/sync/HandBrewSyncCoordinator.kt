@@ -15,10 +15,16 @@ internal class HandBrewSyncCoordinator(
     suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int =
         store.applyRemote(ownerId, snapshot.records)
 
+    suspend fun prepareLocalAccount(ownerId: String): Int {
+        require(ownerId.isNotBlank()) { "ownerId must not be blank" }
+        return store.adoptLocalRecords(ownerId)
+    }
+
     suspend fun syncOnce(ownerId: String): SyncResult {
         require(ownerId.isNotBlank()) { "ownerId must not be blank" }
+        store.adoptLocalRecords(ownerId)
         val initial = remote.fetch(ownerId)
-        var downloaded = store.prepareAccount(ownerId, initial.records)
+        var downloaded = store.applyRemote(ownerId, initial.records)
         var uploaded = 0
 
         store.pending(ownerId).forEach { local ->

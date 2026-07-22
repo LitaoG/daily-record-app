@@ -67,6 +67,7 @@ internal fun AuthScreen(
     productionConfigured: Boolean,
     onSignIn: suspend (String, String) -> Result<Unit>,
     onRegister: suspend (String, String) -> Result<Unit>,
+    onPasswordReset: suspend (String) -> Result<Unit> = { Result.success(Unit) },
     onContinueOffline: () -> Unit = {},
 ) {
     var modeName by rememberSaveable { mutableStateOf(AuthMode.SignIn.name) }
@@ -76,6 +77,7 @@ internal fun AuthScreen(
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var busy by rememberSaveable { mutableStateOf(false) }
     var errorText by rememberSaveable { mutableStateOf<String?>(null) }
+    var showPasswordReset by rememberSaveable { mutableStateOf(false) }
     val mode = AuthMode.entries.firstOrNull { it.name == modeName } ?: AuthMode.SignIn
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val validationError = remember(mode, email, password, confirmPassword) {
@@ -194,6 +196,15 @@ internal fun AuthScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = fieldColors,
                 )
+                if (mode == AuthMode.SignIn) {
+                    HandBrewTextAction(
+                        label = "忘记密码？",
+                        onClick = { showPasswordReset = true },
+                        enabled = productionConfigured && !busy,
+                        modifier = Modifier.align(Alignment.End),
+                        accessibilityLabel = "打开重置密码",
+                    )
+                }
                 if (mode == AuthMode.Register) {
                     OutlinedTextField(
                         value = confirmPassword,
@@ -262,6 +273,20 @@ internal fun AuthScreen(
             "云端只保存你的手冲日期、次数和同步所需数据。",
             color = Ink500,
             style = MaterialTheme.typography.labelSmall,
+        )
+    }
+
+    if (showPasswordReset) {
+        PasswordResetDialog(
+            initialEmail = email,
+            onDismiss = { showPasswordReset = false },
+            onReset = onPasswordReset,
+            onEmailAccepted = { acceptedEmail ->
+                email = acceptedEmail
+                password = ""
+                confirmPassword = ""
+                errorText = null
+            },
         )
     }
 }

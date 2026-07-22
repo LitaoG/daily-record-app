@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.retryWhen
@@ -46,9 +47,18 @@ internal class AccountSyncManager(
                     delay(remoteRetryDelayMillis(attempt))
                     true
                 }
-                .collectLatest { snapshot ->
+                .collect { snapshot ->
                     coordinator.applySnapshot(ownerId, snapshot)
-                    if (!snapshot.fromCache && networkAvailable.value) updateIdleStatus()
+                    if (!snapshot.fromCache && networkAvailable.value) {
+                        if (coordinator.pendingCount(ownerId) > 0) {
+                            // A fresh server snapshot also proves Firebase is reachable. This
+                            // catches VPN/proxy recovery even when Android's network state did
+                            // not change and flushes edits that remained safely in Room.
+                            syncNow()
+                        } else {
+                            updateIdleStatus()
+                        }
+                    }
                 }
         }
         val pendingJob = scope.launch {

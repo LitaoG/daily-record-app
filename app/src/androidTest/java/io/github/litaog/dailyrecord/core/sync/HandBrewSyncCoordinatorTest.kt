@@ -217,6 +217,55 @@ class HandBrewSyncCoordinatorTest {
         )
     }
 
+    @Test
+    fun firstLoginAdoptsLocalRecordsBeforeAnyRemoteRequest() = runBlocking {
+        val remote = FakeRemoteDataSource(failFetchAttempts = Int.MAX_VALUE)
+        val database = database()
+        val localRepository = RoomHandBrewRecordRepository(
+            database = database,
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            clock = Clock.fixed(firstInstant, ZoneOffset.UTC),
+        )
+        val accountRepository = repository(database, firstInstant)
+        val coordinator = coordinator(database, remote)
+        localRepository.saveRecord(record(4, firstInstant).copy(id = "local-$date"))
+
+        assertEquals(1, coordinator.prepareLocalAccount(ownerId))
+        assertEquals(4, accountRepository.observeRecord(date).first()?.brewCount)
+        assertTrue(
+            RoomHandBrewSyncStore(database)
+                .pending(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID)
+                .isEmpty(),
+        )
+        assertTrue(runCatching { coordinator.syncOnce(ownerId) }.isFailure)
+        assertEquals(4, accountRepository.observeRecord(date).first()?.brewCount)
+    }
+
+    @Test
+    fun freshSnapshotFlushesPendingAfterFirebaseRecoversWithoutNetworkStateChange() = runBlocking {
+        val remote = FakeRemoteDataSource(
+            failFirstObservation = true,
+            failFetchAttempts = 1,
+        )
+        val database = database()
+        repository(database, firstInstant).saveRecord(record(7, firstInstant))
+        val manager = AccountSyncManager(
+            ownerId = ownerId,
+            coordinator = coordinator(database, remote),
+            productionConfigured = true,
+            networkAvailable = MutableStateFlow(true),
+            remoteRetryDelayMillis = { 0L },
+        )
+
+        val jobs = manager.start(this)
+        kotlinx.coroutines.withTimeout(5_000) {
+            manager.status.first { it == SyncStatus.UpToDate }
+        }
+        assertEquals(7, remote.fetch(ownerId).records.single().brewCount)
+        assertTrue(remote.observationAttempts.value >= 2)
+        jobs.forEach { it.cancel() }
+    }
+
     private fun database(): DailyRecordDatabase {
         val context = ApplicationProvider.getApplicationContext<Context>()
         return Room.inMemoryDatabaseBuilder(context, DailyRecordDatabase::class.java)
@@ -255,6 +304,7 @@ class HandBrewSyncCoordinatorTest {
 
 private class FakeRemoteDataSource(
     private val failFirstObservation: Boolean = false,
+    private val failFetchAttempts: Int = 0,
 ) : HandBrewRemoteDataSource {
     private val mutex = Mutex()
     private val values = MutableStateFlow<Map<LocalDate, RemoteHandBrewRecord>>(emptyMap())
@@ -274,6 +324,7 @@ private class FakeRemoteDataSource(
 
     override suspend fun fetch(ownerId: String): RemoteSnapshot {
         fetchCalls += 1
+        if (fetchCalls <= failFetchAttempts) throw IOException("temporary fetch failure")
         fetchGate?.await()
         return RemoteSnapshot(values.value.values.toList(), fromCache = false)
     }
