@@ -1,7 +1,10 @@
 package io.github.litaog.dailyrecord.ui.calendar
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
@@ -67,9 +70,33 @@ class CalendarScreenTest {
             .assertExists()
             .assertIsNotEnabled()
         composeRule
-            .onNodeWithContentDescription("1969年12月31日，超出支持范围，不可记录")
-            .assertExists()
-            .assertIsNotEnabled()
+            .onAllNodesWithContentDescription("1969年12月31日，超出支持范围，不可记录")
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun monthGridHidesAdjacentMonthDatesAndVisibleJumpHint() {
+        val today = LocalDate.of(2026, 7, 17)
+        composeRule.setContent {
+            DailyRecordTheme {
+                CalendarScreen(
+                    month = YearMonth.of(2026, 7),
+                    focusedDate = today,
+                    today = today,
+                    records = emptyList(),
+                    onPreviousMonth = {},
+                    onNextMonth = {},
+                    onToday = {},
+                    onOpenDatePicker = {},
+                    onDateSelected = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithText("点此快速跳转").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("2026年6月29日，未填写").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("2026年8月1日，未来日期，不可记录").assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("2026年7月1日，未填写").assertExists()
     }
 
     private fun record(date: LocalDate, count: Int) = HandBrewRecord(

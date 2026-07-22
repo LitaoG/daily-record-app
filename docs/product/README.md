@@ -11,8 +11,8 @@
 - [开源借鉴边界](RESEARCH_OPEN_SOURCE.md)
 - [交付与验证记录](HAND_BREW_REFACTOR_LOG.md)
 - [运行时 UX 与统计验收](RUNTIME_UX_AUDIT.md)
+- [2026-07-22 月历与统计审计](audit/2026-07-22-calendar-statistics/README.md)
 - [仅手冲 v2 设计与实现证据](assets/hand-brew-v2/README.md)
-- [Android Studio 人工验收清单](ANDROID_STUDIO_ACCEPTANCE.md)
 - [Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
 
 当前产品、代码和设计资产只服务于手冲记录。旧“通用活动记录器”产品包已从当前文件树移除，只能通过 Git 历史审计。
