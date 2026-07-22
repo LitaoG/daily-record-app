@@ -19,10 +19,10 @@ internal class RoomHandBrewSyncStore(
 
     suspend fun pendingCount(ownerId: String): Int = dao.getPending(ownerId).size
 
-    suspend fun prepareAccount(ownerId: String, remoteRecords: List<RemoteHandBrewRecord>): Int =
+    suspend fun adoptLocalRecords(ownerId: String): Int =
         database.withTransaction {
             val localRecords = dao.getAllForSync(LOCAL_OWNER_ID)
-            var changed = applyRemoteRecords(ownerId, remoteRecords)
+            var changed = 0
 
             localRecords.forEach { local ->
                 val accountRecord = dao.getByDate(ownerId, local.localDate)

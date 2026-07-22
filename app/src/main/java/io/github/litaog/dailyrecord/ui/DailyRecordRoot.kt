@@ -67,6 +67,9 @@ internal fun DailyRecordRoot(
                 onRegister = { email, password ->
                     authOperation { services.authRepository.register(email, password) }
                 },
+                onPasswordReset = { email ->
+                    authOperation { services.authRepository.sendPasswordResetEmail(email) }
+                },
                 onContinueOffline = {
                     localModePreference.setEnabled(true)
                     continueOffline = true
@@ -104,6 +107,15 @@ private fun SignedInRoot(
             store = RoomHandBrewSyncStore(database),
             remote = services.remoteDataSource,
         )
+    }
+    var accountPrepared by remember(ownerId) { mutableStateOf(false) }
+    LaunchedEffect(ownerId, coordinator) {
+        coordinator.prepareLocalAccount(ownerId)
+        accountPrepared = true
+    }
+    if (!accountPrepared) {
+        LoadingRoot()
+        return
     }
     val syncManager = remember(ownerId, coordinator, services.productionConfigured) {
         AccountSyncManager(

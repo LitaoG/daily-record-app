@@ -8,6 +8,13 @@
 - Cloud Firestore：Standard、Native、生产模式、`asia-east1`
 - Firestore 规则：仓库根目录 `firestore.rules`，已在生产控制台发布
 
+## 密码重置邮件
+
+- Firebase Authentication 的 Email/Password 提供方必须保持启用；应用调用官方 `sendPasswordResetEmail`，不自建口令或邮件服务器。
+- 控制台 Authentication → Templates → Password reset 可配置发件人名称、主题和正文。模板不得声称邮箱一定存在，也不要加入账号口令或敏感数据。
+- 应用使用设备语言请求模板；默认 Firebase 托管重置页完成新密码设置，用户随后返回应用登录。
+- 发送失败按断网、请求过频、项目额度和通用错误处理。真实送达、垃圾邮件分类和生产限额只在明确的真机测试账号上验证，不纳入普通 CI。
+
 ## Android Studio 本地配置
 
 1. 从 Firebase 控制台下载该 Android App 的 `google-services.json`。
@@ -47,7 +54,7 @@ adb shell am instrument -w `
   io.github.litaog.dailyrecord.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
-测试会创建随机邮箱账号，验证本账号空查询、跨账号拒绝和再次登录，随后删除测试账号；不会写入手冲文档。
+测试会创建随机邮箱账号，验证本账号空查询、跨账号拒绝和再次登录，随后删除测试账号；不会写入手冲文档。普通模拟器套件还会在隔离 Auth 模拟器中读取一次性重置码、设置新密码并用新密码重新登录，不会发送真实邮件。
 
 ## 中国大陆网络门槛
 

@@ -15,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.json.JSONObject
 
 @RunWith(AndroidJUnit4::class)
 class FirebaseEmulatorIntegrationTest {
@@ -30,6 +31,8 @@ class FirebaseEmulatorIntegrationTest {
             val firstEmail = "first-$suffix@example.com"
             val secondEmail = "second-$suffix@example.com"
             val password = "test-password-2026"
+            val resetPassword = "reset-password-2026"
+            services.authRepository.sendPasswordResetEmail("missing-$suffix@example.com")
             val first = services.authRepository.register(firstEmail, password)
             val date = LocalDate.of(2026, 7, 16)
             val local = HandBrewRecordEntity(
@@ -47,7 +50,10 @@ class FirebaseEmulatorIntegrationTest {
             val committed = services.remoteDataSource.commit(first.uid, local)
             assertEquals(1L, committed.revision)
             services.authRepository.signOut()
-            val restoredAccount = services.authRepository.signIn(firstEmail, password)
+            services.authRepository.sendPasswordResetEmail(firstEmail)
+            val oobCode = passwordResetCodeFor(firstEmail)
+            confirmPasswordReset(oobCode, resetPassword)
+            val restoredAccount = services.authRepository.signIn(firstEmail, resetPassword)
             assertEquals(first.uid, restoredAccount.uid)
             val restored = services.remoteDataSource.fetch(first.uid).records.single()
             assertEquals(3, restored.brewCount)
@@ -82,6 +88,46 @@ class FirebaseEmulatorIntegrationTest {
         try {
             connection.connectTimeout = 3_000
             connection.readTimeout = 3_000
+            assertEquals(200, connection.responseCode)
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun passwordResetCodeFor(email: String): String {
+        val connection = URL(
+            "http://10.0.2.2:9099/emulator/v1/projects/demo-daily-record-app/oobCodes",
+        ).openConnection() as HttpURLConnection
+        return try {
+            connection.connectTimeout = 3_000
+            connection.readTimeout = 3_000
+            assertEquals(200, connection.responseCode)
+            val body = connection.inputStream.bufferedReader().use { it.readText() }
+            val codes = JSONObject(body).getJSONArray("oobCodes")
+            (0 until codes.length())
+                .asSequence()
+                .map(codes::getJSONObject)
+                .first { it.optString("email") == email && it.optString("requestType") == "PASSWORD_RESET" }
+                .getString("oobCode")
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun confirmPasswordReset(oobCode: String, newPassword: String) {
+        val connection = URL(
+            "http://10.0.2.2:9099/identitytoolkit.googleapis.com/v1/accounts:resetPassword" +
+                "?key=AIzaSyDUMMY0000000000000000000000000000",
+        ).openConnection() as HttpURLConnection
+        try {
+            connection.requestMethod = "POST"
+            connection.doOutput = true
+            connection.connectTimeout = 3_000
+            connection.readTimeout = 3_000
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.outputStream.bufferedWriter().use { writer ->
+                writer.write(JSONObject().put("oobCode", oobCode).put("newPassword", newPassword).toString())
+            }
             assertEquals(200, connection.responseCode)
         } finally {
             connection.disconnect()
