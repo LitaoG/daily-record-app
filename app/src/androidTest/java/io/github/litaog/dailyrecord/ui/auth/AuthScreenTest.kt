@@ -50,6 +50,18 @@ class AuthScreenTest {
     }
 
     @Test
+    fun loginAndRegistrationExplainVpnAndLocalOnlyBehavior() {
+        setContent()
+
+        composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "登录和注册需要打开 VPN（梯子）。选择本机使用则无需开启，但不会同步到云端。",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("注册").performClick()
+        composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
+    }
+
+    @Test
     fun repeatedSubmitIsLockedWhileRequestIsRunning() {
         val gate = CompletableDeferred<Result<Unit>>()
         var calls = 0
@@ -175,7 +187,7 @@ class AuthScreenTest {
         composeRule.onNodeWithText("忘记密码？").performClick()
         composeRule.onNodeWithTag("password_reset_email").performTextInput("brew@example.com")
         composeRule.onNodeWithText("发送重置邮件").performClick()
-        composeRule.onNodeWithText("网络不可用，邮件尚未发送。请检查连接后重试。").assertIsDisplayed()
+        composeRule.onNodeWithText("网络不可用，邮件尚未发送。请打开 VPN（梯子）后重试。").assertIsDisplayed()
         composeRule.onNodeWithText("发送重置邮件").assertIsEnabled()
     }
 

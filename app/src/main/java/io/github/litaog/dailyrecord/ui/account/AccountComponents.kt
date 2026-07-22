@@ -96,7 +96,7 @@ internal fun LocalAccountTopBar(onClick: () -> Unit) {
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                AccountTitle("本机记录可离线使用")
+                AccountTitle("本机记录无需 VPN（梯子），可离线使用")
                 HandBrewTextAction(
                     label = "登录同步",
                     onClick = onClick,
@@ -115,7 +115,7 @@ internal fun LocalAccountTopBar(onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AccountTitle("本机记录可离线使用")
+                AccountTitle("本机记录无需 VPN（梯子），可离线使用")
                 HandBrewTextAction(
                     label = "登录同步",
                     onClick = onClick,

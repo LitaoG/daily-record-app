@@ -38,7 +38,10 @@ internal class AccountSyncManager(
                 .retryWhen { error, attempt ->
                     val retryable = error.isRetryableRemoteObservation()
                     mutableStatus.value = if (networkAvailable.value) {
-                        SyncStatus.Failed(error.userMessage())
+                        SyncStatus.Failed(
+                            message = error.userMessage(),
+                            networkRelated = error.isNetworkRelatedSyncFailure(),
+                        )
                     } else {
                         SyncStatus.Offline
                     }
@@ -100,7 +103,10 @@ internal class AccountSyncManager(
                 throw error
             } catch (error: Exception) {
                 mutableStatus.value = if (networkAvailable.value) {
-                    SyncStatus.Failed(error.userMessage())
+                    SyncStatus.Failed(
+                        message = error.userMessage(),
+                        networkRelated = error.isNetworkRelatedSyncFailure(),
+                    )
                 } else {
                     SyncStatus.Offline
                 }
@@ -134,8 +140,18 @@ internal fun Throwable.isRetryableRemoteObservation(): Boolean =
             )
     }
 
+internal fun Throwable.isNetworkRelatedSyncFailure(): Boolean =
+    generateSequence(this) { it.cause }.any { cause ->
+        cause is FirebaseNetworkException ||
+            cause is IOException ||
+            cause is FirebaseFirestoreException && cause.code in setOf(
+                FirebaseFirestoreException.Code.DEADLINE_EXCEEDED,
+                FirebaseFirestoreException.Code.UNAVAILABLE,
+            )
+    }
+
 private fun Throwable.userMessage(): String = when {
-    generateSequence(this) { it.cause }.any { it is FirebaseNetworkException } ->
+    isNetworkRelatedSyncFailure() ->
         "网络连接不稳定，记录已保存在本机"
     generateSequence(this) { it.cause }.any {
         it is FirebaseAuthException ||

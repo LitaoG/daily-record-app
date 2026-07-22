@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -187,6 +188,55 @@ class HandBrewAppTest {
         composeRule.onNodeWithText("确认退出登录？").assertIsDisplayed()
         composeRule.onNodeWithText("返回").performClick()
         composeRule.onNodeWithText("账号与云同步").assertIsDisplayed()
+    }
+
+    @Test
+    fun networkSyncFailureShowsTemporaryVpnGuidance() {
+        val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    accountEmail = "brew@example.com",
+                    syncStatus = status.value,
+                )
+            }
+        }
+
+        composeRule.runOnIdle {
+            status.value = SyncStatus.Failed(
+                message = "网络连接不稳定，记录已保存在本机",
+                networkRelated = true,
+            )
+        }
+        composeRule.onNodeWithText(VPN_SYNC_FAILURE_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
+    }
+
+    @Test
+    fun nonNetworkSyncFailureDoesNotShowVpnGuidance() {
+        val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    accountEmail = "brew@example.com",
+                    syncStatus = status.value,
+                )
+            }
+        }
+
+        composeRule.runOnIdle {
+            status.value = SyncStatus.Failed(
+                message = "云端数据暂时无法读取",
+                networkRelated = false,
+            )
+        }
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithText(VPN_SYNC_FAILURE_MESSAGE).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
     }
 
     @Test

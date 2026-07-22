@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +29,7 @@ import io.github.litaog.dailyrecord.ui.account.AccountTopBar
 import io.github.litaog.dailyrecord.ui.account.LocalAccountTopBar
 import io.github.litaog.dailyrecord.ui.calendar.CalendarScreen
 import io.github.litaog.dailyrecord.ui.components.HandBrewBottomBar
+import io.github.litaog.dailyrecord.ui.components.HandBrewSnackbarHost
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
 import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
 import io.github.litaog.dailyrecord.ui.record.RecordScreen
@@ -37,6 +41,9 @@ import java.time.YearMonth
 
 private val EarliestSupportedDate: LocalDate = LocalDate.of(1970, 1, 1)
 private val EarliestSupportedMonth: YearMonth = YearMonth.from(EarliestSupportedDate)
+
+internal const val VPN_SYNC_FAILURE_MESSAGE =
+    "云同步需要打开 VPN（梯子）。记录已保存在本机，请开启后重试。"
 
 internal enum class TopDestination {
     Calendar,
@@ -59,6 +66,16 @@ fun HandBrewApp(
     var browseDateText by rememberSaveable { mutableStateOf(effectiveToday.toString()) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showAccountDialog by rememberSaveable { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(syncStatus) {
+        if (syncStatus is SyncStatus.Failed && syncStatus.networkRelated) {
+            snackbarHostState.showSnackbar(
+                message = VPN_SYNC_FAILURE_MESSAGE,
+                duration = SnackbarDuration.Short,
+            )
+        }
+    }
 
     val currentMonth = YearMonth.from(effectiveToday)
     val destination = TopDestination.entries.firstOrNull { it.name == destinationName }
@@ -107,6 +124,7 @@ fun HandBrewApp(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Paper50,
+        snackbarHost = { HandBrewSnackbarHost(snackbarHostState) },
         topBar = {
             if (accountEmail != null) {
                 AccountTopBar(status = syncStatus, onClick = { showAccountDialog = true })

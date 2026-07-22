@@ -41,7 +41,9 @@ class AccountDialogTest {
         composeRule.runOnIdle { status = SyncStatus.Pending(3) }
         composeRule.onNodeWithText("有 3 条记录等待同步").assertIsDisplayed()
 
-        composeRule.runOnIdle { status = SyncStatus.Failed("网络暂不可用") }
+        composeRule.runOnIdle {
+            status = SyncStatus.Failed("网络暂不可用", networkRelated = true)
+        }
         composeRule.onNodeWithText("同步失败：网络暂不可用").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("立即同步").assertIsDisplayed()
     }

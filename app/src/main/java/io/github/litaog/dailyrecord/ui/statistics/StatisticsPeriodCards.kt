@@ -327,4 +327,3 @@ private fun StatisticsDetail.displayValues(): DetailDisplay = when {
     !recorded -> DetailDisplay("未填写", "—", "未填")
     else -> DetailDisplay("${count ?: 0L} 次", "${days ?: 0} 天", (count ?: 0L).toString())
 }
-

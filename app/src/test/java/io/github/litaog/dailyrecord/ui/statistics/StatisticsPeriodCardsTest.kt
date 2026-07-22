@@ -41,4 +41,3 @@ class StatisticsPeriodCardsTest {
         assertEquals(1f, distributionFraction(maximum, maxCount = 4L, minNonZeroFraction = .16f))
     }
 }
-
