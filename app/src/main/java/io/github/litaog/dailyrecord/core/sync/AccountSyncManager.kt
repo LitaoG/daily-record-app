@@ -4,6 +4,7 @@ import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestoreException
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -75,22 +76,25 @@ internal class AccountSyncManager(
             return
         }
         mutex.withLock {
+            val previousStatus = mutableStatus.value
             mutableStatus.value = SyncStatus.Syncing
-            runCatching { coordinator.syncOnce(ownerId) }
-                .onSuccess { result ->
-                    mutableStatus.value = if (result.pending == 0) {
-                        SyncStatus.UpToDate
-                    } else {
-                        SyncStatus.Pending(result.pending)
-                    }
+            try {
+                val result = coordinator.syncOnce(ownerId)
+                mutableStatus.value = if (result.pending == 0) {
+                    SyncStatus.UpToDate
+                } else {
+                    SyncStatus.Pending(result.pending)
                 }
-                .onFailure {
-                    mutableStatus.value = if (networkAvailable.value) {
-                        SyncStatus.Failed(it.userMessage())
-                    } else {
-                        SyncStatus.Offline
-                    }
+            } catch (error: CancellationException) {
+                mutableStatus.value = previousStatus
+                throw error
+            } catch (error: Exception) {
+                mutableStatus.value = if (networkAvailable.value) {
+                    SyncStatus.Failed(error.userMessage())
+                } else {
+                    SyncStatus.Offline
                 }
+            }
         }
     }
 

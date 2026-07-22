@@ -14,7 +14,10 @@ class MainActivity : ComponentActivity() {
         val app = application as DailyRecordApplication
         setContent {
             DailyRecordTheme {
-                DailyRecordRoot(database = app.database, services = app.firebaseServices)
+                DailyRecordRoot(
+                    database = app.database,
+                    servicesProvider = { app.firebaseServices },
+                )
             }
         }
     }

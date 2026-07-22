@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 internal class FakeHandBrewRecordRepository(
     initialRecords: List<HandBrewRecord> = emptyList(),
     private val recordFlowOverride: Flow<HandBrewRecord?>? = null,
+    private val recordsFlowOverride: Flow<List<HandBrewRecord>>? = null,
 ) : HandBrewRecordRepository {
     private val records = MutableStateFlow(initialRecords)
 
@@ -29,9 +30,9 @@ internal class FakeHandBrewRecordRepository(
     override fun observeRecords(
         startDate: LocalDate,
         endExclusive: LocalDate,
-    ): Flow<List<HandBrewRecord>> = records.map { values ->
-        values.filter { it.localDate >= startDate && it.localDate < endExclusive }
-    }
+    ): Flow<List<HandBrewRecord>> = recordsFlowOverride ?: records.map { values ->
+            values.filter { it.localDate >= startDate && it.localDate < endExclusive }
+        }
 
     override fun observeSummary(
         startDate: LocalDate,

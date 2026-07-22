@@ -7,7 +7,8 @@
 ## 当前交付状态
 
 - Android 候选版已完成，等待实体设备人工验收。
-- 自动化基线：28 项 JVM 单元测试通过；Android 设备报告 41 项、0 失败、1 项生产冒烟按设计跳过；Firestore 规则测试通过；Lint 0 错误。
+- 自动化基线：28 项 JVM 单元测试通过；Android 设备测试共收集 47 项，其中 46 项通过、0 失败、1 项生产冒烟按设计跳过；Firestore 规则测试通过；Lint 0 错误。
+- 视觉与可访问性基线：390×844、360×640 和系统字体 200% 均已完成模拟器截图与语义树复核，证据见 [2026-07-19 深度审计](docs/product/audit/2026-07-19-deep-ux/README.md)。
 - 真实设备验收前不会声明正式发布就绪，检查项见 [Android 人工验收清单](docs/product/ANDROID_STUDIO_ACCEPTANCE.md)。
 
 ## P0 范围

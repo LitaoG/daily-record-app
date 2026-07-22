@@ -271,13 +271,18 @@ private fun CalendarDayCell(
     val count = record?.brewCount
     val background = when {
         unsupported || future -> Paper100
+        outsideMonth -> Paper100
         record == null -> Paper0
         count == 0 -> Neutral300
         count == 1 -> Terracotta400
         count == 2 -> Terracotta500
         else -> Terracotta600
     }
-    val contentColor = if ((count ?: 0) >= 2) White else Ink900
+    val contentColor = when {
+        outsideMonth -> Ink700
+        (count ?: 0) >= 2 -> White
+        else -> Ink900
+    }
     val status = when {
         unsupported -> "不可用"
         future -> "未来"
@@ -305,7 +310,6 @@ private fun CalendarDayCell(
     Column(
         modifier = modifier
             .height(cellHeight)
-            .alpha(if (outsideMonth) .38f else 1f)
             .clip(RoundedCornerShape(16.dp))
             .background(background)
             .border(borderWidth, borderColor, RoundedCornerShape(16.dp))
@@ -321,13 +325,13 @@ private fun CalendarDayCell(
     ) {
         Text(
             text = date.dayOfMonth.toString(),
-            color = if (date == today && count == null) Terracotta500 else contentColor,
+            color = if (date == today && count == null && !outsideMonth) Terracotta500 else contentColor,
             style = if (largeText) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Medium,
         )
         Text(
             text = if (date == today && !future && !largeText) "$status·今" else status,
-            color = if (date == today && count == null) Terracotta500 else contentColor,
+            color = if (date == today && count == null && !outsideMonth) Terracotta500 else contentColor,
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
         )

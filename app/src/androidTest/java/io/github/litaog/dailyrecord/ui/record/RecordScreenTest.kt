@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -30,7 +31,7 @@ class RecordScreenTest {
     private val today = LocalDate.of(2026, 7, 17)
 
     @Test
-    fun saveIsDisabledUntilDatabaseRecordLoads() {
+    fun saveStaysDisabledUntilLoadedRecordChanges() {
         val delayedRecord = MutableSharedFlow<HandBrewRecord?>(extraBufferCapacity = 1)
         val repository = FakeHandBrewRecordRepository(recordFlowOverride = delayedRecord)
         setRecordContent(repository)
@@ -39,10 +40,38 @@ class RecordScreenTest {
 
         composeRule.runOnIdle { delayedRecord.tryEmit(record(today, 3)) }
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithContentDescription("保存记录").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithContentDescription("已保存").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithContentDescription("保存记录").assertIsEnabled()
+        composeRule.onNodeWithContentDescription("已保存").assertIsNotEnabled()
         composeRule.onNodeWithText("3").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithContentDescription("保存记录").assertIsEnabled()
+    }
+
+    @Test
+    fun remoteUpdateRefreshesAnUntouchedDraftButPreservesLocalEdits() {
+        val recordUpdates = MutableSharedFlow<HandBrewRecord?>(extraBufferCapacity = 1)
+        val repository = FakeHandBrewRecordRepository(recordFlowOverride = recordUpdates)
+        setRecordContent(repository)
+
+        composeRule.runOnIdle { recordUpdates.tryEmit(record(today, 2, Instant.EPOCH)) }
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithContentDescription("已保存").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("2").assertIsDisplayed()
+
+        composeRule.runOnIdle { recordUpdates.tryEmit(record(today, 4, Instant.EPOCH.plusSeconds(1))) }
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("4").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithContentDescription("已保存").assertIsNotEnabled()
+
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.runOnIdle { recordUpdates.tryEmit(record(today, 7, Instant.EPOCH.plusSeconds(2))) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("5").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("保存记录").assertIsEnabled()
     }
 
     @Test
@@ -150,11 +179,15 @@ class RecordScreenTest {
         }
     }
 
-    private fun record(date: LocalDate, count: Int) = HandBrewRecord(
+    private fun record(
+        date: LocalDate,
+        count: Int,
+        updatedAt: Instant = Instant.EPOCH,
+    ) = HandBrewRecord(
         id = date.toString(),
         localDate = date,
         brewCount = count,
         createdAt = Instant.EPOCH,
-        updatedAt = Instant.EPOCH,
+        updatedAt = updatedAt,
     )
 }

@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
+import kotlinx.coroutines.CancellationException
 
 class HandBrewSyncWorker(
     appContext: Context,
@@ -21,6 +22,8 @@ class HandBrewSyncWorker(
                 remote = services.remoteDataSource,
             ).syncOnce(ownerId)
             if (result.pending == 0) Result.success() else Result.retry()
+        } catch (error: CancellationException) {
+            throw error
         } catch (_: Exception) {
             if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
         } finally {
