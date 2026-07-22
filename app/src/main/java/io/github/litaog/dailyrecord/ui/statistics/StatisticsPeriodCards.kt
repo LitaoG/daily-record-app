@@ -33,7 +33,6 @@ import io.github.litaog.dailyrecord.ui.theme.Ink900
 import io.github.litaog.dailyrecord.ui.theme.Neutral300
 import io.github.litaog.dailyrecord.ui.theme.Paper0
 import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta400
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
 import io.github.litaog.dailyrecord.ui.theme.White
 import java.util.Locale
@@ -150,11 +149,7 @@ internal fun WeekDistributionCard(
         ) {
             details.forEach { detail ->
                 val display = detail.displayValues()
-                val fraction = when {
-                    detail.future || !detail.recorded -> 0f
-                    detail.count == 0L -> .06f
-                    else -> (detail.count!!.toDouble() / maxCount.toDouble()).toFloat().coerceIn(.16f, 1f)
-                }
+                val fraction = distributionFraction(detail, maxCount, minNonZeroFraction = .16f)
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -184,7 +179,7 @@ internal fun WeekDistributionCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .fillMaxHeight(fraction)
-                                    .background(if (detail.count == 0L) Terracotta400 else Terracotta500),
+                                    .background(Terracotta500),
                             )
                         }
                     }
@@ -219,11 +214,7 @@ internal fun MonthDistributionCard(
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             details.forEach { detail ->
                 val display = detail.displayValues()
-                val fraction = when {
-                    detail.future || !detail.recorded -> 0f
-                    detail.count == 0L -> .025f
-                    else -> (detail.count!!.toDouble() / maxCount.toDouble()).toFloat().coerceIn(.08f, 1f)
-                }
+                val fraction = distributionFraction(detail, maxCount, minNonZeroFraction = .08f)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -253,7 +244,7 @@ internal fun MonthDistributionCard(
                                     .fillMaxWidth(fraction)
                                     .fillMaxHeight()
                                     .clip(CircleShape)
-                                    .background(if (detail.count == 0L) Terracotta400 else Terracotta500),
+                                    .background(Terracotta500),
                             )
                         }
                     }
@@ -318,8 +309,22 @@ private data class DetailDisplay(
     val chartValue: String,
 )
 
+internal fun distributionFraction(
+    detail: StatisticsDetail,
+    maxCount: Long,
+    minNonZeroFraction: Float,
+): Float {
+    val count = detail.count ?: return 0f
+    if (detail.future || !detail.recorded || count <= 0L) return 0f
+    if (maxCount <= 0L) return 0f
+    return (count.toDouble() / maxCount.toDouble())
+        .toFloat()
+        .coerceIn(minNonZeroFraction, 1f)
+}
+
 private fun StatisticsDetail.displayValues(): DetailDisplay = when {
     future -> DetailDisplay("未来", "—", "未来")
     !recorded -> DetailDisplay("未填写", "—", "未填")
     else -> DetailDisplay("${count ?: 0L} 次", "${days ?: 0} 天", (count ?: 0L).toString())
 }
+
