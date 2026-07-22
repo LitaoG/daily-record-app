@@ -115,7 +115,13 @@ fun StatisticsScreen(
             )
         }
         item {
-            if (useHorizontalMetrics) {
+            if (period == StatisticsPeriod.Week || period == StatisticsPeriod.Month) {
+                CompactPeriodSummary(
+                    period = period,
+                    summary = model.summary,
+                    horizontal = useHorizontalMetrics,
+                )
+            } else if (useHorizontalMetrics) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -142,32 +148,40 @@ fun StatisticsScreen(
                 }
             }
         }
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(model.detailsTitle, color = Ink900, style = MaterialTheme.typography.labelMedium)
-                Text("次数 · 天数", color = Ink500, style = MaterialTheme.typography.labelSmall)
-            }
-        }
         if (model.details.isEmpty()) {
             item { EmptyStatistics(onOpenCalendar) }
         } else {
-            items(model.details, key = { it.label }) { detail ->
-                StatisticRow(
-                    label = detail.label,
-                    countText = when {
-                        detail.future -> "—"
-                        !detail.recorded -> "未填写"
-                        else -> "${detail.count} 次"
-                    },
-                    daysText = when {
-                        detail.future || !detail.recorded -> "—"
-                        else -> "${detail.days} 天"
-                    },
-                    future = detail.future,
-                )
+            when (period) {
+                StatisticsPeriod.Week -> item { WeekDistributionCard(model.details) }
+                StatisticsPeriod.Month -> item { MonthDistributionCard(model.details) }
+                StatisticsPeriod.Year,
+                StatisticsPeriod.All,
+                -> {
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(model.detailsTitle, color = Ink900, style = MaterialTheme.typography.labelMedium)
+                            Text("次数 · 天数", color = Ink500, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    items(model.details, key = { it.label }) { detail ->
+                        StatisticRow(
+                            label = detail.label,
+                            countText = when {
+                                detail.future -> "—"
+                                !detail.recorded -> "未填写"
+                                else -> "${detail.count} 次"
+                            },
+                            daysText = when {
+                                detail.future || !detail.recorded -> "—"
+                                else -> "${detail.days} 天"
+                            },
+                            future = detail.future,
+                        )
+                    }
+                }
             }
         }
         if (period == StatisticsPeriod.All && records.isNotEmpty()) {
@@ -256,23 +270,12 @@ private fun PeriodNavigator(
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text(
-                        text = model.title,
-                        color = Ink900,
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        text = "点此快速跳转",
-                        color = Terracotta500,
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                Text(
+                    text = model.title,
+                    color = Ink900,
+                    style = MaterialTheme.typography.labelLarge,
+                    textAlign = TextAlign.Center,
+                )
             }
             PeriodArrow(
                 forward = true,

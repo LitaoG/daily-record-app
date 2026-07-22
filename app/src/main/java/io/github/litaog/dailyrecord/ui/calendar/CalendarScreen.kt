@@ -69,8 +69,12 @@ fun CalendarScreen(
     val totalCount = monthRecords.sumOf { it.brewCount.toLong() }
     val brewDays = monthRecords.count { it.brewCount > 0 }
     val first = month.atDay(1)
-    val gridStart = first.minusDays((first.dayOfWeek.value - 1).toLong())
-    val gridDates = List(42) { gridStart.plusDays(it.toLong()) }
+    val leadingEmptyCells = first.dayOfWeek.value - 1
+    val visibleCellCount = ((leadingEmptyCells + month.lengthOfMonth() + 6) / 7) * 7
+    val gridDates = List<LocalDate?>(visibleCellCount) { index ->
+        val dayOfMonth = index - leadingEmptyCells + 1
+        if (dayOfMonth in 1..month.lengthOfMonth()) month.atDay(dayOfMonth) else null
+    }
     val canGoPrevious = month > earliestMonth
     val canGoNext = month < YearMonth.from(today)
     val fontScale = LocalDensity.current.fontScale
@@ -130,18 +134,25 @@ fun CalendarScreen(
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     week.forEach { date ->
-                        CalendarDayCell(
-                            date = date,
-                            month = month,
-                            earliestDate = earliestMonth.atDay(1),
-                            today = today,
-                            focused = date == focusedDate,
-                            record = recordsByDate[date],
-                            cellHeight = dayCellHeight,
-                            largeText = largeText,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onDateSelected(date) },
-                        )
+                        if (date == null) {
+                            Spacer(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(dayCellHeight),
+                            )
+                        } else {
+                            CalendarDayCell(
+                                date = date,
+                                earliestDate = earliestMonth.atDay(1),
+                                today = today,
+                                focused = date == focusedDate,
+                                record = recordsByDate[date],
+                                cellHeight = dayCellHeight,
+                                largeText = largeText,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onDateSelected(date) },
+                            )
+                        }
                     }
                 }
             }
@@ -208,12 +219,6 @@ private fun MonthHeader(
                 textAlign = TextAlign.Center,
                 maxLines = if (largeText) 2 else 1,
             )
-            Text(
-                text = "点此快速跳转",
-                color = Terracotta500,
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center,
-            )
         }
         MonthArrow(forward = true, description = "下个月", enabled = canGoNext, onClick = onNextMonth)
         Box(
@@ -255,7 +260,6 @@ private fun MonthArrow(
 @Composable
 private fun CalendarDayCell(
     date: LocalDate,
-    month: YearMonth,
     earliestDate: LocalDate,
     today: LocalDate,
     focused: Boolean,
@@ -267,11 +271,9 @@ private fun CalendarDayCell(
 ) {
     val unsupported = date < earliestDate
     val future = date > today
-    val outsideMonth = YearMonth.from(date) != month
     val count = record?.brewCount
     val background = when {
         unsupported || future -> Paper100
-        outsideMonth -> Paper100
         record == null -> Paper0
         count == 0 -> Neutral300
         count == 1 -> Terracotta400
@@ -279,7 +281,6 @@ private fun CalendarDayCell(
         else -> Terracotta600
     }
     val contentColor = when {
-        outsideMonth -> Ink700
         (count ?: 0) >= 2 -> White
         else -> Ink900
     }
@@ -325,13 +326,13 @@ private fun CalendarDayCell(
     ) {
         Text(
             text = date.dayOfMonth.toString(),
-            color = if (date == today && count == null && !outsideMonth) Terracotta500 else contentColor,
+            color = if (date == today && count == null) Terracotta500 else contentColor,
             style = if (largeText) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Medium,
         )
         Text(
             text = if (date == today && !future && !largeText) "$status·今" else status,
-            color = if (date == today && count == null && !outsideMonth) Terracotta500 else contentColor,
+            color = if (date == today && count == null) Terracotta500 else contentColor,
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
         )

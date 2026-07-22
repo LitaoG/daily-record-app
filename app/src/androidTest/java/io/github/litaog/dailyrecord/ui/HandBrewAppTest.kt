@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -62,14 +63,16 @@ class HandBrewAppTest {
     }
 
     @Test
-    fun selectingAdjacentMonthDateReturnsToThatMonth() {
+    fun adjacentMonthDatesAreHiddenFromTheCalendarGrid() {
         setAppContent()
 
         composeRule
-            .onNodeWithContentDescription("2026年6月29日，未填写")
-            .performClick()
-        composeRule.onNodeWithTag("record_screen").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("返回日历").performClick()
+            .onAllNodesWithContentDescription("2026年6月29日，未填写")
+            .assertCountEquals(0)
+        composeRule
+            .onAllNodesWithContentDescription("2026年8月1日，未来日期，不可记录")
+            .assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("上个月").performClick()
         assertMonth(2026, 6)
     }
 
@@ -95,6 +98,7 @@ class HandBrewAppTest {
     fun tappingMonthTitleOpensFastDatePicker() {
         setAppContent()
 
+        composeRule.onAllNodesWithText("点此快速跳转").assertCountEquals(0)
         composeRule
             .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
             .performClick()
@@ -139,11 +143,28 @@ class HandBrewAppTest {
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
         composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
+        composeRule.onNodeWithTag("month_distribution_card").assertIsDisplayed()
+        composeRule.onAllNodesWithText("点此快速跳转").assertCountEquals(0)
+
+        composeRule
+            .onNodeWithContentDescription("选择统计日期，当前2026年 5月")
+            .performClick()
+        composeRule.onNodeWithTag("date_navigation_dialog").assertIsDisplayed()
+        composeRule.onNodeWithText("取消").performClick()
 
         composeRule.onNodeWithContentDescription("年统计，未选择").performClick()
         composeRule.onNodeWithText("2026年").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
         composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
+    }
+
+    @Test
+    fun weeklyStatisticsUseTheDistributionCard() {
+        setAppContent()
+
+        composeRule.onNodeWithContentDescription("统计，未选择").performClick()
+        composeRule.onNodeWithTag("week_distribution_card").assertIsDisplayed()
+        composeRule.onNodeWithText("每日分布").assertIsDisplayed()
     }
 
     @Test
