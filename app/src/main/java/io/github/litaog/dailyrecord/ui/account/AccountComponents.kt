@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +32,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
+import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
+import io.github.litaog.dailyrecord.ui.components.HandBrewTextAction
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -96,14 +97,13 @@ internal fun LocalAccountTopBar(onClick: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 AccountTitle("本机记录可离线使用")
-                TextButton(
+                HandBrewTextAction(
+                    label = "登录同步",
                     onClick = onClick,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "登录账号并开启云同步" },
-                ) {
-                    Text("登录同步", color = Terracotta500)
-                }
+                        .fillMaxWidth(),
+                    accessibilityLabel = "登录账号并开启云同步",
+                )
             }
         } else {
             Row(
@@ -116,12 +116,11 @@ internal fun LocalAccountTopBar(onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 AccountTitle("本机记录可离线使用")
-                TextButton(
+                HandBrewTextAction(
+                    label = "登录同步",
                     onClick = onClick,
-                    modifier = Modifier.semantics { contentDescription = "登录账号并开启云同步" },
-                ) {
-                    Text("登录同步", color = Terracotta500)
-                }
+                    accessibilityLabel = "登录账号并开启云同步",
+                )
             }
         }
     }
@@ -233,28 +232,13 @@ internal fun AccountDialog(
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             )
             OutlineActionButton("关闭", onDismiss, Modifier.fillMaxWidth().padding(top = 10.dp))
-            TextButton(
+            HandBrewTextAction(
+                label = "退出登录",
                 onClick = { confirmSignOut = true },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            ) {
-                Text("退出登录", color = MaterialTheme.colorScheme.error)
-            }
+                danger = true,
+            )
         }
-    }
-}
-
-@Composable
-private fun DangerActionButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .heightIn(min = 52.dp)
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.error)
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { role = Role.Button; contentDescription = label },
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(label, color = Paper0, style = MaterialTheme.typography.labelLarge)
     }
 }
 

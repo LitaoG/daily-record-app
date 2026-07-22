@@ -97,6 +97,7 @@ class RecordScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("清除记录").performClick()
+        composeRule.onNodeWithTag("clear_record_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("清除这天的记录？").assertIsDisplayed()
         composeRule.onNodeWithText("取消").performClick()
         assertEquals(0, repository.clearCalls)
@@ -116,6 +117,7 @@ class RecordScreenTest {
 
         composeRule.onNodeWithContentDescription("增加一次").performClick()
         composeRule.runOnIdle { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.onNodeWithTag("discard_record_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("放弃未保存的修改？").assertIsDisplayed()
         composeRule.onNodeWithText("继续编辑").performClick()
         assertEquals(0, backCalls)
@@ -144,6 +146,7 @@ class RecordScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("保存记录").performClick()
+        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
         composeRule.onNodeWithText("保存失败，请重试").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("保存记录").assertIsEnabled()
     }
@@ -156,6 +159,7 @@ class RecordScreenTest {
 
         composeRule.onNodeWithContentDescription("清除记录").performClick()
         composeRule.onNodeWithText("确认清除").performClick()
+        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
         composeRule.onNodeWithText("清除失败，请重试").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("清除记录").assertIsEnabled()
         composeRule.onNodeWithText("已记录 · 2 次").assertIsDisplayed()

@@ -12,6 +12,7 @@
 - [交付与验证记录](HAND_BREW_REFACTOR_LOG.md)
 - [运行时 UX 与统计验收](RUNTIME_UX_AUDIT.md)
 - [2026-07-22 月历与统计审计](audit/2026-07-22-calendar-statistics/README.md)
+- [2026-07-22 应用内 UI 一致性审计](audit/2026-07-22-native-ui/README.md)
 - [仅手冲 v2 设计与实现证据](assets/hand-brew-v2/README.md)
 - [Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
 

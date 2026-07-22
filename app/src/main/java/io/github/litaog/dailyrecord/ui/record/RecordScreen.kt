@@ -20,13 +20,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,6 +48,8 @@ import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.ui.components.BrewCountControl
 import io.github.litaog.dailyrecord.ui.components.BackChevronIcon
+import io.github.litaog.dailyrecord.ui.components.HandBrewConfirmationDialog
+import io.github.litaog.dailyrecord.ui.components.HandBrewSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PlaneIcon
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
@@ -140,7 +139,7 @@ fun RecordScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize().testTag("record_screen"),
         containerColor = Paper50,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { HandBrewSnackbarHost(snackbarHostState) },
         bottomBar = {
             Surface(
                 modifier = Modifier.navigationBarsPadding(),
@@ -308,61 +307,48 @@ fun RecordScreen(
     }
 
     if (showClearDialog) {
-        AlertDialog(
-            onDismissRequest = { if (!saving) showClearDialog = false },
-            title = { Text("清除这天的记录？") },
-            text = { Text("清除后会恢复为“未填写”，这次操作不能在应用内撤销。") },
-            dismissButton = {
-                TextButton(onClick = { showClearDialog = false }, enabled = !saving) {
-                    Text("取消")
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = !saving,
-                    onClick = {
-                        if (saving) return@TextButton
-                        showClearDialog = false
-                        saving = true
-                        scope.launch {
-                            try {
-                                repository.clearRecord(date)
-                                saving = false
-                                onSaved()
-                            } catch (error: CancellationException) {
-                                throw error
-                            } catch (_: Exception) {
-                                saving = false
-                                errorMessage = "清除失败，请重试"
-                            }
+        HandBrewConfirmationDialog(
+            title = "清除这天的记录？",
+            subtitle = "记录会恢复为“未填写”",
+            message = "这次操作不能在应用内撤销，也不会计入统计。",
+            cancelLabel = "取消",
+            confirmLabel = "确认清除",
+            testTag = "clear_record_dialog",
+            confirmEnabled = !saving,
+            onDismiss = { if (!saving) showClearDialog = false },
+            onConfirm = {
+                if (!saving) {
+                    showClearDialog = false
+                    saving = true
+                    scope.launch {
+                        try {
+                            repository.clearRecord(date)
+                            saving = false
+                            onSaved()
+                        } catch (error: CancellationException) {
+                            throw error
+                        } catch (_: Exception) {
+                            saving = false
+                            errorMessage = "清除失败，请重试"
                         }
-                    },
-                ) {
-                    Text("确认清除")
+                    }
                 }
             },
         )
     }
 
     if (showDiscardDialog) {
-        AlertDialog(
-            onDismissRequest = { showDiscardDialog = false },
-            title = { Text("放弃未保存的修改？") },
-            text = { Text("当前次数还没有保存，返回后修改会丢失。") },
-            dismissButton = {
-                TextButton(onClick = { showDiscardDialog = false }) {
-                    Text("继续编辑")
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDiscardDialog = false
-                        onBack()
-                    },
-                ) {
-                    Text("放弃修改")
-                }
+        HandBrewConfirmationDialog(
+            title = "放弃未保存的修改？",
+            subtitle = "当前次数还没有保存",
+            message = "返回日历后，本次调整会丢失。",
+            cancelLabel = "继续编辑",
+            confirmLabel = "放弃修改",
+            testTag = "discard_record_dialog",
+            onDismiss = { showDiscardDialog = false },
+            onConfirm = {
+                showDiscardDialog = false
+                onBack()
             },
         )
     }

@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +35,7 @@ fun HandBrewDialog(
     onDismissRequest: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val largeText = LocalDensity.current.fontScale >= 1.6f
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -61,7 +63,11 @@ fun HandBrewDialog(
                     Text(
                         text = title,
                         color = Ink900,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = if (largeText) {
+                            MaterialTheme.typography.titleMedium
+                        } else {
+                            MaterialTheme.typography.headlineSmall
+                        },
                         fontWeight = FontWeight.Bold,
                     )
                     if (subtitle != null) {
