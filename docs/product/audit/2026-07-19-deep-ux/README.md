@@ -66,6 +66,24 @@
 
 相应 XML 文件保存了设备语义树，用于检查可读名称、按钮角色、禁用状态和日期说明。所有最终截图都来自本分支 Debug APK；360×640、390×844 与 200% 字体证据已经完整归档在 `after/`。
 
+### 完整逐状态复核
+
+以下截图在 PR 可合并后重新从 `emulator-5554` 采集并逐张打开检查，用于补齐最终验收清单，而不是复用早期缓存图。
+
+| 空月历 | 0、1、2、9+ 次 | 月份跳转 | 年份跳转 | 记录页 |
+| --- | --- | --- | --- | --- |
+| ![空月历](final/390x844/01-calendar-empty.png) | ![四种日期状态](final/390x844/02-calendar-states.png) | ![月份跳转](final/390x844/03-jump-month.png) | ![年份跳转](final/390x844/04-jump-year.png) | ![9 次记录页](final/390x844/05-record-nine.png) |
+
+| 周统计 | 月统计 | 年统计 | 全部历史 | 登录 | 注册 |
+| --- | --- | --- | --- | --- | --- |
+| ![周统计](final/390x844/06-stats-week.png) | ![月统计](final/390x844/07-stats-month.png) | ![年统计](final/390x844/08-stats-year.png) | ![全部历史](final/390x844/09-stats-all.png) | ![登录](final/390x844/10-auth-login.png) | ![注册](final/390x844/11-auth-register.png) |
+
+账号状态使用与正式应用相同的 `AccountDialog` 和主题，在隔离的 Compose 测试宿主中渲染，避免创建真实账号或伪造云端数据。对应永久设备回归同时核对状态文案与同步按钮可用性。
+
+| 离线 | 同步中 | 待同步 | 同步失败 |
+| --- | --- | --- | --- |
+| ![账号离线](final/390x844/12-account-offline-component.png) | ![账号同步中](final/390x844/13-account-syncing-component.png) | ![账号待同步](final/390x844/14-account-pending-component.png) | ![账号同步失败](final/390x844/15-account-failed-component.png) |
+
 ## 自动化与运行时结论
 
 - JVM 单元测试：28 项通过。
