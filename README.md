@@ -9,7 +9,8 @@
 - Android 版本持续迭代，合并门禁由自动化测试、API 34 模拟器交互回归、截图对比、语义树检查和 GitHub CI 共同承担，不再把用户人工验收作为完成条件。
 - 最近完整基线：28 项 JVM 单元测试通过；Android 设备测试共收集 47 项，其中 46 项通过、0 失败、1 项生产冒烟按设计跳过；Firestore 规则测试通过；Lint 0 错误。
 - 当前月历只显示本月日期，年月与统计周期标题仍可点击快速跳转；周/月统计使用直接标注的分布卡，年/全部历史继续保留精确明细表。
-- 视觉证据见 [2026-07-22 月历与统计审计](docs/product/audit/2026-07-22-calendar-statistics/README.md)，此前完整状态覆盖见 [2026-07-19 深度审计](docs/product/audit/2026-07-19-deep-ux/README.md)。
+- 当前确认弹窗、日期跳转、账号、登录和错误反馈均使用统一的应用内纸感组件，不再露出默认 Material 确认框或文字按钮。
+- 视觉证据见 [2026-07-22 应用内 UI 一致性审计](docs/product/audit/2026-07-22-native-ui/README.md)与[月历与统计审计](docs/product/audit/2026-07-22-calendar-statistics/README.md)，此前完整状态覆盖见 [2026-07-19 深度审计](docs/product/audit/2026-07-19-deep-ux/README.md)。
 
 ## P0 范围
 

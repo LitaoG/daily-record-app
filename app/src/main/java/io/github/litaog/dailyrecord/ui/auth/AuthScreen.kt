@@ -2,7 +2,10 @@ package io.github.litaog.dailyrecord.ui.auth
 
 import android.util.Patterns
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,9 +19,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +30,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -36,6 +44,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.ui.components.HandBrewTextAction
 import io.github.litaog.dailyrecord.ui.components.PlaneIcon
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -43,6 +52,7 @@ import io.github.litaog.dailyrecord.ui.theme.Ink700
 import io.github.litaog.dailyrecord.ui.theme.Ink900
 import io.github.litaog.dailyrecord.ui.theme.Neutral300
 import io.github.litaog.dailyrecord.ui.theme.Paper0
+import io.github.litaog.dailyrecord.ui.theme.Paper100
 import io.github.litaog.dailyrecord.ui.theme.Paper50
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
 import kotlinx.coroutines.launch
@@ -71,6 +81,21 @@ internal fun AuthScreen(
     val validationError = remember(mode, email, password, confirmPassword) {
         validateCredentials(mode, email, password, confirmPassword)
     }
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Ink900,
+        unfocusedTextColor = Ink900,
+        disabledTextColor = Ink500,
+        focusedBorderColor = Terracotta500,
+        unfocusedBorderColor = Neutral300,
+        disabledBorderColor = Neutral300,
+        focusedLabelColor = Terracotta500,
+        unfocusedLabelColor = Ink500,
+        disabledLabelColor = Ink500,
+        cursorColor = Terracotta500,
+        focusedContainerColor = Paper0,
+        unfocusedContainerColor = Paper0,
+        disabledContainerColor = Paper0,
+    )
     val submit: () -> Unit = submit@{
         if (!productionConfigured || busy || validationError != null) return@submit
         busy = true
@@ -140,6 +165,8 @@ internal fun AuthScreen(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next,
                     ),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = fieldColors,
                 )
                 OutlinedTextField(
                     value = password,
@@ -157,10 +184,15 @@ internal fun AuthScreen(
                         onDone = { if (mode == AuthMode.SignIn) submit() },
                     ),
                     trailingIcon = {
-                        TextButton(onClick = { passwordVisible = !passwordVisible }, enabled = !busy) {
-                            Text(if (passwordVisible) "隐藏" else "显示")
-                        }
+                        HandBrewTextAction(
+                            label = if (passwordVisible) "隐藏" else "显示",
+                            onClick = { passwordVisible = !passwordVisible },
+                            enabled = !busy,
+                            accessibilityLabel = if (passwordVisible) "隐藏密码" else "显示密码",
+                        )
                     },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = fieldColors,
                 )
                 if (mode == AuthMode.Register) {
                     OutlinedTextField(
@@ -176,6 +208,8 @@ internal fun AuthScreen(
                             imeAction = ImeAction.Done,
                         ),
                         keyboardActions = KeyboardActions(onDone = { submit() }),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = fieldColors,
                     )
                 }
                 Text(
@@ -210,9 +244,12 @@ internal fun AuthScreen(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = submit,
                 )
-                TextButton(onClick = onContinueOffline, enabled = !busy) {
-                    Text("先在本机使用", color = Ink700)
-                }
+                HandBrewTextAction(
+                    label = "先在本机使用",
+                    onClick = onContinueOffline,
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Text(
                     "以后登录时，本机记录会合并到你下一次登录的账号。",
                     color = Ink500,
@@ -231,7 +268,24 @@ internal fun AuthScreen(
 
 @Composable
 private fun AuthModeButton(label: String, selected: Boolean, onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
+    Box(
+        modifier = Modifier
+            .height(48.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) Paper100 else Paper0)
+            .border(
+                width = 1.dp,
+                color = if (selected) Terracotta500 else Neutral300,
+                shape = RoundedCornerShape(14.dp),
+            )
+            .clickable(role = Role.Tab, onClick = onClick)
+            .padding(horizontal = 24.dp)
+            .semantics {
+                role = Role.Tab
+                contentDescription = "$label，${if (selected) "已选择" else "未选择"}"
+            },
+        contentAlignment = Alignment.Center,
+    ) {
         Text(
             label,
             color = if (selected) Terracotta500 else Ink500,

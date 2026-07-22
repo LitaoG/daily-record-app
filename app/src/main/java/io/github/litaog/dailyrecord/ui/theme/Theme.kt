@@ -19,6 +19,14 @@ private val HandBrewColorScheme = lightColorScheme(
     onSurfaceVariant = Ink700,
     outline = Neutral300,
     outlineVariant = Paper100,
+    error = Danger500,
+    onError = White,
+    errorContainer = Danger100,
+    onErrorContainer = Ink900,
+    surfaceTint = Terracotta500,
+    inverseSurface = Ink900,
+    inverseOnSurface = Paper0,
+    inversePrimary = Terracotta400,
 )
 
 @Composable
