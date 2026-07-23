@@ -69,11 +69,20 @@ fun HandBrewApp(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(syncStatus) {
-        if (syncStatus is SyncStatus.Failed && syncStatus.networkRelated) {
+        if (
+            !showAccountDialog &&
+            syncStatus is SyncStatus.Failed &&
+            syncStatus.networkRelated
+        ) {
             snackbarHostState.showSnackbar(
                 message = VPN_SYNC_FAILURE_MESSAGE,
                 duration = SnackbarDuration.Short,
             )
+        }
+    }
+    LaunchedEffect(showAccountDialog) {
+        if (showAccountDialog) {
+            snackbarHostState.currentSnackbarData?.dismiss()
         }
     }
 
@@ -124,7 +133,11 @@ fun HandBrewApp(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Paper50,
-        snackbarHost = { HandBrewSnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            if (!showAccountDialog) {
+                HandBrewSnackbarHost(snackbarHostState)
+            }
+        },
         topBar = {
             if (accountEmail != null) {
                 AccountTopBar(status = syncStatus, onClick = { showAccountDialog = true })
