@@ -30,5 +30,8 @@ sealed interface SyncStatus {
     data object Syncing : SyncStatus
     data object UpToDate : SyncStatus
     data class Pending(val count: Int) : SyncStatus
-    data class Failed(val message: String) : SyncStatus
+    data class Failed(
+        val message: String,
+        val networkRelated: Boolean = false,
+    ) : SyncStatus
 }

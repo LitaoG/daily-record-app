@@ -229,6 +229,14 @@ internal fun AuthScreen(
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                Text(
+                    "登录和注册需要打开 VPN（梯子）。选择本机使用则无需开启，但不会同步到云端。",
+                    color = Ink700,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("vpn_auth_notice"),
+                )
                 if (!productionConfigured) {
                     Text(
                         "云端开发项目尚未完成配置，当前构建只能连接本地测试环境。",
@@ -337,7 +345,7 @@ private fun authErrorMessage(error: Throwable): String {
     return when (code) {
         "ERROR_EMAIL_ALREADY_IN_USE" -> "此邮箱已注册，请直接登录"
         "ERROR_WEAK_PASSWORD" -> "密码强度不足，请使用更长的密码"
-        "ERROR_NETWORK_REQUEST_FAILED" -> "网络不可用，请检查连接后重试"
+        "ERROR_NETWORK_REQUEST_FAILED" -> "网络不可用，请确认 VPN（梯子）已开启后重试"
         "ERROR_TOO_MANY_REQUESTS" -> "尝试次数过多，请稍后再试"
         else -> "登录失败，请检查邮箱和密码后重试"
     }

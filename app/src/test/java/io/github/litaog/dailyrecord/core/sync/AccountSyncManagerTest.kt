@@ -22,6 +22,18 @@ class AccountSyncManagerTest {
     }
 
     @Test
+    fun networkFailuresAreMarkedForVpnGuidance() {
+        assertTrue(IOException("firebase unreachable").isNetworkRelatedSyncFailure())
+        assertTrue(
+            IllegalStateException(
+                "listener failed",
+                IOException("connection closed"),
+            ).isNetworkRelatedSyncFailure(),
+        )
+        assertFalse(IllegalArgumentException("invalid data").isNetworkRelatedSyncFailure())
+    }
+
+    @Test
     fun unknownFailureStopsAutomaticRetry() {
         assertFalse(IllegalArgumentException("malformed snapshot").isRetryableRemoteObservation())
     }

@@ -6,19 +6,21 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
+import io.github.litaog.dailyrecord.ui.account.VPN_SYNC_DIALOG_MESSAGE
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableSharedFlow
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.junit.Assert.assertTrue
 
 class HandBrewAppTest {
     @get:Rule
@@ -187,6 +189,116 @@ class HandBrewAppTest {
         composeRule.onNodeWithText("确认退出登录？").assertIsDisplayed()
         composeRule.onNodeWithText("返回").performClick()
         composeRule.onNodeWithText("账号与云同步").assertIsDisplayed()
+    }
+
+    @Test
+    fun networkSyncFailureShowsTemporaryVpnGuidance() {
+        val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    accountEmail = "brew@example.com",
+                    syncStatus = status.value,
+                )
+            }
+        }
+
+        composeRule.runOnIdle {
+            status.value = SyncStatus.Failed(
+                message = "网络连接不稳定，记录已保存在本机",
+                networkRelated = true,
+            )
+        }
+        composeRule.onNodeWithText(VPN_SYNC_FAILURE_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
+    }
+
+    @Test
+    fun openingAccountDialogMovesVpnGuidanceAboveTheModalScrim() {
+        val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    accountEmail = "brew@example.com",
+                    syncStatus = status.value,
+                )
+            }
+        }
+
+        composeRule.runOnIdle {
+            status.value = SyncStatus.Failed(
+                message = "网络连接不稳定，记录已保存在本机",
+                networkRelated = true,
+            )
+        }
+        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription(
+            "账号与云同步，同步失败：网络连接不稳定，记录已保存在本机",
+        ).performClick()
+
+        composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
+        composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
+        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
+    }
+
+    @Test
+    fun networkFailureWhileAccountDialogIsOpenStaysInsideTheDialog() {
+        val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.UpToDate)
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    accountEmail = "brew@example.com",
+                    syncStatus = status.value,
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("账号与云同步，云端已同步").performClick()
+        composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            status.value = SyncStatus.Failed(
+                message = "网络连接不稳定，记录已保存在本机",
+                networkRelated = true,
+            )
+        }
+
+        composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
+        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
+    }
+
+    @Test
+    fun nonNetworkSyncFailureDoesNotShowVpnGuidance() {
+        val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    accountEmail = "brew@example.com",
+                    syncStatus = status.value,
+                )
+            }
+        }
+
+        composeRule.runOnIdle {
+            status.value = SyncStatus.Failed(
+                message = "云端数据暂时无法读取",
+                networkRelated = false,
+            )
+        }
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithText(VPN_SYNC_FAILURE_MESSAGE).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
     }
 
     @Test

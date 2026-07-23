@@ -25,8 +25,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +47,9 @@ import io.github.litaog.dailyrecord.ui.theme.Neutral300
 import io.github.litaog.dailyrecord.ui.theme.Paper0
 import io.github.litaog.dailyrecord.ui.theme.Terracotta400
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+
+internal const val VPN_SYNC_DIALOG_MESSAGE =
+    "请打开 VPN（梯子），然后点击“立即同步”。"
 
 @Composable
 internal fun AccountTopBar(
@@ -96,7 +102,7 @@ internal fun LocalAccountTopBar(onClick: () -> Unit) {
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                AccountTitle("本机记录可离线使用")
+                AccountTitle("本机记录无需 VPN（梯子），可离线使用")
                 HandBrewTextAction(
                     label = "登录同步",
                     onClick = onClick,
@@ -115,7 +121,7 @@ internal fun LocalAccountTopBar(onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AccountTitle("本机记录可离线使用")
+                AccountTitle("本机记录无需 VPN（梯子），可离线使用")
                 HandBrewTextAction(
                     label = "登录同步",
                     onClick = onClick,
@@ -217,6 +223,17 @@ internal fun AccountDialog(
                 ) {
                     androidx.compose.foundation.Canvas(Modifier.size(9.dp)) { drawCircle(status.color()) }
                     Text(status.label(), color = Ink700, style = MaterialTheme.typography.labelLarge)
+                }
+                if (status is SyncStatus.Failed && status.networkRelated) {
+                    Text(
+                        VPN_SYNC_DIALOG_MESSAGE,
+                        color = Terracotta500,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .testTag("account_vpn_sync_guidance")
+                            .semantics { liveRegion = LiveRegionMode.Polite },
+                    )
                 }
             }
             Text(
