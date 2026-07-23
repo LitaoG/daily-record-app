@@ -248,6 +248,35 @@ class HandBrewAppTest {
     }
 
     @Test
+    fun networkFailureWhileAccountDialogIsOpenStaysInsideTheDialog() {
+        val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.UpToDate)
+        composeRule.setContent {
+            DailyRecordTheme {
+                HandBrewApp(
+                    repository = FakeHandBrewRecordRepository(),
+                    today = LocalDate.of(2026, 7, 17),
+                    accountEmail = "brew@example.com",
+                    syncStatus = status.value,
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("账号与云同步，云端已同步").performClick()
+        composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            status.value = SyncStatus.Failed(
+                message = "网络连接不稳定，记录已保存在本机",
+                networkRelated = true,
+            )
+        }
+
+        composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
+        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
+    }
+
+    @Test
     fun nonNetworkSyncFailureDoesNotShowVpnGuidance() {
         val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
         composeRule.setContent {

@@ -6,9 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -51,6 +53,12 @@ class AccountDialogTest {
         composeRule.onNodeWithText("同步失败：网络暂不可用").assertIsDisplayed()
         composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
         composeRule.onNodeWithContentDescription("立即同步").assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            status = SyncStatus.Failed("账号权限已失效", networkRelated = false)
+        }
+        composeRule.onNodeWithText("同步失败：账号权限已失效").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("account_vpn_sync_guidance").assertCountEquals(0)
     }
 
     @Test
