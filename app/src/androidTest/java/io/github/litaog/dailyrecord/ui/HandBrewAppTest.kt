@@ -211,7 +211,7 @@ class HandBrewAppTest {
                 networkRelated = true,
             )
         }
-        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(VPN_SYNC_FAILURE_MESSAGE).assertIsDisplayed()
         composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
     }
 
@@ -243,7 +243,7 @@ class HandBrewAppTest {
 
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
         composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
-        composeRule.onNodeWithText(VPN_SYNC_FAILURE_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
         composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
     }
 
