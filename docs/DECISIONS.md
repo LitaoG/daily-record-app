@@ -67,7 +67,21 @@
 
 - 状态：Accepted
 - 决策：Firestore 使用生产模式，区域 `asia-east1`；规则只允许登录用户读写自己的手冲文档，并验证完整字段形状。
-- 后果：`google-services.json` 不进入 Git；发布前再启用与正式签名配套的 App Check，不在 Android Studio 调试阶段强制执行。
+- 后果：`google-services.json` 不进入 Git；账号永久删除时本人可以物理删除自己路径，普通记录仍必须使用墓碑。
+
+## ADR-012：GitHub Releases 与稳定自主管理签名
+
+- 状态：Accepted
+- 决策：少量用户只从 GitHub Releases 获取签名 APK；从 `v1.0.0-beta.1` 起使用同一份仓库外 release keystore，tag 必须匹配语义化 `versionName`，每次发布递增 `versionCode` 并附 SHA-256。
+- 原因：Android 只允许相同证书的 APK 覆盖升级；Debug APK、未签名 APK 或丢失私钥都会破坏后续升级。
+- 后果：签名材料和 `google-services.json` 只通过本机忽略文件或 GitHub Actions Secrets 注入；GitHub 工作流验证签名后创建 prerelease。
+
+## ADR-013：App Check 暂缓强制
+
+- 状态：Accepted
+- 决策：当前 GitHub-only 侧载版不加入 App Check SDK，也不对 Authentication/Firestore 强制执行。
+- 原因：Play Integrity 虽支持 Play 外分发，但仍需 Play Console 应用与 Cloud 项目关联并正确调整侧载识别条件；当前没有该基础，直接强制会拒绝合法侧载用户。
+- 后果：未来先发布只采集指标、不强制的候选版，验证真实 GitHub APK 后再单独决策；生产 APK 不使用 debug provider。
 
 ## 已废止方向
 

@@ -14,10 +14,19 @@ GitHub `main` 是当前事实来源；功能分支通过 Pull Request、自动�
 ## 验证命令
 
 ```powershell
-.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest assembleRelease --no-parallel
+pnpm test:release-metadata
+.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-parallel
 pnpm test:android-connected
 pnpm test:firestore-rules
 ```
+
+`assembleRelease` 需要仓库外的稳定签名配置和本机私有 `app/google-services.json`：
+
+```powershell
+.\gradlew.bat assembleRelease --no-configuration-cache --no-parallel
+```
+
+缺少签名时任务必须失败，不能把未签名或 Debug APK 当成发布物。完整配置、版本、tag、SHA-256 与覆盖升级流程见 [`RELEASE.md`](RELEASE.md)。
 
 `test:android-connected` 会以 demo 项目启动隔离的 Authentication 与 Firestore 模拟器，运行完整设备测试后自动关闭。测试前保持 Android 模拟器的全局 HTTP 代理为空；若本地 Firebase 探针返回 `502` 或 Auth 超时，先运行 `adb shell settings list global | Select-String proxy` 检查是否残留 `global_http_proxy_host` / `global_http_proxy_port`。
 
@@ -39,12 +48,12 @@ Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm te
 - 找回密码的邮箱预填/规范化、隐私统一提示、重复发送锁、断网/限频/额度错误和模拟器一次性码改密登录。
 - 本机模式跨冷启动保留；登录入口可显式退出本机模式。
 - 登录前本机记录无网络迁入、离线待同步、系统网络状态不变时的 Firebase 恢复、实时监听失败重连、迟到确认、多设备编辑/清除、不同账号隔离。
-- Firestore 规则的所有权、字段形状、非负次数、修订递增、客户端更新时间严格递增和禁止物理删除。
+- Firestore 规则的所有权、字段形状、非负次数、修订递增、墓碑和删除权限；普通记录不允许物理删除，只有永久删除账号流程允许本人删除自己路径。
 
 ## Definition of Done
 
 - 产品契约、代码、Figma 和测试一致。
-- 单元测试、Lint、Debug/Release 构建、设备数据库/Compose 测试和规则测试通过。
+- 单元测试、Lint、Debug/签名 Release 构建、设备数据库/Compose 测试、覆盖升级和规则测试通过。
 - 全文审计没有活动管理、健身或未来活动扩展的有效承诺。
 - 本地提交说明变更、用户影响、验证结果和剩余风险。
 - 不包含 `google-services.json`、服务账号、真实数据库、APK/AAB 或账号口令。

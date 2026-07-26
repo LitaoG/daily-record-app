@@ -2,15 +2,17 @@
 
 一个只记录手冲次数的 Android 日历应用。每天可以记录手冲次数，并按周、月、年和全部历史查看总次数、手冲天数与明细表。
 
-当前版本已经完成仅手冲重构、历史年月快速跳转、Room 本地存储、邮箱密码账号与跨设备云恢复。仓库当前文件树、产品文档和界面不包含健身或其他活动模块；早期通用原型只存在于 Git 历史中。
+当前版本已经完成仅手冲重构、历史年月快速跳转、Room 本地存储、邮箱密码账号、跨设备云恢复、账号/云数据删除和 `v1.0.0-beta.1` GitHub Release 基础。仓库当前文件树、产品文档和界面不包含健身或其他活动模块；早期通用原型只存在于 Git 历史中。
 
 ## 当前交付状态
 
 - Android 版本持续迭代，合并门禁由自动化测试、API 34 模拟器交互回归、截图对比、语义树检查和 GitHub CI 共同承担；本人和少量使用者的日常反馈用于发现后续问题，不设置固定人数、完成率或用时门槛。
-- 当前分支基线：39 项 JVM 单元测试通过，最新 API 34 同步弹窗定向回归 2/2 通过；此前完整 Android 设备基线共收集 55 项，其中 54 项通过、0 失败、1 项生产冒烟按设计跳过；Firestore 规则测试和 Lint 均通过。
+- 当前自动化基线：51 项 JVM 单元测试通过；API 34 隔离 Firebase Auth/Firestore 最终执行 69 次，其中 68 次通过、0 失败、1 项生产冒烟按设计跳过；Firestore 规则、Lint、R8 和签名 Release APK 均通过。
 - 当前月历只显示本月日期，年月与统计周期标题仍可点击快速跳转；周/月统计使用直接标注的分布卡，年/全部历史继续保留精确明细表。
 - 当前确认弹窗、日期跳转、账号、登录和错误反馈均使用统一的应用内纸感组件，不再露出默认 Material 确认框或文字按钮。
 - 顶部账号区域提供可复制、可分享的本机诊断摘要；摘要只含应用/设备/同步/数据库状态，不含邮箱、UID、手冲日期、次数、密码或原始异常。
+- 账号弹窗支持密码重验后永久删除本人云端记录与认证账号；本机记录默认转为离线记录，所有失败路径均不误报成功。
+- 稳定 release 证书的 versionCode 1→2 覆盖安装已在 API 34 验证，Room 记录保持；Android Studio Debug 版因证书不同需先同步后完成一次性重装。
 - 视觉证据见 [2026-07-22 找回密码与同步可靠性审计](docs/product/audit/2026-07-22-password-reset-sync/README.md)、[应用内 UI 一致性审计](docs/product/audit/2026-07-22-native-ui/README.md)与[月历与统计审计](docs/product/audit/2026-07-22-calendar-statistics/README.md)，此前完整状态覆盖见 [2026-07-19 深度审计](docs/product/audit/2026-07-19-deep-ux/README.md)。
 
 ## P0 范围
@@ -36,6 +38,23 @@ P0 不包含健身、喝水、学习、睡眠、跑步、自定义活动、短�
 - Firebase Authentication（仅邮箱密码）、Cloud Firestore、WorkManager
 - `minSdk 26`，技术包名保持 `io.github.litaog.dailyrecord`
 
+## 从 GitHub Release 安装
+
+1. 只从本仓库 [GitHub Releases](https://github.com/LitaoG/daily-record-app/releases) 下载 `hand-brew-calendar-v*.apk` 和同名 `.sha256`。
+2. Windows PowerShell 校验：
+
+   ```powershell
+   Get-FileHash .\hand-brew-calendar-v1.0.0-beta.1.apk -Algorithm SHA256
+   Get-Content .\hand-brew-calendar-v1.0.0-beta.1.apk.sha256
+   ```
+
+3. 两边哈希一致后安装；Android 可能要求允许当前浏览器或文件管理器“安装未知应用”。
+4. 后续 GitHub Release 使用相同证书，可直接覆盖并保留 Room 数据。
+
+首次从 Android Studio Debug 版切换时，正式证书与 Debug 证书不同，不能直接覆盖。请先登录并确认显示“已同步”，再卸载 Debug 版、安装 Release APK并登录恢复；纯本机且未同步的数据不会跨卸载保留。
+
+中国大陆普通网络下，本机记录、日历和统计无需 VPN（梯子）；注册、登录、密码重置、云同步和云端删除可能需要可访问 Firebase 的网络。
+
 ## 文档
 
 - [产品契约](docs/PRODUCT.md)
@@ -48,12 +67,15 @@ P0 不包含健身、喝水、学习、睡眠、跑步、自定义活动、短�
 - [开发与测试](docs/DEVELOPMENT.md)
 - [Firebase 配置](docs/FIREBASE_SETUP.md)
 - [同步与隐私](docs/SYNC_AND_PRIVACY.md)
+- [签名与 GitHub Release](docs/RELEASE.md)
+- [隐私说明](PRIVACY.md)
 - [交付与验证记录](docs/product/HAND_BREW_REFACTOR_LOG.md)
 - [产品交付索引](docs/product/README.md)
 
 ## 本地验证
 
 ```powershell
+pnpm test:release-metadata
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebugAndroidTest --no-parallel
 pnpm test:android-connected
 pnpm test:firestore-rules

@@ -8,6 +8,8 @@
 - [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)
 - [Figma 设计系统](FIGMA_DESIGN_SYSTEM.md)
 - [日常使用反馈](DAILY_USE_FEEDBACK.md)
+- [签名与 GitHub Release](../RELEASE.md)
+- [隐私说明](../../PRIVACY.md)
 - [开源借鉴边界](RESEARCH_OPEN_SOURCE.md)
 - [交付与验证记录](HAND_BREW_REFACTOR_LOG.md)
 - [运行时 UX 与统计验收](RUNTIME_UX_AUDIT.md)

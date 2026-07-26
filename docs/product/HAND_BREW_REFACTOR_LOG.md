@@ -291,3 +291,13 @@
 - 网络、认证、权限、配额/服务和未知部分删除分别给出可操作提示；任何失败都不宣称删除成功，并明确本机记录仍保留、可直接重试。
 - 完整验证：51 项 JVM 单元测试、Debug AndroidTest APK 与 Lint 通过；Firestore 所有权、字段、修订、墓碑与本人删除规则通过；API 34 隔离 Firebase Auth/Firestore 最终执行 69 次，68 次通过、0 失败、1 项生产冒烟按设计跳过。
 - 完整设备回归暴露 `ActivityScenarioRule` 在纯 Compose 导航测试清理阶段可能停留于 `PAUSED`；改用不直接持有 ActivityScenario 的 Compose 测试规则后，失败用例定向 1/1 与完整回归均通过。
+
+## 阶段 26：稳定签名与 GitHub Beta 发布基础
+
+- 版本统一由 `gradle.properties` 的 `dailyRecord.versionCode` 与 `dailyRecord.versionName` 管理；首个候选版固定为 `2 / 1.0.0-beta.1`，tag 必须精确匹配 `v1.0.0-beta.1`。
+- 建立仓库外稳定 release keystore 与本机忽略配置；Release 构建缺少任一签名项时直接失败，Debug 证书或未签名 APK 不会误入发布物。
+- 新增 tag 驱动的 GitHub Actions 发布工作流：恢复私有配置、验证版本、运行 JVM 测试与 Lint、构建并核验签名、生成 SHA-256，再创建不可覆盖的 prerelease。
+- 新增发布指南、版本说明、隐私说明、Bug 反馈脱敏要求与首次从 Debug 版迁移说明；APK、keystore、密码和 `google-services.json` 均不进入 Git。
+- App Check 结论固定为当前 GitHub-only 侧载阶段暂不接入也不强制；未来具备 Play Console 关联后，先观察真实侧载指标再独立决策。
+- 自动化验证：Release 元数据 4/4、JVM 51 项、Debug/AndroidTest APK、Lint、R8 Release 与 Firestore 规则全部通过；`apksigner` 确认单一 RSA 4096 签名者和 v2 签名。
+- 同一稳定证书的 `versionCode = 1` 基线包覆盖升级到 `versionCode = 2` 候选包成功，模拟器内 1 次手冲 Room 记录保持不变；验证脚本拒绝真实设备，避免自动化破坏日常手机数据。
