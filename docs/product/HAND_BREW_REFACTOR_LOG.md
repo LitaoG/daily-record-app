@@ -301,3 +301,12 @@
 - App Check 结论固定为当前 GitHub-only 侧载阶段暂不接入也不强制；未来具备 Play Console 关联后，先观察真实侧载指标再独立决策。
 - 自动化验证：Release 元数据 4/4、JVM 51 项、Debug/AndroidTest APK、Lint、R8 Release 与 Firestore 规则全部通过；`apksigner` 确认单一 RSA 4096 签名者和 v2 签名。
 - 同一稳定证书的 `versionCode = 1` 基线包覆盖升级到 `versionCode = 2` 候选包成功，模拟器内 1 次手冲 Room 记录保持不变；验证脚本拒绝真实设备，避免自动化破坏日常手机数据。
+
+## 阶段 27：生产规则与首个 GitHub Prerelease
+
+- 使用 Firebase 项目所有者账号部署并编译通过生产 `firestore.rules`；本人路径删除、账号隔离、修订与墓碑约束已进入生产规则。
+- GitHub Actions 仓库 Secrets 已配置五项签名与 Firebase 私有输入；仓库继续只保存变量名和恢复流程，不保存实际值。
+- 在合并后的 `main` 提交 `35826eed85f8461a5c60ffec9847b1884f3fd881` 创建并推送 `v1.0.0-beta.1` 注释标签。
+- GitHub Actions Release 工作流 `30192069909` 完整通过：版本匹配、JVM 测试、Lint、签名 Release 构建、签名验证、SHA-256 生成、工作流产物上传和 Prerelease 发布均成功。
+- 从 GitHub Release 重新下载 APK 与校验文件独立复核：包名 `io.github.litaog.dailyrecord`、`versionCode = 2`、`versionName = 1.0.0-beta.1`，单一 RSA 4096 签名者与 APK Signature Scheme v2 均正确；远端 APK SHA-256 为 `6f63a91837caca10b6534cf00c24576502d10acf12bbbe2f5d13df1de3e976ce`。
+- 日常反馈 Bug 模板补充本机/登录模式、网络/VPN 状态和出现频率，并继续强制确认不提交邮箱、密码、token、具体日期次数或密钥。

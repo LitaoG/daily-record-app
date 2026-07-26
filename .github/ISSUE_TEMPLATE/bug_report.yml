@@ -33,6 +33,36 @@ body:
     id: device
     attributes:
       label: Android 版本与设备型号
+  - type: dropdown
+    id: usage_mode
+    attributes:
+      label: 使用模式
+      options:
+        - 本机模式（未登录）
+        - 已登录并启用云同步
+    validations:
+      required: true
+  - type: dropdown
+    id: network
+    attributes:
+      label: 网络状态
+      options:
+        - 无网络
+        - 普通网络（未开 VPN）
+        - VPN 已连接
+        - 与网络无关或不确定
+    validations:
+      required: true
+  - type: dropdown
+    id: reproducibility
+    attributes:
+      label: 出现频率
+      options:
+        - 每次都能复现
+        - 偶尔出现
+        - 只出现过一次
+    validations:
+      required: true
   - type: textarea
     id: logs
     attributes:
@@ -46,4 +76,3 @@ body:
       options:
         - label: 我已确认内容不包含邮箱、密码、token、具体手冲日期与次数、密钥或其他私人数据
           required: true
-
