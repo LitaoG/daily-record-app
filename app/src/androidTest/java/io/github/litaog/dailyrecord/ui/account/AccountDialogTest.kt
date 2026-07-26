@@ -31,12 +31,14 @@ class AccountDialogTest {
     fun allSyncStatesRemainReadableAndActionable() {
         var status by mutableStateOf<SyncStatus>(SyncStatus.Offline)
         var signOutRequested = false
+        var diagnosticsRequested = false
         composeRule.setContent {
             DailyRecordTheme {
                 AccountDialog(
                     email = "demo@example.com",
                     status = status,
                     onSyncNow = {},
+                    onOpenDiagnostics = { diagnosticsRequested = true },
                     onSignOut = { signOutRequested = true },
                     onDismiss = {},
                 )
@@ -44,6 +46,8 @@ class AccountDialogTest {
         }
 
         composeRule.onNodeWithText("当前离线，记录已保存在本机").assertIsDisplayed()
+        composeRule.onNodeWithText("查看诊断信息").performClick()
+        composeRule.runOnIdle { assertTrue(diagnosticsRequested) }
 
         composeRule.runOnIdle { status = SyncStatus.Syncing }
         composeRule.onNodeWithContentDescription("正在同步").assertIsNotEnabled()
@@ -88,6 +92,7 @@ class AccountDialogTest {
                             kind = SyncFailureKind.Network,
                         ),
                         onSyncNow = {},
+                        onOpenDiagnostics = {},
                         onSignOut = {},
                         onDismiss = {},
                     )

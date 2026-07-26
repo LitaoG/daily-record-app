@@ -150,7 +150,10 @@ internal fun AccountTopBar(
 }
 
 @Composable
-internal fun LocalAccountTopBar(onClick: () -> Unit) {
+internal fun LocalAccountTopBar(
+    onClick: () -> Unit,
+    onDiagnostics: () -> Unit,
+) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
     Surface(color = Paper0, shadowElevation = 2.dp) {
         if (largeText) {
@@ -162,13 +165,21 @@ internal fun LocalAccountTopBar(onClick: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 AccountTitle("本机记录无需 VPN（梯子），可离线使用")
-                HandBrewTextAction(
-                    label = "登录同步",
-                    onClick = onClick,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    accessibilityLabel = "登录账号并开启云同步",
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    HandBrewTextAction(
+                        label = "诊断",
+                        onClick = onDiagnostics,
+                        accessibilityLabel = "查看本机诊断信息",
+                    )
+                    HandBrewTextAction(
+                        label = "登录同步",
+                        onClick = onClick,
+                        accessibilityLabel = "登录账号并开启云同步",
+                    )
+                }
             }
         } else {
             Row(
@@ -181,11 +192,18 @@ internal fun LocalAccountTopBar(onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 AccountTitle("本机记录无需 VPN（梯子），可离线使用")
-                HandBrewTextAction(
-                    label = "登录同步",
-                    onClick = onClick,
-                    accessibilityLabel = "登录账号并开启云同步",
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    HandBrewTextAction(
+                        label = "诊断",
+                        onClick = onDiagnostics,
+                        accessibilityLabel = "查看本机诊断信息",
+                    )
+                    HandBrewTextAction(
+                        label = "登录同步",
+                        onClick = onClick,
+                        accessibilityLabel = "登录账号并开启云同步",
+                    )
+                }
             }
         }
     }
@@ -236,6 +254,7 @@ internal fun AccountDialog(
     email: String,
     status: SyncStatus,
     onSyncNow: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
     onSignOut: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -331,6 +350,11 @@ internal fun AccountDialog(
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             )
             OutlineActionButton("关闭", onDismiss, Modifier.fillMaxWidth().padding(top = 10.dp))
+            HandBrewTextAction(
+                label = "查看诊断信息",
+                onClick = onOpenDiagnostics,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            )
             HandBrewTextAction(
                 label = "退出登录",
                 onClick = { confirmSignOut = true },

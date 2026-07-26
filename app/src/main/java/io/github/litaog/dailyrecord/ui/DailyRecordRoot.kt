@@ -26,8 +26,11 @@ import io.github.litaog.dailyrecord.core.sync.AndroidNetworkMonitor
 import io.github.litaog.dailyrecord.core.sync.HandBrewSyncCoordinator
 import io.github.litaog.dailyrecord.core.sync.HandBrewSyncScheduler
 import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
+import io.github.litaog.dailyrecord.core.sync.SyncDiagnostics
+import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.ui.auth.AuthScreen
+import io.github.litaog.dailyrecord.ui.diagnostics.createDiagnosticReport
 import io.github.litaog.dailyrecord.ui.theme.Paper50
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
 import kotlinx.coroutines.CancellationException
@@ -90,7 +93,14 @@ private fun LocalRoot(database: DailyRecordDatabase, onSignIn: () -> Unit) {
     val repository = remember(database) {
         RoomHandBrewRecordRepository(database = database, ownerId = LOCAL_OWNER_ID)
     }
-    HandBrewApp(repository = repository, onSignIn = onSignIn)
+    HandBrewApp(
+        repository = repository,
+        onSignIn = onSignIn,
+        diagnosticReport = createDiagnosticReport(
+            status = SyncStatus.NotConfigured,
+            diagnostics = SyncDiagnostics(),
+        ),
+    )
 }
 
 @Composable
@@ -134,6 +144,7 @@ private fun SignedInRoot(
     }
     val scope = rememberCoroutineScope()
     val syncStatus by syncManager.status.collectAsState()
+    val syncDiagnostics by syncManager.diagnostics.collectAsState()
 
     DisposableEffect(syncManager, networkMonitor, scope) {
         val jobs = syncManager.start(scope)
@@ -152,6 +163,7 @@ private fun SignedInRoot(
         syncStatus = syncStatus,
         onSyncNow = { scope.launch { syncManager.syncNow() } },
         onSignOut = services.authRepository::signOut,
+        diagnosticReport = createDiagnosticReport(syncStatus, syncDiagnostics),
     )
 }
 

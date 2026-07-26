@@ -29,7 +29,9 @@ internal class AccountSyncManager(
     private val mutableStatus = MutableStateFlow<SyncStatus>(
         if (productionConfigured) SyncStatus.Syncing else SyncStatus.NotConfigured,
     )
+    private val mutableDiagnostics = MutableStateFlow(SyncDiagnostics())
     val status: StateFlow<SyncStatus> = mutableStatus
+    val diagnostics: StateFlow<SyncDiagnostics> = mutableDiagnostics
 
     fun start(scope: CoroutineScope): List<Job> {
         if (!productionConfigured) return emptyList()
@@ -37,11 +39,11 @@ internal class AccountSyncManager(
             coordinator.observeRemote(ownerId)
                 .retryWhen { error, attempt ->
                     val retryable = error.isRetryableRemoteObservation()
-                    mutableStatus.value = if (networkAvailable.value) {
+                    publishStatus(if (networkAvailable.value) {
                         error.toSyncFailure()
                     } else {
                         SyncStatus.Offline
-                    }
+                    })
                     if (!retryable) return@retryWhen false
                     networkAvailable.first { it }
                     delay(remoteRetryDelayMillis(attempt))
@@ -50,7 +52,7 @@ internal class AccountSyncManager(
                 .collect { snapshot ->
                     coordinator.applySnapshot(ownerId, snapshot)
                     if (snapshot.rejectedRecordCount > 0) {
-                        mutableStatus.value = malformedRemoteRecordsFailure()
+                        publishStatus(malformedRemoteRecordsFailure())
                     }
                     if (!snapshot.fromCache && networkAvailable.value) {
                         if (coordinator.pendingCount(ownerId) > 0) {
@@ -66,18 +68,19 @@ internal class AccountSyncManager(
         }
         val pendingJob = scope.launch {
             coordinator.observePendingCount(ownerId).collectLatest { count ->
+                updatePendingDiagnostics(count)
                 if (
                     networkAvailable.value &&
                     mutableStatus.value !is SyncStatus.Syncing &&
                     mutableStatus.value !is SyncStatus.Failed
                 ) {
-                    mutableStatus.value = if (count == 0) SyncStatus.UpToDate else SyncStatus.Pending(count)
+                    publishStatus(if (count == 0) SyncStatus.UpToDate else SyncStatus.Pending(count))
                 }
             }
         }
         val networkJob = scope.launch {
             networkAvailable.collectLatest { available ->
-                if (available) syncNow() else mutableStatus.value = SyncStatus.Offline
+                if (available) syncNow() else publishStatus(SyncStatus.Offline)
             }
         }
         return listOf(remoteJob, pendingJob, networkJob)
@@ -85,41 +88,58 @@ internal class AccountSyncManager(
 
     suspend fun syncNow() {
         if (!productionConfigured) {
-            mutableStatus.value = SyncStatus.NotConfigured
+            publishStatus(SyncStatus.NotConfigured)
             return
         }
         if (!networkAvailable.value) {
-            mutableStatus.value = SyncStatus.Offline
+            publishStatus(SyncStatus.Offline)
             return
         }
         mutex.withLock {
             val previousStatus = mutableStatus.value
-            mutableStatus.value = SyncStatus.Syncing
+            publishStatus(SyncStatus.Syncing)
             try {
                 val result = coordinator.syncOnce(ownerId)
-                mutableStatus.value = if (result.rejectedRemoteRecords > 0) {
+                updatePendingDiagnostics(result.pending)
+                publishStatus(if (result.rejectedRemoteRecords > 0) {
                     malformedRemoteRecordsFailure()
                 } else if (result.pending == 0) {
                     SyncStatus.UpToDate
                 } else {
                     SyncStatus.Pending(result.pending)
-                }
+                })
             } catch (error: CancellationException) {
-                mutableStatus.value = previousStatus
+                publishStatus(previousStatus)
                 throw error
             } catch (error: Exception) {
-                mutableStatus.value = if (networkAvailable.value) {
+                publishStatus(if (networkAvailable.value) {
                     error.toSyncFailure()
                 } else {
                     SyncStatus.Offline
-                }
+                })
             }
         }
     }
 
     private suspend fun updateIdleStatus() {
         val pending = coordinator.pendingCount(ownerId)
-        mutableStatus.value = if (pending == 0) SyncStatus.UpToDate else SyncStatus.Pending(pending)
+        updatePendingDiagnostics(pending)
+        publishStatus(if (pending == 0) SyncStatus.UpToDate else SyncStatus.Pending(pending))
+    }
+
+    private fun updatePendingDiagnostics(count: Int) {
+        mutableDiagnostics.value = mutableDiagnostics.value.copy(
+            hasPendingRecords = count > 0,
+        )
+    }
+
+    private fun publishStatus(status: SyncStatus) {
+        mutableStatus.value = status
+        if (status is SyncStatus.Failed) {
+            mutableDiagnostics.value = mutableDiagnostics.value.copy(
+                latestFailureKind = status.kind,
+            )
+        }
     }
 }
 
