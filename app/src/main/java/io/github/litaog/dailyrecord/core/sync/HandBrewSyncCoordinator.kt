@@ -24,11 +24,18 @@ internal class HandBrewSyncCoordinator(
         require(ownerId.isNotBlank()) { "ownerId must not be blank" }
         store.adoptLocalRecords(ownerId)
         val initial = remote.fetch(ownerId)
+        store.alignUnbasedPendingRevisions(ownerId, initial.records)
         var downloaded = store.applyRemote(ownerId, initial.records)
         var uploaded = 0
+        var rejected = initial.rejectedRecordCount
 
         store.pending(ownerId).forEach { local ->
-            val committed = remote.commit(ownerId, local)
+            val committed = try {
+                remote.commit(ownerId, local)
+            } catch (_: MalformedRemoteRecordException) {
+                rejected += 1
+                return@forEach
+            }
             if (store.applyCommitIfUnchanged(ownerId, local, committed)) {
                 if (committed.matches(local)) {
                     uploaded += 1
@@ -40,10 +47,12 @@ internal class HandBrewSyncCoordinator(
 
         val confirmed = remote.fetch(ownerId)
         downloaded += store.applyRemote(ownerId, confirmed.records)
+        rejected = maxOf(rejected, confirmed.rejectedRecordCount)
         return SyncResult(
             uploaded = uploaded,
             downloaded = downloaded,
             pending = store.pendingCount(ownerId),
+            rejectedRemoteRecords = rejected,
         )
     }
 }

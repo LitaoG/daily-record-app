@@ -59,4 +59,4 @@ brewCount > 0 -> BREWED（已手冲）
 
 ## Firestore 文档
 
-文档 ID 与 `localDate` 相同；字段为 `id`、`localDate`、`brewCount`、`createdAtMillis`、`clientUpdatedAtMillis`、`deleted`、`revision`、`schemaVersion` 和服务器时间。规则强制所有权、字段白名单、非负次数、时间顺序、时间戳位于 Unix epoch 至公历 9999 年末、不可变 ID/创建时间、修订号逐次加一和禁止物理删除。
+文档 ID 与 `localDate` 相同；字段为 `id`、`localDate`、`brewCount`、`createdAtMillis`、`clientUpdatedAtMillis`、`deleted`、`revision`、`schemaVersion` 和服务器时间。规则强制所有权、字段白名单、非负次数、单条记录内部的创建/修改时间顺序、时间戳位于 Unix epoch 至公历 9999 年末、不可变 ID/创建时间、修订号逐次加一和禁止物理删除。跨设备并发以修订号为准，不要求新版本的客户端时间大于旧版本，避免设备时钟偏差造成永久无法同步。

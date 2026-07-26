@@ -46,6 +46,19 @@ internal class RoomHandBrewSyncStore(
     suspend fun applyRemote(ownerId: String, records: List<RemoteHandBrewRecord>): Int =
         database.withTransaction { applyRemoteRecords(ownerId, records) }
 
+    suspend fun alignUnbasedPendingRevisions(
+        ownerId: String,
+        records: List<RemoteHandBrewRecord>,
+    ): Int = database.withTransaction {
+        records.sumOf { remote ->
+            dao.setRemoteRevisionForUnbasedPending(
+                ownerId = ownerId,
+                localDate = remote.localDate,
+                remoteRevision = remote.revision,
+            )
+        }
+    }
+
     suspend fun applyCommitIfUnchanged(
         ownerId: String,
         local: HandBrewRecordEntity,

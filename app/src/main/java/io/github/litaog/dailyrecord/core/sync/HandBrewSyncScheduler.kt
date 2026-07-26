@@ -9,6 +9,7 @@ import androidx.work.WorkManager
 
 internal object HandBrewSyncScheduler {
     private const val UNIQUE_WORK_NAME = "hand-brew-cloud-sync"
+    internal val workPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE
 
     fun schedule(context: Context) {
         val request = OneTimeWorkRequestBuilder<HandBrewSyncWorker>()
@@ -20,7 +21,7 @@ internal object HandBrewSyncScheduler {
             .build()
         WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
             UNIQUE_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
+            workPolicy,
             request,
         )
     }

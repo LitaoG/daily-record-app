@@ -101,7 +101,7 @@ try {
       serverUpdatedAt: serverTimestamp(),
     }),
   );
-  await assertFails(
+  await assertSucceeds(
     setDoc(record, {
       ...validRecord,
       brewCount: 4,
@@ -115,7 +115,7 @@ try {
       ...validRecord,
       id: "replacement-id",
       brewCount: 4,
-      revision: 3,
+      revision: 4,
       clientUpdatedAtMillis: 1784160002000,
       serverUpdatedAt: serverTimestamp(),
     }),
@@ -125,7 +125,7 @@ try {
       ...validRecord,
       createdAtMillis: 1784160000500,
       brewCount: 4,
-      revision: 3,
+      revision: 4,
       clientUpdatedAtMillis: 1784160002000,
       serverUpdatedAt: serverTimestamp(),
     }),
