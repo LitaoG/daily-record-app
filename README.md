@@ -2,7 +2,7 @@
 
 一个只记录手冲次数的 Android 日历应用。每天可以记录手冲次数，并按周、月、年和全部历史查看总次数、手冲天数与明细表。
 
-当前版本已经完成仅手冲重构、历史年月快速跳转、Room 本地存储、邮箱密码账号、跨设备云恢复、账号/云数据删除和 `v1.0.0-beta.1` GitHub Release 基础。仓库当前文件树、产品文档和界面不包含健身或其他活动模块；早期通用原型只存在于 Git 历史中。
+当前版本已经完成仅手冲重构、历史年月快速跳转、Room 本地存储、邮箱密码账号、跨设备云恢复、账号/云数据删除，并已发布 [`v1.0.0-beta.1`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.1) GitHub Prerelease。仓库当前文件树、产品文档和界面不包含健身或其他活动模块；早期通用原型只存在于 Git 历史中。
 
 ## 当前交付状态
 
@@ -13,6 +13,7 @@
 - 顶部账号区域提供可复制、可分享的本机诊断摘要；摘要只含应用/设备/同步/数据库状态，不含邮箱、UID、手冲日期、次数、密码或原始异常。
 - 账号弹窗支持密码重验后永久删除本人云端记录与认证账号；本机记录默认转为离线记录，所有失败路径均不误报成功。
 - 稳定 release 证书的 versionCode 1→2 覆盖安装已在 API 34 验证，Room 记录保持；Android Studio Debug 版因证书不同需先同步后完成一次性重装。
+- 生产 Firestore 规则已发布；`v1.0.0-beta.1` 的签名 APK 与 SHA-256 校验文件由通过门禁的 GitHub Actions 工作流生成。
 - 视觉证据见 [2026-07-22 找回密码与同步可靠性审计](docs/product/audit/2026-07-22-password-reset-sync/README.md)、[应用内 UI 一致性审计](docs/product/audit/2026-07-22-native-ui/README.md)与[月历与统计审计](docs/product/audit/2026-07-22-calendar-statistics/README.md)，此前完整状态覆盖见 [2026-07-19 深度审计](docs/product/audit/2026-07-19-deep-ux/README.md)。
 
 ## P0 范围
@@ -40,7 +41,7 @@ P0 不包含健身、喝水、学习、睡眠、跑步、自定义活动、短�
 
 ## 从 GitHub Release 安装
 
-1. 只从本仓库 [GitHub Releases](https://github.com/LitaoG/daily-record-app/releases) 下载 `hand-brew-calendar-v*.apk` 和同名 `.sha256`。
+1. 只从本仓库 [GitHub Releases](https://github.com/LitaoG/daily-record-app/releases) 下载 `hand-brew-calendar-v*.apk` 和同名 `.sha256`；当前测试版是 [`v1.0.0-beta.1`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.1)。
 2. Windows PowerShell 校验：
 
    ```powershell
