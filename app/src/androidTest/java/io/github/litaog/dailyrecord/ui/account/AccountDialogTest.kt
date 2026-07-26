@@ -39,6 +39,7 @@ class AccountDialogTest {
                     status = status,
                     onSyncNow = {},
                     onOpenDiagnostics = { diagnosticsRequested = true },
+                    onDeleteAccount = {},
                     onSignOut = { signOutRequested = true },
                     onDismiss = {},
                 )
@@ -48,6 +49,7 @@ class AccountDialogTest {
         composeRule.onNodeWithText("当前离线，记录已保存在本机").assertIsDisplayed()
         composeRule.onNodeWithText("查看诊断信息").performClick()
         composeRule.runOnIdle { assertTrue(diagnosticsRequested) }
+        composeRule.onNodeWithText("删除账号与云端数据").assertIsDisplayed()
 
         composeRule.runOnIdle { status = SyncStatus.Syncing }
         composeRule.onNodeWithContentDescription("正在同步").assertIsNotEnabled()
@@ -93,6 +95,7 @@ class AccountDialogTest {
                         ),
                         onSyncNow = {},
                         onOpenDiagnostics = {},
+                        onDeleteAccount = {},
                         onSignOut = {},
                         onDismiss = {},
                     )

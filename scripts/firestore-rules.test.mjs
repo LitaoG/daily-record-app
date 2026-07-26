@@ -49,6 +49,7 @@ try {
       localDate: "2026-07-17",
     }),
   );
+  await assertFails(deleteDoc(doc(userB, recordPath)));
   await assertFails(
     setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-18"), {
       ...validRecord,
@@ -130,7 +131,7 @@ try {
       serverUpdatedAt: serverTimestamp(),
     }),
   );
-  await assertFails(deleteDoc(record));
+  await assertSucceeds(deleteDoc(record));
   console.log("Firestore security rules: all ownership, shape, revision, and tombstone checks passed.");
 } finally {
   await testEnv.cleanup();

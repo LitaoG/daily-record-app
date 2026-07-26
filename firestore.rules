@@ -46,7 +46,7 @@ service cloud.firestore {
         && request.resource.data.localDate == resource.data.localDate
         && request.resource.data.createdAtMillis == resource.data.createdAtMillis
         && request.resource.data.revision == resource.data.revision + 1;
-      allow delete: if false;
+      allow delete: if signedInAs(userId);
     }
   }
 }

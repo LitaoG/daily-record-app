@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.core.sync
 
 import androidx.room.withTransaction
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalStore
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 
 internal class RoomHandBrewSyncStore(
     private val database: DailyRecordDatabase,
-) {
+) : AccountDeletionLocalStore {
     private val dao = database.handBrewRecordDao()
 
     fun observePendingCount(ownerId: String): Flow<Int> = dao.observePendingCount(ownerId)
@@ -73,7 +74,32 @@ internal class RoomHandBrewSyncStore(
         true
     }
 
-    suspend fun deleteOwnerCache(ownerId: String): Int = dao.deleteOwnerCache(ownerId)
+    override suspend fun stageLocalRecoveryCopy(ownerId: String) {
+        database.withTransaction {
+            require(dao.countForOwner(LOCAL_OWNER_ID) == 0) {
+                "Local recovery space must be empty while an account is signed in"
+            }
+            dao.getAllForSync(ownerId)
+                .filterNot { it.isDeleted }
+                .forEach { accountRecord ->
+                    dao.upsert(
+                        accountRecord.copy(
+                            ownerId = LOCAL_OWNER_ID,
+                            syncState = SYNC_PENDING,
+                            remoteRevision = 0,
+                        ),
+                    )
+                }
+        }
+    }
+
+    override suspend fun discardLocalRecoveryCopy() {
+        dao.deleteOwnerCache(LOCAL_OWNER_ID)
+    }
+
+    override suspend fun deleteOwnerCache(ownerId: String) {
+        dao.deleteOwnerCache(ownerId)
+    }
 
     private suspend fun applyRemoteRecords(
         ownerId: String,

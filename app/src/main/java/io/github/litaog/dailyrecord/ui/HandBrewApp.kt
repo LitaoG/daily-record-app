@@ -22,9 +22,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
+import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.AccountDialog
+import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
 import io.github.litaog.dailyrecord.ui.account.AccountTopBar
 import io.github.litaog.dailyrecord.ui.account.LocalAccountTopBar
 import io.github.litaog.dailyrecord.ui.calendar.CalendarScreen
@@ -61,6 +63,9 @@ fun HandBrewApp(
     onSignOut: () -> Unit = {},
     onSignIn: (() -> Unit)? = null,
     diagnosticReport: String = "诊断信息暂不可用",
+    onDeleteAccount: suspend (String, LocalDataAfterAccountDeletion) -> Result<Unit> = { _, _ ->
+        Result.failure(IllegalStateException("Account deletion is unavailable"))
+    },
 ) {
     val effectiveToday = today ?: rememberCurrentDate()
     var destinationName by rememberSaveable { mutableStateOf(TopDestination.Calendar.name) }
@@ -69,6 +74,7 @@ fun HandBrewApp(
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showAccountDialog by rememberSaveable { mutableStateOf(false) }
     var showDiagnostics by rememberSaveable { mutableStateOf(false) }
+    var showAccountDeletion by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(syncStatus) {
@@ -231,6 +237,10 @@ fun HandBrewApp(
                 showAccountDialog = false
                 showDiagnostics = true
             },
+            onDeleteAccount = {
+                showAccountDialog = false
+                showAccountDeletion = true
+            },
             onSignOut = onSignOut,
             onDismiss = { showAccountDialog = false },
         )
@@ -239,6 +249,12 @@ fun HandBrewApp(
         DiagnosticDialog(
             report = diagnosticReport,
             onDismiss = { showDiagnostics = false },
+        )
+    }
+    if (showAccountDeletion && accountEmail != null) {
+        AccountDeletionDialog(
+            onDeleteAccount = onDeleteAccount,
+            onDismiss = { showAccountDeletion = false },
         )
     }
 }
