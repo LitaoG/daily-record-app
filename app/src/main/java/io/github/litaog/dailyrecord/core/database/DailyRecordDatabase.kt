@@ -21,6 +21,7 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "daily-record.db"
+        const val SCHEMA_VERSION = 3
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {

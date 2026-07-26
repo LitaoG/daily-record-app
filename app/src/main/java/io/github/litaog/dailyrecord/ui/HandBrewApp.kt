@@ -30,6 +30,7 @@ import io.github.litaog.dailyrecord.ui.account.LocalAccountTopBar
 import io.github.litaog.dailyrecord.ui.calendar.CalendarScreen
 import io.github.litaog.dailyrecord.ui.components.HandBrewBottomBar
 import io.github.litaog.dailyrecord.ui.components.HandBrewSnackbarHost
+import io.github.litaog.dailyrecord.ui.diagnostics.DiagnosticDialog
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
 import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
 import io.github.litaog.dailyrecord.ui.record.RecordScreen
@@ -59,6 +60,7 @@ fun HandBrewApp(
     onSyncNow: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onSignIn: (() -> Unit)? = null,
+    diagnosticReport: String = "诊断信息暂不可用",
 ) {
     val effectiveToday = today ?: rememberCurrentDate()
     var destinationName by rememberSaveable { mutableStateOf(TopDestination.Calendar.name) }
@@ -66,6 +68,7 @@ fun HandBrewApp(
     var browseDateText by rememberSaveable { mutableStateOf(effectiveToday.toString()) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showAccountDialog by rememberSaveable { mutableStateOf(false) }
+    var showDiagnostics by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(syncStatus) {
@@ -142,7 +145,10 @@ fun HandBrewApp(
             if (accountEmail != null) {
                 AccountTopBar(status = syncStatus, onClick = { showAccountDialog = true })
             } else if (onSignIn != null) {
-                LocalAccountTopBar(onClick = onSignIn)
+                LocalAccountTopBar(
+                    onClick = onSignIn,
+                    onDiagnostics = { showDiagnostics = true },
+                )
             }
         },
         bottomBar = {
@@ -221,8 +227,18 @@ fun HandBrewApp(
             email = accountEmail,
             status = syncStatus,
             onSyncNow = onSyncNow,
+            onOpenDiagnostics = {
+                showAccountDialog = false
+                showDiagnostics = true
+            },
             onSignOut = onSignOut,
             onDismiss = { showAccountDialog = false },
+        )
+    }
+    if (showDiagnostics) {
+        DiagnosticDialog(
+            report = diagnosticReport,
+            onDismiss = { showDiagnostics = false },
         )
     }
 }

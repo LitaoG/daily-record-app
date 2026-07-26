@@ -36,6 +36,11 @@ enum class SyncFailureKind {
     Unknown,
 }
 
+internal data class SyncDiagnostics(
+    val hasPendingRecords: Boolean? = null,
+    val latestFailureKind: SyncFailureKind? = null,
+)
+
 sealed interface SyncStatus {
     data object NotConfigured : SyncStatus
     data object Offline : SyncStatus
