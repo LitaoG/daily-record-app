@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import io.github.litaog.dailyrecord.core.auth.AuthState
+import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
+import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
 import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
@@ -34,6 +36,9 @@ import io.github.litaog.dailyrecord.ui.diagnostics.createDiagnosticReport
 import io.github.litaog.dailyrecord.ui.theme.Paper50
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 
 @Composable
@@ -42,6 +47,7 @@ internal fun DailyRecordRoot(
     servicesProvider: () -> FirebaseServices,
 ) {
     val context = LocalContext.current
+    val rootScope = rememberCoroutineScope()
     val localModePreference = remember(context) { LocalModePreference(context) }
     var continueOffline by rememberSaveable {
         mutableStateOf(localModePreference.isEnabled)
@@ -83,7 +89,16 @@ internal fun DailyRecordRoot(
             LaunchedEffect(state.account.uid) {
                 localModePreference.setEnabled(false)
             }
-            SignedInRoot(database, services, state)
+            SignedInRoot(
+                database = database,
+                services = services,
+                state = state,
+                accountDeletionScope = rootScope,
+                onAccountDeletedWithLocalRecords = {
+                    localModePreference.setEnabled(true)
+                    continueOffline = true
+                },
+            )
         }
     }
 }
@@ -108,6 +123,8 @@ private fun SignedInRoot(
     database: DailyRecordDatabase,
     services: FirebaseServices,
     state: AuthState.SignedIn,
+    accountDeletionScope: kotlinx.coroutines.CoroutineScope,
+    onAccountDeletedWithLocalRecords: () -> Unit,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val ownerId = state.account.uid
@@ -142,15 +159,28 @@ private fun SignedInRoot(
             onLocalChange = { HandBrewSyncScheduler.schedule(context) },
         )
     }
+    val deletionCoordinator = remember(ownerId, database, services.remoteDataSource) {
+        AccountDeletionCoordinator(
+            authRepository = services.authRepository,
+            remoteDataSource = services.remoteDataSource,
+            localStore = RoomHandBrewSyncStore(database),
+        )
+    }
     val scope = rememberCoroutineScope()
     val syncStatus by syncManager.status.collectAsState()
     val syncDiagnostics by syncManager.diagnostics.collectAsState()
+    var deletionInProgress by remember(ownerId) { mutableStateOf(false) }
+    var activeSyncJobs by remember(ownerId) { mutableStateOf<List<Job>>(emptyList()) }
 
-    DisposableEffect(syncManager, networkMonitor, scope) {
-        val jobs = syncManager.start(scope)
+    DisposableEffect(networkMonitor) {
+        onDispose { networkMonitor.close() }
+    }
+    DisposableEffect(syncManager, scope, deletionInProgress) {
+        val jobs = if (deletionInProgress) emptyList() else syncManager.start(scope)
+        activeSyncJobs = jobs
         onDispose {
             jobs.forEach { it.cancel() }
-            networkMonitor.close()
+            if (activeSyncJobs === jobs) activeSyncJobs = emptyList()
         }
     }
     LaunchedEffect(ownerId) {
@@ -164,6 +194,27 @@ private fun SignedInRoot(
         onSyncNow = { scope.launch { syncManager.syncNow() } },
         onSignOut = services.authRepository::signOut,
         diagnosticReport = createDiagnosticReport(syncStatus, syncDiagnostics),
+        onDeleteAccount = { password, localData ->
+            val completion = CompletableDeferred<Result<Unit>>()
+            accountDeletionScope.launch {
+                deletionInProgress = true
+                activeSyncJobs.forEach { it.cancelAndJoin() }
+                val result = authOperation {
+                    HandBrewSyncScheduler.cancelAndAwait(context)
+                    deletionCoordinator.deleteAccount(
+                        ownerId = ownerId,
+                        password = password,
+                        localData = localData,
+                    )
+                }
+                if (result.isSuccess && localData == LocalDataAfterAccountDeletion.Keep) {
+                    onAccountDeletedWithLocalRecords()
+                }
+                if (result.isFailure) deletionInProgress = false
+                completion.complete(result)
+            }
+            completion.await()
+        },
     )
 }
 

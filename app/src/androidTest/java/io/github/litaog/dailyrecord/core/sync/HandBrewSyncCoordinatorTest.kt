@@ -311,6 +311,33 @@ class HandBrewSyncCoordinatorTest {
         assertEquals(2, remote.fetchCalls)
     }
 
+    @Test
+    fun accountDeletionCanKeepVisibleRecordsLocallyWithoutKeepingTombstones() = runBlocking {
+        val database = database()
+        val accountRepository = repository(database, firstInstant)
+        val secondDate = date.plusDays(1)
+        accountRepository.saveRecord(record(3, firstInstant))
+        accountRepository.saveRecord(
+            record(4, firstInstant).copy(
+                id = "record-$secondDate",
+                localDate = secondDate,
+            ),
+        )
+        assertTrue(accountRepository.clearRecord(secondDate))
+        val store = RoomHandBrewSyncStore(database)
+
+        store.stageLocalRecoveryCopy(ownerId)
+        store.deleteOwnerCache(ownerId)
+
+        val localRepository = RoomHandBrewRecordRepository(
+            database = database,
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+        )
+        assertEquals(3, localRepository.observeRecord(date).first()?.brewCount)
+        assertNull(localRepository.observeRecord(secondDate).first())
+        assertEquals(0, database.handBrewRecordDao().countForOwner(ownerId))
+    }
+
     private fun database(): DailyRecordDatabase {
         val context = ApplicationProvider.getApplicationContext<Context>()
         return Room.inMemoryDatabaseBuilder(context, DailyRecordDatabase::class.java)
@@ -406,4 +433,8 @@ private class FakeRemoteDataSource(
             values.value = values.value + (local.localDate to committed)
             committed
         }
+
+    override suspend fun deleteAll(ownerId: String) {
+        values.value = emptyMap()
+    }
 }

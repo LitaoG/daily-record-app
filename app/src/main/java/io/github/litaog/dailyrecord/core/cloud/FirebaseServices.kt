@@ -25,15 +25,17 @@ internal data class FirebaseServices(
             context: Context,
             emulatorHost: String? = null,
         ): FirebaseServices {
+            var emulatorAppCreated = false
             val app = if (emulatorHost == null) {
                 FirebaseApp.initializeApp(context) ?: FirebaseApp.initializeApp(context, demoOptions())
             } else {
                 FirebaseApp.getApps(context).firstOrNull { it.name == FIREBASE_EMULATOR_APP_NAME }
                     ?: FirebaseApp.initializeApp(context, demoOptions(), FIREBASE_EMULATOR_APP_NAME)
+                        .also { emulatorAppCreated = true }
             }
             val auth = FirebaseAuth.getInstance(app)
             val firestore = FirebaseFirestore.getInstance(app)
-            if (emulatorHost != null) {
+            if (emulatorHost != null && emulatorAppCreated) {
                 auth.useEmulator(emulatorHost, 9099)
                 firestore.useEmulator(emulatorHost, 8080)
             }

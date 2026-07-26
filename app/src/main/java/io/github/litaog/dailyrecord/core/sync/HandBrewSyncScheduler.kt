@@ -6,6 +6,8 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal object HandBrewSyncScheduler {
     private const val UNIQUE_WORK_NAME = "hand-brew-cloud-sync"
@@ -24,5 +26,14 @@ internal object HandBrewSyncScheduler {
             workPolicy,
             request,
         )
+    }
+
+    suspend fun cancelAndAwait(context: Context) {
+        withContext(Dispatchers.IO) {
+            WorkManager.getInstance(context.applicationContext)
+                .cancelUniqueWork(UNIQUE_WORK_NAME)
+                .result
+                .get()
+        }
     }
 }
