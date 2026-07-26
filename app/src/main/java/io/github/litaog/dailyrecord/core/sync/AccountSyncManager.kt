@@ -38,10 +38,7 @@ internal class AccountSyncManager(
                 .retryWhen { error, attempt ->
                     val retryable = error.isRetryableRemoteObservation()
                     mutableStatus.value = if (networkAvailable.value) {
-                        SyncStatus.Failed(
-                            message = error.userMessage(),
-                            networkRelated = error.isNetworkRelatedSyncFailure(),
-                        )
+                        error.toSyncFailure()
                     } else {
                         SyncStatus.Offline
                     }
@@ -103,10 +100,7 @@ internal class AccountSyncManager(
                 throw error
             } catch (error: Exception) {
                 mutableStatus.value = if (networkAvailable.value) {
-                    SyncStatus.Failed(
-                        message = error.userMessage(),
-                        networkRelated = error.isNetworkRelatedSyncFailure(),
-                    )
+                    error.toSyncFailure()
                 } else {
                     SyncStatus.Offline
                 }
@@ -141,25 +135,50 @@ internal fun Throwable.isRetryableRemoteObservation(): Boolean =
     }
 
 internal fun Throwable.isNetworkRelatedSyncFailure(): Boolean =
-    generateSequence(this) { it.cause }.any { cause ->
-        cause is FirebaseNetworkException ||
-            cause is IOException ||
-            cause is FirebaseFirestoreException && cause.code in setOf(
-                FirebaseFirestoreException.Code.DEADLINE_EXCEEDED,
-                FirebaseFirestoreException.Code.UNAVAILABLE,
-            )
+    syncFailureKind() == SyncFailureKind.Network
+
+internal fun Throwable.syncFailureKind(): SyncFailureKind {
+    val causes = generateSequence(this) { it.cause }.toList()
+    if (causes.any { it is FirebaseAuthException }) return SyncFailureKind.Authentication
+
+    causes.filterIsInstance<FirebaseFirestoreException>().firstOrNull()?.let { error ->
+        return syncFailureKindForFirestoreCode(error.code.value())
     }
 
-private fun Throwable.userMessage(): String = when {
-    isNetworkRelatedSyncFailure() ->
-        "网络连接不稳定，记录已保存在本机"
-    generateSequence(this) { it.cause }.any {
-        it is FirebaseAuthException ||
-            it is FirebaseFirestoreException && it.code in setOf(
-                FirebaseFirestoreException.Code.PERMISSION_DENIED,
-                FirebaseFirestoreException.Code.UNAUTHENTICATED,
-            )
-    } ->
-        "账号权限已失效，请退出后重新登录"
-    else -> "暂时无法同步，记录已保存在本机"
+    return when {
+        causes.any { it is FirebaseNetworkException || it is IOException } ->
+            SyncFailureKind.Network
+        causes.any { it is IllegalArgumentException } ->
+            SyncFailureKind.Data
+        else ->
+            SyncFailureKind.Unknown
+    }
+}
+
+/**
+ * Maps Firestore's public gRPC-compatible numeric status codes without requiring Android
+ * framework classes in local unit tests.
+ */
+internal fun syncFailureKindForFirestoreCode(code: Int): SyncFailureKind = when (code) {
+    16 -> SyncFailureKind.Authentication // UNAUTHENTICATED
+    7 -> SyncFailureKind.Permission // PERMISSION_DENIED
+    8 -> SyncFailureKind.Quota // RESOURCE_EXHAUSTED
+    4, 14 -> SyncFailureKind.Network // DEADLINE_EXCEEDED, UNAVAILABLE
+    1, 10, 13 -> SyncFailureKind.Service // CANCELLED, ABORTED, INTERNAL
+    3, 5, 6, 9, 11, 12, 15 -> SyncFailureKind.Data
+    else -> SyncFailureKind.Unknown
+}
+
+private fun Throwable.toSyncFailure(): SyncStatus.Failed {
+    val kind = syncFailureKind()
+    val message = when (kind) {
+        SyncFailureKind.Network -> "网络连接异常，记录已保存在本机"
+        SyncFailureKind.Authentication -> "登录状态已失效，记录已保存在本机"
+        SyncFailureKind.Permission -> "账号暂无云端访问权限，记录已保存在本机"
+        SyncFailureKind.Quota -> "云服务额度暂时受限，记录已保存在本机"
+        SyncFailureKind.Service -> "云服务暂时不可用，记录已保存在本机"
+        SyncFailureKind.Data -> "部分记录暂时无法同步，原始记录已保存在本机"
+        SyncFailureKind.Unknown -> "暂时无法同步，记录已保存在本机"
+    }
+    return SyncStatus.Failed(message = message, kind = kind)
 }

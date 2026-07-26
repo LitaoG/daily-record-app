@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.core.sync
 
 import java.io.IOException
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,6 +32,46 @@ class AccountSyncManagerTest {
             ).isNetworkRelatedSyncFailure(),
         )
         assertFalse(IllegalArgumentException("invalid data").isNetworkRelatedSyncFailure())
+    }
+
+    @Test
+    fun firestoreFailuresAreClassifiedForActionableGuidance() {
+        assertEquals(
+            SyncFailureKind.Authentication,
+            syncFailureKindForFirestoreCode(16),
+        )
+        assertEquals(
+            SyncFailureKind.Permission,
+            syncFailureKindForFirestoreCode(7),
+        )
+        assertEquals(
+            SyncFailureKind.Quota,
+            syncFailureKindForFirestoreCode(8),
+        )
+        assertEquals(
+            SyncFailureKind.Network,
+            syncFailureKindForFirestoreCode(14),
+        )
+        assertEquals(
+            SyncFailureKind.Service,
+            syncFailureKindForFirestoreCode(13),
+        )
+        assertEquals(
+            SyncFailureKind.Data,
+            syncFailureKindForFirestoreCode(15),
+        )
+        assertEquals(
+            SyncFailureKind.Unknown,
+            syncFailureKindForFirestoreCode(2),
+        )
+    }
+
+    @Test
+    fun localArgumentFailureIsClassifiedAsDataFailure() {
+        assertEquals(
+            SyncFailureKind.Data,
+            IllegalArgumentException("invalid local record").syncFailureKind(),
+        )
     }
 
     @Test

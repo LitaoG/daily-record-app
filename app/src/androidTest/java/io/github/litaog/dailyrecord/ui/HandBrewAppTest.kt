@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.VPN_SYNC_DIALOG_MESSAGE
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
@@ -208,7 +209,7 @@ class HandBrewAppTest {
         composeRule.runOnIdle {
             status.value = SyncStatus.Failed(
                 message = "网络连接不稳定，记录已保存在本机",
-                networkRelated = true,
+                kind = SyncFailureKind.Network,
             )
         }
         composeRule.onNodeWithText(VPN_SYNC_FAILURE_MESSAGE).assertIsDisplayed()
@@ -232,13 +233,13 @@ class HandBrewAppTest {
         composeRule.runOnIdle {
             status.value = SyncStatus.Failed(
                 message = "网络连接不稳定，记录已保存在本机",
-                networkRelated = true,
+                kind = SyncFailureKind.Network,
             )
         }
         composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription(
-            "账号与云同步，同步失败：网络连接不稳定，记录已保存在本机",
+            "账号与云同步，网络连接异常",
         ).performClick()
 
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
@@ -267,7 +268,7 @@ class HandBrewAppTest {
         composeRule.runOnIdle {
             status.value = SyncStatus.Failed(
                 message = "网络连接不稳定，记录已保存在本机",
-                networkRelated = true,
+                kind = SyncFailureKind.Network,
             )
         }
 
@@ -293,7 +294,7 @@ class HandBrewAppTest {
         composeRule.runOnIdle {
             status.value = SyncStatus.Failed(
                 message = "云端数据暂时无法读取",
-                networkRelated = false,
+                kind = SyncFailureKind.Service,
             )
         }
         composeRule.waitForIdle()

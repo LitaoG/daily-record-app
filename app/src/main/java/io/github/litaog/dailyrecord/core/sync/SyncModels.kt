@@ -24,6 +24,16 @@ internal data class SyncResult(
     val pending: Int,
 )
 
+enum class SyncFailureKind {
+    Network,
+    Authentication,
+    Permission,
+    Quota,
+    Service,
+    Data,
+    Unknown,
+}
+
 sealed interface SyncStatus {
     data object NotConfigured : SyncStatus
     data object Offline : SyncStatus
@@ -32,6 +42,9 @@ sealed interface SyncStatus {
     data class Pending(val count: Int) : SyncStatus
     data class Failed(
         val message: String,
-        val networkRelated: Boolean = false,
-    ) : SyncStatus
+        val kind: SyncFailureKind = SyncFailureKind.Unknown,
+    ) : SyncStatus {
+        val networkRelated: Boolean
+            get() = kind == SyncFailureKind.Network
+    }
 }

@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
@@ -50,7 +51,64 @@ import io.github.litaog.dailyrecord.ui.theme.Terracotta400
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
 
 internal const val VPN_SYNC_DIALOG_MESSAGE =
-    "请打开 VPN（梯子），然后点击“立即同步”。"
+    "请检查网络或 VPN（梯子），然后点击“立即同步”。"
+
+internal enum class SyncFailureAction {
+    Retry,
+    Reauthenticate,
+}
+
+internal data class SyncFailurePresentation(
+    val title: String,
+    val guidance: String,
+    val actionLabel: String,
+    val action: SyncFailureAction,
+)
+
+internal fun SyncFailureKind.presentation(): SyncFailurePresentation = when (this) {
+    SyncFailureKind.Network -> SyncFailurePresentation(
+        title = "网络连接异常",
+        guidance = VPN_SYNC_DIALOG_MESSAGE,
+        actionLabel = "立即同步",
+        action = SyncFailureAction.Retry,
+    )
+    SyncFailureKind.Authentication -> SyncFailurePresentation(
+        title = "登录状态已失效",
+        guidance = "请重新登录账号，然后再次同步本机记录。",
+        actionLabel = "重新登录",
+        action = SyncFailureAction.Reauthenticate,
+    )
+    SyncFailureKind.Permission -> SyncFailurePresentation(
+        title = "账号没有云端访问权限",
+        guidance = "请重新登录；如果仍然失败，请稍后重试或联系开发者。",
+        actionLabel = "重新登录",
+        action = SyncFailureAction.Reauthenticate,
+    )
+    SyncFailureKind.Quota -> SyncFailurePresentation(
+        title = "云服务额度暂时受限",
+        guidance = "本机记录不会丢失，请稍后再点击“立即同步”。",
+        actionLabel = "立即同步",
+        action = SyncFailureAction.Retry,
+    )
+    SyncFailureKind.Service -> SyncFailurePresentation(
+        title = "云服务暂时不可用",
+        guidance = "可能是 Firebase 临时故障，本机记录不会丢失，请稍后重试。",
+        actionLabel = "立即同步",
+        action = SyncFailureAction.Retry,
+    )
+    SyncFailureKind.Data -> SyncFailurePresentation(
+        title = "部分记录无法同步",
+        guidance = "原始记录已保存在本机，请不要清除应用数据，并在稍后重试。",
+        actionLabel = "立即同步",
+        action = SyncFailureAction.Retry,
+    )
+    SyncFailureKind.Unknown -> SyncFailurePresentation(
+        title = "暂时无法完成同步",
+        guidance = "未能确定失败原因，本机记录不会丢失，请稍后重试。",
+        actionLabel = "立即同步",
+        action = SyncFailureAction.Retry,
+    )
+}
 
 @Composable
 internal fun AccountTopBar(
@@ -182,6 +240,7 @@ internal fun AccountDialog(
     onDismiss: () -> Unit,
 ) {
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
+    val failurePresentation = (status as? SyncStatus.Failed)?.kind?.presentation()
     HandBrewDialog(
         title = if (confirmSignOut) "确认退出登录？" else "账号与云同步",
         subtitle = if (confirmSignOut) "云端数据会保留" else "换手机后仍可恢复手冲记录",
@@ -225,9 +284,14 @@ internal fun AccountDialog(
                     androidx.compose.foundation.Canvas(Modifier.size(9.dp)) { drawCircle(status.color()) }
                     Text(status.label(), color = Ink700, style = MaterialTheme.typography.labelLarge)
                 }
-                if (status is SyncStatus.Failed && status.networkRelated) {
+                if (status is SyncStatus.Failed && failurePresentation != null) {
                     Text(
-                        VPN_SYNC_DIALOG_MESSAGE,
+                        status.message,
+                        color = Ink700,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    Text(
+                        failurePresentation.guidance,
                         color = Terracotta500,
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontSize = 9.33.sp,
@@ -235,7 +299,13 @@ internal fun AccountDialog(
                         ),
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
-                            .testTag("account_vpn_sync_guidance")
+                            .testTag(
+                                if (status.networkRelated) {
+                                    "account_vpn_sync_guidance"
+                                } else {
+                                    "account_sync_failure_guidance"
+                                },
+                            )
                             .semantics { liveRegion = LiveRegionMode.Polite },
                     )
                 }
@@ -247,8 +317,16 @@ internal fun AccountDialog(
                 modifier = Modifier.padding(top = 14.dp),
             )
             PrimaryActionButton(
-                label = if (status is SyncStatus.Syncing) "正在同步" else "立即同步",
-                onClick = onSyncNow,
+                label = when {
+                    status is SyncStatus.Syncing -> "正在同步"
+                    failurePresentation != null -> failurePresentation.actionLabel
+                    else -> "立即同步"
+                },
+                onClick = if (failurePresentation?.action == SyncFailureAction.Reauthenticate) {
+                    onSignOut
+                } else {
+                    onSyncNow
+                },
                 enabled = status !is SyncStatus.Syncing,
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             )
@@ -269,7 +347,7 @@ internal fun SyncStatus.label(): String = when (this) {
     SyncStatus.Syncing -> "正在同步"
     SyncStatus.UpToDate -> "云端已同步"
     is SyncStatus.Pending -> "有 $count 条记录等待同步"
-    is SyncStatus.Failed -> "同步失败：$message"
+    is SyncStatus.Failed -> kind.presentation().title
 }
 
 private fun SyncStatus.shortLabel(): String = when (this) {
