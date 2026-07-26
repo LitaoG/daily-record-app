@@ -255,6 +255,7 @@ internal fun AccountDialog(
     status: SyncStatus,
     onSyncNow: () -> Unit,
     onOpenDiagnostics: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -358,6 +359,12 @@ internal fun AccountDialog(
             HandBrewTextAction(
                 label = "退出登录",
                 onClick = { confirmSignOut = true },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                danger = true,
+            )
+            HandBrewTextAction(
+                label = "删除账号与云端数据",
+                onClick = onDeleteAccount,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 danger = true,
             )

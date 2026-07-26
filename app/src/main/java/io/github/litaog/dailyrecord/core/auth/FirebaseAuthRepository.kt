@@ -3,6 +3,7 @@ package io.github.litaog.dailyrecord.core.auth
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.EmailAuthProvider
 import io.github.litaog.dailyrecord.core.cloud.awaitResult
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +42,20 @@ internal class FirebaseAuthRepository(
             // A reset request must not reveal whether an account exists for the address.
             if (error.errorCode != "ERROR_USER_NOT_FOUND") throw error
         }
+    }
+
+    override suspend fun reauthenticate(password: String) {
+        val user = requireNotNull(auth.currentUser) { "No signed-in account" }
+        val email = requireNotNull(user.email) { "Signed-in account has no email" }
+        user.reauthenticate(
+            EmailAuthProvider.getCredential(email.normalizedEmail(), password),
+        ).awaitResult()
+    }
+
+    override suspend fun deleteCurrentAccount() {
+        requireNotNull(auth.currentUser) { "No signed-in account" }
+            .delete()
+            .awaitResult()
     }
 
     override fun signOut() {

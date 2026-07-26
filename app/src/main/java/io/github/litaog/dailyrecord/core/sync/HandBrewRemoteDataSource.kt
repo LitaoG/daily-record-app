@@ -9,4 +9,6 @@ internal interface HandBrewRemoteDataSource {
     suspend fun fetch(ownerId: String): RemoteSnapshot
 
     suspend fun commit(ownerId: String, local: HandBrewRecordEntity): RemoteHandBrewRecord
+
+    suspend fun deleteAll(ownerId: String)
 }

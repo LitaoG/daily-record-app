@@ -83,6 +83,46 @@ class FirebaseEmulatorIntegrationTest {
         }
     }
 
+    @Test
+    fun accountDeletionRemovesCloudRecordsBeforeDeletingAuthenticationAccount() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertAuthEmulatorReachable()
+        val services = FirebaseServices.create(context, emulatorHost = "10.0.2.2")
+        services.authRepository.signOut()
+        val suffix = UUID.randomUUID().toString().take(10)
+        val email = "delete-$suffix@example.com"
+        val password = "test-password-2026"
+        try {
+            val account = services.authRepository.register(email, password)
+            services.remoteDataSource.commit(
+                account.uid,
+                HandBrewRecordEntity(
+                    id = "delete-$suffix",
+                    localDate = LocalDate.of(2026, 7, 18),
+                    ownerId = account.uid,
+                    brewCount = 2,
+                    createdAt = Instant.parse("2026-07-18T08:00:00Z"),
+                    updatedAt = Instant.parse("2026-07-18T08:00:01Z"),
+                    isDeleted = false,
+                    syncState = SYNC_PENDING,
+                    remoteRevision = 0,
+                ),
+            )
+
+            services.authRepository.reauthenticate(password)
+            services.remoteDataSource.deleteAll(account.uid)
+            assertTrue(services.remoteDataSource.fetch(account.uid).records.isEmpty())
+            services.authRepository.deleteCurrentAccount()
+
+            assertTrue(
+                "Deleted Firebase account must not accept the old credentials",
+                runCatching { services.authRepository.signIn(email, password) }.isFailure,
+            )
+        } finally {
+            services.authRepository.signOut()
+        }
+    }
+
     private fun assertAuthEmulatorReachable() {
         val connection = URL(
             "http://10.0.2.2:9099/emulator/v1/projects/demo-daily-record-app/config",

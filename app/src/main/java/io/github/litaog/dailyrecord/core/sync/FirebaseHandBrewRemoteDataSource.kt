@@ -94,6 +94,19 @@ internal class FirebaseHandBrewRemoteDataSource(
         }.awaitResult()
     }
 
+    override suspend fun deleteAll(ownerId: String) {
+        while (true) {
+            val snapshot = records(ownerId)
+                .limit(DELETE_BATCH_SIZE)
+                .get(Source.SERVER)
+                .awaitResult()
+            if (snapshot.isEmpty) return
+            val batch = firestore.batch()
+            snapshot.documents.forEach { batch.delete(it.reference) }
+            batch.commit().awaitResult()
+        }
+    }
+
     private fun records(ownerId: String) = firestore
         .collection("users")
         .document(ownerId)
@@ -117,6 +130,8 @@ internal class FirebaseHandBrewRemoteDataSource(
         )
     }
 }
+
+private const val DELETE_BATCH_SIZE = 400L
 
 internal class MalformedRemoteRecordException(
     cause: Throwable,
