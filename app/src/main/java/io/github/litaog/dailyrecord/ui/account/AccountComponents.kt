@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
@@ -228,7 +229,10 @@ internal fun AccountDialog(
                     Text(
                         VPN_SYNC_DIALOG_MESSAGE,
                         color = Terracotta500,
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontSize = 9.33.sp,
+                            lineHeight = 13.33.sp,
+                        ),
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .testTag("account_vpn_sync_guidance")
