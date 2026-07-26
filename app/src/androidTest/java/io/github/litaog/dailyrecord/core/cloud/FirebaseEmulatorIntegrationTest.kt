@@ -61,10 +61,12 @@ class FirebaseEmulatorIntegrationTest {
             val newer = local.copy(
                 brewCount = 5,
                 updatedAt = Instant.parse("2026-07-16T08:00:03Z"),
+                remoteRevision = 1,
             )
             val stale = local.copy(
                 brewCount = 2,
-                updatedAt = Instant.parse("2026-07-16T08:00:02Z"),
+                updatedAt = Instant.parse("2026-07-16T09:00:00Z"),
+                remoteRevision = 1,
             )
             assertEquals(5, services.remoteDataSource.commit(first.uid, newer).brewCount)
             val rejectedStaleCommit = services.remoteDataSource.commit(first.uid, stale)

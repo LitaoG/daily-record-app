@@ -93,6 +93,22 @@ internal interface HandBrewRecordDao {
         remoteRevision: Long,
     ): Int
 
+    @Query(
+        """
+        UPDATE hand_brew_records
+        SET remote_revision = :remoteRevision
+        WHERE owner_id = :ownerId
+          AND local_date = :localDate
+          AND sync_state = 'PENDING'
+          AND remote_revision = 0
+        """,
+    )
+    suspend fun setRemoteRevisionForUnbasedPending(
+        ownerId: String,
+        localDate: LocalDate,
+        remoteRevision: Long,
+    ): Int
+
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
     fun observePendingCount(ownerId: String): Flow<Int>
 

@@ -16,12 +16,14 @@ internal data class RemoteHandBrewRecord(
 internal data class RemoteSnapshot(
     val records: List<RemoteHandBrewRecord>,
     val fromCache: Boolean,
+    val rejectedRecordCount: Int = 0,
 )
 
 internal data class SyncResult(
     val uploaded: Int,
     val downloaded: Int,
     val pending: Int,
+    val rejectedRemoteRecords: Int = 0,
 )
 
 enum class SyncFailureKind {

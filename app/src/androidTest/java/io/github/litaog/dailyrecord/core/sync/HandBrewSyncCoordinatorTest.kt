@@ -117,6 +117,31 @@ class HandBrewSyncCoordinatorTest {
     }
 
     @Test
+    fun remoteRevisionRejectsStaleBaseEvenWhenItsDeviceClockIsFarAhead() = runBlocking {
+        val remote = FakeRemoteDataSource()
+        val firstDatabase = database()
+        val secondDatabase = database()
+        val firstRepository = repository(firstDatabase, firstInstant)
+        val secondRepository = repository(secondDatabase, firstInstant)
+        val firstCoordinator = coordinator(firstDatabase, remote)
+        val secondCoordinator = coordinator(secondDatabase, remote)
+
+        firstRepository.saveRecord(record(1, firstInstant))
+        firstCoordinator.syncOnce(ownerId)
+        secondCoordinator.syncOnce(ownerId)
+
+        firstRepository.saveRecord(record(9, firstInstant.plusSeconds(3_600)))
+        secondRepository.saveRecord(record(2, firstInstant.plusSeconds(10)))
+        secondCoordinator.syncOnce(ownerId)
+        firstCoordinator.syncOnce(ownerId)
+        secondCoordinator.syncOnce(ownerId)
+
+        assertEquals(2, firstRepository.observeRecord(date).first()?.brewCount)
+        assertEquals(2, secondRepository.observeRecord(date).first()?.brewCount)
+        assertEquals(2, remote.fetch(ownerId).records.single().brewCount)
+    }
+
+    @Test
     fun offlineStatusPreventsNetworkAttemptAndReconnectFlushesPendingRecord() = runBlocking {
         val remote = FakeRemoteDataSource()
         val database = database()
@@ -266,6 +291,24 @@ class HandBrewSyncCoordinatorTest {
         jobs.forEach { it.cancel() }
     }
 
+    @Test
+    fun malformedCloudRecordReportsDataFailureWithoutRetryLoop() = runBlocking {
+        val remote = FakeRemoteDataSource(rejectedRecordCount = 1)
+        val database = database()
+        val manager = AccountSyncManager(
+            ownerId = ownerId,
+            coordinator = coordinator(database, remote),
+            productionConfigured = true,
+        )
+
+        manager.syncNow()
+
+        val failure = manager.status.value as SyncStatus.Failed
+        assertEquals(SyncFailureKind.Data, failure.kind)
+        assertTrue(failure.message.contains("其余记录已继续同步"))
+        assertEquals(2, remote.fetchCalls)
+    }
+
     private fun database(): DailyRecordDatabase {
         val context = ApplicationProvider.getApplicationContext<Context>()
         return Room.inMemoryDatabaseBuilder(context, DailyRecordDatabase::class.java)
@@ -305,6 +348,7 @@ class HandBrewSyncCoordinatorTest {
 private class FakeRemoteDataSource(
     private val failFirstObservation: Boolean = false,
     private val failFetchAttempts: Int = 0,
+    private val rejectedRecordCount: Int = 0,
 ) : HandBrewRemoteDataSource {
     private val mutex = Mutex()
     private val values = MutableStateFlow<Map<LocalDate, RemoteHandBrewRecord>>(emptyMap())
@@ -319,28 +363,41 @@ private class FakeRemoteDataSource(
         if (failFirstObservation && attempt == 1) {
             throw IOException("temporary listener failure")
         }
-        emitAll(values.map { RemoteSnapshot(it.values.toList(), fromCache = false) })
+        emitAll(
+            values.map {
+                RemoteSnapshot(
+                    records = it.values.toList(),
+                    fromCache = false,
+                    rejectedRecordCount = rejectedRecordCount,
+                )
+            },
+        )
     }
 
     override suspend fun fetch(ownerId: String): RemoteSnapshot {
         fetchCalls += 1
         if (fetchCalls <= failFetchAttempts) throw IOException("temporary fetch failure")
         fetchGate?.await()
-        return RemoteSnapshot(values.value.values.toList(), fromCache = false)
+        return RemoteSnapshot(
+            records = values.value.values.toList(),
+            fromCache = false,
+            rejectedRecordCount = rejectedRecordCount,
+        )
     }
 
     override suspend fun commit(ownerId: String, local: HandBrewRecordEntity): RemoteHandBrewRecord =
         mutex.withLock {
             val current = values.value[local.localDate]
-            if (current != null && !local.updatedAt.isAfter(current.clientUpdatedAt)) {
+            if (current != null && local.remoteRevision != current.revision) {
                 return@withLock current
             }
+            require(current != null || local.remoteRevision == 0L)
             val committed = RemoteHandBrewRecord(
                 id = current?.id ?: local.id,
                 localDate = local.localDate,
                 brewCount = local.brewCount,
                 createdAt = current?.createdAt ?: local.createdAt,
-                clientUpdatedAt = local.updatedAt,
+                clientUpdatedAt = maxOf(local.updatedAt, current?.createdAt ?: local.createdAt),
                 deleted = local.isDeleted,
                 revision = (current?.revision ?: 0) + 1,
             )

@@ -49,13 +49,16 @@ internal class AccountSyncManager(
                 }
                 .collect { snapshot ->
                     coordinator.applySnapshot(ownerId, snapshot)
+                    if (snapshot.rejectedRecordCount > 0) {
+                        mutableStatus.value = malformedRemoteRecordsFailure()
+                    }
                     if (!snapshot.fromCache && networkAvailable.value) {
                         if (coordinator.pendingCount(ownerId) > 0) {
                             // A fresh server snapshot also proves Firebase is reachable. This
                             // catches VPN/proxy recovery even when Android's network state did
                             // not change and flushes edits that remained safely in Room.
                             syncNow()
-                        } else {
+                        } else if (snapshot.rejectedRecordCount == 0) {
                             updateIdleStatus()
                         }
                     }
@@ -63,7 +66,11 @@ internal class AccountSyncManager(
         }
         val pendingJob = scope.launch {
             coordinator.observePendingCount(ownerId).collectLatest { count ->
-                if (networkAvailable.value && mutableStatus.value !is SyncStatus.Syncing) {
+                if (
+                    networkAvailable.value &&
+                    mutableStatus.value !is SyncStatus.Syncing &&
+                    mutableStatus.value !is SyncStatus.Failed
+                ) {
                     mutableStatus.value = if (count == 0) SyncStatus.UpToDate else SyncStatus.Pending(count)
                 }
             }
@@ -90,7 +97,9 @@ internal class AccountSyncManager(
             mutableStatus.value = SyncStatus.Syncing
             try {
                 val result = coordinator.syncOnce(ownerId)
-                mutableStatus.value = if (result.pending == 0) {
+                mutableStatus.value = if (result.rejectedRemoteRecords > 0) {
+                    malformedRemoteRecordsFailure()
+                } else if (result.pending == 0) {
                     SyncStatus.UpToDate
                 } else {
                     SyncStatus.Pending(result.pending)
@@ -113,6 +122,11 @@ internal class AccountSyncManager(
         mutableStatus.value = if (pending == 0) SyncStatus.UpToDate else SyncStatus.Pending(pending)
     }
 }
+
+private fun malformedRemoteRecordsFailure() = SyncStatus.Failed(
+    message = "部分云端记录格式异常，其余记录已继续同步",
+    kind = SyncFailureKind.Data,
+)
 
 private fun remoteRetryDelayMillis(attempt: Long): Long {
     val exponent = attempt.coerceAtMost(5).toInt()

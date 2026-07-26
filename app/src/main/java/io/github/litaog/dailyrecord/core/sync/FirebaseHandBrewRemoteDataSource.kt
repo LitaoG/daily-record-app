@@ -3,6 +3,7 @@ package io.github.litaog.dailyrecord.core.sync
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
 import io.github.litaog.dailyrecord.core.cloud.awaitResult
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
@@ -30,12 +31,7 @@ internal class FirebaseHandBrewRemoteDataSource(
         val registration = records(ownerId).addSnapshotListener { snapshot, error ->
             when {
                 error != null -> close(error)
-                snapshot != null -> runCatching {
-                    RemoteSnapshot(
-                        records = snapshot.documents.map { it.toRemoteRecord() },
-                        fromCache = snapshot.metadata.isFromCache,
-                    )
-                }.onSuccess(::trySend).onFailure(::close)
+                snapshot != null -> trySend(snapshot.toRemoteSnapshot())
             }
         }
         awaitClose { registration.remove() }
@@ -43,10 +39,7 @@ internal class FirebaseHandBrewRemoteDataSource(
 
     override suspend fun fetch(ownerId: String): RemoteSnapshot {
         val snapshot = records(ownerId).get(Source.SERVER).awaitResult()
-        return RemoteSnapshot(
-            records = snapshot.documents.map { it.toRemoteRecord() },
-            fromCache = snapshot.metadata.isFromCache,
-        )
+        return snapshot.toRemoteSnapshot()
     }
 
     override suspend fun commit(
@@ -62,12 +55,19 @@ internal class FirebaseHandBrewRemoteDataSource(
             } else {
                 null
             }
-            if (currentRemote != null && !local.updatedAt.isAfter(currentRemote.clientUpdatedAt)) {
+            if (currentRemote != null && local.remoteRevision != currentRemote.revision) {
                 return@runTransaction currentRemote
+            }
+            require(currentRemote != null || local.remoteRevision == 0L) {
+                "Cloud record disappeared after local revision ${local.remoteRevision}"
             }
             val revision = (current.getLong(FIELD_REVISION) ?: 0L) + 1L
             val stableId = current.getString(FIELD_ID) ?: local.id
             val stableCreatedAt = current.getLong(FIELD_CREATED_AT) ?: local.createdAt.toEpochMilli()
+            val committedUpdatedAt = maxOf(
+                local.updatedAt,
+                Instant.ofEpochMilli(stableCreatedAt),
+            )
             transaction.set(
                 reference,
                 mapOf(
@@ -75,7 +75,7 @@ internal class FirebaseHandBrewRemoteDataSource(
                     FIELD_LOCAL_DATE to local.localDate.toString(),
                     FIELD_BREW_COUNT to local.brewCount.toLong(),
                     FIELD_CREATED_AT to stableCreatedAt,
-                    FIELD_CLIENT_UPDATED_AT to local.updatedAt.toEpochMilli(),
+                    FIELD_CLIENT_UPDATED_AT to committedUpdatedAt.toEpochMilli(),
                     FIELD_DELETED to local.isDeleted,
                     FIELD_REVISION to revision,
                     FIELD_SCHEMA_VERSION to 1L,
@@ -87,7 +87,7 @@ internal class FirebaseHandBrewRemoteDataSource(
                 localDate = local.localDate,
                 brewCount = local.brewCount,
                 createdAt = Instant.ofEpochMilli(stableCreatedAt),
-                clientUpdatedAt = local.updatedAt,
+                clientUpdatedAt = committedUpdatedAt,
                 deleted = local.isDeleted,
                 revision = revision,
             )
@@ -103,12 +103,55 @@ internal class FirebaseHandBrewRemoteDataSource(
         documentId = id,
         values = requireNotNull(data) { "Cloud record has no data" },
     )
+
+    private fun QuerySnapshot.toRemoteSnapshot(): RemoteSnapshot {
+        val parsed = parseRemoteHandBrewRecords(
+            documents.map { document ->
+                document.id to document.data
+            },
+        )
+        return RemoteSnapshot(
+            records = parsed.records,
+            fromCache = metadata.isFromCache,
+            rejectedRecordCount = parsed.rejectedRecordCount,
+        )
+    }
+}
+
+internal class MalformedRemoteRecordException(
+    cause: Throwable,
+) : IllegalArgumentException("Cloud record is malformed", cause)
+
+internal data class ParsedRemoteHandBrewRecords(
+    val records: List<RemoteHandBrewRecord>,
+    val rejectedRecordCount: Int,
+)
+
+internal fun parseRemoteHandBrewRecords(
+    documents: List<Pair<String, Map<String, Any?>?>>,
+): ParsedRemoteHandBrewRecords {
+    var rejected = 0
+    val records = documents.mapNotNull { (documentId, values) ->
+        try {
+            parseRemoteHandBrewRecord(
+                documentId = documentId,
+                values = requireNotNull(values) { "Cloud record has no data" },
+            )
+        } catch (_: RuntimeException) {
+            rejected += 1
+            null
+        }
+    }
+    return ParsedRemoteHandBrewRecords(
+        records = records,
+        rejectedRecordCount = rejected,
+    )
 }
 
 internal fun parseRemoteHandBrewRecord(
     documentId: String,
     values: Map<String, Any?>,
-): RemoteHandBrewRecord {
+): RemoteHandBrewRecord = try {
     val dateText = requireNotNull(values[FIELD_LOCAL_DATE] as? String)
     require(documentId == dateText) { "Document id and localDate must match" }
     val count = requireNotNull(values[FIELD_BREW_COUNT] as? Long)
@@ -123,7 +166,7 @@ internal fun parseRemoteHandBrewRecord(
     require(updatedAtMillis in createdAtMillis..MAX_SUPPORTED_EPOCH_MILLIS) {
         "clientUpdatedAtMillis is out of range"
     }
-    return RemoteHandBrewRecord(
+    RemoteHandBrewRecord(
         id = requireNotNull(values[FIELD_ID] as? String),
         localDate = LocalDate.parse(dateText),
         brewCount = count.toInt(),
@@ -132,4 +175,8 @@ internal fun parseRemoteHandBrewRecord(
         deleted = requireNotNull(values[FIELD_DELETED] as? Boolean),
         revision = revision,
     )
+} catch (error: MalformedRemoteRecordException) {
+    throw error
+} catch (error: RuntimeException) {
+    throw MalformedRemoteRecordException(error)
 }

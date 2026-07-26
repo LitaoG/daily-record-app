@@ -65,6 +65,21 @@ class FirebaseHandBrewRemoteRecordParserTest {
         }
     }
 
+    @Test
+    fun isolatesMalformedRecordAndKeepsValidRecordsInSameSnapshot() {
+        val parsed = parseRemoteHandBrewRecords(
+            listOf(
+                DATE to validValues(),
+                "2026-07-19" to validValues(),
+                "2026-07-20" to null,
+            ),
+        )
+
+        assertEquals(1, parsed.records.size)
+        assertEquals(LocalDate.parse(DATE), parsed.records.single().localDate)
+        assertEquals(2, parsed.rejectedRecordCount)
+    }
+
     private fun validValues(
         createdAtMillis: Long = 1,
         updatedAtMillis: Long = createdAtMillis,

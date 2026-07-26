@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import io.github.litaog.dailyrecord.MainActivity
@@ -25,6 +26,12 @@ class MainActivityStateTest {
             composeRule.onAllNodesWithText("先在本机使用").fetchSemanticsNodes().size == 1
         }
         composeRule.onNodeWithText("先在本机使用").performClick()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule
+                .onAllNodesWithContentDescription("上个月")
+                .fetchSemanticsNodes()
+                .size == 1
+        }
         composeRule.onNodeWithContentDescription("上个月").performClick()
         composeRule.onNodeWithContentDescription("上个月").performClick()
         val historicalMonth = java.time.LocalDate.now().minusMonths(2)
