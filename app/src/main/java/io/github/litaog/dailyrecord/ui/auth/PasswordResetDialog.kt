@@ -212,11 +212,11 @@ internal fun passwordResetErrorMessage(error: Throwable): String {
 
 internal fun passwordResetErrorMessageFor(code: String, networkFailure: Boolean): String {
     return when (code) {
-        "ERROR_NETWORK_REQUEST_FAILED" -> "网络不可用，邮件尚未发送。请检查连接后重试。"
+        "ERROR_NETWORK_REQUEST_FAILED" -> "网络不可用，邮件尚未发送。请打开 VPN（梯子）后重试。"
         "ERROR_TOO_MANY_REQUESTS" -> "请求过于频繁，请稍后再试。"
         "ERROR_QUOTA_EXCEEDED" -> "今日发送额度已用完，请稍后再试。"
         else -> if (networkFailure) {
-            "网络不可用，邮件尚未发送。请检查连接后重试。"
+            "网络不可用，邮件尚未发送。请打开 VPN（梯子）后重试。"
         } else {
             "暂时无法发送重置邮件，请稍后重试。"
         }
