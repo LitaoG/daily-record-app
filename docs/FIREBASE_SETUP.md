@@ -6,7 +6,7 @@
 - Android 包名：`io.github.litaog.dailyrecord`
 - Authentication：仅启用 Email/Password
 - Cloud Firestore：Standard、Native、生产模式、`asia-east1`
-- Firestore 规则：仓库根目录 `firestore.rules`，已在生产控制台发布
+- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源；账号删除版本在合并后按下述命令发布并回读
 
 ## 密码重置邮件
 
@@ -72,7 +72,7 @@ adb shell am instrument -w `
 
 ## 发布前仍需完成
 
-- 配置正式 release keystore、SHA 指纹和 Play Console App Signing。
-- 接入并观察 App Check，再决定强制执行日期；调试构建使用官方 debug provider/token。
-- 建立隐私政策、账号和云数据删除流程、支持邮箱、预算/配额告警。
-- 在至少两台真实设备完成注册、离线编辑、重连、跨设备恢复和删除不复活回归。
+- 稳定 release keystore、证书指纹、GitHub tag 工作流、隐私说明和账号/云数据删除已建立；私钥和生产配置只存在于本机安全文件或 GitHub Actions Secrets。
+- App Check 评估结论：Play Integrity 可配置为支持 Play 外分发，但仍需要 Play Console 应用/Cloud 项目关联并关闭不适合侧载的默认识别要求。当前 GitHub-only 分发暂不接入、不强制；不能用 debug provider 保护生产 APK。
+- 本人和少量使用者继续通过日常真实使用反馈问题；不再设置固定人数的正式真人测试门槛。
+- 中国大陆无代理云恢复仍不承诺；本机模式不受影响。
