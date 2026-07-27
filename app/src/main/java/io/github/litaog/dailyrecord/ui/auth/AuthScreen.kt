@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.HandBrewTextAction
 import io.github.litaog.dailyrecord.ui.components.PlaneIcon
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.ui.theme.Ink500
 import io.github.litaog.dailyrecord.ui.theme.Ink700
 import io.github.litaog.dailyrecord.ui.theme.Ink900
@@ -108,7 +109,7 @@ internal fun AuthScreen(
             } else {
                 onRegister(email.trim(), password)
             }
-            result.exceptionOrNull()?.let { errorText = authErrorMessage(it) }
+            result.exceptionOrNull()?.let { errorText = authErrorMessage(it, mode) }
             busy = false
         }
     }
@@ -340,13 +341,27 @@ private fun validateCredentials(
     else -> null
 }
 
-private fun authErrorMessage(error: Throwable): String {
-    val code = (error as? com.google.firebase.auth.FirebaseAuthException)?.errorCode.orEmpty()
+internal fun authErrorMessage(error: Throwable, mode: AuthMode): String {
+    val code = generateSequence(error) { it.cause }
+        .filterIsInstance<com.google.firebase.auth.FirebaseAuthException>()
+        .firstOrNull()
+        ?.errorCode
+        .orEmpty()
+    if (error.isNetworkReachabilityFailure() || code == "ERROR_NETWORK_REQUEST_FAILED") {
+        return "连接云服务超时或网络不可用，请打开 VPN（梯子）后重试"
+    }
     return when (code) {
         "ERROR_EMAIL_ALREADY_IN_USE" -> "此邮箱已注册，请直接登录"
         "ERROR_WEAK_PASSWORD" -> "密码强度不足，请使用更长的密码"
-        "ERROR_NETWORK_REQUEST_FAILED" -> "网络不可用，请确认 VPN（梯子）已开启后重试"
         "ERROR_TOO_MANY_REQUESTS" -> "尝试次数过多，请稍后再试"
-        else -> "登录失败，请检查邮箱和密码后重试"
+        "ERROR_INVALID_CREDENTIAL",
+        "ERROR_INVALID_LOGIN_CREDENTIALS",
+        "ERROR_WRONG_PASSWORD",
+        "ERROR_USER_NOT_FOUND",
+        -> "邮箱或密码不正确，请检查后重试"
+        else -> when (mode) {
+            AuthMode.SignIn -> "暂时无法登录，请稍后重试"
+            AuthMode.Register -> "暂时无法创建账号，请稍后重试"
+        }
     }
 }

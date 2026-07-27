@@ -35,6 +35,26 @@ Android 只有在新旧 APK 的包名和签名证书一致、且新 APK 的 `ver
 
 keystore、密码、`keystore.properties`、`google-services.json`、APK 和 AAB 均不得提交。keystore 至少保留两份加密备份；如果自主管理的签名私钥丢失，已安装用户无法再覆盖升级。
 
+## 电脑丢失或重装后的恢复边界
+
+GitHub 保存完整源码、构建脚本、版本历史和 Release 工作流，但以下私密材料按设计不进入 Git：
+
+| 私密材料 | 只从 GitHub 克隆后的影响 | 恢复方式 |
+|---|---|---|
+| `app/google-services.json` | 工程仍可编译并运行纯本机模式，但生产登录与同步禁用 | 从 Firebase 控制台重新下载同一 Android App 的配置 |
+| release keystore | 本机不能生成可覆盖现有安装的正式 APK | 从自己保存的加密备份恢复原文件 |
+| keystore 密码与 alias | 即使仍有 keystore，本机也不能签名 | 从独立的密码管理器或加密备份恢复 |
+| `keystore.properties` | 只影响本机签名配置，不影响 Debug/本机模式 | 按本文件模板重新创建并指向恢复后的 keystore |
+
+当前 GitHub Actions Secrets 能继续让仓库工作流生成正式 APK，但 GitHub 不允许把 Secret 原值读取出来，因此它不能替代可导出的个人备份。如果本机备份、GitHub 仓库/Secrets 或账号访问同时丢失，原签名私钥无法重新生成，已安装用户将不能覆盖升级。
+
+最低备份要求：
+
+1. release keystore 做两份加密副本，存放在两个不同位置。
+2. 密码与 alias 存入密码管理器，不与 keystore 放在同一个未加密目录。
+3. 保存 Firebase 项目 ID、Android 包名和签名证书公开 SHA-256；`google-services.json` 本身可从控制台重新下载。
+4. 每次恢复后先用 `apksigner --print-certs` 核对下方证书指纹，再构建或发布。
+
 当前稳定 release 证书的公开 SHA-256 指纹为：
 
 ```text

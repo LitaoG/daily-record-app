@@ -1,6 +1,8 @@
 package io.github.litaog.dailyrecord.ui.auth
 
+import io.github.litaog.dailyrecord.core.cloud.InteractiveCloudTimeoutException
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PasswordResetErrorMessageTest {
@@ -25,6 +27,13 @@ class PasswordResetErrorMessageTest {
         assertEquals(
             "暂时无法发送重置邮件，请稍后重试。",
             passwordResetErrorMessageFor(code = "", networkFailure = false),
+        )
+    }
+
+    @Test
+    fun interactiveTimeoutUsesNetworkGuidance() {
+        assertTrue(
+            passwordResetErrorMessage(InteractiveCloudTimeoutException()).contains("VPN"),
         )
     }
 }

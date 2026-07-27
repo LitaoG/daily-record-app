@@ -21,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.assertTrue
 import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthException
 
 class AuthScreenTest {
     @get:Rule
@@ -59,6 +60,28 @@ class AuthScreenTest {
         ).assertIsDisplayed()
         composeRule.onNodeWithText("注册").performClick()
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
+    }
+
+    @Test
+    fun authErrorsDistinguishNetworkCredentialsAndRegistrationServiceFailures() {
+        assertEquals(
+            "连接云服务超时或网络不可用，请打开 VPN（梯子）后重试",
+            authErrorMessage(
+                IllegalStateException("wrapped", FirebaseNetworkException("offline")),
+                AuthMode.SignIn,
+            ),
+        )
+        assertEquals(
+            "邮箱或密码不正确，请检查后重试",
+            authErrorMessage(
+                FirebaseAuthException("ERROR_INVALID_CREDENTIAL", "invalid"),
+                AuthMode.SignIn,
+            ),
+        )
+        assertEquals(
+            "暂时无法创建账号，请稍后重试",
+            authErrorMessage(IllegalStateException("service failure"), AuthMode.Register),
+        )
     }
 
     @Test

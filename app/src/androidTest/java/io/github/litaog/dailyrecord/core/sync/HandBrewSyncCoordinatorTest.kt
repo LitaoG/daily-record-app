@@ -214,6 +214,27 @@ class HandBrewSyncCoordinatorTest {
     }
 
     @Test
+    fun manualSyncTimesOutAndReportsNetworkFailure() = runBlocking {
+        val remote = FakeRemoteDataSource().apply {
+            fetchGate = kotlinx.coroutines.CompletableDeferred()
+        }
+        val database = database()
+        val manager = AccountSyncManager(
+            ownerId = ownerId,
+            coordinator = coordinator(database, remote),
+            productionConfigured = true,
+            syncAttemptTimeoutMillis = 50L,
+        )
+
+        manager.syncNow()
+
+        val failure = manager.status.value as SyncStatus.Failed
+        assertEquals(SyncFailureKind.Network, failure.kind)
+        assertTrue(failure.message.contains("超过 5 秒"))
+        assertEquals(1, remote.fetchCalls)
+    }
+
+    @Test
     fun localRecordsCreatedAfterEarlierLoginMergeIntoNextSignedInAccount() = runBlocking {
         val remote = FakeRemoteDataSource()
         val database = database()

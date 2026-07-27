@@ -32,8 +32,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
-import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
+import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
@@ -207,7 +207,7 @@ private fun Throwable?.isMissingAccountError(): Boolean =
 internal fun passwordResetErrorMessage(error: Throwable): String {
     val causes = generateSequence(error) { it.cause }.toList()
     val code = causes.filterIsInstance<FirebaseAuthException>().firstOrNull()?.errorCode.orEmpty()
-    return passwordResetErrorMessageFor(code, causes.any { it is FirebaseNetworkException })
+    return passwordResetErrorMessageFor(code, error.isNetworkReachabilityFailure())
 }
 
 internal fun passwordResetErrorMessageFor(code: String, networkFailure: Boolean): String {
