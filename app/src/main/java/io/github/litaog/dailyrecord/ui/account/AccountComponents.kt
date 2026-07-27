@@ -192,7 +192,7 @@ internal fun LocalAccountTopBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 AccountTitle("本机记录无需 VPN（梯子），可离线使用")
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     HandBrewTextAction(
                         label = "诊断",
                         onClick = onDiagnostics,
