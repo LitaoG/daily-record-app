@@ -6,7 +6,7 @@
 - Android 包名：`io.github.litaog.dailyrecord`
 - Authentication：仅启用 Email/Password
 - Cloud Firestore：Standard、Native、生产模式、`asia-east1`
-- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源；账号删除版本在合并后按下述命令发布并回读
+- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源；账号删除版本已于 `v1.0.0-beta.1` 发布准备阶段部署到生产项目
 
 ## 密码重置邮件
 

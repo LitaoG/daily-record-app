@@ -3,10 +3,13 @@ package io.github.litaog.dailyrecord.core.sync
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestoreException
+import io.github.litaog.dailyrecord.core.cloud.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
+import io.github.litaog.dailyrecord.core.cloud.InteractiveCloudTimeoutException
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 
 internal class AccountSyncManager(
     private val ownerId: String,
@@ -24,6 +28,7 @@ internal class AccountSyncManager(
     private val productionConfigured: Boolean,
     private val networkAvailable: StateFlow<Boolean> = MutableStateFlow(true),
     private val remoteRetryDelayMillis: (Long) -> Long = ::remoteRetryDelayMillis,
+    private val syncAttemptTimeoutMillis: Long = INTERACTIVE_CLOUD_TIMEOUT_MILLIS,
 ) {
     private val mutex = Mutex()
     private val mutableStatus = MutableStateFlow<SyncStatus>(
@@ -95,29 +100,37 @@ internal class AccountSyncManager(
             publishStatus(SyncStatus.Offline)
             return
         }
-        mutex.withLock {
-            val previousStatus = mutableStatus.value
-            publishStatus(SyncStatus.Syncing)
-            try {
-                val result = coordinator.syncOnce(ownerId)
-                updatePendingDiagnostics(result.pending)
-                publishStatus(if (result.rejectedRemoteRecords > 0) {
-                    malformedRemoteRecordsFailure()
-                } else if (result.pending == 0) {
-                    SyncStatus.UpToDate
-                } else {
-                    SyncStatus.Pending(result.pending)
-                })
-            } catch (error: CancellationException) {
-                publishStatus(previousStatus)
-                throw error
-            } catch (error: Exception) {
-                publishStatus(if (networkAvailable.value) {
-                    error.toSyncFailure()
-                } else {
-                    SyncStatus.Offline
-                })
+        val previousStatus = mutableStatus.value
+        try {
+            withTimeout(syncAttemptTimeoutMillis) {
+                mutex.withLock {
+                    publishStatus(SyncStatus.Syncing)
+                    val result = coordinator.syncOnce(ownerId)
+                    updatePendingDiagnostics(result.pending)
+                    publishStatus(if (result.rejectedRemoteRecords > 0) {
+                        malformedRemoteRecordsFailure()
+                    } else if (result.pending == 0) {
+                        SyncStatus.UpToDate
+                    } else {
+                        SyncStatus.Pending(result.pending)
+                    })
+                }
             }
+        } catch (error: TimeoutCancellationException) {
+            publishStatus(if (networkAvailable.value) {
+                InteractiveCloudTimeoutException(error).toSyncFailure()
+            } else {
+                SyncStatus.Offline
+            })
+        } catch (error: CancellationException) {
+            publishStatus(previousStatus)
+            throw error
+        } catch (error: Exception) {
+            publishStatus(if (networkAvailable.value) {
+                error.toSyncFailure()
+            } else {
+                SyncStatus.Offline
+            })
         }
     }
 
@@ -173,7 +186,9 @@ internal fun Throwable.isNetworkRelatedSyncFailure(): Boolean =
 
 internal fun Throwable.syncFailureKind(): SyncFailureKind {
     val causes = generateSequence(this) { it.cause }.toList()
-    if (causes.any { it is FirebaseAuthException }) return SyncFailureKind.Authentication
+    causes.filterIsInstance<FirebaseAuthException>().firstOrNull()?.let { error ->
+        return syncFailureKindForFirebaseAuthCode(error.errorCode)
+    }
 
     causes.filterIsInstance<FirebaseFirestoreException>().firstOrNull()?.let { error ->
         return syncFailureKindForFirestoreCode(error.code.value())
@@ -187,6 +202,12 @@ internal fun Throwable.syncFailureKind(): SyncFailureKind {
         else ->
             SyncFailureKind.Unknown
     }
+}
+
+internal fun syncFailureKindForFirebaseAuthCode(code: String): SyncFailureKind = when (code) {
+    "ERROR_NETWORK_REQUEST_FAILED" -> SyncFailureKind.Network
+    "ERROR_TOO_MANY_REQUESTS" -> SyncFailureKind.Quota
+    else -> SyncFailureKind.Authentication
 }
 
 /**
@@ -206,7 +227,11 @@ internal fun syncFailureKindForFirestoreCode(code: Int): SyncFailureKind = when 
 private fun Throwable.toSyncFailure(): SyncStatus.Failed {
     val kind = syncFailureKind()
     val message = when (kind) {
-        SyncFailureKind.Network -> "网络连接异常，记录已保存在本机"
+        SyncFailureKind.Network -> if (this is InteractiveCloudTimeoutException) {
+            "连接云服务超过 5 秒，记录已保存在本机"
+        } else {
+            "网络连接异常，记录已保存在本机"
+        }
         SyncFailureKind.Authentication -> "登录状态已失效，记录已保存在本机"
         SyncFailureKind.Permission -> "账号暂无云端访问权限，记录已保存在本机"
         SyncFailureKind.Quota -> "云服务额度暂时受限，记录已保存在本机"

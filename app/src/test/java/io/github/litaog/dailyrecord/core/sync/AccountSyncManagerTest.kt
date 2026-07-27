@@ -75,6 +75,14 @@ class AccountSyncManagerTest {
     }
 
     @Test
+    fun firebaseAuthNetworkFailureIsNotMisclassifiedAsExpiredLogin() {
+        assertEquals(
+            SyncFailureKind.Network,
+            syncFailureKindForFirebaseAuthCode("ERROR_NETWORK_REQUEST_FAILED"),
+        )
+    }
+
+    @Test
     fun unknownFailureStopsAutomaticRetry() {
         assertFalse(IllegalArgumentException("malformed snapshot").isRetryableRemoteObservation())
     }

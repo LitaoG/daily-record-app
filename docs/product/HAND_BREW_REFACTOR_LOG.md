@@ -310,3 +310,11 @@
 - GitHub Actions Release 工作流 `30192069909` 完整通过：版本匹配、JVM 测试、Lint、签名 Release 构建、签名验证、SHA-256 生成、工作流产物上传和 Prerelease 发布均成功。
 - 从 GitHub Release 重新下载 APK 与校验文件独立复核：包名 `io.github.litaog.dailyrecord`、`versionCode = 2`、`versionName = 1.0.0-beta.1`，单一 RSA 4096 签名者与 APK Signature Scheme v2 均正确；远端 APK SHA-256 为 `6f63a91837caca10b6534cf00c24576502d10acf12bbbe2f5d13df1de3e976ce`。
 - 日常反馈 Bug 模板补充本机/登录模式、网络/VPN 状态和出现频率，并继续强制确认不提交邮箱、密码、token、具体日期次数或密钥。
+
+## 阶段 28：认证与手动同步快速失败
+
+- 登录、注册、密码重置和手动同步增加 5 秒产品级截止时间；同步截止时间覆盖互斥锁排队与 Firebase 请求。
+- VPN 未开启或 Firebase 不可达时，认证超时、直接网络异常和被包装的网络异常统一显示网络/VPN 提示，不再误报邮箱或密码错误。
+- 只有 Firebase 明确返回无效凭据、密码错误或用户不存在时才显示统一的邮箱/密码错误；注册未知错误使用注册专属文案。
+- 手动同步超时进入网络错误状态，记录继续安全保存在 Room；生命周期取消仍恢复原状态并向上传播。
+- 发布文档增加灾难恢复边界：GitHub 源码可恢复 Debug 与本机模式，Firebase 配置可重新下载，但稳定签名私钥与密码必须保留独立加密备份，GitHub Secrets 不能读取导出。

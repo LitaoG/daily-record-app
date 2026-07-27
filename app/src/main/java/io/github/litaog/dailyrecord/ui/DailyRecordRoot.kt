@@ -21,6 +21,7 @@ import io.github.litaog.dailyrecord.core.auth.AuthState
 import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
+import io.github.litaog.dailyrecord.core.cloud.runInteractiveCloudOperation
 import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.AccountSyncManager
@@ -71,13 +72,19 @@ internal fun DailyRecordRoot(
             AuthScreen(
                 productionConfigured = services.productionConfigured,
                 onSignIn = { email, password ->
-                    authOperation { services.authRepository.signIn(email, password) }
+                    runInteractiveCloudOperation {
+                        services.authRepository.signIn(email, password)
+                    }.map { Unit }
                 },
                 onRegister = { email, password ->
-                    authOperation { services.authRepository.register(email, password) }
+                    runInteractiveCloudOperation {
+                        services.authRepository.register(email, password)
+                    }.map { Unit }
                 },
                 onPasswordReset = { email ->
-                    authOperation { services.authRepository.sendPasswordResetEmail(email) }
+                    runInteractiveCloudOperation {
+                        services.authRepository.sendPasswordResetEmail(email)
+                    }.map { Unit }
                 },
                 onContinueOffline = {
                     localModePreference.setEnabled(true)
