@@ -1,12 +1,14 @@
 # Firebase 配置与运维
 
+最后复核：2026-07-28
+
 ## 已建立的生产资源
 
 - Firebase 项目：`daily-record-hand-brew`
 - Android 包名：`io.github.litaog.dailyrecord`
 - Authentication：仅启用 Email/Password
 - Cloud Firestore：Standard、Native、生产模式、`asia-east1`
-- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源；账号删除版本已于 `v1.0.0-beta.1` 发布准备阶段部署到生产项目
+- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源；包含账号删除权限的当前规则已于 2026-07-26 部署到生产项目
 
 ## 密码重置邮件
 
@@ -63,16 +65,16 @@ adb shell am instrument -w `
 
 当前开发网络中，Android 模拟器直连百度成功，但直连 `identitytoolkit.googleapis.com:443` 与 `firestore.googleapis.com:443` 超时；通过宿主机代理后，上述生产烟雾测试 1/1 通过。这证明生产配置与规则有效，也说明 Firebase 不能被视为“中国大陆无需代理可用”的发布后端。
 
-本地记录功能不受影响，登录也保持可选。若正式发行面向中国大陆普通网络，必须在发布前完成二选一并做两台真机验证：
+本地记录功能不受影响，登录也保持可选。若未来产品目标改为“中国大陆普通网络无需代理也能使用云功能”，必须另立迁移项目，在对外承诺前完成二选一并做两台真机验证：
 
 1. 明确产品只支持可访问 Google/Firebase 的网络环境；或
 2. 在现有 `AuthRepository`、`HandBrewRemoteDataSource` 接口后替换为大陆可达服务，并重新完成账户隔离、迁移和删除测试。
 
 没有完成该决策前，不得在商店文案中承诺中国大陆无代理跨设备恢复。
 
-## 发布前仍需完成
+## 当前运维边界与后续事项
 
-- 稳定 release keystore、证书指纹、GitHub tag 工作流、隐私说明和账号/云数据删除已建立；私钥和生产配置只存在于本机安全文件或 GitHub Actions Secrets。
+- 稳定 release keystore、证书指纹、GitHub tag 工作流、隐私说明和账号/云数据删除已经建立并用于 `v1.0.0-beta.1`；私钥和生产配置只存在于受控恢复镜像、本机安全文件或 GitHub Actions Secrets，不进入公开仓库。
 - App Check 评估结论：Play Integrity 可配置为支持 Play 外分发，但仍需要 Play Console 应用/Cloud 项目关联并关闭不适合侧载的默认识别要求。当前 GitHub-only 分发暂不接入、不强制；不能用 debug provider 保护生产 APK。
 - 本人和少量使用者继续通过日常真实使用反馈问题；不再设置固定人数的正式真人测试门槛。
-- 中国大陆无代理云恢复仍不承诺；本机模式不受影响。
+- 中国大陆无代理云恢复不属于当前承诺；本机模式不受影响。若未来要求无代理云功能，必须另立后端迁移项目。

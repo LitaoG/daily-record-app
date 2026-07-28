@@ -1,5 +1,7 @@
 # GitHub Release 发布与签名
 
+最后复核：2026-07-28
+
 本项目只通过 GitHub Releases 向本人和少量使用者提供签名 APK。首个候选版本为 `v1.0.0-beta.1`，对应 `versionCode = 2`。发布物不是 Debug APK。
 
 ## 版本规则

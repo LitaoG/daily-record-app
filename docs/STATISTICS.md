@@ -1,6 +1,8 @@
 # 手冲统计口径
 
-所有统计都来自 `hand_brew_records`，不在 UI 中二次推断。
+最后复核：2026-07-28
+
+所有统计都从 Repository 提供的 `hand_brew_records` 原始记录，通过 `ui.statistics` 中唯一的纯计算模型推导。DAO 不维护另一套汇总结果，避免两个统计实现漂移。
 
 ## 指标
 
