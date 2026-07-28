@@ -14,6 +14,12 @@ class StatisticsModelsTest {
     private val today = LocalDate.of(2026, 7, 17)
 
     @Test
+    fun summaryAverageUsesOnlyBrewDaysAndHandlesEmptyData() {
+        assertEquals(1.7, StatisticsSummary(128, 74).average, 0.05)
+        assertEquals(0.0, StatisticsSummary(0, 0).average, 0.0)
+    }
+
+    @Test
     fun weekDistinguishesExplicitZeroAndFutureDays() {
         val model = buildStatistics(
             period = StatisticsPeriod.Week,

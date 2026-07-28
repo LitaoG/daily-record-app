@@ -3,7 +3,6 @@ package io.github.litaog.dailyrecord.core.database
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
-import io.github.litaog.dailyrecord.core.model.HandBrewSummary
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -36,22 +35,6 @@ internal interface HandBrewRecordDao {
         startDate: LocalDate,
         endExclusive: LocalDate,
     ): Flow<List<HandBrewRecordEntity>>
-
-    @Query(
-        """
-        SELECT COALESCE(SUM(brew_count), 0) AS totalCount,
-               COALESCE(SUM(CASE WHEN brew_count > 0 THEN 1 ELSE 0 END), 0) AS brewDays
-        FROM hand_brew_records
-        WHERE owner_id = :ownerId
-          AND is_deleted = 0
-          AND local_date >= :startDate AND local_date < :endExclusive
-        """,
-    )
-    fun observeSummary(
-        ownerId: String,
-        startDate: LocalDate,
-        endExclusive: LocalDate,
-    ): Flow<HandBrewSummary>
 
     @Upsert
     suspend fun upsert(record: HandBrewRecordEntity)

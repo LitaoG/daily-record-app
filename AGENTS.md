@@ -4,7 +4,7 @@
 
 1. 阅读 `README.md`、`docs/PRODUCT.md`、`docs/ARCHITECTURE.md`、`docs/DATA_MODEL.md` 和 `docs/DECISIONS.md`。
 2. 检查当前分支与工作区，保护用户已有改动。
-3. 本产品只记录手冲；不得重新引入活动表、活动类型、健身或自定义活动抽象。
+3. 当前版本只记录手冲；不得提前引入活动表、活动类型、健身或自定义活动抽象。未来记录类型必须通过新 ADR 作为独立垂直模块加入。
 4. 统计口径以 `docs/STATISTICS.md` 为唯一事实来源。
 5. Room schema 变化必须提供显式迁移和设备测试。
 
@@ -12,7 +12,7 @@
 
 - 本地优先：无网络也能完成全部核心功能。
 - 单一事实来源：UI 只通过 Repository 读取 Room。
-- 专用建模：每天最多一条 `HandBrewRecord`，不使用 `Activity` 或 `MeasurementType`。
+- 专用建模：每天最多一条 `HandBrewRecord`，不使用 `Activity` 或 `MeasurementType`；未来模块不得污染现有手冲模型。
 - 精确统计：次数和天数必须可从原始记录重算。
 - 范围克制：未进入 `docs/PRODUCT.md` 的功能不实现、不提前抽象。
 - 可访问：颜色不是唯一状态编码，关键控件具备 TalkBack 描述。

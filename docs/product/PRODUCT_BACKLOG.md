@@ -2,7 +2,7 @@
 
 ## P0 数据基础
 
-- [x] 定义 `HandBrewRecord` 与 `HandBrewSummary`。
+- [x] 定义 `HandBrewRecord`，统计由原始记录统一推导。
 - [x] 删除活动、计量类型和通用状态模型。
 - [x] 建立 `hand_brew_records` schema v3、账号隔离、墓碑与迁移代码。
 - [x] 通过单元、Lint、编译和设备迁移测试。

@@ -5,7 +5,6 @@ import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.database.asEntity
 import io.github.litaog.dailyrecord.core.database.asExternalModel
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
-import io.github.litaog.dailyrecord.core.model.HandBrewSummary
 import java.time.LocalDate
 import java.time.Clock
 import java.time.Instant
@@ -32,14 +31,6 @@ internal class RoomHandBrewRecordRepository(
         return recordDao.observeForRange(ownerId, startDate, endExclusive).map { records ->
             records.map { it.asExternalModel() }
         }
-    }
-
-    override fun observeSummary(
-        startDate: LocalDate,
-        endExclusive: LocalDate,
-    ): Flow<HandBrewSummary> {
-        requireValidRange(startDate, endExclusive)
-        return recordDao.observeSummary(ownerId, startDate, endExclusive)
     }
 
     override suspend fun saveRecord(record: HandBrewRecord): HandBrewRecord {

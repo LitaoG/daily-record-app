@@ -89,12 +89,13 @@ class RoomHandBrewRecordRepositoryTest {
         val start = LocalDate.of(2026, 1, 1)
         val end = LocalDate.of(2027, 1, 1)
         val records = repository.observeRecords(start, end).first()
-        val summary = repository.observeSummary(start, end).first()
+        val totalCount = records.sumOf { it.brewCount.toLong() }
+        val brewDays = records.count { it.brewCount > 0 }
 
         assertEquals(74, records.size)
-        assertEquals(128L, summary.totalCount)
-        assertEquals(74, summary.brewDays)
-        assertEquals(1.7, summary.averagePerBrewDay, 0.05)
+        assertEquals(128L, totalCount)
+        assertEquals(74, brewDays)
+        assertEquals(1.7, totalCount.toDouble() / brewDays, 0.05)
         assertFalse(records.any { it.localDate.monthValue > 10 })
     }
 
@@ -104,9 +105,9 @@ class RoomHandBrewRecordRepositoryTest {
         repository.saveRecord(record("no-brew", start, 0))
         repository.saveRecord(record("brewed", start.plusDays(1), 2))
 
-        val summary = repository.observeSummary(start, start.plusMonths(1)).first()
-        assertEquals(2L, summary.totalCount)
-        assertEquals(1, summary.brewDays)
+        val records = repository.observeRecords(start, start.plusMonths(1)).first()
+        assertEquals(2L, records.sumOf { it.brewCount.toLong() })
+        assertEquals(1, records.count { it.brewCount > 0 })
     }
 
     @Test
@@ -114,9 +115,6 @@ class RoomHandBrewRecordRepositoryTest {
         val date = LocalDate.of(2026, 7, 16)
         assertThrows(IllegalArgumentException::class.java) {
             repository.observeRecords(date, date)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            repository.observeSummary(date, date.minusDays(1))
         }
     }
 

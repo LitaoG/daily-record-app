@@ -22,6 +22,7 @@ import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
 import io.github.litaog.dailyrecord.core.cloud.runInteractiveCloudOperation
+import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.AccountSyncManager
@@ -36,7 +37,6 @@ import io.github.litaog.dailyrecord.ui.auth.AuthScreen
 import io.github.litaog.dailyrecord.ui.diagnostics.createDiagnosticReport
 import io.github.litaog.dailyrecord.ui.theme.Paper50
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -206,7 +206,7 @@ private fun SignedInRoot(
             accountDeletionScope.launch {
                 deletionInProgress = true
                 activeSyncJobs.forEach { it.cancelAndJoin() }
-                val result = authOperation {
+                val result = runCatchingPreservingCancellation {
                     HandBrewSyncScheduler.cancelAndAwait(context)
                     deletionCoordinator.deleteAccount(
                         ownerId = ownerId,
@@ -233,13 +233,4 @@ private fun LoadingRoot() {
     ) {
         CircularProgressIndicator(color = Terracotta500)
     }
-}
-
-private suspend fun <T> authOperation(operation: suspend () -> T): Result<Unit> = try {
-    operation()
-    Result.success(Unit)
-} catch (error: CancellationException) {
-    throw error
-} catch (error: Exception) {
-    Result.failure(error)
 }

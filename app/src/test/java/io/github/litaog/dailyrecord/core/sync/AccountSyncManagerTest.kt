@@ -1,12 +1,41 @@
 package io.github.litaog.dailyrecord.core.sync
 
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AccountSyncManagerTest {
+    @Test
+    fun concurrentSyncTriggersShareTheInFlightAttempt() = runBlocking {
+        val operations = BlockingSyncOperations()
+        val manager = AccountSyncManager(
+            ownerId = "owner",
+            coordinator = operations,
+            productionConfigured = true,
+            syncAttemptTimeoutMillis = 1_000,
+        )
+
+        val first = launch { manager.syncNow() }
+        operations.started.await()
+        manager.syncNow()
+
+        assertEquals(1, operations.syncCalls.get())
+        assertEquals(SyncStatus.Syncing, manager.status.value)
+
+        operations.release.complete(Unit)
+        first.join()
+        assertEquals(SyncStatus.UpToDate, manager.status.value)
+    }
+
     @Test
     fun networkFailureIsRetryable() {
         assertTrue(IOException("temporary network failure").isRetryableRemoteObservation())
@@ -85,5 +114,26 @@ class AccountSyncManagerTest {
     @Test
     fun unknownFailureStopsAutomaticRetry() {
         assertFalse(IllegalArgumentException("malformed snapshot").isRetryableRemoteObservation())
+    }
+}
+
+private class BlockingSyncOperations : AccountSyncOperations {
+    val syncCalls = AtomicInteger()
+    val started = CompletableDeferred<Unit>()
+    val release = CompletableDeferred<Unit>()
+
+    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = emptyFlow()
+
+    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
+
+    override suspend fun pendingCount(ownerId: String): Int = 0
+
+    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int = 0
+
+    override suspend fun syncOnce(ownerId: String): SyncResult {
+        syncCalls.incrementAndGet()
+        started.complete(Unit)
+        release.await()
+        return SyncResult(uploaded = 0, downloaded = 0, pending = 0)
     }
 }
