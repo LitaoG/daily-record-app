@@ -1,24 +1,29 @@
 # 开发、测试与发布
 
+最后复核：2026-07-28
+
 ## 环境
 
 - Android Studio 稳定版与内置 JDK
 - Android SDK / Platform Tools
 - `minSdk 26`，`compileSdk` 与 `targetSdk` 由工程配置管理
-- 至少一台模拟器或真机
+- 至少一台专用 Android 测试模拟器；完整自动化设备套件不得连接日常使用的真机
 - 生产登录联调需要本机私有的 `app/google-services.json`
 - Firestore 规则测试需要 Node.js/pnpm；仓库已锁定依赖版本
 
-GitHub `main` 是当前事实来源；功能分支通过 Pull Request、自动化检查和审查后合并，不复制或压平提交。
+GitHub `main` 是当前事实来源；从最新 `main` 建立短生命周期分支，通过 Pull Request、自动化检查和审查后 squash 合并。
 
 ## 验证命令
 
 ```powershell
+pnpm test:docs
 pnpm test:release-metadata
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-parallel
 pnpm test:android-connected
 pnpm test:firestore-rules
 ```
+
+`test:docs` 会检查全部 Markdown 的本地链接与图片，并核对 README/产品契约中的发布版本、Android SDK 和 Room schema。修改版本、数据库或文档目录时必须同步通过。
 
 `assembleRelease` 需要仓库外的稳定签名配置和本机私有 `app/google-services.json`：
 
@@ -31,6 +36,8 @@ pnpm test:firestore-rules
 `test:android-connected` 会以 demo 项目启动隔离的 Authentication 与 Firestore 模拟器，运行完整设备测试后自动关闭。测试前保持 Android 模拟器的全局 HTTP 代理为空；若本地 Firebase 探针返回 `502` 或 Auth 超时，先运行 `adb shell settings list global | Select-String proxy` 检查是否残留 `global_http_proxy_host` / `global_http_proxy_port`。
 
 Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm test:android-connected:unix`。
+
+`test:android-connected` 会安装测试 APK、修改应用数据并执行账号/数据库流程，只能在可重置的模拟器上运行。运行前用 `adb devices -l` 确认列表中没有日常使用的实体手机；生产 Firebase 烟雾测试继续默认跳过。
 
 ## 必测范围
 
@@ -54,7 +61,7 @@ Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm te
 
 - 产品契约、代码、Figma 和测试一致。
 - 单元测试、Lint、Debug/签名 Release 构建、设备数据库/Compose 测试、覆盖升级和规则测试通过。
-- 全文审计没有活动管理、健身或未来活动扩展的有效承诺。
+- 全文审计没有把活动管理、健身或未来记录类型误写成当前功能；未来扩展只遵循 ADR-002 的独立垂直模块边界。
 - 本地提交说明变更、用户影响、验证结果和剩余风险。
 - 不包含 `google-services.json`、服务账号、真实数据库、APK/AAB 或账号口令。
 - 完成由自动化、模拟器运行证据和 GitHub 审查判定；不要求用户执行重复的人工验收清单。

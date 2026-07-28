@@ -1,96 +1,98 @@
-# 手冲日历（Android）
+# 手冲日历
 
-一个只记录手冲次数的 Android 日历应用。每天可以记录手冲次数，并按周、月、年和全部历史查看总次数、手冲天数与明细表。
+[![Android CI](https://github.com/LitaoG/daily-record-app/actions/workflows/android-ci.yml/badge.svg)](https://github.com/LitaoG/daily-record-app/actions/workflows/android-ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/LitaoG/daily-record-app?include_prereleases&label=release)](https://github.com/LitaoG/daily-record-app/releases)
+[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3F7D6B)](https://github.com/LitaoG/daily-record-app/releases)
+[![License](https://img.shields.io/github/license/LitaoG/daily-record-app)](LICENSE)
 
-当前版本已经完成仅手冲重构、历史年月快速跳转、Room 本地存储、邮箱密码账号、跨设备云恢复、账号/云数据删除，并已发布 [`v1.0.0-beta.1`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.1) GitHub Prerelease。仓库当前文件树、产品文档和界面不包含健身或其他活动模块；早期通用原型只存在于 Git 历史中。
+一个本地优先的 Android 手冲次数日历。无需登录即可记录；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。
 
-## 当前交付状态
+<p align="center">
+  <img src="docs/product/audit/2026-07-27-quick-runtime/06-calendar-after-spacing.png" alt="手冲日历月视图" width="31%">
+  <img src="docs/product/audit/2026-07-27-quick-runtime/03-record-editor.png" alt="日期记录页" width="31%">
+  <img src="docs/product/audit/2026-07-22-calendar-statistics/after/statistics-week-data.png" alt="手冲周统计" width="31%">
+</p>
 
-- Android 版本持续迭代，合并门禁由自动化测试、API 34 模拟器交互回归、截图对比、语义树检查和 GitHub CI 共同承担；本人和少量使用者的日常反馈用于发现后续问题，不设置固定人数、完成率或用时门槛。
-- 当前自动化基线：65 项 JVM 单元测试通过；API 34 隔离 Firebase Auth/Firestore 最终执行 69 次，其中 68 次通过、0 失败、1 项生产冒烟按设计跳过；Firestore 规则、Lint、R8 和签名 Release APK 均通过。
-- 当前月历只显示本月日期，年月与统计周期标题仍可点击快速跳转；周/月统计使用直接标注的分布卡，年/全部历史继续保留精确明细表。
-- 当前确认弹窗、日期跳转、账号、登录和错误反馈均使用统一的应用内纸感组件，不再露出默认 Material 确认框或文字按钮。
-- 顶部账号区域提供可复制、可分享的本机诊断摘要；摘要只含应用/设备/同步/数据库状态，不含邮箱、UID、手冲日期、次数、密码或原始异常。
-- 账号弹窗支持密码重验后永久删除本人云端记录与认证账号；本机记录默认转为离线记录，所有失败路径均不误报成功。
-- 稳定 release 证书的 versionCode 1→2 覆盖安装已在 API 34 验证，Room 记录保持；Android Studio Debug 版因证书不同需先同步后完成一次性重装。
-- 生产 Firestore 规则已发布；`v1.0.0-beta.1` 的签名 APK 与 SHA-256 校验文件由通过门禁的 GitHub Actions 工作流生成。
-- 视觉证据见 [2026-07-22 找回密码与同步可靠性审计](docs/product/audit/2026-07-22-password-reset-sync/README.md)、[应用内 UI 一致性审计](docs/product/audit/2026-07-22-native-ui/README.md)与[月历与统计审计](docs/product/audit/2026-07-22-calendar-statistics/README.md)，此前完整状态覆盖见 [2026-07-19 深度审计](docs/product/audit/2026-07-19-deep-ux/README.md)。
+## 已实现
 
-## P0 范围
+- 月历查看、相邻月份切换和 1970 年至今天的年月日快速跳转。
+- 每日次数加减、显式保存 `0` 次、清除记录和未保存返回确认。
+- 明确区分“未填写”“0 次”和正次数。
+- 周、月、年和全部历史的总次数、手冲天数、记录日均与明细。
+- Room 本地数据库；断网时记录、日历和统计照常使用。
+- 可选邮箱密码注册/登录、密码重置、跨设备恢复和离线待同步。
+- 同步错误分级、脱敏诊断摘要以及账号与本人云端数据永久删除。
+- TalkBack 语义、48dp 点击目标、200% 系统字体和应用内统一弹窗。
 
-- 月历查看与日期选择。
-- 当天手冲次数 `+1`、`-1`，并可显式保存 0 次或清除记录。
-- `count > 0` 表示当天手冲过，`count = 0` 表示明确没冲，没有记录表示尚未填写。
-- 总手冲次数、总手冲天数、记录日均次数。
-- 周、月、年、全部历史统计与精确明细表。
-- Room 本地数据库，完全离线可用。
-- 可选邮箱密码账号；登录后自动把本机记录合并到个人云端，并可在新手机恢复。
-- 登录页支持通过注册邮箱发送密码重置邮件；成功提示不泄露该邮箱是否已注册。
-- 同步状态、离线待上传、手动重试、删除墓碑和确定性冲突处理。
-- 账号弹窗支持二次确认和密码重验后删除本人云端记录与 Firebase 账号；本机记录默认保留为离线记录，也可明确选择一并删除。
+当前 P0 只包含手冲记录，不包含健身、提醒、目标、社交、广告或短信验证码。未来若增加其他记录类型，会作为独立垂直模块设计，不把 `HandBrewRecord` 改造成万能活动表。
 
-P0 不包含健身、喝水、学习、睡眠、跑步、自定义活动、短信验证码、提醒、社交、目标或付费功能。本项目不预建通用活动模型；未来若增加其他记录类型，将以独立垂直模块接入，不改写 `HandBrewRecord` 的业务含义。
+## 下载与安装
 
-## 技术基线
+当前公开版本是 [`v1.0.0-beta.1`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.1)，面向本人和少量使用者测试。
 
-- Kotlin、Jetpack Compose、Material 3
-- Coroutines、Flow、单向数据流
-- Room v3；唯一业务表为 `hand_brew_records`
-- Firebase Authentication（仅邮箱密码）、Cloud Firestore、WorkManager
-- `minSdk 26`，技术包名保持 `io.github.litaog.dailyrecord`
-
-## 从 GitHub Release 安装
-
-1. 只从本仓库 [GitHub Releases](https://github.com/LitaoG/daily-record-app/releases) 下载 `hand-brew-calendar-v*.apk` 和同名 `.sha256`；当前测试版是 [`v1.0.0-beta.1`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.1)。
-2. Windows PowerShell 校验：
+1. 从本仓库 [GitHub Releases](https://github.com/LitaoG/daily-record-app/releases) 下载 APK 和同名 `.sha256`。
+2. 在 Windows PowerShell 中校验：
 
    ```powershell
    Get-FileHash .\hand-brew-calendar-v1.0.0-beta.1.apk -Algorithm SHA256
    Get-Content .\hand-brew-calendar-v1.0.0-beta.1.apk.sha256
    ```
 
-3. 两边哈希一致后安装；Android 可能要求允许当前浏览器或文件管理器“安装未知应用”。
-4. 后续 GitHub Release 使用相同证书，可直接覆盖并保留 Room 数据。
+3. 确认哈希一致后安装；Android 可能要求允许当前浏览器或文件管理器“安装未知应用”。
 
-首次从 Android Studio Debug 版切换时，正式证书与 Debug 证书不同，不能直接覆盖。请先登录并确认显示“已同步”，再卸载 Debug 版、安装 Release APK并登录恢复；纯本机且未同步的数据不会跨卸载保留。
+后续 Release 使用同一份稳定证书，可覆盖安装并保留 Room 数据。Android Studio Debug 版使用不同证书，首次切换前应先登录并确认“已同步”，再卸载 Debug 版、安装 Release 并登录恢复；未同步的纯本机数据无法跨卸载保留。
 
-中国大陆普通网络下，本机记录、日历和统计无需 VPN（梯子）；注册、登录、密码重置、云同步和云端删除可能需要可访问 Firebase 的网络。
+> 中国大陆普通网络下，本机记录、日历和统计不需要 VPN（梯子）。注册、登录、密码重置、云同步和云端删除依赖 Firebase，可能需要可访问 Firebase 的网络。
+
+## 数据与隐私
+
+- 所有记录先写入本机 Room；登录不是核心功能的前置条件。
+- 云同步只在用户主动注册或登录后启用，并按 Firebase UID 隔离。
+- 应用不含广告、分析 SDK 或社交功能，不自动上传诊断日志。
+- Android 系统云备份已关闭；未同步的本机数据在卸载后无法恢复。
+- 账号弹窗可以永久删除本人云端记录与 Firebase 账号，并选择是否保留本机记录。
+
+完整说明见 [隐私说明](PRIVACY.md)、[同步与隐私](docs/SYNC_AND_PRIVACY.md)和[安全策略](SECURITY.md)。
+
+## 技术栈
+
+- Kotlin、Jetpack Compose、Material 3
+- Coroutines、Flow、单向数据流
+- Room v3、WorkManager
+- Firebase Authentication、Cloud Firestore
+- `minSdk 26`、`targetSdk 36`
+- Apache License 2.0
+
+## 开发与验证
+
+需要 Android Studio 内置 JDK、Android SDK、Node.js/pnpm，以及一台 API 34 Android 模拟器。自动化设备测试会修改应用数据，只能在测试模拟器上运行，不要连接日常使用的真机。
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm test:docs
+pnpm test:release-metadata
+.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-parallel
+pnpm test:firestore-rules
+pnpm test:android-connected
+```
+
+- Gradle 命令执行 JVM 测试、Lint 和 APK 编译，不会启动 Firebase 模拟器。
+- `test:docs` 检查本地链接、截图、版本、Android SDK 和 Room schema 是否与工程一致。
+- `test:firestore-rules` 会临时启动隔离的 Firestore 模拟器。
+- `test:android-connected` 会启动隔离的 Auth/Firestore 模拟器，并在已启动的 Android 测试模拟器上执行完整设备套件。
+- Release 签名、版本、tag 和覆盖升级流程见 [发布指南](docs/RELEASE.md)。
 
 ## 文档
+
+[文档中心](docs/README.md)区分“当前事实文档”和“历史审计证据”。常用入口：
 
 - [产品契约](docs/PRODUCT.md)
 - [界面与交互](docs/UI_UX.md)
 - [架构](docs/ARCHITECTURE.md)
 - [数据模型](docs/DATA_MODEL.md)
 - [统计口径](docs/STATISTICS.md)
-- [决策记录](docs/DECISIONS.md)
-- [路线图](docs/ROADMAP.md)
 - [开发与测试](docs/DEVELOPMENT.md)
-- [Firebase 配置](docs/FIREBASE_SETUP.md)
-- [同步与隐私](docs/SYNC_AND_PRIVACY.md)
-- [签名与 GitHub Release](docs/RELEASE.md)
-- [隐私说明](PRIVACY.md)
-- [交付与验证记录](docs/product/HAND_BREW_REFACTOR_LOG.md)
-- [产品交付索引](docs/product/README.md)
+- [路线图](docs/ROADMAP.md)
+- [决策记录](docs/DECISIONS.md)
 
-## 本地验证
-
-```powershell
-pnpm test:release-metadata
-.\gradlew.bat testDebugUnitTest lintDebug assembleDebugAndroidTest --no-parallel
-pnpm test:android-connected
-pnpm test:firestore-rules
-```
-
-第二条命令会自动启动隔离的 Firebase Auth/Firestore 模拟器，并在测试结束后关闭；同时需要一台已启动的 Android 模拟器或已连接真机。Android 模拟器应能通过标准宿主地址 `10.0.2.2` 访问本机，且不要残留会拦截本地端口的全局 HTTP 代理。
-
-如需纯命令行启动本机已有的 API 34 模拟器，可先查看 AVD 名称，再启动：
-
-```powershell
-& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -list-avds
-& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd Pixel_4_API_34 -no-snapshot-save
-```
-
-## 开源与安全
-
-项目使用 [Apache License 2.0](LICENSE)。`app/google-services.json` 不进入 Git；公开提交不得包含真实用户数据库、签名文件、测试账号口令或其他账号信息。
+公开仓库不包含 `app/google-services.json`、签名文件、密码、真实用户数据库、APK/AAB 或敏感日志。贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
