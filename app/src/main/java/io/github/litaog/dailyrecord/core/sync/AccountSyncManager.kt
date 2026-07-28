@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import io.github.litaog.dailyrecord.core.cloud.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
 import io.github.litaog.dailyrecord.core.cloud.InteractiveCloudTimeoutException
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -31,6 +32,7 @@ internal class AccountSyncManager(
     private val syncAttemptTimeoutMillis: Long = INTERACTIVE_CLOUD_TIMEOUT_MILLIS,
 ) {
     private val mutex = Mutex()
+    private val followUpSyncRequested = AtomicBoolean(false)
     private val mutableStatus = MutableStateFlow<SyncStatus>(
         if (productionConfigured) SyncStatus.Syncing else SyncStatus.NotConfigured,
     )
@@ -64,7 +66,7 @@ internal class AccountSyncManager(
                             // A fresh server snapshot also proves Firebase is reachable. This
                             // catches VPN/proxy recovery even when Android's network state did
                             // not change and flushes edits that remained safely in Room.
-                            syncNow()
+                            syncNow(queueIfBusy = true)
                         } else if (snapshot.rejectedRecordCount == 0) {
                             updateIdleStatus()
                         }
@@ -85,13 +87,15 @@ internal class AccountSyncManager(
         }
         val networkJob = scope.launch {
             networkAvailable.collectLatest { available ->
-                if (available) syncNow() else publishStatus(SyncStatus.Offline)
+                if (available) syncNow(queueIfBusy = true) else publishStatus(SyncStatus.Offline)
             }
         }
         return listOf(remoteJob, pendingJob, networkJob)
     }
 
-    suspend fun syncNow() {
+    suspend fun syncNow() = syncNow(queueIfBusy = false)
+
+    private suspend fun syncNow(queueIfBusy: Boolean) {
         if (!productionConfigured) {
             publishStatus(SyncStatus.NotConfigured)
             return
@@ -100,7 +104,25 @@ internal class AccountSyncManager(
             publishStatus(SyncStatus.Offline)
             return
         }
-        if (!mutex.tryLock()) return
+        if (!mutex.tryLock()) {
+            if (queueIfBusy) followUpSyncRequested.set(true)
+            return
+        }
+        try {
+            do {
+                followUpSyncRequested.set(false)
+                performSyncAttempt()
+            } while (
+                productionConfigured &&
+                networkAvailable.value &&
+                followUpSyncRequested.getAndSet(false)
+            )
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    private suspend fun performSyncAttempt() {
         val previousStatus = mutableStatus.value
         try {
             withTimeout(syncAttemptTimeoutMillis) {
@@ -130,8 +152,6 @@ internal class AccountSyncManager(
             } else {
                 SyncStatus.Offline
             })
-        } finally {
-            mutex.unlock()
         }
     }
 

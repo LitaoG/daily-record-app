@@ -40,7 +40,7 @@ class DiagnosticDialogTest {
 
         composeRule.onNodeWithTag("diagnostic_dialog").assertIsDisplayed()
         composeRule.onNodeWithTag("diagnostic_report").assertIsDisplayed()
-        composeRule.onNodeWithText("不包含邮箱、手冲日期、次数或密码").assertIsDisplayed()
+        composeRule.onNodeWithText("不包含邮箱、私密记录日期、次数或密码").assertIsDisplayed()
 
         composeRule.onNodeWithText("复制诊断信息").performClick()
         composeRule.onNodeWithText("诊断信息已复制").assertIsDisplayed()

@@ -125,7 +125,7 @@ internal fun AccountTopBar(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                AccountTitle("只记录手冲次数")
+                AccountTitle("记录每天的私密次数")
                 SyncStatusChip(
                     status = status,
                     onClick = onClick,
@@ -142,7 +142,7 @@ internal fun AccountTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AccountTitle("只记录手冲次数")
+                AccountTitle("记录每天的私密次数")
                 SyncStatusChip(status = status, onClick = onClick)
             }
         }
@@ -213,7 +213,7 @@ internal fun LocalAccountTopBar(
 private fun AccountTitle(subtitle: String) {
     Column {
         Text(
-            "手冲日历",
+            "私密日历",
             color = Ink900,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
@@ -263,7 +263,7 @@ internal fun AccountDialog(
     val failurePresentation = (status as? SyncStatus.Failed)?.kind?.presentation()
     HandBrewDialog(
         title = if (confirmSignOut) "确认退出登录？" else "账号与云同步",
-        subtitle = if (confirmSignOut) "云端数据会保留" else "换手机后仍可恢复手冲记录",
+        subtitle = if (confirmSignOut) "云端数据会保留" else "换手机后仍可恢复全部记录",
         testTag = "account_sync_dialog",
         onDismissRequest = onDismiss,
     ) {

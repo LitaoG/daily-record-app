@@ -17,9 +17,15 @@ class HandBrewSyncWorker(
         val ownerId = services.currentUserId() ?: return Result.success()
         val database = DailyRecordDatabase.create(applicationContext)
         return try {
-            val result = HandBrewSyncCoordinator(
-                store = RoomHandBrewSyncStore(database),
-                remote = services.remoteDataSource,
+            val result = CombinedSyncCoordinator(
+                handBrew = HandBrewSyncCoordinator(
+                    store = RoomHandBrewSyncStore(database),
+                    remote = services.remoteDataSource,
+                ),
+                sex = SexSyncCoordinator(
+                    store = RoomSexSyncStore(database),
+                    remote = services.sexRemoteDataSource,
+                ),
             ).syncOnce(ownerId)
             if (result.pending == 0) Result.success() else Result.retry()
         } catch (error: CancellationException) {

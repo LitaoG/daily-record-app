@@ -8,7 +8,7 @@ import androidx.compose.runtime.saveable.listSaver
  *
  * Remote updates replace a clean draft, but never overwrite an in-progress local edit.
  */
-internal data class BrewCountDraft(
+internal data class CountDraft(
     val count: Int = 0,
     val baseline: Int = 0,
     val initialized: Boolean = false,
@@ -21,7 +21,7 @@ internal data class BrewCountDraft(
     val hasChanges: Boolean
         get() = initialized && count != baseline
 
-    fun reconcile(latestCount: Int): BrewCountDraft {
+    fun reconcile(latestCount: Int): CountDraft {
         require(latestCount >= 0) { "Latest count must be non-negative." }
         return copy(
             count = if (!initialized || !hasChanges) latestCount else count,
@@ -30,16 +30,16 @@ internal data class BrewCountDraft(
         )
     }
 
-    fun decrease(): BrewCountDraft = copy(count = (count - 1).coerceAtLeast(0))
+    fun decrease(): CountDraft = copy(count = (count - 1).coerceAtLeast(0))
 
-    fun increase(): BrewCountDraft =
+    fun increase(): CountDraft =
         if (count == Int.MAX_VALUE) this else copy(count = count + 1)
 
     companion object {
-        val Saver: Saver<BrewCountDraft, Any> = listSaver(
+        val Saver: Saver<CountDraft, Any> = listSaver(
             save = { listOf(it.count, it.baseline, it.initialized) },
             restore = {
-                BrewCountDraft(
+                CountDraft(
                     count = it[0] as Int,
                     baseline = it[1] as Int,
                     initialized = it[2] as Boolean,

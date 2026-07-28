@@ -37,10 +37,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.ui.DailyCountEntry
+import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
+import io.github.litaog.dailyrecord.ui.RecordModule
+import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
+import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.MetricCard
 import io.github.litaog.dailyrecord.ui.components.PeriodTabs
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.components.StatisticRow
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.navigation.nextPeriodAnchor
@@ -65,12 +71,41 @@ fun StatisticsScreen(
     onOpenDatePicker: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenCalendar: () -> Unit = {},
+) = DailyCountStatisticsScreen(
+    today = today,
+    anchorDate = anchorDate,
+    earliestDate = earliestDate,
+    records = records.map(HandBrewRecord::asDailyCountEntry),
+    moduleSpec = HandBrewModuleSpec,
+    selectedModule = RecordModule.HandBrew,
+    availableModules = listOf(HandBrewModuleSpec),
+    onModuleSelected = {},
+    onAnchorDateChanged = onAnchorDateChanged,
+    onOpenDatePicker = onOpenDatePicker,
+    modifier = modifier,
+    onOpenCalendar = onOpenCalendar,
+)
+
+@Composable
+internal fun DailyCountStatisticsScreen(
+    today: LocalDate,
+    anchorDate: LocalDate,
+    earliestDate: LocalDate,
+    records: List<DailyCountEntry>,
+    moduleSpec: RecordModuleUiSpec,
+    selectedModule: RecordModule,
+    availableModules: List<RecordModuleUiSpec>,
+    onModuleSelected: (RecordModule) -> Unit,
+    onAnchorDateChanged: (LocalDate) -> Unit,
+    onOpenDatePicker: () -> Unit,
+    modifier: Modifier = Modifier,
+    onOpenCalendar: () -> Unit = {},
 ) {
     var periodName by rememberSaveable { mutableStateOf(StatisticsPeriod.Week.name) }
     val period = StatisticsPeriod.entries.firstOrNull { it.name == periodName }
         ?: StatisticsPeriod.Week
     val model = remember(period, anchorDate, today, records) {
-        buildStatistics(period, anchorDate, today, records)
+        buildDailyCountStatistics(period, anchorDate, today, records)
     }
     val useHorizontalMetrics = LocalDensity.current.fontScale < 1.4f
 
@@ -79,6 +114,13 @@ fun StatisticsScreen(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 15.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        item {
+            RecordModuleSelector(
+                selected = selectedModule,
+                specs = availableModules,
+                onSelected = onModuleSelected,
+            )
+        }
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -93,7 +135,7 @@ fun StatisticsScreen(
                         .border(1.dp, Neutral300, CircleShape)
                         .padding(horizontal = 12.dp, vertical = 7.dp),
                 ) {
-                    Text("手冲", color = Terracotta500, style = MaterialTheme.typography.labelMedium)
+                    Text(moduleSpec.label, color = Terracotta500, style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
@@ -120,14 +162,16 @@ fun StatisticsScreen(
                     period = period,
                     summary = model.summary,
                     horizontal = useHorizontalMetrics,
+                    moduleLabel = moduleSpec.label,
+                    daysLabel = moduleSpec.daysLabel,
                 )
             } else if (useHorizontalMetrics) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
-                    MetricCard("手冲总次数", model.summary.totalCount.toString(), "次", Modifier.weight(1f))
-                    MetricCard("手冲天数", model.summary.brewDays.toString(), "天", Modifier.weight(1f))
+                    MetricCard(moduleSpec.totalLabel, model.summary.totalCount.toString(), "次", Modifier.weight(1f))
+                    MetricCard(moduleSpec.daysLabel, model.summary.recordedDays.toString(), "天", Modifier.weight(1f))
                     MetricCard(
                         "记录日均",
                         String.format(Locale.US, "%.1f", model.summary.average),
@@ -137,8 +181,8 @@ fun StatisticsScreen(
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MetricCard("手冲总次数", model.summary.totalCount.toString(), "次", Modifier.fillMaxWidth())
-                    MetricCard("手冲天数", model.summary.brewDays.toString(), "天", Modifier.fillMaxWidth())
+                    MetricCard(moduleSpec.totalLabel, model.summary.totalCount.toString(), "次", Modifier.fillMaxWidth())
+                    MetricCard(moduleSpec.daysLabel, model.summary.recordedDays.toString(), "天", Modifier.fillMaxWidth())
                     MetricCard(
                         "记录日均",
                         String.format(Locale.US, "%.1f", model.summary.average),
@@ -149,7 +193,7 @@ fun StatisticsScreen(
             }
         }
         if (model.details.isEmpty()) {
-            item { EmptyStatistics(onOpenCalendar) }
+            item { EmptyStatistics(moduleSpec.label, onOpenCalendar) }
         } else {
             when (period) {
                 StatisticsPeriod.Week -> item { WeekDistributionCard(model.details) }
@@ -312,7 +356,7 @@ private fun PeriodArrow(
 }
 
 @Composable
-private fun EmptyStatistics(onOpenCalendar: () -> Unit) {
+private fun EmptyStatistics(moduleLabel: String, onOpenCalendar: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -322,7 +366,7 @@ private fun EmptyStatistics(onOpenCalendar: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            "还没有可统计的手冲记录",
+            "还没有可统计的${moduleLabel}记录",
             color = Ink900,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,

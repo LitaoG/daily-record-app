@@ -11,17 +11,19 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(
     entities = [
         HandBrewRecordEntity::class,
+        SexRecordEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
 internal abstract class DailyRecordDatabase : RoomDatabase() {
     abstract fun handBrewRecordDao(): HandBrewRecordDao
+    abstract fun sexRecordDao(): SexRecordDao
 
     companion object {
         const val DATABASE_NAME = "daily-record.db"
-        const val SCHEMA_VERSION = 3
+        const val SCHEMA_VERSION = 4
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -110,7 +112,40 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `sex_records` (
+                        `id` TEXT NOT NULL,
+                        `local_date` TEXT NOT NULL,
+                        `owner_id` TEXT NOT NULL DEFAULT '__local__',
+                        `sex_count` INTEGER NOT NULL DEFAULT 0,
+                        `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        `is_deleted` INTEGER NOT NULL DEFAULT 0,
+                        `sync_state` TEXT NOT NULL DEFAULT 'PENDING',
+                        `remote_revision` INTEGER NOT NULL DEFAULT 0,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_sex_records_owner_id_local_date` " +
+                        "ON `sex_records` (`owner_id`, `local_date`)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_sex_records_owner_id_sync_state` " +
+                        "ON `sex_records` (`owner_id`, `sync_state`)",
+                )
+            }
+        }
+
+        val MIGRATIONS: Array<Migration> = arrayOf(
+            MIGRATION_1_2,
+            MIGRATION_2_3,
+            MIGRATION_3_4,
+        )
 
         fun create(context: Context): DailyRecordDatabase = Room.databaseBuilder(
             context.applicationContext,

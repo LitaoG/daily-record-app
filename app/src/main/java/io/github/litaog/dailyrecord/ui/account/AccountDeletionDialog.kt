@@ -95,7 +95,7 @@ internal fun AccountDeletionDialog(
     ) {
         if (step == AccountDeletionStep.Warning) {
             Text(
-                "继续后会先验证密码，再删除该账号的全部云端手冲记录和登录账号。",
+                "继续后会先验证密码，再删除该账号的全部云端手冲、做爱记录和登录账号。",
                 color = Ink700,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 18.dp),

@@ -4,7 +4,7 @@
 
 ## 目标
 
-- 专注单一手冲记录，不建立通用活动框架。
+- 专注手冲与做爱两个固定、独立的垂直模块，不建立通用活动框架。
 - 离线可用，记录反馈及时。
 - Room 是唯一业务事实来源。
 - 账号和云端是可选恢复通道，不阻塞本地记录。
@@ -14,9 +14,13 @@
 
 ```mermaid
 flowchart LR
-    UI[Compose HandBrewApp] --> REPO[HandBrewRecordRepository]
-    REPO --> ROOM[Room hand_brew_records]
+    UI[Compose 私密日历] --> ROUTE[强类型 UI 模块适配器]
+    ROUTE --> BREW[HandBrewRecordRepository]
+    ROUTE --> SEX[SexRecordRepository]
+    BREW --> ROOM[Room hand_brew_records]
+    SEX --> ROOM2[Room sex_records]
     ROOM --> FLOW[Flow]
+    ROOM2 --> FLOW
     FLOW --> UI
     AUTH[Firebase Email/Password] --> SYNC[AccountSyncManager]
     ROOM <--> SYNC
@@ -24,18 +28,18 @@ flowchart LR
     WORK[WorkManager connected retry] --> SYNC
 ```
 
-UI 不直接访问 DAO 或 Firestore。`HandBrewApp` 只订阅 Repository 暴露的 Room Flow；保存和清除先落 Room，再由同步协调器异步上传。Repository 负责同日 upsert、单调修改时间、范围校验和映射；DAO 负责账号隔离、日期范围、墓碑和待同步查询。Firestore 快照也必须先合并进 Room，UI 不读取远端缓存。当前 UI 状态使用 Compose 可保存状态；只有状态复杂度证明需要时才引入 ViewModel。
+UI 不直接访问 DAO 或 Firestore。UI 适配器只把强类型的 `HandBrewRecord` / `SexRecord` 投影为共享日期次数组件；保存时仍回到对应 Repository。保存和清除先落 Room，再由组合协调器驱动两个独立同步链路。Firestore 快照也必须先合并进各自 Room 表，UI 不读取远端缓存。
 
-用户明确选择的本机模式使用一个专用 SharedPreferences 布尔值持久化，避免冷启动反复要求选择登录；它不存业务记录、邮箱或密码。Firebase 已登录状态仍以 Authentication 为准。
+用户明确选择的本机模式和上次选择的记录模块分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。Firebase 已登录状态仍以 Authentication 为准。
 
 ## 包结构
 
 ```text
 app
 └─ io.github.litaog.dailyrecord
-   ├─ core:model       HandBrewRecord
-   ├─ core:database    Room entity / DAO / migration
-   ├─ core:data        repository interface / implementation
+   ├─ core:model       HandBrewRecord / SexRecord
+   ├─ core:database    two independent entities / DAOs / migration
+   ├─ core:data        two independent repositories
    ├─ core:auth        email/password and reset-email boundary
    ├─ core:cloud       Firebase bootstrap
    ├─ core:sync        remote source / coordinator / worker
@@ -51,10 +55,10 @@ app
 
 ## 功能演进边界
 
-- 当前运行时只有手冲垂直切片：`HandBrewRecord`、对应 Repository、统计规则和 Firestore 路径保持专用语义。
+- 当前运行时有手冲与做爱两个垂直切片；实体、表、DAO、Repository、远端字段和 Firestore 路径保持专用语义。
 - 账号外壳、日期导航、主题、可取消操作结果和基础反馈等语义一致的能力可以复用。
-- 未来新增记录类型时，先建立 ADR，再新增自己的领域实体、Repository、统计计算、同步路径和迁移测试；不向 `HandBrewRecord` 塞活动 ID，也不建立预判需求的万能字段。
-- 只有两个真实模块出现相同实现并经过验证后，才提取共享接口或物理 Gradle 模块。
+- 两个真实模块已证明相同的日期导航、次数编辑、统计纯函数和冲突流程由强类型 UI 适配器与 `DailyCountSyncEngine` 共享。
+- 未来新增记录类型时，先建立 ADR，再新增自己的领域实体、Repository、统计计算、同步路径和迁移测试；不向既有记录塞活动 ID，也不建立万能字段。
 
 ## 日期规则
 
@@ -65,13 +69,14 @@ app
 
 ## 数据库演进
 
-Room 当前版本为 3。v1→v2 只提取名称为“手冲”或旧飞机图标标识的记录；旧表改名为 `legacy_*_v1` 保留作恢复证据。v2→v3 为每条记录增加账号所有者、墓碑、同步状态和远端修订号；旧记录迁到 `__local__` 本机空间并标记为待同步。运行时代码不读取 legacy 表。
+Room 当前版本为 4。v1→v2 只提取名称为“手冲”或旧飞机图标标识的记录；旧表改名为 `legacy_*_v1` 保留作恢复证据。v2→v3 为手冲记录增加账号所有者、墓碑、同步状态和远端修订号。v3→v4 非破坏地创建空的 `sex_records`，不改写任何手冲行。运行时代码不读取 legacy 表。
 
 禁止 destructive migration。
 
 ## 同步边界
 
-- Firestore 路径固定为 `/users/{uid}/handBrewRecords/{YYYY-MM-DD}`。
+- Firestore 路径分别固定为 `/users/{uid}/handBrewRecords/{YYYY-MM-DD}` 与 `/users/{uid}/sexRecords/{YYYY-MM-DD}`。
+- `CombinedSyncCoordinator` 只聚合账号状态、待同步数量和后台触发；每个模块仍使用自己的 Store、RemoteDataSource 和映射。
 - 远端不能直接覆盖本地待同步版本；提交确认也必须匹配发起提交的本地版本。
 - 删除只写墓碑，不允许客户端物理删除。
 - 新登录先在单个 Room 事务中把 `__local__` 记录按日期合并到账号空间，再开始任何 Firestore 请求；因此云端不可达时本机数据仍立即可见且保持 `PENDING`。

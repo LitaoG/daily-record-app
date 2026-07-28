@@ -53,7 +53,7 @@ internal fun DiagnosticDialog(
 
     HandBrewDialog(
         title = "本机诊断信息",
-        subtitle = "不包含邮箱、手冲日期、次数或密码",
+        subtitle = "不包含邮箱、私密记录日期、次数或密码",
         testTag = "diagnostic_dialog",
         onDismissRequest = onDismiss,
     ) {
@@ -119,13 +119,13 @@ internal fun DiagnosticDialog(
 
 private fun copyReport(context: Context, report: String): Boolean = runCatching {
     val clipboard = context.getSystemService(ClipboardManager::class.java)
-    clipboard.setPrimaryClip(ClipData.newPlainText("手冲日历诊断信息", report))
+    clipboard.setPrimaryClip(ClipData.newPlainText("私密日历诊断信息", report))
 }.isSuccess
 
 private fun shareReport(context: Context, report: String): Boolean = runCatching {
     val shareIntent = Intent(Intent.ACTION_SEND)
         .setType("text/plain")
-        .putExtra(Intent.EXTRA_SUBJECT, "手冲日历诊断信息")
+        .putExtra(Intent.EXTRA_SUBJECT, "私密日历诊断信息")
         .putExtra(Intent.EXTRA_TEXT, report)
     context.startActivity(
         Intent.createChooser(shareIntent, "分享诊断信息")

@@ -13,8 +13,19 @@ internal data class RemoteHandBrewRecord(
     val revision: Long,
 )
 
+internal data class RemoteSexRecord(
+    val id: String,
+    val localDate: LocalDate,
+    val sexCount: Int,
+    val createdAt: Instant,
+    val clientUpdatedAt: Instant,
+    val deleted: Boolean,
+    val revision: Long,
+)
+
 internal data class RemoteSnapshot(
-    val records: List<RemoteHandBrewRecord>,
+    val records: List<RemoteHandBrewRecord> = emptyList(),
+    val sexRecords: List<RemoteSexRecord> = emptyList(),
     val fromCache: Boolean,
     val rejectedRecordCount: Int = 0,
 )

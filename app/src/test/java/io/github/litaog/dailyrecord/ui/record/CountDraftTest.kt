@@ -6,10 +6,10 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class BrewCountDraftTest {
+class CountDraftTest {
     @Test
     fun firstRoomValueInitializesDraftAndBaseline() {
-        val draft = BrewCountDraft().reconcile(2)
+        val draft = CountDraft().reconcile(2)
 
         assertEquals(2, draft.count)
         assertEquals(2, draft.baseline)
@@ -19,7 +19,7 @@ class BrewCountDraftTest {
 
     @Test
     fun cleanDraftFollowsNewRoomValue() {
-        val draft = BrewCountDraft().reconcile(2).reconcile(4)
+        val draft = CountDraft().reconcile(2).reconcile(4)
 
         assertEquals(4, draft.count)
         assertEquals(4, draft.baseline)
@@ -28,7 +28,7 @@ class BrewCountDraftTest {
 
     @Test
     fun dirtyDraftSurvivesRemoteUpdate() {
-        val draft = BrewCountDraft().reconcile(2).increase().reconcile(5)
+        val draft = CountDraft().reconcile(2).increase().reconcile(5)
 
         assertEquals(3, draft.count)
         assertEquals(5, draft.baseline)
@@ -37,7 +37,7 @@ class BrewCountDraftTest {
 
     @Test
     fun matchingRemoteUpdateMakesDraftClean() {
-        val draft = BrewCountDraft().reconcile(2).increase().reconcile(3)
+        val draft = CountDraft().reconcile(2).increase().reconcile(3)
 
         assertEquals(3, draft.count)
         assertEquals(3, draft.baseline)
@@ -46,9 +46,9 @@ class BrewCountDraftTest {
 
     @Test
     fun countNeverUnderflowsOrOverflows() {
-        assertEquals(0, BrewCountDraft().decrease().count)
+        assertEquals(0, CountDraft().decrease().count)
 
-        val maximum = BrewCountDraft(count = Int.MAX_VALUE)
+        val maximum = CountDraft(count = Int.MAX_VALUE)
         assertSame(maximum, maximum.increase())
     }
 }

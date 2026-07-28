@@ -36,7 +36,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.ui.DailyCountEntry
+import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
+import io.github.litaog.dailyrecord.ui.RecordModule
+import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
+import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
+import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.theme.Ink500
 import io.github.litaog.dailyrecord.ui.theme.Ink700
 import io.github.litaog.dailyrecord.ui.theme.Ink900
@@ -63,11 +69,46 @@ fun CalendarScreen(
     onToday: () -> Unit,
     onOpenDatePicker: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
+) = DailyCountCalendarScreen(
+    month = month,
+    focusedDate = focusedDate,
+    today = today,
+    records = records.map(HandBrewRecord::asDailyCountEntry),
+    moduleSpec = HandBrewModuleSpec,
+    selectedModule = RecordModule.HandBrew,
+    availableModules = listOf(HandBrewModuleSpec),
+    modifier = modifier,
+    earliestMonth = earliestMonth,
+    onModuleSelected = {},
+    onPreviousMonth = onPreviousMonth,
+    onNextMonth = onNextMonth,
+    onToday = onToday,
+    onOpenDatePicker = onOpenDatePicker,
+    onDateSelected = onDateSelected,
+)
+
+@Composable
+internal fun DailyCountCalendarScreen(
+    month: YearMonth,
+    focusedDate: LocalDate,
+    today: LocalDate,
+    records: List<DailyCountEntry>,
+    moduleSpec: RecordModuleUiSpec,
+    selectedModule: RecordModule,
+    availableModules: List<RecordModuleUiSpec>,
+    modifier: Modifier = Modifier,
+    earliestMonth: YearMonth = YearMonth.of(1970, 1),
+    onModuleSelected: (RecordModule) -> Unit,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onToday: () -> Unit,
+    onOpenDatePicker: () -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
 ) {
     val monthRecords = records.filter { YearMonth.from(it.localDate) == month }
     val recordsByDate = monthRecords.associateBy { it.localDate }
-    val totalCount = monthRecords.sumOf { it.brewCount.toLong() }
-    val brewDays = monthRecords.count { it.brewCount > 0 }
+    val totalCount = monthRecords.sumOf { it.count.toLong() }
+    val recordedDays = monthRecords.count { it.count > 0 }
     val first = month.atDay(1)
     val leadingEmptyCells = first.dayOfWeek.value - 1
     val visibleCellCount = ((leadingEmptyCells + month.lengthOfMonth() + 6) / 7) * 7
@@ -89,6 +130,11 @@ fun CalendarScreen(
             .padding(horizontal = 15.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        RecordModuleSelector(
+            selected = selectedModule,
+            specs = availableModules,
+            onSelected = onModuleSelected,
+        )
         MonthHeader(
             month = month,
             canGoPrevious = canGoPrevious,
@@ -108,9 +154,9 @@ fun CalendarScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("本月手冲", color = Ink900, style = MaterialTheme.typography.labelMedium)
+            Text(moduleSpec.monthlyLabel, color = Ink900, style = MaterialTheme.typography.labelMedium)
             Text(
-                "$totalCount 次 · $brewDays 天",
+                "$totalCount 次 · $recordedDays 天",
                 color = Ink900,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
@@ -147,6 +193,7 @@ fun CalendarScreen(
                                 today = today,
                                 focused = date == focusedDate,
                                 record = recordsByDate[date],
+                                moduleSpec = moduleSpec,
                                 cellHeight = dayCellHeight,
                                 largeText = largeText,
                                 modifier = Modifier.weight(1f),
@@ -165,9 +212,9 @@ fun CalendarScreen(
                 .border(1.dp, Neutral300, RoundedCornerShape(14.dp))
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            Text("选择日期记录手冲次数", color = Ink900, style = MaterialTheme.typography.labelLarge)
+            Text(moduleSpec.calendarInstruction, color = Ink900, style = MaterialTheme.typography.labelLarge)
             Text(
-                "0 次表示明确没冲；清除记录才回到未填写",
+                moduleSpec.calendarZeroRule,
                 color = Ink700,
                 style = MaterialTheme.typography.labelSmall,
             )
@@ -263,7 +310,8 @@ private fun CalendarDayCell(
     earliestDate: LocalDate,
     today: LocalDate,
     focused: Boolean,
-    record: HandBrewRecord?,
+    record: DailyCountEntry?,
+    moduleSpec: RecordModuleUiSpec,
     cellHeight: androidx.compose.ui.unit.Dp,
     largeText: Boolean,
     onClick: () -> Unit,
@@ -271,7 +319,7 @@ private fun CalendarDayCell(
 ) {
     val unsupported = date < earliestDate
     val future = date > today
-    val count = record?.brewCount
+    val count = record?.count
     val background = when {
         unsupported || future -> Paper100
         record == null -> Paper0
@@ -298,8 +346,8 @@ private fun CalendarDayCell(
         unsupported -> "超出支持范围，不可记录"
         future -> "未来日期，不可记录"
         record == null -> "未填写"
-        count == 0 -> "明确记录 0 次手冲"
-        else -> "手冲 $count 次"
+        count == 0 -> "明确记录 0 次${moduleSpec.semanticCountLabel}"
+        else -> "${moduleSpec.semanticCountLabel} $count 次"
     }
     val borderColor = when {
         focused -> Terracotta600

@@ -1,7 +1,7 @@
 package io.github.litaog.dailyrecord.core.account
 
 import io.github.litaog.dailyrecord.core.auth.AuthRepository
-import io.github.litaog.dailyrecord.core.sync.HandBrewRemoteDataSource
+import io.github.litaog.dailyrecord.core.sync.AccountRemoteDataStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -21,7 +21,7 @@ internal interface AccountDeletionLocalStore {
 
 internal class AccountDeletionCoordinator(
     private val authRepository: AuthRepository,
-    private val remoteDataSource: HandBrewRemoteDataSource,
+    private val remoteDataSource: AccountRemoteDataStore,
     private val localStore: AccountDeletionLocalStore,
 ) {
     suspend fun deleteAccount(
