@@ -51,8 +51,8 @@ class RecordModuleIntegrationTest {
 
         composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()
-        composeRule.onNodeWithText("做爱").assertIsDisplayed()
-        composeRule.onNodeWithText("1 次").assertIsDisplayed()
+        composeRule.onNodeWithText("本周 · 做爱次数").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("周五 17日，1 次，1 天").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("日历，未选择").performClick()
         composeRule.onNodeWithContentDescription("2026年7月17日，做爱 1 次，已选择").performClick()

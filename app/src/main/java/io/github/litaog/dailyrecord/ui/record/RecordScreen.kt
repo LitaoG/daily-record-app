@@ -52,7 +52,7 @@ import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
 import io.github.litaog.dailyrecord.ui.RecordModuleController
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
-import io.github.litaog.dailyrecord.ui.components.BrewCountControl
+import io.github.litaog.dailyrecord.ui.components.DailyCountControl
 import io.github.litaog.dailyrecord.ui.components.BackChevronIcon
 import io.github.litaog.dailyrecord.ui.components.HandBrewConfirmationDialog
 import io.github.litaog.dailyrecord.ui.components.HandBrewSnackbarHost
@@ -114,8 +114,8 @@ internal fun DailyCountRecordScreen(
     val loadedState = recordState as? RecordLoadState.Loaded
     val record = loadedState?.record
     val dataReady = loadedState != null
-    var draft by rememberSaveable(date.toString(), stateSaver = BrewCountDraft.Saver) {
-        mutableStateOf(BrewCountDraft())
+    var draft by rememberSaveable(date.toString(), stateSaver = CountDraft.Saver) {
+        mutableStateOf(CountDraft())
     }
     var saving by remember(date) { mutableStateOf(false) }
     var showClearDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
@@ -265,7 +265,7 @@ internal fun DailyCountRecordScreen(
                     style = MaterialTheme.typography.labelMedium,
                 )
             }
-            BrewCountControl(
+            DailyCountControl(
                 count = draft.count,
                 enabled = editable && dataReady && draft.initialized && !saving,
                 hasRecord = record != null,

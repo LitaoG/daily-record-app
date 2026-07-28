@@ -171,7 +171,7 @@ internal fun DailyCountStatisticsScreen(
                     horizontalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
                     MetricCard(moduleSpec.totalLabel, model.summary.totalCount.toString(), "次", Modifier.weight(1f))
-                    MetricCard(moduleSpec.daysLabel, model.summary.brewDays.toString(), "天", Modifier.weight(1f))
+                    MetricCard(moduleSpec.daysLabel, model.summary.recordedDays.toString(), "天", Modifier.weight(1f))
                     MetricCard(
                         "记录日均",
                         String.format(Locale.US, "%.1f", model.summary.average),
@@ -182,7 +182,7 @@ internal fun DailyCountStatisticsScreen(
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     MetricCard(moduleSpec.totalLabel, model.summary.totalCount.toString(), "次", Modifier.fillMaxWidth())
-                    MetricCard(moduleSpec.daysLabel, model.summary.brewDays.toString(), "天", Modifier.fillMaxWidth())
+                    MetricCard(moduleSpec.daysLabel, model.summary.recordedDays.toString(), "天", Modifier.fillMaxWidth())
                     MetricCard(
                         "记录日均",
                         String.format(Locale.US, "%.1f", model.summary.average),

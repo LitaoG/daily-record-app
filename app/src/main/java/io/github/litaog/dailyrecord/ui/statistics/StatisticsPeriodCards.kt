@@ -63,7 +63,7 @@ internal fun CompactPeriodSummary(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    SummaryFact(daysLabel, "${summary.brewDays} 天")
+                    SummaryFact(daysLabel, "${summary.recordedDays} 天")
                     SummaryFact(
                         "记录日均",
                         String.format(Locale.US, "%.1f 次/天", summary.average),
@@ -76,7 +76,7 @@ internal fun CompactPeriodSummary(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 PeriodTotal(periodLabel, moduleLabel, summary, Modifier.fillMaxWidth())
-                SummaryFact(daysLabel, "${summary.brewDays} 天")
+                SummaryFact(daysLabel, "${summary.recordedDays} 天")
                 SummaryFact(
                     "记录日均",
                     String.format(Locale.US, "%.1f 次/天", summary.average),

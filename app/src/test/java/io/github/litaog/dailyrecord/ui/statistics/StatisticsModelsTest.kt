@@ -14,7 +14,7 @@ class StatisticsModelsTest {
     private val today = LocalDate.of(2026, 7, 17)
 
     @Test
-    fun summaryAverageUsesOnlyBrewDaysAndHandlesEmptyData() {
+    fun summaryAverageUsesOnlyRecordedDaysAndHandlesEmptyData() {
         assertEquals(1.7, StatisticsSummary(128, 74).average, 0.05)
         assertEquals(0.0, StatisticsSummary(0, 0).average, 0.0)
     }
@@ -35,7 +35,7 @@ class StatisticsModelsTest {
         )
 
         assertEquals(5L, model.summary.totalCount)
-        assertEquals(4, model.summary.brewDays)
+        assertEquals(4, model.summary.recordedDays)
         assertEquals(0L, model.details[1].count)
         assertEquals(0, model.details[1].days)
         assertTrue(model.details[1].recorded)
@@ -76,7 +76,7 @@ class StatisticsModelsTest {
         val model = buildStatistics(StatisticsPeriod.Year, today, today, records)
 
         assertEquals(128L, model.summary.totalCount)
-        assertEquals(7, model.summary.brewDays)
+        assertEquals(7, model.summary.recordedDays)
         assertEquals(128L, model.details.filterNot { it.future }.sumOf { it.count ?: 0L })
         assertEquals(5, model.details.count { it.future })
     }
@@ -117,7 +117,7 @@ class StatisticsModelsTest {
         assertEquals("2026年 5月", model.title)
         assertEquals("已结束", model.status)
         assertEquals(5L, model.summary.totalCount)
-        assertEquals(2, model.summary.brewDays)
+        assertEquals(2, model.summary.recordedDays)
         assertEquals(5L, model.details.sumOf { it.count ?: 0L })
         assertEquals(2, model.details.sumOf { it.days ?: 0 })
         assertEquals("第1周 1–3日", model.details.first().label)
@@ -168,7 +168,7 @@ class StatisticsModelsTest {
         assertEquals("2026年 5月4日–5月10日", model.title)
         assertEquals("已结束", model.status)
         assertEquals(3L, model.summary.totalCount)
-        assertEquals(2, model.summary.brewDays)
+        assertEquals(2, model.summary.recordedDays)
         assertEquals("周三 6日", model.details[2].label)
         assertEquals(3L, model.details.sumOf { it.count ?: 0L })
     }

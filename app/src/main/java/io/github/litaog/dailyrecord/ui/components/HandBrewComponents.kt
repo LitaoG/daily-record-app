@@ -362,7 +362,7 @@ fun MetricCard(label: String, value: String, unit: String, modifier: Modifier = 
 }
 
 @Composable
-fun BrewCountControl(
+fun DailyCountControl(
     count: Int,
     enabled: Boolean,
     hasRecord: Boolean,

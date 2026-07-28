@@ -9,10 +9,10 @@ import java.time.YearMonth
 
 data class StatisticsSummary(
     val totalCount: Long,
-    val brewDays: Int,
+    val recordedDays: Int,
 ) {
     val average: Double
-        get() = if (brewDays == 0) 0.0 else totalCount.toDouble() / brewDays
+        get() = if (recordedDays == 0) 0.0 else totalCount.toDouble() / recordedDays
 }
 
 data class StatisticsDetail(
@@ -130,7 +130,7 @@ private fun buildMonth(
                     StatisticsDetail(
                         label = monthWeekLabel(index, bucketStart, bucketEnd),
                         count = summary.totalCount,
-                        days = summary.brewDays,
+                        days = summary.recordedDays,
                         recorded = bucketRecords.isNotEmpty(),
                     ),
                 )
@@ -172,7 +172,7 @@ private fun buildYear(
             StatisticsDetail(
                 label = monthNumber.toString() + "月",
                 count = summary.totalCount,
-                days = summary.brewDays,
+                days = summary.recordedDays,
                 recorded = monthRecords.isNotEmpty(),
             )
         }
@@ -195,7 +195,7 @@ private fun buildAll(today: LocalDate, records: List<DailyCountEntry>): Statisti
     val details = years.map { year ->
         val yearRecords = records.filter { it.localDate.year == year }
         val summary = summaryOf(yearRecords)
-        StatisticsDetail(year.toString() + "年", summary.totalCount, summary.brewDays)
+        StatisticsDetail(year.toString() + "年", summary.totalCount, summary.recordedDays)
     }
     val status = records.minOfOrNull { it.localDate }?.let { first ->
         first.year.toString() + "." + first.monthValue.toString().padStart(2, '0') +
@@ -212,7 +212,7 @@ private fun buildAll(today: LocalDate, records: List<DailyCountEntry>): Statisti
 
 private fun summaryOf(records: List<DailyCountEntry>) = StatisticsSummary(
     totalCount = records.sumOf { it.count.toLong() },
-    brewDays = records.count { it.count > 0 },
+    recordedDays = records.count { it.count > 0 },
 )
 
 private fun weekdayName(date: LocalDate): String = when (date.dayOfWeek.value) {
