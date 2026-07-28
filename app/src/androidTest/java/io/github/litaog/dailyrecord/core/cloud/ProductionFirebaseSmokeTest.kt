@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
  * Explicit, non-default production smoke test.
  *
  * It creates and deletes a random account, verifies owner reads and cross-owner denial,
- * and never writes a hand-brew document. Normal connected test runs skip this class.
+ * and never writes a private record document. Normal connected test runs skip this class.
  */
 @RunWith(AndroidJUnit4::class)
 class ProductionFirebaseSmokeTest {
@@ -40,9 +40,14 @@ class ProductionFirebaseSmokeTest {
             try {
                 val account = services.authRepository.register(email, password)
                 assertTrue(services.remoteDataSource.fetch(account.uid).records.isEmpty())
+                assertTrue(services.sexRemoteDataSource.fetch(account.uid).sexRecords.isEmpty())
                 assertTrue(
                     "A signed-in user must not list another owner's records",
                     runCatching { services.remoteDataSource.fetch("not-${account.uid}") }.isFailure,
+                )
+                assertTrue(
+                    "A signed-in user must not list another owner's sex records",
+                    runCatching { services.sexRemoteDataSource.fetch("not-${account.uid}") }.isFailure,
                 )
                 services.authRepository.signOut()
                 services.authRepository.signIn(email, password)

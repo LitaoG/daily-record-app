@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal object HandBrewSyncScheduler {
+    // Kept stable so upgrades do not leave an older WorkManager request orphaned.
     private const val UNIQUE_WORK_NAME = "hand-brew-cloud-sync"
     internal val workPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE
 

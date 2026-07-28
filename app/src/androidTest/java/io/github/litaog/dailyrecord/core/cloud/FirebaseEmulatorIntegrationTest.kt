@@ -5,6 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
+import io.github.litaog.dailyrecord.core.database.SexRecordEntity
+import io.github.litaog.dailyrecord.core.sync.CombinedAccountRemoteDataStore
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
@@ -49,6 +51,20 @@ class FirebaseEmulatorIntegrationTest {
 
             val committed = services.remoteDataSource.commit(first.uid, local)
             assertEquals(1L, committed.revision)
+            services.sexRemoteDataSource.commit(
+                first.uid,
+                SexRecordEntity(
+                    id = "firebase-sex-$suffix",
+                    localDate = date,
+                    ownerId = first.uid,
+                    sexCount = 1,
+                    createdAt = Instant.parse("2026-07-16T08:00:00Z"),
+                    updatedAt = Instant.parse("2026-07-16T08:00:01Z"),
+                    isDeleted = false,
+                    syncState = SYNC_PENDING,
+                    remoteRevision = 0,
+                ),
+            )
             services.authRepository.signOut()
             services.authRepository.sendPasswordResetEmail(firstEmail)
             val oobCode = passwordResetCodeFor(firstEmail)
@@ -57,6 +73,10 @@ class FirebaseEmulatorIntegrationTest {
             assertEquals(first.uid, restoredAccount.uid)
             val restored = services.remoteDataSource.fetch(first.uid).records.single()
             assertEquals(3, restored.brewCount)
+            assertEquals(
+                1,
+                services.sexRemoteDataSource.fetch(first.uid).sexRecords.single().sexCount,
+            )
 
             val newer = local.copy(
                 brewCount = 5,
@@ -78,6 +98,10 @@ class FirebaseEmulatorIntegrationTest {
             services.authRepository.register(secondEmail, password)
             val crossAccountRead = runCatching { services.remoteDataSource.fetch(first.uid) }
             assertTrue("A different account must not read the first account", crossAccountRead.isFailure)
+            assertTrue(
+                "A different account must not read the first account's sex records",
+                runCatching { services.sexRemoteDataSource.fetch(first.uid) }.isFailure,
+            )
         } finally {
             services.authRepository.signOut()
         }
@@ -108,10 +132,28 @@ class FirebaseEmulatorIntegrationTest {
                     remoteRevision = 0,
                 ),
             )
+            services.sexRemoteDataSource.commit(
+                account.uid,
+                SexRecordEntity(
+                    id = "delete-sex-$suffix",
+                    localDate = LocalDate.of(2026, 7, 18),
+                    ownerId = account.uid,
+                    sexCount = 1,
+                    createdAt = Instant.parse("2026-07-18T08:00:00Z"),
+                    updatedAt = Instant.parse("2026-07-18T08:00:01Z"),
+                    isDeleted = false,
+                    syncState = SYNC_PENDING,
+                    remoteRevision = 0,
+                ),
+            )
 
             services.authRepository.reauthenticate(password)
-            services.remoteDataSource.deleteAll(account.uid)
+            CombinedAccountRemoteDataStore(
+                services.remoteDataSource,
+                services.sexRemoteDataSource,
+            ).deleteAll(account.uid)
             assertTrue(services.remoteDataSource.fetch(account.uid).records.isEmpty())
+            assertTrue(services.sexRemoteDataSource.fetch(account.uid).sexRecords.isEmpty())
             services.authRepository.deleteCurrentAccount()
 
             assertTrue(

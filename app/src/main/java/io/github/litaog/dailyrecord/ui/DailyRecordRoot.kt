@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import io.github.litaog.dailyrecord.core.auth.AuthState
 import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
+import io.github.litaog.dailyrecord.core.account.CombinedAccountDeletionLocalStore
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
 import io.github.litaog.dailyrecord.core.cloud.runInteractiveCloudOperation
@@ -28,9 +29,13 @@ import io.github.litaog.dailyrecord.core.data.RoomSexRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.AccountSyncManager
 import io.github.litaog.dailyrecord.core.sync.AndroidNetworkMonitor
+import io.github.litaog.dailyrecord.core.sync.CombinedAccountRemoteDataStore
+import io.github.litaog.dailyrecord.core.sync.CombinedSyncCoordinator
 import io.github.litaog.dailyrecord.core.sync.HandBrewSyncCoordinator
 import io.github.litaog.dailyrecord.core.sync.HandBrewSyncScheduler
 import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
+import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
+import io.github.litaog.dailyrecord.core.sync.SexSyncCoordinator
 import io.github.litaog.dailyrecord.core.sync.SyncDiagnostics
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
@@ -141,10 +146,24 @@ private fun SignedInRoot(
     val context = androidx.compose.ui.platform.LocalContext.current
     val ownerId = state.account.uid
     val networkMonitor = remember(ownerId, context) { AndroidNetworkMonitor(context) }
-    val coordinator = remember(ownerId, database, services.remoteDataSource) {
-        HandBrewSyncCoordinator(
-            store = RoomHandBrewSyncStore(database),
-            remote = services.remoteDataSource,
+    val handBrewSyncStore = remember(database) { RoomHandBrewSyncStore(database) }
+    val sexSyncStore = remember(database) { RoomSexSyncStore(database) }
+    val coordinator = remember(
+        ownerId,
+        handBrewSyncStore,
+        sexSyncStore,
+        services.remoteDataSource,
+        services.sexRemoteDataSource,
+    ) {
+        CombinedSyncCoordinator(
+            handBrew = HandBrewSyncCoordinator(
+                store = handBrewSyncStore,
+                remote = services.remoteDataSource,
+            ),
+            sex = SexSyncCoordinator(
+                store = sexSyncStore,
+                remote = services.sexRemoteDataSource,
+            ),
         )
     }
     var accountPrepared by remember(ownerId) { mutableStateOf(false) }
@@ -178,11 +197,23 @@ private fun SignedInRoot(
             onLocalChange = { HandBrewSyncScheduler.schedule(context) },
         )
     }
-    val deletionCoordinator = remember(ownerId, database, services.remoteDataSource) {
+    val deletionCoordinator = remember(
+        ownerId,
+        handBrewSyncStore,
+        sexSyncStore,
+        services.remoteDataSource,
+        services.sexRemoteDataSource,
+    ) {
         AccountDeletionCoordinator(
             authRepository = services.authRepository,
-            remoteDataSource = services.remoteDataSource,
-            localStore = RoomHandBrewSyncStore(database),
+            remoteDataSource = CombinedAccountRemoteDataStore(
+                handBrew = services.remoteDataSource,
+                sex = services.sexRemoteDataSource,
+            ),
+            localStore = CombinedAccountDeletionLocalStore(
+                handBrew = handBrewSyncStore,
+                sex = sexSyncStore,
+            ),
         )
     }
     val scope = rememberCoroutineScope()

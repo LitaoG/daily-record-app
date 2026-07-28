@@ -32,6 +32,18 @@ const validRecord = {
   schemaVersion: 1,
   serverUpdatedAt: serverTimestamp(),
 };
+const sexRecordPath = "users/user-a/sexRecords/2026-07-16";
+const validSexRecord = {
+  id: "sex-record-2026-07-16",
+  localDate: "2026-07-16",
+  sexCount: 1,
+  createdAtMillis: 1784160000000,
+  clientUpdatedAtMillis: 1784160000000,
+  deleted: false,
+  revision: 1,
+  schemaVersion: 1,
+  serverUpdatedAt: serverTimestamp(),
+};
 
 try {
   const userA = testEnv.authenticatedContext("user-a").firestore();
@@ -132,7 +144,60 @@ try {
     }),
   );
   await assertSucceeds(deleteDoc(record));
-  console.log("Firestore security rules: all ownership, shape, revision, and tombstone checks passed.");
+
+  const sexRecord = doc(userA, sexRecordPath);
+  await assertSucceeds(setDoc(sexRecord, validSexRecord));
+  await assertSucceeds(getDoc(sexRecord));
+  await assertFails(getDoc(doc(userB, sexRecordPath)));
+  await assertFails(
+    setDoc(doc(userB, "users/user-a/sexRecords/2026-07-17"), {
+      ...validSexRecord,
+      localDate: "2026-07-17",
+    }),
+  );
+  await assertFails(
+    setDoc(doc(userA, "users/user-a/sexRecords/2026-07-18"), {
+      ...validSexRecord,
+      localDate: "2026-07-18",
+      sexCount: -1,
+    }),
+  );
+  await assertFails(
+    setDoc(doc(userA, "users/user-a/sexRecords/2026-07-19"), {
+      ...validSexRecord,
+      localDate: "2026-07-19",
+      brewCount: 1,
+    }),
+  );
+  await assertFails(
+    setDoc(sexRecord, {
+      ...validSexRecord,
+      sexCount: 2,
+      revision: 3,
+      serverUpdatedAt: serverTimestamp(),
+    }),
+  );
+  await assertSucceeds(
+    setDoc(sexRecord, {
+      ...validSexRecord,
+      sexCount: 2,
+      revision: 2,
+      clientUpdatedAtMillis: 1784160001000,
+      serverUpdatedAt: serverTimestamp(),
+    }),
+  );
+  await assertFails(
+    setDoc(sexRecord, {
+      ...validSexRecord,
+      id: "replacement-sex-id",
+      sexCount: 3,
+      revision: 3,
+      clientUpdatedAtMillis: 1784160002000,
+      serverUpdatedAt: serverTimestamp(),
+    }),
+  );
+  await assertSucceeds(deleteDoc(sexRecord));
+  console.log("Firestore security rules: both module collections passed ownership, shape, revision, and deletion checks.");
 } finally {
   await testEnv.cleanup();
 }

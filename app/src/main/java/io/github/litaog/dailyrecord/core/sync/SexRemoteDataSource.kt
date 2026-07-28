@@ -1,14 +1,14 @@
 package io.github.litaog.dailyrecord.core.sync
 
-import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
+import io.github.litaog.dailyrecord.core.database.SexRecordEntity
 import kotlinx.coroutines.flow.Flow
 
-internal interface HandBrewRemoteDataSource : AccountRemoteDataStore {
+internal interface SexRemoteDataSource : AccountRemoteDataStore {
     fun observe(ownerId: String): Flow<RemoteSnapshot>
 
     suspend fun fetch(ownerId: String): RemoteSnapshot
 
-    suspend fun commit(ownerId: String, local: HandBrewRecordEntity): RemoteHandBrewRecord
+    suspend fun commit(ownerId: String, local: SexRecordEntity): RemoteSexRecord
 
     override suspend fun deleteAll(ownerId: String)
 }

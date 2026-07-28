@@ -8,13 +8,16 @@ import com.google.firebase.firestore.FirebaseFirestore
 import io.github.litaog.dailyrecord.core.auth.AuthRepository
 import io.github.litaog.dailyrecord.core.auth.FirebaseAuthRepository
 import io.github.litaog.dailyrecord.core.sync.FirebaseHandBrewRemoteDataSource
+import io.github.litaog.dailyrecord.core.sync.FirebaseSexRemoteDataSource
 import io.github.litaog.dailyrecord.core.sync.HandBrewRemoteDataSource
+import io.github.litaog.dailyrecord.core.sync.SexRemoteDataSource
 
 internal const val FIREBASE_EMULATOR_APP_NAME = "daily-record-emulator"
 
 internal data class FirebaseServices(
     val authRepository: AuthRepository,
     val remoteDataSource: HandBrewRemoteDataSource,
+    val sexRemoteDataSource: SexRemoteDataSource,
     val productionConfigured: Boolean,
     val currentUserId: () -> String?,
 ) {
@@ -42,6 +45,7 @@ internal data class FirebaseServices(
             return FirebaseServices(
                 authRepository = FirebaseAuthRepository(auth),
                 remoteDataSource = FirebaseHandBrewRemoteDataSource(firestore),
+                sexRemoteDataSource = FirebaseSexRemoteDataSource(firestore),
                 productionConfigured = app.options.projectId != DEMO_PROJECT_ID,
                 currentUserId = { auth.currentUser?.uid },
             )
