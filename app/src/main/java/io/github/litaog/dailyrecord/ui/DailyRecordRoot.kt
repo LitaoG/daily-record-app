@@ -24,6 +24,7 @@ import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
 import io.github.litaog.dailyrecord.core.cloud.runInteractiveCloudOperation
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
+import io.github.litaog.dailyrecord.core.data.RoomSexRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.AccountSyncManager
 import io.github.litaog.dailyrecord.core.sync.AndroidNetworkMonitor
@@ -112,11 +113,15 @@ internal fun DailyRecordRoot(
 
 @Composable
 private fun LocalRoot(database: DailyRecordDatabase, onSignIn: () -> Unit) {
-    val repository = remember(database) {
+    val handBrewRepository = remember(database) {
         RoomHandBrewRecordRepository(database = database, ownerId = LOCAL_OWNER_ID)
     }
+    val sexRepository = remember(database) {
+        RoomSexRecordRepository(database = database, ownerId = LOCAL_OWNER_ID)
+    }
     HandBrewApp(
-        repository = repository,
+        repository = handBrewRepository,
+        sexRepository = sexRepository,
         onSignIn = onSignIn,
         diagnosticReport = createDiagnosticReport(
             status = SyncStatus.NotConfigured,
@@ -159,8 +164,15 @@ private fun SignedInRoot(
             networkMonitor.availability,
         )
     }
-    val repository = remember(ownerId, database) {
+    val handBrewRepository = remember(ownerId, database) {
         RoomHandBrewRecordRepository(
+            database = database,
+            ownerId = ownerId,
+            onLocalChange = { HandBrewSyncScheduler.schedule(context) },
+        )
+    }
+    val sexRepository = remember(ownerId, database) {
+        RoomSexRecordRepository(
             database = database,
             ownerId = ownerId,
             onLocalChange = { HandBrewSyncScheduler.schedule(context) },
@@ -195,7 +207,8 @@ private fun SignedInRoot(
     }
 
     HandBrewApp(
-        repository = repository,
+        repository = handBrewRepository,
+        sexRepository = sexRepository,
         accountEmail = state.account.email,
         syncStatus = syncStatus,
         onSyncNow = { scope.launch { syncManager.syncNow() } },

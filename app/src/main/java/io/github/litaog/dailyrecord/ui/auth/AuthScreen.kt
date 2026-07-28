@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,7 +46,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.HandBrewTextAction
-import io.github.litaog.dailyrecord.ui.components.PlaneIcon
+import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -136,8 +137,8 @@ internal fun AuthScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                PlaneIcon()
-                Text("手冲日历", color = Ink900, style = MaterialTheme.typography.headlineLarge)
+                CalendarGlyph(color = Terracotta500, modifier = Modifier.size(36.dp))
+                Text("私密日历", color = Ink900, style = MaterialTheme.typography.headlineLarge)
                 Text(
                     "登录后，本机记录会安全合并到你的账号，换手机可自动恢复。",
                     color = Ink700,
@@ -279,7 +280,7 @@ internal fun AuthScreen(
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            "云端只保存你的手冲日期、次数和同步所需数据。",
+            "云端只保存两个模块中已记录的日期、次数和同步所需数据。",
             color = Ink500,
             style = MaterialTheme.typography.labelSmall,
         )

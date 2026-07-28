@@ -44,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.TopDestination
+import io.github.litaog.dailyrecord.ui.RecordModule
+import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.theme.Ink500
 import io.github.litaog.dailyrecord.ui.theme.Ink700
 import io.github.litaog.dailyrecord.ui.theme.Ink900
@@ -205,6 +207,80 @@ fun PlaneIcon(modifier: Modifier = Modifier, color: Color = Terracotta500) {
     }
 }
 
+/**
+ * A neutral, non-explicit intimacy mark: two interlocking rings.
+ * Text always accompanies this icon, so module identity never depends on shape or color alone.
+ */
+@Composable
+fun IntimacyIcon(modifier: Modifier = Modifier, color: Color = Terracotta500) {
+    Canvas(modifier.size(36.dp)) {
+        val stroke = 2.6.dp.toPx()
+        val radius = size.minDimension * .23f
+        drawCircle(
+            color = color,
+            radius = radius,
+            center = Offset(size.width * .39f, size.height * .50f),
+            style = Stroke(stroke),
+        )
+        drawCircle(
+            color = color,
+            radius = radius,
+            center = Offset(size.width * .61f, size.height * .50f),
+            style = Stroke(stroke),
+        )
+    }
+}
+
+@Composable
+internal fun RecordModuleSelector(
+    selected: RecordModule,
+    specs: List<RecordModuleUiSpec>,
+    onSelected: (RecordModule) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Paper0)
+            .border(1.dp, Neutral300, RoundedCornerShape(16.dp))
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        specs.forEach { spec ->
+            val active = spec.module == selected
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (active) Terracotta500 else Color.Transparent)
+                    .clickable(role = Role.Tab) { onSelected(spec.module) }
+                    .semantics {
+                        this.selected = active
+                        role = Role.Tab
+                        contentDescription = spec.label + "记录，" +
+                            if (active) "已选择" else "未选择"
+                    },
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                spec.icon(
+                    Modifier.size(20.dp),
+                    if (active) White else Terracotta500,
+                )
+                Spacer(Modifier.width(7.dp))
+                Text(
+                    text = spec.label,
+                    color = if (active) White else Ink700,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun PeriodTabs(
     selected: StatisticsPeriod,
@@ -293,6 +369,8 @@ fun BrewCountControl(
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
     modifier: Modifier = Modifier,
+    explicitZeroText: String = "明确没冲",
+    positiveStateText: String = "已手冲",
 ) {
     Surface(
         modifier = modifier.fillMaxWidth().heightIn(min = 84.dp),
@@ -317,8 +395,8 @@ fun BrewCountControl(
                     text = when {
                         !enabled -> "未来日期"
                         !hasRecord -> "尚未保存"
-                        count == 0 -> "明确没冲"
-                        else -> "已手冲"
+                        count == 0 -> explicitZeroText
+                        else -> positiveStateText
                     },
                     color = Ink500,
                     style = MaterialTheme.typography.labelSmall,

@@ -42,6 +42,8 @@ internal fun CompactPeriodSummary(
     period: StatisticsPeriod,
     summary: StatisticsSummary,
     horizontal: Boolean,
+    moduleLabel: String = "手冲",
+    daysLabel: String = "手冲天数",
     modifier: Modifier = Modifier,
 ) {
     val periodLabel = if (period == StatisticsPeriod.Week) "本周" else "本月"
@@ -56,12 +58,12 @@ internal fun CompactPeriodSummary(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                PeriodTotal(periodLabel, summary, Modifier.weight(1.2f))
+                PeriodTotal(periodLabel, moduleLabel, summary, Modifier.weight(1.2f))
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    SummaryFact("手冲天数", "${summary.brewDays} 天")
+                    SummaryFact(daysLabel, "${summary.brewDays} 天")
                     SummaryFact(
                         "记录日均",
                         String.format(Locale.US, "%.1f 次/天", summary.average),
@@ -73,8 +75,8 @@ internal fun CompactPeriodSummary(
                 modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                PeriodTotal(periodLabel, summary, Modifier.fillMaxWidth())
-                SummaryFact("手冲天数", "${summary.brewDays} 天")
+                PeriodTotal(periodLabel, moduleLabel, summary, Modifier.fillMaxWidth())
+                SummaryFact(daysLabel, "${summary.brewDays} 天")
                 SummaryFact(
                     "记录日均",
                     String.format(Locale.US, "%.1f 次/天", summary.average),
@@ -87,12 +89,13 @@ internal fun CompactPeriodSummary(
 @Composable
 private fun PeriodTotal(
     periodLabel: String,
+    moduleLabel: String,
     summary: StatisticsSummary,
     modifier: Modifier,
 ) {
     Column(modifier = modifier) {
         Text(
-            text = "$periodLabel · 手冲次数",
+            text = "$periodLabel · ${moduleLabel}次数",
             color = White,
             style = MaterialTheme.typography.labelMedium,
         )

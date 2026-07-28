@@ -46,12 +46,17 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.ui.DailyCountEntry
+import io.github.litaog.dailyrecord.ui.HandBrewModuleController
+import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
+import io.github.litaog.dailyrecord.ui.RecordModuleController
+import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
+import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.BrewCountControl
 import io.github.litaog.dailyrecord.ui.components.BackChevronIcon
 import io.github.litaog.dailyrecord.ui.components.HandBrewConfirmationDialog
 import io.github.litaog.dailyrecord.ui.components.HandBrewSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
-import io.github.litaog.dailyrecord.ui.components.PlaneIcon
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
 import io.github.litaog.dailyrecord.ui.theme.Ink700
@@ -62,16 +67,14 @@ import io.github.litaog.dailyrecord.ui.theme.Paper100
 import io.github.litaog.dailyrecord.ui.theme.Paper50
 import io.github.litaog.dailyrecord.ui.theme.Terracotta400
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
-import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
-import java.util.UUID
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 private sealed interface RecordLoadState {
     data object Loading : RecordLoadState
-    data class Loaded(val record: HandBrewRecord?) : RecordLoadState
+    data class Loaded(val record: DailyCountEntry?) : RecordLoadState
 }
 
 @Composable
@@ -82,9 +85,28 @@ fun RecordScreen(
     monthRecords: List<HandBrewRecord>,
     onBack: () -> Unit,
     onSaved: () -> Unit,
+) = DailyCountRecordScreen(
+    date = date,
+    today = today,
+    controller = HandBrewModuleController(repository),
+    moduleSpec = HandBrewModuleSpec,
+    monthRecords = monthRecords.map(HandBrewRecord::asDailyCountEntry),
+    onBack = onBack,
+    onSaved = onSaved,
+)
+
+@Composable
+internal fun DailyCountRecordScreen(
+    date: LocalDate,
+    today: LocalDate,
+    controller: RecordModuleController,
+    moduleSpec: RecordModuleUiSpec,
+    monthRecords: List<DailyCountEntry>,
+    onBack: () -> Unit,
+    onSaved: () -> Unit,
 ) {
-    val recordFlow = remember(repository, date) {
-        repository.observeRecord(date).map<HandBrewRecord?, RecordLoadState> {
+    val recordFlow = remember(controller, date) {
+        controller.observeRecord(date).map<DailyCountEntry?, RecordLoadState> {
             RecordLoadState.Loaded(it)
         }
     }
@@ -103,9 +125,9 @@ fun RecordScreen(
     val scope = rememberCoroutineScope()
     val editable = date <= today
 
-    LaunchedEffect(dataReady, record?.id, record?.updatedAt) {
+    LaunchedEffect(dataReady, record) {
         if (dataReady) {
-            draft = draft.reconcile(record?.brewCount ?: 0)
+            draft = draft.reconcile(record?.count ?: 0)
         }
     }
 
@@ -116,8 +138,8 @@ fun RecordScreen(
         }
     }
 
-    val storedMonthCount = monthRecords.sumOf { it.brewCount.toLong() }
-    val storedMonthDays = monthRecords.count { it.brewCount > 0 }
+    val storedMonthCount = monthRecords.sumOf { it.count.toLong() }
+    val storedMonthDays = monthRecords.count { it.count > 0 }
     val hasUnsavedChanges = dataReady && draft.hasChanges
     val canSave = dataReady && draft.initialized && (record == null || hasUnsavedChanges)
     val launchMutation = { failureMessage: String, operation: suspend () -> Unit ->
@@ -167,23 +189,9 @@ fun RecordScreen(
                         enabled = editable && canSave && !saving,
                         onClick = {
                             if (!editable || !canSave || saving) return@PrimaryActionButton
-                            val currentRecord = record
                             val currentDraftCount = draft.count
                             launchMutation("保存失败，请重试") {
-                                val now = Instant.now()
-                                val safeUpdatedAt = currentRecord?.updatedAt
-                                    ?.plusMillis(1)
-                                    ?.takeIf { it.isAfter(now) }
-                                    ?: now
-                                repository.saveRecord(
-                                    HandBrewRecord(
-                                        id = currentRecord?.id ?: UUID.randomUUID().toString(),
-                                        localDate = date,
-                                        brewCount = currentDraftCount,
-                                        createdAt = currentRecord?.createdAt ?: now,
-                                        updatedAt = safeUpdatedAt,
-                                    ),
-                                )
+                                controller.saveRecord(date, currentDraftCount)
                             }
                         },
                         modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
@@ -225,10 +233,10 @@ fun RecordScreen(
                         .background(Paper0),
                     contentAlignment = Alignment.Center,
                 ) {
-                    PlaneIcon(color = Terracotta500, modifier = Modifier.size(26.dp))
+                    moduleSpec.icon(Modifier.size(26.dp), Terracotta500)
                 }
                 Text(
-                    text = if (date == today) "今天手冲了几次？" else "这天手冲了几次？",
+                    text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
                     color = Ink900,
                     style = MaterialTheme.typography.headlineLarge,
                 )
@@ -250,8 +258,8 @@ fun RecordScreen(
                         !dataReady -> "正在读取记录…"
                         !editable -> "未来日期 · 不可记录"
                         record == null -> "尚未填写"
-                        record?.brewCount == 0 -> "已记录 · 0 次"
-                        else -> "已记录 · " + record?.brewCount + " 次"
+                        record?.count == 0 -> "已记录 · 0 次"
+                        else -> "已记录 · " + record?.count + " 次"
                     },
                     color = if (editable) Terracotta500 else Ink500,
                     style = MaterialTheme.typography.labelMedium,
@@ -263,6 +271,8 @@ fun RecordScreen(
                 hasRecord = record != null,
                 onDecrease = { draft = draft.decrease() },
                 onIncrease = { draft = draft.increase() },
+                explicitZeroText = moduleSpec.explicitZeroText,
+                positiveStateText = moduleSpec.positiveStateText,
             )
             Column(
                 modifier = Modifier
@@ -274,7 +284,11 @@ fun RecordScreen(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text("记录规则", color = Ink900, style = MaterialTheme.typography.labelLarge)
-                Text("0 次＝明确没冲，会保留记录。", color = Ink700, style = MaterialTheme.typography.labelSmall)
+                Text(
+                    "0 次＝${moduleSpec.explicitZeroText}，会保留记录。",
+                    color = Ink700,
+                    style = MaterialTheme.typography.labelSmall,
+                )
                 Text("清除记录＝恢复未填写，不进入统计。", color = Ink700, style = MaterialTheme.typography.labelSmall)
             }
             Row(
@@ -316,7 +330,7 @@ fun RecordScreen(
                 if (!saving) {
                     showClearDialog = false
                     launchMutation("清除失败，请重试") {
-                        repository.clearRecord(date)
+                        controller.clearRecord(date)
                     }
                 }
             },

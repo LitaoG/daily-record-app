@@ -1,6 +1,8 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.ui.DailyCountEntry
+import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import java.time.LocalDate
 import java.time.YearMonth
@@ -34,6 +36,18 @@ fun buildStatistics(
     anchorDate: LocalDate,
     today: LocalDate,
     records: List<HandBrewRecord>,
+): StatisticsUiModel = buildDailyCountStatistics(
+    period = period,
+    anchorDate = anchorDate,
+    today = today,
+    records = records.map(HandBrewRecord::asDailyCountEntry),
+)
+
+internal fun buildDailyCountStatistics(
+    period: StatisticsPeriod,
+    anchorDate: LocalDate,
+    today: LocalDate,
+    records: List<DailyCountEntry>,
 ): StatisticsUiModel {
     val completedRecords = records.filter { it.localDate <= today }
     val safeAnchor = anchorDate.coerceAtMost(today)
@@ -48,7 +62,7 @@ fun buildStatistics(
 private fun buildWeek(
     anchorDate: LocalDate,
     today: LocalDate,
-    records: List<HandBrewRecord>,
+    records: List<DailyCountEntry>,
 ): StatisticsUiModel {
     val start = anchorDate.minusDays((anchorDate.dayOfWeek.value - 1).toLong())
     val end = start.plusDays(6)
@@ -67,8 +81,8 @@ private fun buildWeek(
             val record = rangeRecords.firstOrNull { it.localDate == date }
             StatisticsDetail(
                 label = weekdayName(date) + " " + date.dayOfMonth + "日",
-                count = record?.brewCount?.toLong() ?: 0L,
-                days = if ((record?.brewCount ?: 0) > 0) 1 else 0,
+                count = record?.count?.toLong() ?: 0L,
+                days = if ((record?.count ?: 0) > 0) 1 else 0,
                 recorded = record != null,
             )
         }
@@ -85,7 +99,7 @@ private fun buildWeek(
 private fun buildMonth(
     anchorDate: LocalDate,
     today: LocalDate,
-    records: List<HandBrewRecord>,
+    records: List<DailyCountEntry>,
 ): StatisticsUiModel {
     val month = YearMonth.from(anchorDate)
     val start = month.atDay(1)
@@ -137,7 +151,7 @@ private fun buildMonth(
 private fun buildYear(
     anchorDate: LocalDate,
     today: LocalDate,
-    records: List<HandBrewRecord>,
+    records: List<DailyCountEntry>,
 ): StatisticsUiModel {
     val start = LocalDate.of(anchorDate.year, 1, 1)
     val end = LocalDate.of(anchorDate.year, 12, 31)
@@ -176,7 +190,7 @@ private fun buildYear(
     )
 }
 
-private fun buildAll(today: LocalDate, records: List<HandBrewRecord>): StatisticsUiModel {
+private fun buildAll(today: LocalDate, records: List<DailyCountEntry>): StatisticsUiModel {
     val years = records.map { it.localDate.year }.distinct().sortedDescending()
     val details = years.map { year ->
         val yearRecords = records.filter { it.localDate.year == year }
@@ -196,9 +210,9 @@ private fun buildAll(today: LocalDate, records: List<HandBrewRecord>): Statistic
     )
 }
 
-private fun summaryOf(records: List<HandBrewRecord>) = StatisticsSummary(
-    totalCount = records.sumOf { it.brewCount.toLong() },
-    brewDays = records.count { it.brewCount > 0 },
+private fun summaryOf(records: List<DailyCountEntry>) = StatisticsSummary(
+    totalCount = records.sumOf { it.count.toLong() },
+    brewDays = records.count { it.count > 0 },
 )
 
 private fun weekdayName(date: LocalDate): String = when (date.dayOfWeek.value) {

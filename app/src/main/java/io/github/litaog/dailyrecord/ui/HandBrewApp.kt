@@ -19,11 +19,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
+import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
-import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.AccountDialog
 import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
@@ -37,6 +38,9 @@ import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
 import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
 import io.github.litaog.dailyrecord.ui.record.RecordScreen
 import io.github.litaog.dailyrecord.ui.statistics.StatisticsScreen
+import io.github.litaog.dailyrecord.ui.calendar.DailyCountCalendarScreen
+import io.github.litaog.dailyrecord.ui.record.DailyCountRecordScreen
+import io.github.litaog.dailyrecord.ui.statistics.DailyCountStatisticsScreen
 import io.github.litaog.dailyrecord.ui.theme.Paper50
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
 import java.time.LocalDate
@@ -56,6 +60,7 @@ internal enum class TopDestination {
 @Composable
 fun HandBrewApp(
     repository: HandBrewRecordRepository,
+    sexRepository: SexRecordRepository? = null,
     today: LocalDate? = null,
     accountEmail: String? = null,
     syncStatus: SyncStatus = SyncStatus.NotConfigured,
@@ -67,7 +72,22 @@ fun HandBrewApp(
         Result.failure(IllegalStateException("Account deletion is unavailable"))
     },
 ) {
+    val context = LocalContext.current
     val effectiveToday = today ?: rememberCurrentDate()
+    val modulePreference = remember(context) { SelectedRecordModulePreference(context) }
+    val handBrewController = remember(repository) { HandBrewModuleController(repository) }
+    val sexController = remember(sexRepository) {
+        sexRepository?.let(::SexModuleController)
+    }
+    val availableControllers = remember(handBrewController, sexController) {
+        listOfNotNull(handBrewController, sexController)
+    }
+    val availableModuleSpecs = remember(availableControllers) {
+        availableControllers.map { it.module.uiSpec() }
+    }
+    var selectedModuleName by rememberSaveable {
+        mutableStateOf(modulePreference.selectedModule.name)
+    }
     var destinationName by rememberSaveable { mutableStateOf(TopDestination.Calendar.name) }
     var selectedDateText by rememberSaveable { mutableStateOf<String?>(null) }
     var browseDateText by rememberSaveable { mutableStateOf(effectiveToday.toString()) }
@@ -98,6 +118,18 @@ fun HandBrewApp(
     val currentMonth = YearMonth.from(effectiveToday)
     val destination = TopDestination.entries.firstOrNull { it.name == destinationName }
         ?: TopDestination.Calendar
+    val selectedModule = RecordModule.entries
+        .firstOrNull { it.name == selectedModuleName }
+        ?.takeIf { selected -> availableControllers.any { it.module == selected } }
+        ?: RecordModule.HandBrew
+    val selectedController = availableControllers.first { it.module == selectedModule }
+    val moduleSpec = selectedModule.uiSpec()
+    val selectModule: (RecordModule) -> Unit = { module ->
+        if (availableControllers.any { it.module == module }) {
+            selectedModuleName = module.name
+            modulePreference.setSelectedModule(module)
+        }
+    }
     val selectedDate = selectedDateText
         ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
         ?.takeIf { it in EarliestSupportedDate..effectiveToday }
@@ -106,10 +138,10 @@ fun HandBrewApp(
         .takeIf { it in EarliestSupportedDate..effectiveToday }
         ?: effectiveToday
     val displayedMonth = YearMonth.from(browseDate)
-    val recordsFlow = remember(repository, effectiveToday) {
-        repository.observeRecords(EarliestSupportedDate, effectiveToday.plusDays(1))
+    val recordsFlow = remember(selectedController, effectiveToday) {
+        selectedController.observeRecords(EarliestSupportedDate, effectiveToday.plusDays(1))
     }
-    val allRecordsState by recordsFlow.collectAsState<List<HandBrewRecord>, List<HandBrewRecord>?>(
+    val allRecordsState by recordsFlow.collectAsState<List<DailyCountEntry>, List<DailyCountEntry>?>(
         initial = null,
     )
     if (allRecordsState == null) {
@@ -128,10 +160,11 @@ fun HandBrewApp(
     val allRecords = allRecordsState.orEmpty()
 
     if (selectedDate != null) {
-        RecordScreen(
+        DailyCountRecordScreen(
             date = selectedDate,
             today = effectiveToday,
-            repository = repository,
+            controller = selectedController,
+            moduleSpec = moduleSpec,
             monthRecords = allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) },
             onBack = { selectedDateText = null },
             onSaved = { selectedDateText = null },
@@ -165,11 +198,14 @@ fun HandBrewApp(
         },
     ) { contentPadding ->
         when (destination) {
-            TopDestination.Calendar -> CalendarScreen(
+            TopDestination.Calendar -> DailyCountCalendarScreen(
                 month = displayedMonth,
                 focusedDate = browseDate,
                 today = effectiveToday,
                 records = allRecords,
+                moduleSpec = moduleSpec,
+                selectedModule = selectedModule,
+                availableModules = availableModuleSpecs,
                 earliestMonth = EarliestSupportedMonth,
                 modifier = Modifier.padding(contentPadding),
                 onPreviousMonth = {
@@ -183,6 +219,7 @@ fun HandBrewApp(
                         ).toString()
                     }
                 },
+                onModuleSelected = selectModule,
                 onNextMonth = {
                     val next = displayedMonth.plusMonths(1)
                     if (!next.isAfter(currentMonth)) {
@@ -202,11 +239,15 @@ fun HandBrewApp(
                 },
             )
 
-            TopDestination.Statistics -> StatisticsScreen(
+            TopDestination.Statistics -> DailyCountStatisticsScreen(
                 today = effectiveToday,
                 anchorDate = browseDate,
                 earliestDate = EarliestSupportedDate,
                 records = allRecords,
+                moduleSpec = moduleSpec,
+                selectedModule = selectedModule,
+                availableModules = availableModuleSpecs,
+                onModuleSelected = selectModule,
                 modifier = Modifier.padding(contentPadding),
                 onAnchorDateChanged = { browseDateText = it.toString() },
                 onOpenDatePicker = { showDatePicker = true },
