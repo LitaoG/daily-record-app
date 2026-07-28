@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
@@ -19,12 +20,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 internal class AccountSyncManager(
     private val ownerId: String,
-    private val coordinator: HandBrewSyncCoordinator,
+    private val coordinator: AccountSyncOperations,
     private val productionConfigured: Boolean,
     private val networkAvailable: StateFlow<Boolean> = MutableStateFlow(true),
     private val remoteRetryDelayMillis: (Long) -> Long = ::remoteRetryDelayMillis,
@@ -100,21 +100,20 @@ internal class AccountSyncManager(
             publishStatus(SyncStatus.Offline)
             return
         }
+        if (!mutex.tryLock()) return
         val previousStatus = mutableStatus.value
         try {
             withTimeout(syncAttemptTimeoutMillis) {
-                mutex.withLock {
-                    publishStatus(SyncStatus.Syncing)
-                    val result = coordinator.syncOnce(ownerId)
-                    updatePendingDiagnostics(result.pending)
-                    publishStatus(if (result.rejectedRemoteRecords > 0) {
-                        malformedRemoteRecordsFailure()
-                    } else if (result.pending == 0) {
-                        SyncStatus.UpToDate
-                    } else {
-                        SyncStatus.Pending(result.pending)
-                    })
-                }
+                publishStatus(SyncStatus.Syncing)
+                val result = coordinator.syncOnce(ownerId)
+                updatePendingDiagnostics(result.pending)
+                publishStatus(if (result.rejectedRemoteRecords > 0) {
+                    malformedRemoteRecordsFailure()
+                } else if (result.pending == 0) {
+                    SyncStatus.UpToDate
+                } else {
+                    SyncStatus.Pending(result.pending)
+                })
             }
         } catch (error: TimeoutCancellationException) {
             publishStatus(if (networkAvailable.value) {
@@ -131,6 +130,8 @@ internal class AccountSyncManager(
             } else {
                 SyncStatus.Offline
             })
+        } finally {
+            mutex.unlock()
         }
     }
 
@@ -154,6 +155,24 @@ internal class AccountSyncManager(
             )
         }
     }
+}
+
+/**
+ * The narrow coordinator surface needed by the account lifecycle.
+ *
+ * Keeping this boundary smaller than [HandBrewSyncCoordinator] makes status and concurrency
+ * behavior independently testable without turning the hand-brew data model into a generic one.
+ */
+internal interface AccountSyncOperations {
+    fun observeRemote(ownerId: String): Flow<RemoteSnapshot>
+
+    fun observePendingCount(ownerId: String): Flow<Int>
+
+    suspend fun pendingCount(ownerId: String): Int
+
+    suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int
+
+    suspend fun syncOnce(ownerId: String): SyncResult
 }
 
 private fun malformedRemoteRecordsFailure() = SyncStatus.Failed(

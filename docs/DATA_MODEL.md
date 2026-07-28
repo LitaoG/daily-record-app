@@ -16,7 +16,7 @@
 | syncState | `PENDING` / `SYNCED`，仅同步基础设施使用 |
 | remoteRevision | 最近确认的云端修订号 |
 
-不存在 `Activity`、`activityId`、`MeasurementType`、通用业务状态枚举、活动颜色或归档字段。同步元数据只服务于手冲记录，不构成通用活动框架。
+不存在 `Activity`、`activityId`、`MeasurementType`、通用业务状态枚举、活动颜色或归档字段。同步元数据只服务于手冲记录，不构成通用活动框架。未来记录类型应使用自己的实体和表，不向本表追加用于区分活动种类的字段。
 
 ## Room schema v3
 

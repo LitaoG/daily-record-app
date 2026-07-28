@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,6 +43,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.ui.components.BrewCountControl
@@ -66,7 +66,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.UUID
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -93,9 +92,9 @@ fun RecordScreen(
     val loadedState = recordState as? RecordLoadState.Loaded
     val record = loadedState?.record
     val dataReady = loadedState != null
-    var draftCount by rememberSaveable(date.toString()) { mutableIntStateOf(0) }
-    var baselineCount by rememberSaveable(date.toString()) { mutableIntStateOf(0) }
-    var draftInitialized by rememberSaveable(date.toString()) { mutableStateOf(false) }
+    var draft by rememberSaveable(date.toString(), stateSaver = BrewCountDraft.Saver) {
+        mutableStateOf(BrewCountDraft())
+    }
     var saving by remember(date) { mutableStateOf(false) }
     var showClearDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var showDiscardDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
@@ -106,12 +105,7 @@ fun RecordScreen(
 
     LaunchedEffect(dataReady, record?.id, record?.updatedAt) {
         if (dataReady) {
-            val latestCount = record?.brewCount ?: 0
-            if (!draftInitialized || draftCount == baselineCount) {
-                draftCount = latestCount
-            }
-            baselineCount = latestCount
-            draftInitialized = true
+            draft = draft.reconcile(record?.brewCount ?: 0)
         }
     }
 
@@ -124,8 +118,22 @@ fun RecordScreen(
 
     val storedMonthCount = monthRecords.sumOf { it.brewCount.toLong() }
     val storedMonthDays = monthRecords.count { it.brewCount > 0 }
-    val hasUnsavedChanges = dataReady && draftInitialized && draftCount != baselineCount
-    val canSave = dataReady && draftInitialized && (record == null || hasUnsavedChanges)
+    val hasUnsavedChanges = dataReady && draft.hasChanges
+    val canSave = dataReady && draft.initialized && (record == null || hasUnsavedChanges)
+    val launchMutation = { failureMessage: String, operation: suspend () -> Unit ->
+        if (!saving) {
+            saving = true
+            scope.launch {
+                val result = runCatchingPreservingCancellation(operation)
+                saving = false
+                if (result.isSuccess) {
+                    onSaved()
+                } else {
+                    errorMessage = failureMessage
+                }
+            }
+        }
+    }
     val requestBack = {
         when {
             saving -> Unit
@@ -159,33 +167,23 @@ fun RecordScreen(
                         enabled = editable && canSave && !saving,
                         onClick = {
                             if (!editable || !canSave || saving) return@PrimaryActionButton
-                            saving = true
                             val currentRecord = record
-                            val currentDraftCount = draftCount
-                            scope.launch {
-                                try {
-                                    val now = Instant.now()
-                                    val safeUpdatedAt = currentRecord?.updatedAt
-                                        ?.plusMillis(1)
-                                        ?.takeIf { it.isAfter(now) }
-                                        ?: now
-                                    repository.saveRecord(
-                                        HandBrewRecord(
-                                            id = currentRecord?.id ?: UUID.randomUUID().toString(),
-                                            localDate = date,
-                                            brewCount = currentDraftCount,
-                                            createdAt = currentRecord?.createdAt ?: now,
-                                            updatedAt = safeUpdatedAt,
-                                        ),
-                                    )
-                                    saving = false
-                                    onSaved()
-                                } catch (error: CancellationException) {
-                                    throw error
-                                } catch (_: Exception) {
-                                    saving = false
-                                    errorMessage = "保存失败，请重试"
-                                }
+                            val currentDraftCount = draft.count
+                            launchMutation("保存失败，请重试") {
+                                val now = Instant.now()
+                                val safeUpdatedAt = currentRecord?.updatedAt
+                                    ?.plusMillis(1)
+                                    ?.takeIf { it.isAfter(now) }
+                                    ?: now
+                                repository.saveRecord(
+                                    HandBrewRecord(
+                                        id = currentRecord?.id ?: UUID.randomUUID().toString(),
+                                        localDate = date,
+                                        brewCount = currentDraftCount,
+                                        createdAt = currentRecord?.createdAt ?: now,
+                                        updatedAt = safeUpdatedAt,
+                                    ),
+                                )
                             }
                         },
                         modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
@@ -260,13 +258,11 @@ fun RecordScreen(
                 )
             }
             BrewCountControl(
-                count = draftCount,
-                enabled = editable && dataReady && draftInitialized && !saving,
+                count = draft.count,
+                enabled = editable && dataReady && draft.initialized && !saving,
                 hasRecord = record != null,
-                onDecrease = { draftCount = (draftCount - 1).coerceAtLeast(0) },
-                onIncrease = {
-                    if (draftCount < Int.MAX_VALUE) draftCount += 1
-                },
+                onDecrease = { draft = draft.decrease() },
+                onIncrease = { draft = draft.increase() },
             )
             Column(
                 modifier = Modifier
@@ -319,18 +315,8 @@ fun RecordScreen(
             onConfirm = {
                 if (!saving) {
                     showClearDialog = false
-                    saving = true
-                    scope.launch {
-                        try {
-                            repository.clearRecord(date)
-                            saving = false
-                            onSaved()
-                        } catch (error: CancellationException) {
-                            throw error
-                        } catch (_: Exception) {
-                            saving = false
-                            errorMessage = "清除失败，请重试"
-                        }
+                    launchMutation("清除失败，请重试") {
+                        repository.clearRecord(date)
                     }
                 }
             },

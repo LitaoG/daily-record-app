@@ -31,7 +31,7 @@ UI 不直接访问 DAO 或 Firestore。`HandBrewApp` 只订阅 Repository 暴露
 ```text
 app
 └─ io.github.litaog.dailyrecord
-   ├─ core:model       HandBrewRecord / HandBrewSummary
+   ├─ core:model       HandBrewRecord
    ├─ core:database    Room entity / DAO / migration
    ├─ core:data        repository interface / implementation
    ├─ core:auth        email/password and reset-email boundary
@@ -46,6 +46,13 @@ app
 ```
 
 早期保持单一 Gradle 模块；只有构建时间或团队规模证明需要时才拆物理模块。
+
+## 功能演进边界
+
+- 当前运行时只有手冲垂直切片：`HandBrewRecord`、对应 Repository、统计规则和 Firestore 路径保持专用语义。
+- 账号外壳、日期导航、主题、可取消操作结果和基础反馈等语义一致的能力可以复用。
+- 未来新增记录类型时，先建立 ADR，再新增自己的领域实体、Repository、统计计算、同步路径和迁移测试；不向 `HandBrewRecord` 塞活动 ID，也不建立预判需求的万能字段。
+- 只有两个真实模块出现相同实现并经过验证后，才提取共享接口或物理 Gradle 模块。
 
 ## 日期规则
 
@@ -72,7 +79,7 @@ Room 当前版本为 3。v1→v2 只提取名称为“手冲”或旧飞机图�
 - Firestore 快照逐文档解析，格式异常的单条记录不会关闭整个实时流或阻断其他日期；账号状态会显示数据类错误供诊断。
 - 实时监听发生瞬时错误后使用最高 30 秒的指数退避重新订阅；离线时先等待有效网络，取消页面作用域会同时取消等待与重试。
 - Android 仍可能把网络判定为有效但 Firebase 被阻断；实时监听收到新的服务器快照时会把它视为服务恢复信号，并主动冲刷 Room 中的待同步记录。
-- 登录、注册、密码重置和手动同步使用 5 秒交互截止时间。截止时间覆盖同步互斥锁排队和远端请求；超时按网络不可达反馈，生命周期取消仍继续向上传播，不伪装成失败。
+- 登录、注册、密码重置和手动同步使用 5 秒交互截止时间。并发同步触发会合并为正在进行的一次请求，截止时间只覆盖实际远端请求；超时按网络不可达反馈，生命周期取消仍继续向上传播，不伪装成失败。
 
 ## 启动、取消与实时编辑
 

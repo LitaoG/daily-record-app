@@ -5,14 +5,14 @@ import kotlinx.coroutines.flow.Flow
 internal class HandBrewSyncCoordinator(
     private val store: RoomHandBrewSyncStore,
     private val remote: HandBrewRemoteDataSource,
-) {
-    fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = remote.observe(ownerId)
+) : AccountSyncOperations {
+    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = remote.observe(ownerId)
 
-    fun observePendingCount(ownerId: String): Flow<Int> = store.observePendingCount(ownerId)
+    override fun observePendingCount(ownerId: String): Flow<Int> = store.observePendingCount(ownerId)
 
-    suspend fun pendingCount(ownerId: String): Int = store.pendingCount(ownerId)
+    override suspend fun pendingCount(ownerId: String): Int = store.pendingCount(ownerId)
 
-    suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int =
+    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int =
         store.applyRemote(ownerId, snapshot.records)
 
     suspend fun prepareLocalAccount(ownerId: String): Int {
@@ -20,7 +20,7 @@ internal class HandBrewSyncCoordinator(
         return store.adoptLocalRecords(ownerId)
     }
 
-    suspend fun syncOnce(ownerId: String): SyncResult {
+    override suspend fun syncOnce(ownerId: String): SyncResult {
         require(ownerId.isNotBlank()) { "ownerId must not be blank" }
         store.adoptLocalRecords(ownerId)
         val initial = remote.fetch(ownerId)

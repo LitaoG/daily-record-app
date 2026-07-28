@@ -2,7 +2,6 @@ package io.github.litaog.dailyrecord.ui
 
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
-import io.github.litaog.dailyrecord.core.model.HandBrewSummary
 import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -33,15 +32,6 @@ internal class FakeHandBrewRecordRepository(
     ): Flow<List<HandBrewRecord>> = recordsFlowOverride ?: records.map { values ->
             values.filter { it.localDate >= startDate && it.localDate < endExclusive }
         }
-
-    override fun observeSummary(
-        startDate: LocalDate,
-        endExclusive: LocalDate,
-    ): Flow<HandBrewSummary> = observeRecords(startDate, endExclusive).map { values ->
-        val totalCount = values.sumOf { it.brewCount.toLong() }
-        val brewDays = values.count { it.brewCount > 0 }
-        HandBrewSummary(totalCount = totalCount, brewDays = brewDays)
-    }
 
     override suspend fun saveRecord(record: HandBrewRecord): HandBrewRecord {
         saveCalls += 1
