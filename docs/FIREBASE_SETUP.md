@@ -8,7 +8,7 @@
 - Android 包名：`io.github.litaog.dailyrecord`
 - Authentication：仅启用 Email/Password
 - Cloud Firestore：Standard、Native、生产模式、`asia-east1`
-- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源；包含账号删除权限的当前规则已于 2026-07-26 部署到生产项目
+- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源；同时覆盖 `handBrewRecords` 与 `sexRecords`、并保留账号删除权限的当前规则已于 2026-07-28 部署到生产项目
 
 ## 密码重置邮件
 
@@ -57,6 +57,8 @@ adb shell am instrument -w `
 ```
 
 测试会创建随机邮箱账号，验证两个集合的本账号空查询、跨账号拒绝和再次登录，随后删除测试账号；不会写入生产记录文档。普通模拟器套件会在隔离环境中分别写入、恢复和删除手冲与做爱文档，并读取一次性重置码设置新密码，不会发送真实邮件。
+
+2026-07-28 发布双集合规则后，另以一次性随机账号完成了 `handBrewRecords` 与 `sexRecords` 的生产写入/读取闭环；两条虚构记录和临时账号均在同一测试中删除。
 
 ## 中国大陆网络门槛
 
