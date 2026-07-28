@@ -77,7 +77,8 @@ class DatabaseSchemaTest {
             assertEquals(3, migrated?.brewCount)
             assertEquals(LOCAL_OWNER_ID, migrated?.ownerId)
             assertEquals(SYNC_PENDING, migrated?.syncState)
-            assertEquals(3, database.openHelper.readableDatabase.version)
+            assertEquals(4, database.openHelper.readableDatabase.version)
+            assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
 
             database.openHelper.readableDatabase.query(
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_activities_v1'",
@@ -120,7 +121,47 @@ class DatabaseSchemaTest {
             assertEquals(false, migrated?.isDeleted)
             assertEquals(SYNC_PENDING, migrated?.syncState)
             assertEquals(0L, migrated?.remoteRevision)
-            assertEquals(3, database.openHelper.readableDatabase.version)
+            assertEquals(4, database.openHelper.readableDatabase.version)
+            assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun versionThreeAddsEmptySexTableWithoutChangingHandBrewData() = runBlocking {
+        migrationHelper.createDatabase(V3_TEST_DATABASE, 3).apply {
+            execSQL(
+                """
+                INSERT INTO hand_brew_records (
+                    id, local_date, owner_id, brew_count, created_at, updated_at,
+                    is_deleted, sync_state, remote_revision
+                ) VALUES ('existing-brew', '2026-07-16', '__local__', 5, 1000, 2000,
+                          0, 'PENDING', 0)
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        val database = Room.databaseBuilder(
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            DailyRecordDatabase::class.java,
+            V3_TEST_DATABASE,
+        ).addMigrations(*DailyRecordDatabase.MIGRATIONS).build()
+
+        try {
+            val existing = database.handBrewRecordDao().getByDate(
+                LOCAL_OWNER_ID,
+                java.time.LocalDate.of(2026, 7, 16),
+            )
+            assertEquals(5, existing?.brewCount)
+            assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
+            assertEquals(4, database.openHelper.readableDatabase.version)
+            database.openHelper.readableDatabase.query(
+                "SELECT name FROM sqlite_master WHERE type = 'index' " +
+                    "AND name = 'index_sex_records_owner_id_local_date'",
+            ).use { cursor -> assertTrue(cursor.moveToFirst()) }
         } finally {
             database.close()
         }
@@ -129,5 +170,6 @@ class DatabaseSchemaTest {
     private companion object {
         const val TEST_DATABASE = "migration-test.db"
         const val V2_TEST_DATABASE = "migration-v2-test.db"
+        const val V3_TEST_DATABASE = "migration-v3-test.db"
     }
 }
