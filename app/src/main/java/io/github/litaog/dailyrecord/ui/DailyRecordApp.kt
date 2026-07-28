@@ -31,8 +31,8 @@ import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
 import io.github.litaog.dailyrecord.ui.account.AccountTopBar
 import io.github.litaog.dailyrecord.ui.account.LocalAccountTopBar
 import io.github.litaog.dailyrecord.ui.calendar.CalendarScreen
-import io.github.litaog.dailyrecord.ui.components.HandBrewBottomBar
-import io.github.litaog.dailyrecord.ui.components.HandBrewSnackbarHost
+import io.github.litaog.dailyrecord.ui.components.DailyRecordBottomBar
+import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.diagnostics.DiagnosticDialog
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
 import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
@@ -58,7 +58,7 @@ internal enum class TopDestination {
 }
 
 @Composable
-fun HandBrewApp(
+fun DailyRecordApp(
     repository: HandBrewRecordRepository,
     sexRepository: SexRecordRepository? = null,
     today: LocalDate? = null,
@@ -177,7 +177,7 @@ fun HandBrewApp(
         containerColor = Paper50,
         snackbarHost = {
             if (!showAccountDialog) {
-                HandBrewSnackbarHost(snackbarHostState)
+                DailyRecordSnackbarHost(snackbarHostState)
             }
         },
         topBar = {
@@ -191,7 +191,7 @@ fun HandBrewApp(
             }
         },
         bottomBar = {
-            HandBrewBottomBar(
+            DailyRecordBottomBar(
                 selected = destination,
                 onSelected = { destinationName = it.name },
             )

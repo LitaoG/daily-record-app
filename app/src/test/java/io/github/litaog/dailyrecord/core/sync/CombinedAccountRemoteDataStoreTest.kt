@@ -1,54 +1,52 @@
 package io.github.litaog.dailyrecord.core.sync
 
-import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
-import io.github.litaog.dailyrecord.core.database.SexRecordEntity
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class CombinedAccountRemoteDataStoreTest {
     @Test
-    fun permanentAccountDeletionCoversBothCloudCollections() = runBlocking {
+    fun permanentAccountDeletionCoversEveryCloudCollection() = runBlocking {
         val calls = mutableListOf<String>()
         val store = CombinedAccountRemoteDataStore(
-            handBrew = DeleteOnlyHandBrewRemote(calls),
-            sex = DeleteOnlySexRemote(calls),
+            stores = listOf(
+                DeleteOnlyRemote("hand-brew", calls),
+                DeleteOnlyRemote("sex", calls),
+                DeleteOnlyRemote("future-module", calls),
+            ),
         )
 
         store.deleteAll("owner")
 
-        assertEquals(listOf("hand-brew", "sex"), calls)
+        assertEquals(listOf("hand-brew", "sex", "future-module"), calls)
+    }
+
+    @Test
+    fun deletionStillAttemptsLaterCollectionsAfterOneFails() = runBlocking {
+        val calls = mutableListOf<String>()
+        val store = CombinedAccountRemoteDataStore(
+            stores = listOf(
+                DeleteOnlyRemote("first", calls, failure = IllegalStateException("first failed")),
+                DeleteOnlyRemote("second", calls),
+                DeleteOnlyRemote("third", calls, failure = IllegalArgumentException("third failed")),
+            ),
+        )
+
+        val failure = runCatching { store.deleteAll("owner") }.exceptionOrNull()
+
+        assertEquals(listOf("first", "second", "third"), calls)
+        assertEquals("first failed", failure?.message)
+        assertEquals(listOf("third failed"), failure?.suppressed?.map { it.message })
     }
 }
 
-private class DeleteOnlyHandBrewRemote(
+private class DeleteOnlyRemote(
+    private val name: String,
     private val calls: MutableList<String>,
-) : HandBrewRemoteDataSource {
-    override fun observe(ownerId: String): Flow<RemoteSnapshot> = emptyFlow()
-    override suspend fun fetch(ownerId: String) = RemoteSnapshot(fromCache = false)
-    override suspend fun commit(
-        ownerId: String,
-        local: HandBrewRecordEntity,
-    ): RemoteHandBrewRecord = error("Not used")
-
+    private val failure: Exception? = null,
+) : AccountRemoteDataStore {
     override suspend fun deleteAll(ownerId: String) {
-        calls += "hand-brew"
-    }
-}
-
-private class DeleteOnlySexRemote(
-    private val calls: MutableList<String>,
-) : SexRemoteDataSource {
-    override fun observe(ownerId: String): Flow<RemoteSnapshot> = emptyFlow()
-    override suspend fun fetch(ownerId: String) = RemoteSnapshot(fromCache = false)
-    override suspend fun commit(
-        ownerId: String,
-        local: SexRecordEntity,
-    ): RemoteSexRecord = error("Not used")
-
-    override suspend fun deleteAll(ownerId: String) {
-        calls += "sex"
+        calls += name
+        failure?.let { throw it }
     }
 }

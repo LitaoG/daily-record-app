@@ -63,7 +63,7 @@ class RecordModuleIntegrationTest {
     private fun setDualModuleContent() {
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(
                         initialRecords = listOf(
                             HandBrewRecord(

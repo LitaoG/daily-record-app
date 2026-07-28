@@ -43,7 +43,7 @@ internal fun createDiagnosticReport(
 )
 
 internal fun renderDiagnosticReport(input: DiagnosticReportInput): String = buildString {
-    appendLine("Hand Brew Calendar diagnostics")
+    appendLine("Private Calendar diagnostics")
     appendLine("app_version=${input.appVersion.safeValue()}")
     appendLine("version_code=${input.versionCode}")
     appendLine("build_type=${input.buildType.safeValue()}")

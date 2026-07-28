@@ -41,7 +41,7 @@ import io.github.litaog.dailyrecord.ui.theme.White
 
 /** Branded confirmation surface used instead of a library-default confirmation dialog. */
 @Composable
-fun HandBrewConfirmationDialog(
+fun DailyRecordConfirmationDialog(
     title: String,
     subtitle: String,
     message: String,
@@ -53,7 +53,7 @@ fun HandBrewConfirmationDialog(
     confirmEnabled: Boolean = true,
 ) {
     val stackActions = LocalDensity.current.fontScale >= 1.35f
-    HandBrewDialog(
+    DailyRecordDialog(
         title = title,
         subtitle = subtitle,
         testTag = testTag,
@@ -142,7 +142,7 @@ fun DangerActionButton(
 
 /** Low-emphasis app action without Material's default text-button styling. */
 @Composable
-fun HandBrewTextAction(
+fun DailyRecordTextAction(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -176,7 +176,7 @@ fun HandBrewTextAction(
 
 /** Branded transient feedback used instead of the default dark Material snackbar. */
 @Composable
-fun HandBrewSnackbarHost(hostState: SnackbarHostState) {
+fun DailyRecordSnackbarHost(hostState: SnackbarHostState) {
     SnackbarHost(hostState = hostState) { data ->
         Surface(
             modifier = Modifier

@@ -22,7 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-class HandBrewAppTest {
+class DailyRecordAppTest {
     @get:Rule
     val composeRule = createComposeRule()
 
@@ -33,7 +33,7 @@ class HandBrewAppTest {
         )
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(recordsFlowOverride = delayedRecords),
                     today = LocalDate.of(2026, 7, 17),
                 )
@@ -173,7 +173,7 @@ class HandBrewAppTest {
     fun accountDialogShowsSyncStateAndConfirmsSignOut() {
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(),
                     today = LocalDate.of(2026, 7, 17),
                     accountEmail = "brew@example.com",
@@ -196,7 +196,7 @@ class HandBrewAppTest {
         val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(),
                     today = LocalDate.of(2026, 7, 17),
                     accountEmail = "brew@example.com",
@@ -220,7 +220,7 @@ class HandBrewAppTest {
         val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(),
                     today = LocalDate.of(2026, 7, 17),
                     accountEmail = "brew@example.com",
@@ -252,7 +252,7 @@ class HandBrewAppTest {
         val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.UpToDate)
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(),
                     today = LocalDate.of(2026, 7, 17),
                     accountEmail = "brew@example.com",
@@ -281,7 +281,7 @@ class HandBrewAppTest {
         val status = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Syncing)
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(),
                     today = LocalDate.of(2026, 7, 17),
                     accountEmail = "brew@example.com",
@@ -306,7 +306,7 @@ class HandBrewAppTest {
         var requestedSignIn = false
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(),
                     today = LocalDate.of(2026, 7, 17),
                     onSignIn = { requestedSignIn = true },
@@ -322,7 +322,7 @@ class HandBrewAppTest {
     private fun setAppContent() {
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(),
                     today = LocalDate.of(2026, 7, 17),
                 )

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 internal class HandBrewSyncCoordinator(
     store: RoomHandBrewSyncStore,
     remote: HandBrewRemoteDataSource,
-) : AccountSyncOperations {
+) : ModuleSyncCoordinator {
     private val engine = DailyCountSyncEngine(store, remote)
 
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = engine.observeRemote(ownerId)
@@ -17,7 +17,8 @@ internal class HandBrewSyncCoordinator(
     override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int =
         engine.applySnapshot(ownerId, snapshot)
 
-    suspend fun prepareLocalAccount(ownerId: String): Int = engine.prepareLocalAccount(ownerId)
+    override suspend fun prepareLocalAccount(ownerId: String): Int =
+        engine.prepareLocalAccount(ownerId)
 
     override suspend fun syncOnce(ownerId: String): SyncResult = engine.syncOnce(ownerId)
 }

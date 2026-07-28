@@ -29,6 +29,7 @@ Figma、Canva 与 `hand-brew-v2` 截图是历史视觉协作资料。当前双�
 ## 历史交付证据
 
 - [交付与验证日志](HAND_BREW_REFACTOR_LOG.md)
+- [2026-07-28 局部一致性、扩展边界与安全加固](audit/2026-07-28-consistency-hardening/README.md)
 - [2026-07-27 快速真实运行审计](audit/2026-07-27-quick-runtime/README.md)
 - [2026-07-22 找回密码与同步可靠性审计](audit/2026-07-22-password-reset-sync/README.md)
 - [2026-07-22 应用内 UI 一致性审计](audit/2026-07-22-native-ui/README.md)

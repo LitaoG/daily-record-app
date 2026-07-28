@@ -122,22 +122,7 @@ internal fun DailyCountStatisticsScreen(
             )
         }
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("统计", color = Ink900, style = MaterialTheme.typography.headlineLarge)
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Paper0)
-                        .border(1.dp, Neutral300, CircleShape)
-                        .padding(horizontal = 12.dp, vertical = 7.dp),
-                ) {
-                    Text(moduleSpec.label, color = Terracotta500, style = MaterialTheme.typography.labelMedium)
-                }
-            }
+            Text("统计", color = Ink900, style = MaterialTheme.typography.headlineLarge)
         }
         item {
             PeriodTabs(

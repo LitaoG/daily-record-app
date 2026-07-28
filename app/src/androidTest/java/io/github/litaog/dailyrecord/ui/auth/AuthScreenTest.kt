@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.test.espresso.Espresso
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
@@ -141,6 +142,25 @@ class AuthScreenTest {
         composeRule.onNodeWithText("登录并恢复记录").assertIsNotEnabled()
         composeRule.onNodeWithText("先在本机使用").performScrollTo().assertIsDisplayed().performClick()
         composeRule.runOnIdle { assertTrue(continuedOffline) }
+    }
+
+    @Test
+    fun backReturnsToLocalModeWhenAuthWasOpenedFromTheLocalApp() {
+        var returnedToLocalMode = false
+        composeRule.setContent {
+            DailyRecordTheme {
+                AuthScreen(
+                    productionConfigured = true,
+                    onSignIn = { _, _ -> Result.success(Unit) },
+                    onRegister = { _, _ -> Result.success(Unit) },
+                    onBack = { returnedToLocalMode = true },
+                )
+            }
+        }
+
+        Espresso.pressBack()
+
+        composeRule.runOnIdle { assertTrue(returnedToLocalMode) }
     }
 
     @Test

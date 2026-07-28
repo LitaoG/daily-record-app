@@ -54,8 +54,8 @@ import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.DailyCountControl
 import io.github.litaog.dailyrecord.ui.components.BackChevronIcon
-import io.github.litaog.dailyrecord.ui.components.HandBrewConfirmationDialog
-import io.github.litaog.dailyrecord.ui.components.HandBrewSnackbarHost
+import io.github.litaog.dailyrecord.ui.components.DailyRecordConfirmationDialog
+import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -169,7 +169,7 @@ internal fun DailyCountRecordScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize().testTag("record_screen"),
         containerColor = Paper50,
-        snackbarHost = { HandBrewSnackbarHost(snackbarHostState) },
+        snackbarHost = { DailyRecordSnackbarHost(snackbarHostState) },
         bottomBar = {
             Surface(
                 modifier = Modifier.navigationBarsPadding(),
@@ -317,7 +317,7 @@ internal fun DailyCountRecordScreen(
     }
 
     if (showClearDialog) {
-        HandBrewConfirmationDialog(
+        DailyRecordConfirmationDialog(
             title = "清除这天的记录？",
             subtitle = "记录会恢复为“未填写”",
             message = "这次操作不能在应用内撤销，也不会计入统计。",
@@ -338,7 +338,7 @@ internal fun DailyCountRecordScreen(
     }
 
     if (showDiscardDialog) {
-        HandBrewConfirmationDialog(
+        DailyRecordConfirmationDialog(
             title = "放弃未保存的修改？",
             subtitle = "当前次数还没有保存",
             message = "返回日历后，本次调整会丢失。",

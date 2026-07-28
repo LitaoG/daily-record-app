@@ -38,8 +38,8 @@ import androidx.compose.ui.unit.sp
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.components.DangerActionButton
-import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
-import io.github.litaog.dailyrecord.ui.components.HandBrewTextAction
+import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
+import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -169,12 +169,12 @@ internal fun LocalAccountTopBar(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    HandBrewTextAction(
+                    DailyRecordTextAction(
                         label = "诊断",
                         onClick = onDiagnostics,
                         accessibilityLabel = "查看本机诊断信息",
                     )
-                    HandBrewTextAction(
+                    DailyRecordTextAction(
                         label = "登录同步",
                         onClick = onClick,
                         accessibilityLabel = "登录账号并开启云同步",
@@ -193,12 +193,12 @@ internal fun LocalAccountTopBar(
             ) {
                 AccountTitle("本机记录无需 VPN（梯子），可离线使用")
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    HandBrewTextAction(
+                    DailyRecordTextAction(
                         label = "诊断",
                         onClick = onDiagnostics,
                         accessibilityLabel = "查看本机诊断信息",
                     )
-                    HandBrewTextAction(
+                    DailyRecordTextAction(
                         label = "登录同步",
                         onClick = onClick,
                         accessibilityLabel = "登录账号并开启云同步",
@@ -261,7 +261,7 @@ internal fun AccountDialog(
 ) {
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
     val failurePresentation = (status as? SyncStatus.Failed)?.kind?.presentation()
-    HandBrewDialog(
+    DailyRecordDialog(
         title = if (confirmSignOut) "确认退出登录？" else "账号与云同步",
         subtitle = if (confirmSignOut) "云端数据会保留" else "换手机后仍可恢复全部记录",
         testTag = "account_sync_dialog",
@@ -351,18 +351,18 @@ internal fun AccountDialog(
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             )
             OutlineActionButton("关闭", onDismiss, Modifier.fillMaxWidth().padding(top = 10.dp))
-            HandBrewTextAction(
+            DailyRecordTextAction(
                 label = "查看诊断信息",
                 onClick = onOpenDiagnostics,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             )
-            HandBrewTextAction(
+            DailyRecordTextAction(
                 label = "退出登录",
                 onClick = { confirmSignOut = true },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 danger = true,
             )
-            HandBrewTextAction(
+            DailyRecordTextAction(
                 label = "删除账号与云端数据",
                 onClick = onDeleteAccount,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),

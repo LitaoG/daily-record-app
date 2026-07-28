@@ -5,38 +5,56 @@ import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
 import kotlinx.coroutines.CancellationException
 
 internal class CombinedAccountDeletionLocalStore(
-    private val handBrew: RoomHandBrewSyncStore,
-    private val sex: RoomSexSyncStore,
+    private val stores: List<AccountDeletionLocalStore>,
 ) : AccountDeletionLocalStore {
+    constructor(
+        handBrew: RoomHandBrewSyncStore,
+        sex: RoomSexSyncStore,
+    ) : this(listOf(handBrew, sex))
+
+    init {
+        require(stores.isNotEmpty()) { "At least one local account store is required." }
+    }
+
     override suspend fun stageLocalRecoveryCopy(ownerId: String) {
         try {
-            handBrew.stageLocalRecoveryCopy(ownerId)
-            sex.stageLocalRecoveryCopy(ownerId)
+            stores.forEach { it.stageLocalRecoveryCopy(ownerId) }
         } catch (error: CancellationException) {
-            discardBothSafely(error)
+            discardAllSafely(error)
             throw error
         } catch (error: Exception) {
-            discardBothSafely(error)
+            discardAllSafely(error)
             throw error
         }
     }
 
     override suspend fun discardLocalRecoveryCopy() {
-        handBrew.discardLocalRecoveryCopy()
-        sex.discardLocalRecoveryCopy()
+        runForAll { it.discardLocalRecoveryCopy() }
     }
 
     override suspend fun deleteOwnerCache(ownerId: String) {
-        handBrew.deleteOwnerCache(ownerId)
-        sex.deleteOwnerCache(ownerId)
+        runForAll { it.deleteOwnerCache(ownerId) }
     }
 
-    private suspend fun discardBothSafely(primary: Throwable) {
-        runCatching { handBrew.discardLocalRecoveryCopy() }
-            .exceptionOrNull()
-            ?.let(primary::addSuppressed)
-        runCatching { sex.discardLocalRecoveryCopy() }
-            .exceptionOrNull()
-            ?.let(primary::addSuppressed)
+    private suspend fun discardAllSafely(primary: Throwable) {
+        stores.forEach { store ->
+            runCatching { store.discardLocalRecoveryCopy() }
+                .exceptionOrNull()
+                ?.let(primary::addSuppressed)
+        }
+    }
+
+    private suspend fun runForAll(operation: suspend (AccountDeletionLocalStore) -> Unit) {
+        var primary: Exception? = null
+        stores.forEach { store ->
+            try {
+                operation(store)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                if (primary == null) primary = error else primary?.addSuppressed(error)
+            }
+        }
+        primary?.let { throw it }
     }
 }

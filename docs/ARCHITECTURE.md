@@ -28,9 +28,9 @@ flowchart LR
     WORK[WorkManager connected retry] --> SYNC
 ```
 
-UI 不直接访问 DAO 或 Firestore。UI 适配器只把强类型的 `HandBrewRecord` / `SexRecord` 投影为共享日期次数组件；保存时仍回到对应 Repository。保存和清除先落 Room，再由组合协调器驱动两个独立同步链路。Firestore 快照也必须先合并进各自 Room 表，UI 不读取远端缓存。
+UI 不直接访问 DAO 或 Firestore。`DailyCountRecord` 与 `DailyCountRecordRepository<T>` 只提供日期、次数和时间戳这组最小公共契约；UI 适配器把强类型的 `HandBrewRecord` / `SexRecord` 投影为共享日期次数组件，保存时仍由对应模块创建领域记录并回到对应 Repository。保存和清除先落 Room，再由组合协调器驱动独立同步链路。Firestore 快照也必须先合并进各自 Room 表，UI 不读取远端缓存。
 
-用户明确选择的本机模式和上次选择的记录模块分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。Firebase 已登录状态仍以 Authentication 为准。
+用户明确选择的本机模式和上次选择的记录模块分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。从本机日历打开登录页是进程内导航状态，只有认证成功后才关闭本机偏好；登录页返回或登录中断不会改变既有本机入口。Firebase 已登录状态仍以 Authentication 为准。
 
 ## 包结构
 
@@ -58,6 +58,7 @@ app
 - 当前运行时有手冲与做爱两个垂直切片；实体、表、DAO、Repository、远端字段和 Firestore 路径保持专用语义。
 - 账号外壳、日期导航、主题、可取消操作结果和基础反馈等语义一致的能力可以复用。
 - 两个真实模块已证明相同的日期导航、次数编辑、统计纯函数和冲突流程由强类型 UI 适配器与 `DailyCountSyncEngine` 共享。
+- `CombinedSyncCoordinator`、`CombinedAccountRemoteDataStore` 与 `CombinedAccountDeletionLocalStore` 接受非空模块列表；新增模块不需要继续扩展手冲/做爱的二元构造逻辑。兼容构造函数只服务当前两个模块的组合入口。
 - 未来新增记录类型时，先建立 ADR，再新增自己的领域实体、Repository、统计计算、同步路径和迁移测试；不向既有记录塞活动 ID，也不建立万能字段。
 
 ## 日期规则
@@ -76,7 +77,7 @@ Room 当前版本为 4。v1→v2 只提取名称为“手冲”或旧飞机图�
 ## 同步边界
 
 - Firestore 路径分别固定为 `/users/{uid}/handBrewRecords/{YYYY-MM-DD}` 与 `/users/{uid}/sexRecords/{YYYY-MM-DD}`。
-- `CombinedSyncCoordinator` 只聚合账号状态、待同步数量和后台触发；每个模块仍使用自己的 Store、RemoteDataSource 和映射。
+- `CombinedSyncCoordinator` 只按模块列表聚合账号状态、待同步数量和后台触发；每个模块仍使用自己的 Store、RemoteDataSource 和映射。
 - 远端不能直接覆盖本地待同步版本；提交确认也必须匹配发起提交的本地版本。
 - 删除只写墓碑，不允许客户端物理删除。
 - 新登录先在单个 Room 事务中把 `__local__` 记录按日期合并到账号空间，再开始任何 Firestore 请求；因此云端不可达时本机数据仍立即可见且保持 `PENDING`。

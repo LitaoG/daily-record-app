@@ -180,8 +180,8 @@ internal class AccountSyncManager(
 /**
  * The narrow coordinator surface needed by the account lifecycle.
  *
- * Keeping this boundary smaller than [HandBrewSyncCoordinator] makes status and concurrency
- * behavior independently testable without turning the hand-brew data model into a generic one.
+ * Keeping this boundary smaller than a module coordinator makes status and concurrency
+ * behavior independently testable without coupling the account lifecycle to one record type.
  */
 internal interface AccountSyncOperations {
     fun observeRemote(ownerId: String): Flow<RemoteSnapshot>

@@ -43,7 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
-import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
+import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -79,7 +79,7 @@ internal fun DateNavigationDialog(
     }
     var mode by remember { mutableStateOf(NavigationMode.Date) }
 
-    HandBrewDialog(
+    DailyRecordDialog(
         title = "快速跳转",
         subtitle = "直接选择年份和日期，不必逐月翻找",
         testTag = "date_navigation_dialog",

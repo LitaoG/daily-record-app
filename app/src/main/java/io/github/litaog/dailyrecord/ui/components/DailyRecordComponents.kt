@@ -34,6 +34,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -63,7 +64,7 @@ enum class StatisticsPeriod(val label: String) {
 }
 
 @Composable
-internal fun HandBrewBottomBar(
+internal fun DailyRecordBottomBar(
     selected: TopDestination,
     onSelected: (TopDestination) -> Unit,
 ) {
@@ -203,7 +204,15 @@ fun PlaneIcon(modifier: Modifier = Modifier, color: Color = Terracotta500) {
             lineTo(size.width * .42f, size.height * .42f)
             close()
         }
-        drawPath(path, color)
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(
+                width = 2.4.dp.toPx(),
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
+        )
     }
 }
 
@@ -268,7 +277,7 @@ internal fun RecordModuleSelector(
             ) {
                 spec.icon(
                     Modifier.size(20.dp),
-                    if (active) White else Terracotta500,
+                    if (active) White else Ink700,
                 )
                 Spacer(Modifier.width(7.dp))
                 Text(

@@ -43,6 +43,7 @@
 以下内容用于解释某次迭代当时验证了什么，不应覆盖上面的当前规则：
 
 - [重构与交付日志](product/HAND_BREW_REFACTOR_LOG.md)
+- [2026-07-28 局部一致性、扩展边界与安全加固](product/audit/2026-07-28-consistency-hardening/README.md)
 - [2026-07-27 快速运行审计](product/audit/2026-07-27-quick-runtime/README.md)
 - [2026-07-22 找回密码与同步审计](product/audit/2026-07-22-password-reset-sync/README.md)
 - [2026-07-22 应用内 UI 一致性审计](product/audit/2026-07-22-native-ui/README.md)

@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.auth
 
 import android.util.Patterns
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,7 +46,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.ui.components.HandBrewTextAction
+import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
@@ -70,6 +71,7 @@ internal fun AuthScreen(
     onSignIn: suspend (String, String) -> Result<Unit>,
     onRegister: suspend (String, String) -> Result<Unit>,
     onPasswordReset: suspend (String) -> Result<Unit> = { Result.success(Unit) },
+    onBack: (() -> Unit)? = null,
     onContinueOffline: () -> Unit = {},
 ) {
     var modeName by rememberSaveable { mutableStateOf(AuthMode.SignIn.name) }
@@ -115,6 +117,10 @@ internal fun AuthScreen(
         }
     }
 
+    BackHandler(enabled = onBack != null && !busy) {
+        onBack?.invoke()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -140,7 +146,7 @@ internal fun AuthScreen(
                 CalendarGlyph(color = Terracotta500, modifier = Modifier.size(36.dp))
                 Text("私密日历", color = Ink900, style = MaterialTheme.typography.headlineLarge)
                 Text(
-                    "登录后，本机记录会安全合并到你的账号，换手机可自动恢复。",
+                    "登录后，本机记录会合并到你的账号，换手机可自动恢复。",
                     color = Ink700,
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -188,7 +194,7 @@ internal fun AuthScreen(
                         onDone = { if (mode == AuthMode.SignIn) submit() },
                     ),
                     trailingIcon = {
-                        HandBrewTextAction(
+                        DailyRecordTextAction(
                             label = if (passwordVisible) "隐藏" else "显示",
                             onClick = { passwordVisible = !passwordVisible },
                             enabled = !busy,
@@ -199,7 +205,7 @@ internal fun AuthScreen(
                     colors = fieldColors,
                 )
                 if (mode == AuthMode.SignIn) {
-                    HandBrewTextAction(
+                    DailyRecordTextAction(
                         label = "忘记密码？",
                         onClick = { showPasswordReset = true },
                         enabled = productionConfigured && !busy,
@@ -265,7 +271,7 @@ internal fun AuthScreen(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = submit,
                 )
-                HandBrewTextAction(
+                DailyRecordTextAction(
                     label = "先在本机使用",
                     onClick = onContinueOffline,
                     enabled = !busy,

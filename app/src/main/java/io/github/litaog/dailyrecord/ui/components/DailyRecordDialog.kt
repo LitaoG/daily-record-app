@@ -26,9 +26,9 @@ import io.github.litaog.dailyrecord.ui.theme.Ink900
 import io.github.litaog.dailyrecord.ui.theme.Neutral300
 import io.github.litaog.dailyrecord.ui.theme.Paper0
 
-/** Shared app-native dialog surface for the hand-brew visual language. */
+/** Shared app-native dialog surface for the private-calendar visual language. */
 @Composable
-fun HandBrewDialog(
+fun DailyRecordDialog(
     title: String,
     subtitle: String? = null,
     testTag: String,
