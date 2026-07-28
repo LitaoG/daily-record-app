@@ -11,16 +11,17 @@ import kotlinx.coroutines.flow.Flow
 
 internal class RoomHandBrewSyncStore(
     private val database: DailyRecordDatabase,
-) : AccountDeletionLocalStore {
+) : AccountDeletionLocalStore,
+    DailyCountSyncStore<HandBrewRecordEntity, RemoteHandBrewRecord> {
     private val dao = database.handBrewRecordDao()
 
-    fun observePendingCount(ownerId: String): Flow<Int> = dao.observePendingCount(ownerId)
+    override fun observePendingCount(ownerId: String): Flow<Int> = dao.observePendingCount(ownerId)
 
-    suspend fun pending(ownerId: String): List<HandBrewRecordEntity> = dao.getPending(ownerId)
+    override suspend fun pending(ownerId: String): List<HandBrewRecordEntity> = dao.getPending(ownerId)
 
-    suspend fun pendingCount(ownerId: String): Int = dao.getPending(ownerId).size
+    override suspend fun pendingCount(ownerId: String): Int = dao.getPending(ownerId).size
 
-    suspend fun adoptLocalRecords(ownerId: String): Int =
+    override suspend fun adoptLocalRecords(ownerId: String): Int =
         database.withTransaction {
             val localRecords = dao.getAllForSync(LOCAL_OWNER_ID)
             var changed = 0
@@ -44,10 +45,10 @@ internal class RoomHandBrewSyncStore(
             changed
         }
 
-    suspend fun applyRemote(ownerId: String, records: List<RemoteHandBrewRecord>): Int =
+    override suspend fun applyRemote(ownerId: String, records: List<RemoteHandBrewRecord>): Int =
         database.withTransaction { applyRemoteRecords(ownerId, records) }
 
-    suspend fun alignUnbasedPendingRevisions(
+    override suspend fun alignUnbasedPendingRevisions(
         ownerId: String,
         records: List<RemoteHandBrewRecord>,
     ): Int = database.withTransaction {
@@ -60,7 +61,7 @@ internal class RoomHandBrewSyncStore(
         }
     }
 
-    suspend fun applyCommitIfUnchanged(
+    override suspend fun applyCommitIfUnchanged(
         ownerId: String,
         local: HandBrewRecordEntity,
         committed: RemoteHandBrewRecord,

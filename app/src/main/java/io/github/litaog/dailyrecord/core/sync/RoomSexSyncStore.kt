@@ -11,16 +11,17 @@ import kotlinx.coroutines.flow.Flow
 
 internal class RoomSexSyncStore(
     private val database: DailyRecordDatabase,
-) : AccountDeletionLocalStore {
+) : AccountDeletionLocalStore,
+    DailyCountSyncStore<SexRecordEntity, RemoteSexRecord> {
     private val dao = database.sexRecordDao()
 
-    fun observePendingCount(ownerId: String): Flow<Int> = dao.observePendingCount(ownerId)
+    override fun observePendingCount(ownerId: String): Flow<Int> = dao.observePendingCount(ownerId)
 
-    suspend fun pending(ownerId: String): List<SexRecordEntity> = dao.getPending(ownerId)
+    override suspend fun pending(ownerId: String): List<SexRecordEntity> = dao.getPending(ownerId)
 
-    suspend fun pendingCount(ownerId: String): Int = dao.getPending(ownerId).size
+    override suspend fun pendingCount(ownerId: String): Int = dao.getPending(ownerId).size
 
-    suspend fun adoptLocalRecords(ownerId: String): Int = database.withTransaction {
+    override suspend fun adoptLocalRecords(ownerId: String): Int = database.withTransaction {
         val localRecords = dao.getAllForSync(LOCAL_OWNER_ID)
         var changed = 0
         localRecords.forEach { local ->
@@ -42,7 +43,7 @@ internal class RoomSexSyncStore(
         changed
     }
 
-    suspend fun applyRemote(ownerId: String, records: List<RemoteSexRecord>): Int =
+    override suspend fun applyRemote(ownerId: String, records: List<RemoteSexRecord>): Int =
         database.withTransaction {
             var changed = 0
             records.forEach { remote ->
@@ -62,7 +63,7 @@ internal class RoomSexSyncStore(
             changed
         }
 
-    suspend fun alignUnbasedPendingRevisions(
+    override suspend fun alignUnbasedPendingRevisions(
         ownerId: String,
         records: List<RemoteSexRecord>,
     ): Int = database.withTransaction {
@@ -75,7 +76,7 @@ internal class RoomSexSyncStore(
         }
     }
 
-    suspend fun applyCommitIfUnchanged(
+    override suspend fun applyCommitIfUnchanged(
         ownerId: String,
         local: SexRecordEntity,
         committed: RemoteSexRecord,
