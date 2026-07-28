@@ -1,4 +1,4 @@
-# 手冲日历产品交付索引
+# 私密日历产品交付索引
 
 最后复核：2026-07-28
 
@@ -22,9 +22,9 @@
 
 - [Figma 设计文件](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
 - [Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
-- [仅手冲 v2 设计与实现截图索引](assets/hand-brew-v2/README.md)
+- [仅手冲 v2 历史设计与实现截图索引](assets/hand-brew-v2/README.md)
 
-Figma 和 Canva 是视觉协作资料。运行时行为、文案、数据规则和无障碍要求以 `main` 代码与当前事实文档为准。
+Figma、Canva 与 `hand-brew-v2` 截图是历史视觉协作资料。当前双模块运行时行为、文案、数据规则和无障碍要求以 `main` 代码与当前事实文档为准。
 
 ## 历史交付证据
 

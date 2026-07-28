@@ -42,7 +42,7 @@ Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm te
 ## 必测范围
 
 - `HandBrewRecord` 非负次数和时间约束。
-- 同一本地日期唯一、重复保存沿用 ID。
+- 同一模块同一本地日期唯一、重复保存沿用 ID；两个模块互不覆盖。
 - 0 次、未填写和清除语义。
 - 周/月/年/全部历史统计一致性。
 - 128 次、74 天固定数据集。

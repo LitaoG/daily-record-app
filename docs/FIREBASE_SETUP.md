@@ -56,7 +56,7 @@ adb shell am instrument -w `
   io.github.litaog.dailyrecord.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
-测试会创建随机邮箱账号，验证本账号空查询、跨账号拒绝和再次登录，随后删除测试账号；不会写入手冲文档。普通模拟器套件还会在隔离 Auth 模拟器中读取一次性重置码、设置新密码并用新密码重新登录，不会发送真实邮件。
+测试会创建随机邮箱账号，验证两个集合的本账号空查询、跨账号拒绝和再次登录，随后删除测试账号；不会写入生产记录文档。普通模拟器套件会在隔离环境中分别写入、恢复和删除手冲与做爱文档，并读取一次性重置码设置新密码，不会发送真实邮件。
 
 ## 中国大陆网络门槛
 
@@ -68,7 +68,7 @@ adb shell am instrument -w `
 本地记录功能不受影响，登录也保持可选。若未来产品目标改为“中国大陆普通网络无需代理也能使用云功能”，必须另立迁移项目，在对外承诺前完成二选一并做两台真机验证：
 
 1. 明确产品只支持可访问 Google/Firebase 的网络环境；或
-2. 在现有 `AuthRepository`、`HandBrewRemoteDataSource` 接口后替换为大陆可达服务，并重新完成账户隔离、迁移和删除测试。
+2. 在现有 `AuthRepository`、`HandBrewRemoteDataSource`、`SexRemoteDataSource` 接口后替换为大陆可达服务，并重新完成账户隔离、迁移和双集合删除测试。
 
 没有完成该决策前，不得在商店文案中承诺中国大陆无代理跨设备恢复。
 
