@@ -1,6 +1,6 @@
 # 路线图
 
-最后复核：2026-07-28
+最后复核：2026-07-29
 
 ## 已完成：手冲专用产品重构
 
@@ -41,15 +41,21 @@
 - [x] 发布 [`v1.0.0-beta.1`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.1)。
 - [x] 确认当前只通过 GitHub Releases 分发，不准备应用商店资料或 AAB。
 
-## 当前阶段：稳定性维护
+## 当前阶段：安静的私密数据日志 UI v2
 
-以下是持续活动，不使用一次性完成复选框：
+总 Goal 与唯一阶段顺序见 [`product/QUIET_PRIVATE_JOURNAL_GOALS.md`](product/QUIET_PRIVATE_JOURNAL_GOALS.md)：
 
-- 在本人和少量使用者的日常 Android 使用中收集可复现问题。
-- 持续回归离线写入、账号切换、跨设备恢复、墓碑和永久删除。
-- 保持产品、代码、README、运维文档和 Release 说明一致。
-- 每个小版本通过单元测试、Lint、模拟器设备回归、规则测试和 GitHub CI。
-- 中国大陆普通网络继续明确区分“完全可用的本机模式”和“可能需要 VPN 的 Firebase 云功能”。
+- [ ] Stage 0：仓库清理、文档权威层级、设计资产和 GitHub Goal 同步。
+- [ ] Stage 1：手冲紫色、做爱深红的设计 Token 与共享外壳。
+- [ ] Stage 2：方形次数热力日历页。
+- [ ] Stage 3：点击日期进入的克制次数记录页。
+- [ ] Stage 4：统计页与真实日期年度热力图。
+- [ ] Stage 5：跨页面集成 QA、一次完整套件和候选 APK。
+- [ ] Stage 6：真机日常验收、GitHub Release 与私有恢复镜像同步。
+
+同一时间只进行一个阶段；每个阶段完成 PR、CI 和证据后停下等待用户验收，不提前开始下一阶段。
+
+稳定性维护仍持续进行：在本人和少量使用者的日常 Android 使用中记录可复现问题，继续区分完全可用的本机模式与可能需要 VPN 的 Firebase 云功能。
 
 ## 未来范围规则
 
