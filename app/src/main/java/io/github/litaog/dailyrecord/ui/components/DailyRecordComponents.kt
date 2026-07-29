@@ -249,53 +249,58 @@ internal fun RecordModuleSelector(
     onSelected: (RecordModule) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .testTag("record_module_selector")
-            .clip(RoundedCornerShape(16.dp))
-            .background(Paper0)
-            .border(1.dp, Neutral300, RoundedCornerShape(16.dp))
-            .drawWithContent {
-                drawContent()
-                val dividerWidth = 1.dp.toPx()
-                drawLine(
-                    color = Neutral300,
-                    start = Offset(size.width / 2f, 0f),
-                    end = Offset(size.width / 2f, size.height),
-                    strokeWidth = dividerWidth,
-                )
-            },
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
     ) {
-        specs.forEach { spec ->
-            val active = spec.module == selected
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .testTag("record_module_${spec.module.name}")
-                    .background(if (active) Terracotta500 else Color.Transparent)
-                    .clickable(role = Role.Tab) { onSelected(spec.module) }
-                    .semantics {
-                        this.selected = active
-                        role = Role.Tab
-                        contentDescription = spec.label + "记录，" +
-                            if (active) "已选择" else "未选择"
-                    },
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                spec.icon(
-                    Modifier.size(24.dp),
-                    if (active) White else Ink700,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = spec.label,
-                    color = if (active) White else Ink700,
-                    style = MaterialTheme.typography.titleMedium,
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .height(48.dp)
+                .testTag("record_module_selector")
+                .clip(RoundedCornerShape(14.dp))
+                .background(Paper0)
+                .border(1.dp, Neutral300, RoundedCornerShape(14.dp))
+                .drawWithContent {
+                    drawContent()
+                    val dividerWidth = 1.dp.toPx()
+                    drawLine(
+                        color = Neutral300,
+                        start = Offset(size.width / 2f, 0f),
+                        end = Offset(size.width / 2f, size.height),
+                        strokeWidth = dividerWidth,
+                    )
+                },
+        ) {
+            specs.forEach { spec ->
+                val active = spec.module == selected
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .testTag("record_module_${spec.module.name}")
+                        .background(if (active) Terracotta500 else Color.Transparent)
+                        .clickable(role = Role.Tab) { onSelected(spec.module) }
+                        .semantics {
+                            this.selected = active
+                            role = Role.Tab
+                            contentDescription = spec.label + "记录，" +
+                                if (active) "已选择" else "未选择"
+                        },
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    spec.icon(
+                        Modifier.size(24.dp),
+                        if (active) White else Ink700,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = spec.label,
+                        color = if (active) White else Ink700,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
             }
         }
     }
