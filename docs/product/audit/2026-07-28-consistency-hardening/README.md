@@ -46,7 +46,7 @@
 
 ## 截图
 
-- [`01-calendar.png`](01-calendar.png)：局部统一后的双模块日历。
+- [`01-calendar.png`](01-calendar.png)：局部统一后的双模块日历；未填写和未来日期不显示冗余状态字样，改用淡色层级区分，今天仅保留“今”。
 - [`02-statistics-sex.png`](02-statistics-sex.png)：移除重复模块标签后的做爱统计页。
 - [`03-clear-dialog.png`](03-clear-dialog.png)：项目自有清除确认弹窗。
 - [`04-module-selector-equal-halves.png`](04-module-selector-equal-halves.png)：紧凑的单层选择器右侧选中时，颜色与点击范围占满唯一外框的完整半区；控件保持 48dp 最小触控高度并在页面内居中。
