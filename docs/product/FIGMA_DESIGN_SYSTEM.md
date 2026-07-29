@@ -2,7 +2,9 @@
 
 设计文件：<https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw>
 
-状态：视觉与组件参考。运行时行为、文案和无障碍细节以 Compose 代码、当前事实文档和最新模拟器审计为准；Figma 与运行时不一致时不得用旧画板覆盖已验证实现。
+状态：`Historical — superseded`
+
+> 本文和对应 Figma 文件记录 2026-07-17 的仅手冲设计阶段，只用于历史审计。当前双模块 UI v2 的唯一视觉入口是[紫色手冲＋深红做爱设计基线](design/quiet-private-journal-v2/README.md)，实现顺序以[分阶段 Goal](QUIET_PRIVATE_JOURNAL_GOALS.md)为准。旧陶土色、旧组件和旧画板不得覆盖当前目标、Compose 事实或已验证交互。
 
 ## Foundations
 

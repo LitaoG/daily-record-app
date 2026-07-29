@@ -1,5 +1,7 @@
 # 仅手冲 v2 设计与实现证据
 
+> 历史资产：本目录记录 2026-07-17 至 2026-07-22 的仅手冲/Figma/Canva 与早期运行时证据，不是当前 UI 目标。当前双模块设计入口见 [`design/quiet-private-journal-v2/`](../../design/quiet-private-journal-v2/README.md)，不得从本目录恢复陶土色或仅手冲范围。
+
 - `01-figma-cover.png`：Figma v2 封面。
 - `02-figma-foundations.png`：颜色、字体、间距、圆角与阴影规范。
 - `03-figma-product-screens.png`：月历、记录和四类统计共六张 390×844 产品屏幕。

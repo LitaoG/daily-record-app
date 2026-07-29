@@ -13,6 +13,8 @@
   <img src="docs/product/audit/2026-07-22-calendar-statistics/after/statistics-week-data.png" alt="早期周统计设计基线" width="31%">
 </p>
 
+上图是当前运行时证据。下一轮已经确认的“手冲紫色＋做爱深红”日历、记录与统计改版尚未进入代码，目标图和逐阶段暂停规则见 [UI v2 设计基线](docs/product/design/quiet-private-journal-v2/README.md)与[分阶段执行计划](docs/product/QUIET_PRIVATE_JOURNAL_GOALS.md)。
+
 ## 已实现
 
 - 月历查看、相邻月份切换和 1970 年至今天的年月日快速跳转。

@@ -32,11 +32,12 @@
 ## 产品协作资料
 
 - [产品交付索引](product/README.md)
+- [UI v2 分阶段执行计划](product/QUIET_PRIVATE_JOURNAL_GOALS.md)
+- [已确认的 UI v2 设计基线与三张高保真图](product/design/quiet-private-journal-v2/README.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)
 - [用户故事与验收](product/USER_STORIES_AND_ACCEPTANCE.md)
 - [实现与发布准备度](product/IMPLEMENTATION_READINESS.md)
-- [Figma 设计系统说明](product/FIGMA_DESIGN_SYSTEM.md)
 - [日常使用反馈](product/DAILY_USE_FEEDBACK.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 
@@ -44,6 +45,7 @@
 
 以下内容用于解释某次迭代当时验证了什么，不应覆盖上面的当前规则：
 
+- [历史 Figma Hand-brew-only v2 设计系统](product/FIGMA_DESIGN_SYSTEM.md)
 - [重构与交付日志](product/HAND_BREW_REFACTOR_LOG.md)
 - [2026-07-28 局部一致性、扩展边界与安全加固](product/audit/2026-07-28-consistency-hardening/README.md)
 - [2026-07-27 快速运行审计](product/audit/2026-07-27-quick-runtime/README.md)
