@@ -32,7 +32,7 @@ import io.github.litaog.dailyrecord.core.sync.AndroidNetworkMonitor
 import io.github.litaog.dailyrecord.core.sync.CombinedAccountRemoteDataStore
 import io.github.litaog.dailyrecord.core.sync.CombinedSyncCoordinator
 import io.github.litaog.dailyrecord.core.sync.HandBrewSyncCoordinator
-import io.github.litaog.dailyrecord.core.sync.HandBrewSyncScheduler
+import io.github.litaog.dailyrecord.core.sync.DailyRecordSyncScheduler
 import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
 import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
 import io.github.litaog.dailyrecord.core.sync.SexSyncCoordinator
@@ -59,11 +59,12 @@ internal fun DailyRecordRoot(
     var continueOffline by rememberSaveable {
         mutableStateOf(localModePreference.isEnabled)
     }
+    var authOpenedFromLocal by rememberSaveable { mutableStateOf(false) }
     if (continueOffline) {
         LocalRoot(
             database = database,
             onSignIn = {
-                localModePreference.setEnabled(false)
+                authOpenedFromLocal = true
                 continueOffline = false
             },
         )
@@ -92,8 +93,18 @@ internal fun DailyRecordRoot(
                         services.authRepository.sendPasswordResetEmail(email)
                     }.map { Unit }
                 },
+                onBack = if (authOpenedFromLocal) {
+                    {
+                        localModePreference.setEnabled(true)
+                        authOpenedFromLocal = false
+                        continueOffline = true
+                    }
+                } else {
+                    null
+                },
                 onContinueOffline = {
                     localModePreference.setEnabled(true)
+                    authOpenedFromLocal = false
                     continueOffline = true
                 },
             )
@@ -101,6 +112,7 @@ internal fun DailyRecordRoot(
         is AuthState.SignedIn -> {
             LaunchedEffect(state.account.uid) {
                 localModePreference.setEnabled(false)
+                authOpenedFromLocal = false
             }
             SignedInRoot(
                 database = database,
@@ -124,7 +136,7 @@ private fun LocalRoot(database: DailyRecordDatabase, onSignIn: () -> Unit) {
     val sexRepository = remember(database) {
         RoomSexRecordRepository(database = database, ownerId = LOCAL_OWNER_ID)
     }
-    HandBrewApp(
+    DailyRecordApp(
         repository = handBrewRepository,
         sexRepository = sexRepository,
         onSignIn = onSignIn,
@@ -187,14 +199,14 @@ private fun SignedInRoot(
         RoomHandBrewRecordRepository(
             database = database,
             ownerId = ownerId,
-            onLocalChange = { HandBrewSyncScheduler.schedule(context) },
+            onLocalChange = { DailyRecordSyncScheduler.schedule(context) },
         )
     }
     val sexRepository = remember(ownerId, database) {
         RoomSexRecordRepository(
             database = database,
             ownerId = ownerId,
-            onLocalChange = { HandBrewSyncScheduler.schedule(context) },
+            onLocalChange = { DailyRecordSyncScheduler.schedule(context) },
         )
     }
     val deletionCoordinator = remember(
@@ -234,10 +246,10 @@ private fun SignedInRoot(
         }
     }
     LaunchedEffect(ownerId) {
-        HandBrewSyncScheduler.schedule(context)
+        DailyRecordSyncScheduler.schedule(context)
     }
 
-    HandBrewApp(
+    DailyRecordApp(
         repository = handBrewRepository,
         sexRepository = sexRepository,
         accountEmail = state.account.email,
@@ -251,7 +263,7 @@ private fun SignedInRoot(
                 deletionInProgress = true
                 activeSyncJobs.forEach { it.cancelAndJoin() }
                 val result = runCatchingPreservingCancellation {
-                    HandBrewSyncScheduler.cancelAndAwait(context)
+                    DailyRecordSyncScheduler.cancelAndAwait(context)
                     deletionCoordinator.deleteAccount(
                         ownerId = ownerId,
                         password = password,

@@ -34,7 +34,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuthException
 import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
-import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
+import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -84,7 +84,7 @@ internal fun PasswordResetDialog(
     }
     val stackActions = LocalDensity.current.fontScale >= 1.35f
 
-    HandBrewDialog(
+    DailyRecordDialog(
         title = if (sent) "请查收邮件" else "重置密码",
         subtitle = if (sent) "为了保护账号隐私，我们不会显示该邮箱是否已注册。" else "输入注册邮箱，我们会发送安全的重置链接。",
         testTag = "password_reset_dialog",

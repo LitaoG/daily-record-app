@@ -4,12 +4,12 @@ import androidx.work.ExistingWorkPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class HandBrewSyncSchedulerTest {
+class DailyRecordSyncSchedulerTest {
     @Test
     fun localChangeQueuesFollowUpWorkInsteadOfBeingDroppedByRunningWork() {
         assertEquals(
             ExistingWorkPolicy.APPEND_OR_REPLACE,
-            HandBrewSyncScheduler.workPolicy,
+            DailyRecordSyncScheduler.workPolicy,
         )
     }
 }

@@ -20,9 +20,11 @@ Android Firebase 客户端配置本身不是管理员凭据，但仍不进入此
 ## 应用安全基线
 
 - 只启用 Firebase 邮箱密码登录和 Cloud Firestore；不启用短信登录、广告或业务分析 SDK。
-- 手冲记录只通过 Repository 访问 Room；UI 不直接读取 Firestore。
+- 手冲与做爱记录只通过各自 Repository 访问 Room；UI 不直接读取 Firestore。
 - Firestore 路径按 Firebase UID 隔离，规则校验所有权、字段白名单、修订递增和禁止物理删除。
 - 系统云备份与设备迁移关闭，避免个人记录被隐式复制。
-- 日志不得输出手冲记录内容或完整数据库行。
+- Release Manifest 禁止明文网络；仅 Debug 构建为本机 Firebase 模拟器允许 HTTP，Debug APK 不对外分发。
+- Room 当前依赖 Android 应用沙箱、系统文件级加密和设备锁，不宣称应用层端到端加密。引入数据库加密前必须先验证密钥恢复和无损迁移。
+- 日志不得输出任一私密记录的日期、次数、文档内容或完整数据库行。
 - Room schema 变化必须使用显式迁移；禁止 destructive migration。
 - 隐私政策、账号/云数据删除、稳定签名和生产规则回归必须持续保持有效。当前 GitHub 侧载阶段按 ADR-013 暂不接入或强制 App Check；未来只有在 Play Console/侧载识别条件可验证并先观察真实指标后，才重新决定是否强制。

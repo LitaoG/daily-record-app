@@ -29,8 +29,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
-import io.github.litaog.dailyrecord.ui.components.HandBrewTextAction
+import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
+import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -51,7 +51,7 @@ internal fun DiagnosticDialog(
     val shareAction = onShare ?: { shareReport(context, it) }
     var feedback by remember { mutableStateOf<String?>(null) }
 
-    HandBrewDialog(
+    DailyRecordDialog(
         title = "本机诊断信息",
         subtitle = "不包含邮箱、私密记录日期、次数或密码",
         testTag = "diagnostic_dialog",
@@ -102,7 +102,7 @@ internal fun DiagnosticDialog(
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
-            HandBrewTextAction(
+            DailyRecordTextAction(
                 label = "返回",
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth(),

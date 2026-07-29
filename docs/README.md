@@ -1,6 +1,6 @@
 # 私密日历文档中心
 
-最后复核：2026-07-28
+最后复核：2026-07-29
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
@@ -22,6 +22,7 @@
 | 文档 | 负责回答 |
 |---|---|
 | [开发与测试](DEVELOPMENT.md) | 环境、命令、设备安全和完成门槛 |
+| [测试策略与执行矩阵](TESTING.md) | 每类代码改动何时跑定向测试、何时在小版本末尾跑一次全量验证 |
 | [Firebase 配置与运维](FIREBASE_SETUP.md) | 生产资源、本地配置、规则发布和网络限制 |
 | [签名与 GitHub Release](RELEASE.md) | 版本、稳定签名、Secrets、发布和灾难恢复 |
 | [隐私说明](../PRIVACY.md) | 面向使用者的数据处理说明 |
@@ -31,6 +32,7 @@
 ## 产品协作资料
 
 - [产品交付索引](product/README.md)
+- [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)
 - [用户故事与验收](product/USER_STORIES_AND_ACCEPTANCE.md)
 - [实现与发布准备度](product/IMPLEMENTATION_READINESS.md)
@@ -43,6 +45,7 @@
 以下内容用于解释某次迭代当时验证了什么，不应覆盖上面的当前规则：
 
 - [重构与交付日志](product/HAND_BREW_REFACTOR_LOG.md)
+- [2026-07-28 局部一致性、扩展边界与安全加固](product/audit/2026-07-28-consistency-hardening/README.md)
 - [2026-07-27 快速运行审计](product/audit/2026-07-27-quick-runtime/README.md)
 - [2026-07-22 找回密码与同步审计](product/audit/2026-07-22-password-reset-sync/README.md)
 - [2026-07-22 应用内 UI 一致性审计](product/audit/2026-07-22-native-ui/README.md)

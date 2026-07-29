@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -12,6 +13,7 @@ import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.Instant
 import java.time.LocalDate
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -60,10 +62,38 @@ class RecordModuleIntegrationTest {
         composeRule.onNodeWithText("0 次＝明确没有，会保留记录。").assertIsDisplayed()
     }
 
+    @Test
+    fun moduleSelectorSplitsTheAvailableWidthAtTheExactCenter() {
+        setDualModuleContent()
+
+        val selectorBounds = composeRule
+            .onNodeWithTag("record_module_selector")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val handBrewBounds = composeRule
+            .onNodeWithTag("record_module_HandBrew")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val sexBounds = composeRule
+            .onNodeWithTag("record_module_Sex")
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertEquals(selectorBounds.width / 2f, handBrewBounds.width, 0.5f)
+        assertEquals(selectorBounds.width / 2f, sexBounds.width, 0.5f)
+        assertEquals(selectorBounds.left, handBrewBounds.left, 0.5f)
+        assertEquals(selectorBounds.top, handBrewBounds.top, 0.5f)
+        assertEquals(selectorBounds.bottom, handBrewBounds.bottom, 0.5f)
+        assertEquals(handBrewBounds.right, sexBounds.left, 0.5f)
+        assertEquals(selectorBounds.top, sexBounds.top, 0.5f)
+        assertEquals(selectorBounds.right, sexBounds.right, 0.5f)
+        assertEquals(selectorBounds.bottom, sexBounds.bottom, 0.5f)
+    }
+
     private fun setDualModuleContent() {
         composeRule.setContent {
             DailyRecordTheme {
-                HandBrewApp(
+                DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(
                         initialRecords = listOf(
                             HandBrewRecord(

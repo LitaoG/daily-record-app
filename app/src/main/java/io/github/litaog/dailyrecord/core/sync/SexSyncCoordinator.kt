@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 internal class SexSyncCoordinator(
     store: RoomSexSyncStore,
     remote: SexRemoteDataSource,
-) : AccountSyncOperations {
+) : ModuleSyncCoordinator {
     private val engine = DailyCountSyncEngine(store, remote)
 
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = engine.observeRemote(ownerId)
@@ -17,7 +17,8 @@ internal class SexSyncCoordinator(
 
     override suspend fun pendingCount(ownerId: String): Int = engine.pendingCount(ownerId)
 
-    suspend fun prepareLocalAccount(ownerId: String): Int = engine.prepareLocalAccount(ownerId)
+    override suspend fun prepareLocalAccount(ownerId: String): Int =
+        engine.prepareLocalAccount(ownerId)
 
     override suspend fun syncOnce(ownerId: String): SyncResult = engine.syncOnce(ownerId)
 }

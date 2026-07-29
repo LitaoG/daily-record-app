@@ -38,7 +38,7 @@ import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.syncFailureKind
 import io.github.litaog.dailyrecord.ui.components.DangerActionButton
-import io.github.litaog.dailyrecord.ui.components.HandBrewDialog
+import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.Ink500
@@ -83,7 +83,7 @@ internal fun AccountDeletionDialog(
         }
     }
 
-    HandBrewDialog(
+    DailyRecordDialog(
         title = if (step == AccountDeletionStep.Warning) "删除账号与云端数据？" else "再次确认永久删除",
         subtitle = if (step == AccountDeletionStep.Warning) {
             "此操作无法撤销"

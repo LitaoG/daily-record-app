@@ -1,6 +1,6 @@
 # 开发、测试与发布
 
-最后复核：2026-07-28
+最后复核：2026-07-29
 
 ## 环境
 
@@ -14,6 +14,8 @@
 GitHub `main` 是当前事实来源；从最新 `main` 建立短生命周期分支，通过 Pull Request、自动化检查和审查后 squash 合并。
 
 ## 验证命令
+
+测试不按“每次修改都全量运行”执行。日常修改先根据 [`TESTING.md`](TESTING.md) 选择能够覆盖当前影响面的最小测试集；只有一个连贯小版本的功能代码全部完成、准备合并或交付时，才在最终功能 head 上运行一次下面的完整套件。未受后续修改影响的测试结果可以沿用，不机械重复。
 
 ```powershell
 pnpm test:docs
@@ -59,6 +61,7 @@ Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm te
 
 ## Definition of Done
 
+- 已按 [`TESTING.md`](TESTING.md) 完成修改中的定向验证，并在小版本最终功能 head 上完成一次完整验证；未受影响的套件没有无意义地重复执行。
 - 产品契约、代码、Figma 和测试一致。
 - 单元测试、Lint、Debug/签名 Release 构建、设备数据库/Compose 测试、覆盖升级和规则测试通过。
 - 全文审计没有把活动管理、健身或未来记录类型误写成当前功能；未来扩展只遵循 ADR-002 的独立垂直模块边界。

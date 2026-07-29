@@ -28,13 +28,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -63,7 +66,7 @@ enum class StatisticsPeriod(val label: String) {
 }
 
 @Composable
-internal fun HandBrewBottomBar(
+internal fun DailyRecordBottomBar(
     selected: TopDestination,
     onSelected: (TopDestination) -> Unit,
 ) {
@@ -203,7 +206,15 @@ fun PlaneIcon(modifier: Modifier = Modifier, color: Color = Terracotta500) {
             lineTo(size.width * .42f, size.height * .42f)
             close()
         }
-        drawPath(path, color)
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(
+                width = 2.4.dp.toPx(),
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
+        )
     }
 }
 
@@ -238,44 +249,58 @@ internal fun RecordModuleSelector(
     onSelected: (RecordModule) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Paper0)
-            .border(1.dp, Neutral300, RoundedCornerShape(16.dp))
-            .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
     ) {
-        specs.forEach { spec ->
-            val active = spec.module == selected
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (active) Terracotta500 else Color.Transparent)
-                    .clickable(role = Role.Tab) { onSelected(spec.module) }
-                    .semantics {
-                        this.selected = active
-                        role = Role.Tab
-                        contentDescription = spec.label + "记录，" +
-                            if (active) "已选择" else "未选择"
-                    },
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                spec.icon(
-                    Modifier.size(20.dp),
-                    if (active) White else Terracotta500,
-                )
-                Spacer(Modifier.width(7.dp))
-                Text(
-                    text = spec.label,
-                    color = if (active) White else Ink700,
-                    style = MaterialTheme.typography.labelMedium,
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .height(48.dp)
+                .testTag("record_module_selector")
+                .clip(RoundedCornerShape(14.dp))
+                .background(Paper0)
+                .border(1.dp, Neutral300, RoundedCornerShape(14.dp))
+                .drawWithContent {
+                    drawContent()
+                    val dividerWidth = 1.dp.toPx()
+                    drawLine(
+                        color = Neutral300,
+                        start = Offset(size.width / 2f, 0f),
+                        end = Offset(size.width / 2f, size.height),
+                        strokeWidth = dividerWidth,
+                    )
+                },
+        ) {
+            specs.forEach { spec ->
+                val active = spec.module == selected
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .testTag("record_module_${spec.module.name}")
+                        .background(if (active) Terracotta500 else Color.Transparent)
+                        .clickable(role = Role.Tab) { onSelected(spec.module) }
+                        .semantics {
+                            this.selected = active
+                            role = Role.Tab
+                            contentDescription = spec.label + "记录，" +
+                                if (active) "已选择" else "未选择"
+                        },
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    spec.icon(
+                        Modifier.size(24.dp),
+                        if (active) White else Ink700,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = spec.label,
+                        color = if (active) White else Ink700,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
             }
         }
     }

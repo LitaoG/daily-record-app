@@ -18,7 +18,7 @@ class DiagnosticDialogTest {
 
     @Test
     fun reportCanBeReviewedCopiedAndSharedInsideAppDialog() {
-        val report = "Hand Brew Calendar diagnostics\nsync_status=offline"
+        val report = "Private Calendar diagnostics\nsync_status=offline"
         var copied = ""
         var shared = ""
         composeRule.setContent {

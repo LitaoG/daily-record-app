@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
+import io.github.litaog.dailyrecord.core.data.DailyCountRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
+import io.github.litaog.dailyrecord.core.model.DailyCountRecord
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.components.IntimacyIcon
@@ -98,84 +100,94 @@ internal interface RecordModuleController {
     suspend fun clearRecord(localDate: LocalDate): Boolean
 }
 
-internal class HandBrewModuleController(
-    private val repository: HandBrewRecordRepository,
+internal abstract class RepositoryRecordModuleController<T : DailyCountRecord>(
+    final override val module: RecordModule,
+    private val repository: DailyCountRecordRepository<T>,
 ) : RecordModuleController {
-    override val module = RecordModule.HandBrew
-
-    override fun observeRecord(localDate: LocalDate): Flow<DailyCountEntry?> =
+    final override fun observeRecord(localDate: LocalDate): Flow<DailyCountEntry?> =
         repository.observeRecord(localDate).map { it?.asDailyCountEntry() }
 
-    override fun observeRecords(
+    final override fun observeRecords(
         startDate: LocalDate,
         endExclusive: LocalDate,
     ): Flow<List<DailyCountEntry>> =
         repository.observeRecords(startDate, endExclusive).map { records ->
-            records.map(HandBrewRecord::asDailyCountEntry)
+            records.map(DailyCountRecord::asDailyCountEntry)
         }
 
-    override suspend fun saveRecord(localDate: LocalDate, count: Int) {
+    final override suspend fun saveRecord(localDate: LocalDate, count: Int) {
         val existing = repository.observeRecord(localDate).firstValue()
         val now = Instant.now()
         val safeUpdatedAt = existing?.updatedAt
             ?.plusMillis(1)
             ?.takeIf { it.isAfter(now) }
             ?: now
-        repository.saveRecord(
-            HandBrewRecord(
-                id = existing?.id ?: UUID.randomUUID().toString(),
-                localDate = localDate,
-                brewCount = count,
-                createdAt = existing?.createdAt ?: now,
-                updatedAt = safeUpdatedAt,
-            ),
-        )
+        repository.saveRecord(createRecord(
+            existing = existing,
+            localDate = localDate,
+            count = count,
+            createdAt = existing?.createdAt ?: now,
+            updatedAt = safeUpdatedAt,
+        ))
     }
 
-    override suspend fun clearRecord(localDate: LocalDate): Boolean =
+    protected abstract fun createRecord(
+        existing: T?,
+        localDate: LocalDate,
+        count: Int,
+        createdAt: Instant,
+        updatedAt: Instant,
+    ): T
+
+    final override suspend fun clearRecord(localDate: LocalDate): Boolean =
         repository.clearRecord(localDate)
+}
+
+internal class HandBrewModuleController(
+    repository: HandBrewRecordRepository,
+) : RepositoryRecordModuleController<HandBrewRecord>(
+    module = RecordModule.HandBrew,
+    repository = repository,
+) {
+    override fun createRecord(
+        existing: HandBrewRecord?,
+        localDate: LocalDate,
+        count: Int,
+        createdAt: Instant,
+        updatedAt: Instant,
+    ) = HandBrewRecord(
+        id = existing?.id ?: UUID.randomUUID().toString(),
+        localDate = localDate,
+        brewCount = count,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 }
 
 internal class SexModuleController(
-    private val repository: SexRecordRepository,
-) : RecordModuleController {
-    override val module = RecordModule.Sex
-
-    override fun observeRecord(localDate: LocalDate): Flow<DailyCountEntry?> =
-        repository.observeRecord(localDate).map { it?.asDailyCountEntry() }
-
-    override fun observeRecords(
-        startDate: LocalDate,
-        endExclusive: LocalDate,
-    ): Flow<List<DailyCountEntry>> =
-        repository.observeRecords(startDate, endExclusive).map { records ->
-            records.map(SexRecord::asDailyCountEntry)
-        }
-
-    override suspend fun saveRecord(localDate: LocalDate, count: Int) {
-        val existing = repository.observeRecord(localDate).firstValue()
-        val now = Instant.now()
-        val safeUpdatedAt = existing?.updatedAt
-            ?.plusMillis(1)
-            ?.takeIf { it.isAfter(now) }
-            ?: now
-        repository.saveRecord(
-            SexRecord(
-                id = existing?.id ?: UUID.randomUUID().toString(),
-                localDate = localDate,
-                sexCount = count,
-                createdAt = existing?.createdAt ?: now,
-                updatedAt = safeUpdatedAt,
-            ),
-        )
-    }
-
-    override suspend fun clearRecord(localDate: LocalDate): Boolean =
-        repository.clearRecord(localDate)
+    repository: SexRecordRepository,
+) : RepositoryRecordModuleController<SexRecord>(
+    module = RecordModule.Sex,
+    repository = repository,
+) {
+    override fun createRecord(
+        existing: SexRecord?,
+        localDate: LocalDate,
+        count: Int,
+        createdAt: Instant,
+        updatedAt: Instant,
+    ) = SexRecord(
+        id = existing?.id ?: UUID.randomUUID().toString(),
+        localDate = localDate,
+        sexCount = count,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 }
 
-internal fun HandBrewRecord.asDailyCountEntry() = DailyCountEntry(localDate, brewCount)
-
-internal fun SexRecord.asDailyCountEntry() = DailyCountEntry(localDate, sexCount)
+internal fun DailyCountRecord.asDailyCountEntry() = DailyCountEntry(
+    localDate = localDate,
+    count = count,
+)
 
 private suspend fun <T> Flow<T>.firstValue(): T = first()

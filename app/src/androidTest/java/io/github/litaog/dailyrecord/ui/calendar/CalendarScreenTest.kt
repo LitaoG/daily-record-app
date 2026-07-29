@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.Instant
@@ -19,7 +20,7 @@ class CalendarScreenTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun explicitZeroAndFutureDateHaveDistinctAccessibleSemantics() {
+    fun compactDayCellsHideEmptyLabelsButKeepAccessibleSemantics() {
         val today = LocalDate.of(2026, 7, 17)
         composeRule.setContent {
             DailyRecordTheme {
@@ -44,6 +45,9 @@ class CalendarScreenTest {
             .onNodeWithContentDescription("2026年7月18日，未来日期，不可记录")
             .assertExists()
             .assertIsNotEnabled()
+        composeRule.onAllNodesWithText("未填").assertCountEquals(0)
+        composeRule.onAllNodesWithText("未来").assertCountEquals(0)
+        composeRule.onNodeWithText("今").assertExists()
     }
 
     @Test

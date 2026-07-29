@@ -10,12 +10,12 @@ import java.time.LocalDate
  * recorded that it did not occur. The absence of a row means the date is unset.
  */
 data class SexRecord(
-    val id: String,
-    val localDate: LocalDate,
+    override val id: String,
+    override val localDate: LocalDate,
     val sexCount: Int,
-    val createdAt: Instant,
-    val updatedAt: Instant,
-) {
+    override val createdAt: Instant,
+    override val updatedAt: Instant,
+) : DailyCountRecord {
     init {
         require(id.isNotBlank()) { "SexRecord id must not be blank." }
         require(sexCount >= 0) { "SexRecord sexCount must be non-negative." }
@@ -26,4 +26,7 @@ data class SexRecord(
 
     val occurred: Boolean
         get() = sexCount > 0
+
+    override val count: Int
+        get() = sexCount
 }

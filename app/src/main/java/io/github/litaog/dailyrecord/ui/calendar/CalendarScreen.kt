@@ -48,6 +48,7 @@ import io.github.litaog.dailyrecord.ui.theme.Ink700
 import io.github.litaog.dailyrecord.ui.theme.Ink900
 import io.github.litaog.dailyrecord.ui.theme.Neutral300
 import io.github.litaog.dailyrecord.ui.theme.Paper0
+import io.github.litaog.dailyrecord.ui.theme.Paper50
 import io.github.litaog.dailyrecord.ui.theme.Paper100
 import io.github.litaog.dailyrecord.ui.theme.Terracotta400
 import io.github.litaog.dailyrecord.ui.theme.Terracotta500
@@ -322,25 +323,30 @@ private fun CalendarDayCell(
     val count = record?.count
     val background = when {
         unsupported || future -> Paper100
-        record == null -> Paper0
+        record == null -> Paper50
         count == 0 -> Neutral300
         count == 1 -> Terracotta400
         count == 2 -> Terracotta500
         else -> Terracotta600
     }
     val contentColor = when {
+        unsupported || future || record == null -> Ink500
         (count ?: 0) >= 2 -> White
         else -> Ink900
     }
-    val status = when {
+    val recordStatus = when {
         unsupported -> "不可用"
-        future -> "未来"
-        record == null -> "未填"
+        future || record == null -> null
         count == 0 -> "0次"
         count == 1 -> "1次"
         count == 2 -> "2次"
         count in 3..8 -> "${count}次"
         else -> "9+次"
+    }
+    val visibleStatus = when {
+        date == today && record == null -> "今"
+        date == today && !future && !largeText && recordStatus != null -> "$recordStatus·今"
+        else -> recordStatus
     }
     val semanticStatus = when {
         unsupported -> "超出支持范围，不可记录"
@@ -372,17 +378,20 @@ private fun CalendarDayCell(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        val dayColor = if (date == today && record == null) Terracotta400 else contentColor
         Text(
             text = date.dayOfMonth.toString(),
-            color = if (date == today && count == null) Terracotta500 else contentColor,
+            color = dayColor,
             style = if (largeText) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Medium,
         )
-        Text(
-            text = if (date == today && !future && !largeText) "$status·今" else status,
-            color = if (date == today && count == null) Terracotta500 else contentColor,
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 1,
-        )
+        visibleStatus?.let { status ->
+            Text(
+                text = status,
+                color = dayColor,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+            )
+        }
     }
 }

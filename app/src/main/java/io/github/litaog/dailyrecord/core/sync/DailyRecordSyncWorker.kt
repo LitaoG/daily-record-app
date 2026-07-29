@@ -7,7 +7,7 @@ import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import kotlinx.coroutines.CancellationException
 
-class HandBrewSyncWorker(
+class DailyRecordSyncWorker(
     appContext: Context,
     workerParams: WorkerParameters,
 ) : CoroutineWorker(appContext, workerParams) {

@@ -4,7 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val HandBrewColorScheme = lightColorScheme(
+private val DailyRecordColorScheme = lightColorScheme(
     primary = Terracotta500,
     onPrimary = White,
     primaryContainer = Terracotta400,
@@ -32,7 +32,7 @@ private val HandBrewColorScheme = lightColorScheme(
 @Composable
 fun DailyRecordTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = HandBrewColorScheme,
+        colorScheme = DailyRecordColorScheme,
         typography = Typography,
         content = content,
     )

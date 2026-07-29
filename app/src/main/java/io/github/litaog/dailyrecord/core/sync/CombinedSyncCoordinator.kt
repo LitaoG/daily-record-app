@@ -9,37 +9,57 @@ import kotlinx.coroutines.flow.merge
  * remote mapping, collection and conflict logic.
  */
 internal class CombinedSyncCoordinator(
-    private val handBrew: HandBrewSyncCoordinator,
-    private val sex: SexSyncCoordinator,
+    private val modules: List<ModuleSyncCoordinator>,
 ) : AccountSyncOperations {
-    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = merge(
-        handBrew.observeRemote(ownerId),
-        sex.observeRemote(ownerId),
-    )
+    constructor(
+        handBrew: HandBrewSyncCoordinator,
+        sex: SexSyncCoordinator,
+    ) : this(listOf(handBrew, sex))
+
+    init {
+        require(modules.isNotEmpty()) { "At least one sync module is required." }
+    }
+
+    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> =
+        merge(*modules.map { it.observeRemote(ownerId) }.toTypedArray())
 
     override fun observePendingCount(ownerId: String): Flow<Int> = combine(
-        handBrew.observePendingCount(ownerId),
-        sex.observePendingCount(ownerId),
-    ) { handBrewCount, sexCount -> handBrewCount + sexCount }
+        modules.map { it.observePendingCount(ownerId) },
+    ) { counts -> counts.sum() }
 
     override suspend fun pendingCount(ownerId: String): Int =
-        handBrew.pendingCount(ownerId) + sex.pendingCount(ownerId)
+        modules.sumOfSuspend { it.pendingCount(ownerId) }
 
     override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int =
-        handBrew.applySnapshot(ownerId, snapshot) + sex.applySnapshot(ownerId, snapshot)
+        modules.sumOfSuspend { it.applySnapshot(ownerId, snapshot) }
 
     suspend fun prepareLocalAccount(ownerId: String): Int =
-        handBrew.prepareLocalAccount(ownerId) + sex.prepareLocalAccount(ownerId)
+        modules.sumOfSuspend { it.prepareLocalAccount(ownerId) }
 
     override suspend fun syncOnce(ownerId: String): SyncResult {
-        val handBrewResult = handBrew.syncOnce(ownerId)
-        val sexResult = sex.syncOnce(ownerId)
-        return SyncResult(
-            uploaded = handBrewResult.uploaded + sexResult.uploaded,
-            downloaded = handBrewResult.downloaded + sexResult.downloaded,
-            pending = handBrewResult.pending + sexResult.pending,
-            rejectedRemoteRecords =
-                handBrewResult.rejectedRemoteRecords + sexResult.rejectedRemoteRecords,
-        )
+        return modules.fold(
+            SyncResult(uploaded = 0, downloaded = 0, pending = 0),
+        ) { combined, module ->
+            combined + module.syncOnce(ownerId)
+        }
     }
 }
+
+internal interface ModuleSyncCoordinator : AccountSyncOperations {
+    suspend fun prepareLocalAccount(ownerId: String): Int
+}
+
+private suspend inline fun <T> Iterable<T>.sumOfSuspend(
+    crossinline value: suspend (T) -> Int,
+): Int {
+    var total = 0
+    for (item in this) total += value(item)
+    return total
+}
+
+private operator fun SyncResult.plus(other: SyncResult) = SyncResult(
+    uploaded = uploaded + other.uploaded,
+    downloaded = downloaded + other.downloaded,
+    pending = pending + other.pending,
+    rejectedRemoteRecords = rejectedRemoteRecords + other.rejectedRemoteRecords,
+)
