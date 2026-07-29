@@ -1,6 +1,6 @@
 # 私密日历产品交付索引
 
-最后复核：2026-07-28
+最后复核：2026-07-29
 
 完整工程文档请先看[文档中心](../README.md)。本页只索引产品、设计和交付资料。
 
@@ -9,6 +9,7 @@
 - [产品契约](../PRODUCT.md)
 - [界面与交互](../UI_UX.md)
 - [统计口径](../STATISTICS.md)
+- [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
 - [实现与发布准备度](IMPLEMENTATION_READINESS.md)
 - [产品 Backlog](PRODUCT_BACKLOG.md)
 - [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)
@@ -38,3 +39,4 @@ Figma、Canva 与 `hand-brew-v2` 截图是历史视觉协作资料。当前双�
 - [早期运行时 UX 与统计验收](RUNTIME_UX_AUDIT.md)
 
 这些材料记录特定日期的截图、测试数量和阶段结论，不代表当前待办。旧“通用活动记录器”产品包已从当前文件树移除；未来记录模块也不会恢复旧通用活动模型。
+

@@ -32,6 +32,7 @@
 ## 产品协作资料
 
 - [产品交付索引](product/README.md)
+- [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)
 - [用户故事与验收](product/USER_STORIES_AND_ACCEPTANCE.md)
 - [实现与发布准备度](product/IMPLEMENTATION_READINESS.md)
@@ -53,3 +54,4 @@
 - [v1.0.0-beta.1 发布说明](releases/v1.0.0-beta.1.md)
 
 历史文档中的测试数量、截图日期、分支名和“下一步”只描述当时状态。当前版本、发布物和 CI 状态以仓库首页、GitHub Releases 与 `main` 为准。
+
