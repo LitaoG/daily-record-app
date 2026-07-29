@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -251,11 +252,21 @@ internal fun RecordModuleSelector(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .height(56.dp)
+            .testTag("record_module_selector")
             .clip(RoundedCornerShape(16.dp))
             .background(Paper0)
             .border(1.dp, Neutral300, RoundedCornerShape(16.dp))
-            .padding(6.dp),
+            .drawWithContent {
+                drawContent()
+                val dividerWidth = 1.dp.toPx()
+                drawLine(
+                    color = Neutral300,
+                    start = Offset(size.width / 2f, 0f),
+                    end = Offset(size.width / 2f, size.height),
+                    strokeWidth = dividerWidth,
+                )
+            },
     ) {
         specs.forEach { spec ->
             val active = spec.module == selected
@@ -264,7 +275,6 @@ internal fun RecordModuleSelector(
                     .weight(1f)
                     .fillMaxHeight()
                     .testTag("record_module_${spec.module.name}")
-                    .clip(RoundedCornerShape(12.dp))
                     .background(if (active) Terracotta500 else Color.Transparent)
                     .clickable(role = Role.Tab) { onSelected(spec.module) }
                     .semantics {

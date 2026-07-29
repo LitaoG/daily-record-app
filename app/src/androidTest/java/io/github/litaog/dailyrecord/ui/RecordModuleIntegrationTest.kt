@@ -66,6 +66,10 @@ class RecordModuleIntegrationTest {
     fun moduleSelectorSplitsTheAvailableWidthAtTheExactCenter() {
         setDualModuleContent()
 
+        val selectorBounds = composeRule
+            .onNodeWithTag("record_module_selector")
+            .fetchSemanticsNode()
+            .boundsInRoot
         val handBrewBounds = composeRule
             .onNodeWithTag("record_module_HandBrew")
             .fetchSemanticsNode()
@@ -75,8 +79,15 @@ class RecordModuleIntegrationTest {
             .fetchSemanticsNode()
             .boundsInRoot
 
-        assertEquals(handBrewBounds.width, sexBounds.width, 0.5f)
+        assertEquals(selectorBounds.width / 2f, handBrewBounds.width, 0.5f)
+        assertEquals(selectorBounds.width / 2f, sexBounds.width, 0.5f)
+        assertEquals(selectorBounds.left, handBrewBounds.left, 0.5f)
+        assertEquals(selectorBounds.top, handBrewBounds.top, 0.5f)
+        assertEquals(selectorBounds.bottom, handBrewBounds.bottom, 0.5f)
         assertEquals(handBrewBounds.right, sexBounds.left, 0.5f)
+        assertEquals(selectorBounds.top, sexBounds.top, 0.5f)
+        assertEquals(selectorBounds.right, sexBounds.right, 0.5f)
+        assertEquals(selectorBounds.bottom, sexBounds.bottom, 0.5f)
     }
 
     private fun setDualModuleContent() {
