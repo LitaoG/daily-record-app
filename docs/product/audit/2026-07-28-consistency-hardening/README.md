@@ -26,6 +26,7 @@
 5. 清除确认继续使用项目自有弹窗，不回退到系统默认 `AlertDialog`。
 6. 诊断标题为 `Private Calendar diagnostics`，后台同步 Worker/Scheduler 也使用通用命名，不再把双模块应用写成 Hand Brew Calendar。
 7. 连续五次冷启动为 2516–3259 ms，Crash Buffer 和应用 FATAL/ANR 检索均为空。
+8. 2026-07-29 根据真机反馈修正模块选择器：两个选项严格平分可用宽度并在外框正中心相接；选中底色完整覆盖对应内半区，图标与文字组合居中，图标由 20 dp 放大至 24 dp，文字由 12 sp 放大至 16 sp。Android 边界测试和左右选中态截图回归均通过。
 
 ## 代码与安全结果
 
@@ -40,7 +41,7 @@
 - JVM 单元测试：通过。
 - Android Lint：0 错误；剩余提示仅为 SDK 与依赖版本更新。
 - Firestore Rules 模拟器：两个集合的所有权、字段形状、修订和删除检查通过。
-- Android 设备套件：83 项完成，0 失败，1 项生产烟雾测试按设计跳过。
+- Android 设备套件：84 项完成，0 失败，1 项生产烟雾测试按设计跳过；其中新增边界测试锁定模块选择器的严格二等分布局。
 - 手工回归：模块切换、日历、统计、日期弹窗、显式 0、清除弹窗、诊断弹窗、登录返回和冷启动均通过。
 
 ## 截图
@@ -48,6 +49,7 @@
 - [`01-calendar.png`](01-calendar.png)：局部统一后的双模块日历。
 - [`02-statistics-sex.png`](02-statistics-sex.png)：移除重复模块标签后的做爱统计页。
 - [`03-clear-dialog.png`](03-clear-dialog.png)：项目自有清除确认弹窗。
+- [`04-module-selector-equal-halves.png`](04-module-selector-equal-halves.png)：右侧模块选中时严格占据外框内半区，图标与文字在各自半区居中。
 
 ## 已知边界
 

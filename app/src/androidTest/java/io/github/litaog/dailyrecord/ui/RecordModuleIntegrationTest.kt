@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -12,6 +13,7 @@ import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.Instant
 import java.time.LocalDate
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -58,6 +60,23 @@ class RecordModuleIntegrationTest {
         composeRule.onNodeWithContentDescription("2026年7月17日，做爱 1 次，已选择").performClick()
         composeRule.onNodeWithText("今天做爱了几次？").assertIsDisplayed()
         composeRule.onNodeWithText("0 次＝明确没有，会保留记录。").assertIsDisplayed()
+    }
+
+    @Test
+    fun moduleSelectorSplitsTheAvailableWidthAtTheExactCenter() {
+        setDualModuleContent()
+
+        val handBrewBounds = composeRule
+            .onNodeWithTag("record_module_HandBrew")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val sexBounds = composeRule
+            .onNodeWithTag("record_module_Sex")
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertEquals(handBrewBounds.width, sexBounds.width, 0.5f)
+        assertEquals(handBrewBounds.right, sexBounds.left, 0.5f)
     }
 
     private fun setDualModuleContent() {

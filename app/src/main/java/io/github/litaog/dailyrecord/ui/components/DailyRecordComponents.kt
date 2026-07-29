@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -255,7 +256,6 @@ internal fun RecordModuleSelector(
             .background(Paper0)
             .border(1.dp, Neutral300, RoundedCornerShape(16.dp))
             .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         specs.forEach { spec ->
             val active = spec.module == selected
@@ -263,6 +263,7 @@ internal fun RecordModuleSelector(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
+                    .testTag("record_module_${spec.module.name}")
                     .clip(RoundedCornerShape(12.dp))
                     .background(if (active) Terracotta500 else Color.Transparent)
                     .clickable(role = Role.Tab) { onSelected(spec.module) }
@@ -276,14 +277,14 @@ internal fun RecordModuleSelector(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 spec.icon(
-                    Modifier.size(20.dp),
+                    Modifier.size(24.dp),
                     if (active) White else Ink700,
                 )
-                Spacer(Modifier.width(7.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(
                     text = spec.label,
                     color = if (active) White else Ink700,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.titleMedium,
                 )
             }
         }
