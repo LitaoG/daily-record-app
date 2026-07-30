@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 val DailyRecordCanvas = Color(0xFFFAF8F3)
 val DailyRecordSurface = Color(0xFFFFFEFB)
 val DailyRecordSurfaceMuted = Color(0xFFF2EFEA)
+val DailyRecordSurfaceDisabled = Color(0xFFF8F5EF)
 val DailyRecordText = Color(0xFF2D2926)
 val DailyRecordTextSecondary = Color(0xFF514A45)
 val DailyRecordTextMuted = Color(0xFF706761)
@@ -74,7 +75,7 @@ data class RecordModuleColorTokens(
             outline = strong,
         )
         RecordVisualState.Disabled -> RecordVisualColors(
-            background = DailyRecordSurfaceMuted,
+            background = DailyRecordSurfaceDisabled,
             content = DailyRecordTextMuted,
             outline = DailyRecordDivider,
         )

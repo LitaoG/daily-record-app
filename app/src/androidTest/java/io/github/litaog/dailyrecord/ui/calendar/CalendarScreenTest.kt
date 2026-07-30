@@ -5,6 +5,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -62,15 +65,21 @@ class CalendarScreenTest {
         composeRule.onNodeWithContentDescription("2026年7月14日，手冲 2 次").assertExists()
         composeRule.onNodeWithContentDescription("2026年7月15日，手冲 1 次").assertExists()
         composeRule.onNodeWithContentDescription("2026年7月12日，手冲 10 次").assertExists()
-        composeRule.onAllNodesWithText("未填").assertCountEquals(0)
-        composeRule.onAllNodesWithText("未来").assertCountEquals(0)
+        composeRule.onAllNodes(
+            hasText("未填") and hasAnyAncestor(hasTestTag("calendar_day_2026-07-01")),
+            useUnmergedTree = true,
+        ).assertCountEquals(0)
+        composeRule.onAllNodes(
+            hasText("未来") and hasAnyAncestor(hasTestTag("calendar_day_2026-07-18")),
+            useUnmergedTree = true,
+        ).assertCountEquals(0)
         composeRule.onAllNodesWithText("0次").assertCountEquals(0)
         composeRule.onNodeWithText("9+次").assertExists()
         composeRule.onNodeWithText("今").assertExists()
     }
 
     @Test
-    fun monthlySummaryUsesRecordedDaysAndZeroSafeAverage() {
+    fun monthlySummaryShowsOnlyTotalAndRecordedDays() {
         val today = LocalDate.of(2026, 7, 17)
         composeRule.setContent {
             DailyRecordTheme {
@@ -93,9 +102,14 @@ class CalendarScreenTest {
         }
 
         composeRule.onNodeWithText("本月 3 次 · 2 天").assertExists()
-        composeRule.onNodeWithText("1.5次/天").assertExists()
+        composeRule.onAllNodesWithText("1.5次/天").assertCountEquals(0)
         composeRule
-            .onNodeWithContentDescription("本月 3 次 · 2 天，记录日均 1.5次/天")
+            .onNodeWithContentDescription("本月 3 次 · 2 天")
+            .assertExists()
+        composeRule
+            .onNodeWithContentDescription(
+                "点击日期记录手冲次数。图例：未填写、未来不可记录、明确记录零次、已记录",
+            )
             .assertExists()
     }
 

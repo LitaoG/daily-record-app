@@ -48,6 +48,16 @@ class DesignTokensTest {
     }
 
     @Test
+    fun futureDatesAreNotVisuallyCollapsedIntoPastUnsetDates() {
+        listOf(HandBrewColorTokens, SexColorTokens).forEach { module ->
+            val unset = module.colorsFor(RecordVisualState.Unset)
+            val disabled = module.colorsFor(RecordVisualState.Disabled)
+
+            assertNotEquals(unset.background, disabled.background)
+        }
+    }
+
+    @Test
     fun bothModulesDefineEverySharedRecordState() {
         listOf(HandBrewColorTokens, SexColorTokens).forEach { module ->
             RecordVisualState.entries.forEach { state ->
