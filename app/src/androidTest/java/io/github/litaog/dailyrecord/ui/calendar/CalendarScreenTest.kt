@@ -1,17 +1,24 @@
 package io.github.litaog.dailyrecord.ui.calendar
 
+import android.content.Context
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.unit.Density
+import androidx.test.core.app.ApplicationProvider
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -28,7 +35,13 @@ class CalendarScreenTest {
                     month = YearMonth.of(2026, 7),
                     focusedDate = today,
                     today = today,
-                    records = listOf(record(LocalDate.of(2026, 7, 16), 0)),
+                    records = listOf(
+                        record(LocalDate.of(2026, 7, 12), 10),
+                        record(LocalDate.of(2026, 7, 13), 3),
+                        record(LocalDate.of(2026, 7, 14), 2),
+                        record(LocalDate.of(2026, 7, 15), 1),
+                        record(LocalDate.of(2026, 7, 16), 0),
+                    ),
                     onPreviousMonth = {},
                     onNextMonth = {},
                     onToday = {},
@@ -45,9 +58,55 @@ class CalendarScreenTest {
             .onNodeWithContentDescription("2026年7月18日，未来日期，不可记录")
             .assertExists()
             .assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("2026年7月13日，手冲 3 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月14日，手冲 2 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月15日，手冲 1 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月12日，手冲 10 次").assertExists()
         composeRule.onAllNodesWithText("未填").assertCountEquals(0)
         composeRule.onAllNodesWithText("未来").assertCountEquals(0)
+        composeRule.onAllNodesWithText("0次").assertCountEquals(0)
+        composeRule.onNodeWithText("9+次").assertExists()
         composeRule.onNodeWithText("今").assertExists()
+    }
+
+    @Test
+    fun monthlySummaryUsesRecordedDaysAndZeroSafeAverage() {
+        val today = LocalDate.of(2026, 7, 17)
+        composeRule.setContent {
+            DailyRecordTheme {
+                CalendarScreen(
+                    month = YearMonth.of(2026, 7),
+                    focusedDate = today,
+                    today = today,
+                    records = listOf(
+                        record(LocalDate.of(2026, 7, 14), 0),
+                        record(LocalDate.of(2026, 7, 15), 1),
+                        record(LocalDate.of(2026, 7, 16), 2),
+                    ),
+                    onPreviousMonth = {},
+                    onNextMonth = {},
+                    onToday = {},
+                    onOpenDatePicker = {},
+                    onDateSelected = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("本月 3 次 · 2 天").assertExists()
+        composeRule.onNodeWithText("1.5次/天").assertExists()
+        composeRule
+            .onNodeWithContentDescription("本月 3 次 · 2 天，记录日均 1.5次/天")
+            .assertExists()
+    }
+
+    @Test
+    fun dayTouchTargetsRemainAtLeast48DpAtNormalText() {
+        assertDayTargetHeight(fontScale = 1f, minimumDp = 48f)
+    }
+
+    @Test
+    fun dayCellsExpandAt200PercentText() {
+        assertDayTargetHeight(fontScale = 2f, minimumDp = 76f)
     }
 
     @Test
@@ -110,4 +169,36 @@ class CalendarScreenTest {
         createdAt = Instant.EPOCH,
         updatedAt = Instant.EPOCH,
     )
+
+    private fun assertDayTargetHeight(fontScale: Float, minimumDp: Float) {
+        val today = LocalDate.of(2026, 7, 17)
+        composeRule.setContent {
+            val density = LocalDensity.current.density
+            CompositionLocalProvider(LocalDensity provides Density(density, fontScale)) {
+                DailyRecordTheme {
+                    CalendarScreen(
+                        month = YearMonth.of(2026, 7),
+                        focusedDate = today,
+                        today = today,
+                        records = emptyList(),
+                        onPreviousMonth = {},
+                        onNextMonth = {},
+                        onToday = {},
+                        onOpenDatePicker = {},
+                        onDateSelected = {},
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val heightPx = composeRule
+            .onNodeWithTag("calendar_day_2026-07-01")
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .height
+        val heightDp = heightPx / context.resources.displayMetrics.density
+        assertTrue("Calendar day height was $heightDp dp", heightDp >= minimumDp)
+    }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,13 +47,12 @@ import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import java.time.LocalDate
 import java.time.YearMonth
+import java.util.Locale
 
 @Composable
 fun CalendarScreen(
@@ -107,121 +107,168 @@ internal fun DailyCountCalendarScreen(
     val recordsByDate = monthRecords.associateBy { it.localDate }
     val totalCount = monthRecords.sumOf { it.count.toLong() }
     val recordedDays = monthRecords.count { it.count > 0 }
-    val first = month.atDay(1)
-    val leadingEmptyCells = first.dayOfWeek.value - 1
-    val visibleCellCount = ((leadingEmptyCells + month.lengthOfMonth() + 6) / 7) * 7
-    val gridDates = List<LocalDate?>(visibleCellCount) { index ->
-        val dayOfMonth = index - leadingEmptyCells + 1
-        if (dayOfMonth in 1..month.lengthOfMonth()) month.atDay(dayOfMonth) else null
-    }
+    val averagePerRecordedDay = if (recordedDays == 0) 0.0 else totalCount.toDouble() / recordedDays
+    val gridDates = calendarGridDates(month)
     val canGoPrevious = month > earliestMonth
     val canGoNext = month < YearMonth.from(today)
     val fontScale = LocalDensity.current.fontScale
     val largeText = fontScale >= 1.4f
-    val dayCellHeight = if (largeText) 68.dp else 56.dp
+    val dayCellHeight = if (largeText) 76.dp else 48.dp
 
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .testTag("calendar_screen")
-            .verticalScroll(rememberScrollState())
-            .padding(
-                horizontal = DailyRecordSpacing.ScreenHorizontal,
-                vertical = DailyRecordSpacing.ScreenVertical,
-            ),
-        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
+            .testTag("calendar_screen"),
     ) {
-        RecordModuleSelector(
-            selected = selectedModule,
-            specs = availableModules,
-            onSelected = onModuleSelected,
-        )
-        MonthHeader(
-            month = month,
-            canGoPrevious = canGoPrevious,
-            canGoNext = canGoNext,
-            onPreviousMonth = onPreviousMonth,
-            onNextMonth = onNextMonth,
-            onToday = onToday,
-            onOpenDatePicker = onOpenDatePicker,
-            colors = moduleSpec.colors,
-        )
-        Row(
+        val horizontalPadding = if (maxWidth < 376.dp) 12.dp else DailyRecordSpacing.ScreenHorizontal
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = if (largeText) 56.dp else 44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(moduleSpec.colors.soft)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    horizontal = horizontalPadding,
+                    vertical = 12.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(moduleSpec.monthlyLabel, color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
-            Text(
-                "$totalCount 次 · $recordedDays 天",
-                color = DailyRecordText,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
+            RecordModuleSelector(
+                selected = selectedModule,
+                specs = availableModules,
+                onSelected = onModuleSelected,
             )
-        }
-        Row(Modifier.fillMaxWidth()) {
-            listOf("一", "二", "三", "四", "五", "六", "日").forEach { weekday ->
-                Text(
-                    text = weekday,
-                    modifier = Modifier.weight(1f),
-                    color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall,
-                    textAlign = TextAlign.Center,
-                )
+            MonthHeader(
+                month = month,
+                canGoPrevious = canGoPrevious,
+                canGoNext = canGoNext,
+                onPreviousMonth = onPreviousMonth,
+                onNextMonth = onNextMonth,
+                onToday = onToday,
+                onOpenDatePicker = onOpenDatePicker,
+                colors = moduleSpec.colors,
+            )
+            MonthlySummary(
+                totalCount = totalCount,
+                recordedDays = recordedDays,
+                averagePerRecordedDay = averagePerRecordedDay,
+                largeText = largeText,
+            )
+            Row(Modifier.fillMaxWidth()) {
+                listOf("一", "二", "三", "四", "五", "六", "日").forEach { weekday ->
+                    Text(
+                        text = weekday,
+                        modifier = Modifier.weight(1f),
+                        color = DailyRecordTextMuted,
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            gridDates.chunked(7).forEach { week ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    week.forEach { date ->
-                        if (date == null) {
-                            Spacer(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(dayCellHeight),
-                            )
-                        } else {
-                            CalendarDayCell(
-                                date = date,
-                                earliestDate = earliestMonth.atDay(1),
-                                today = today,
-                                focused = date == focusedDate,
-                                record = recordsByDate[date],
-                                moduleSpec = moduleSpec,
-                                cellHeight = dayCellHeight,
-                                largeText = largeText,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onDateSelected(date) },
-                            )
+            Column {
+                gridDates.chunked(7).forEach { week ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        week.forEach { date ->
+                            if (date == null) {
+                                Spacer(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(dayCellHeight),
+                                )
+                            } else {
+                                CalendarDayCell(
+                                    date = date,
+                                    earliestDate = earliestMonth.atDay(1),
+                                    today = today,
+                                    focused = date == focusedDate,
+                                    record = recordsByDate[date],
+                                    moduleSpec = moduleSpec,
+                                    cellHeight = dayCellHeight,
+                                    largeText = largeText,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onDateSelected(date) },
+                                )
+                            }
                         }
                     }
                 }
             }
+            Text(
+                text = "点击日期记录",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+                    .semantics {
+                        contentDescription = "点击日期记录${moduleSpec.semanticCountLabel}次数"
+                    },
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(2.dp))
         }
+    }
+}
+
+internal fun calendarGridDates(month: YearMonth): List<LocalDate?> {
+    val leadingEmptyCells = month.atDay(1).dayOfWeek.value - 1
+    val visibleCellCount = ((leadingEmptyCells + month.lengthOfMonth() + 6) / 7) * 7
+    return List(visibleCellCount) { index ->
+        val dayOfMonth = index - leadingEmptyCells + 1
+        if (dayOfMonth in 1..month.lengthOfMonth()) month.atDay(dayOfMonth) else null
+    }
+}
+
+@Composable
+private fun MonthlySummary(
+    totalCount: Long,
+    recordedDays: Int,
+    averagePerRecordedDay: Double,
+    largeText: Boolean,
+) {
+    val summary = "本月 $totalCount 次 · $recordedDays 天"
+    val average = String.format(Locale.SIMPLIFIED_CHINESE, "%.1f次/天", averagePerRecordedDay)
+
+    if (largeText) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(DailyRecordSurface)
-                .border(1.dp, DailyRecordDivider, RoundedCornerShape(14.dp))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .testTag("calendar_month_summary")
+                .semantics { contentDescription = "$summary，记录日均 $average" },
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text(moduleSpec.calendarInstruction, color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
             Text(
-                moduleSpec.calendarZeroRule,
+                text = summary,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = average,
                 color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
             )
         }
-        Spacer(Modifier.height(2.dp))
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 32.dp)
+                .testTag("calendar_month_summary")
+                .semantics { contentDescription = "$summary，记录日均 $average" },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = summary,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = average,
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
     }
 }
 
@@ -241,7 +288,7 @@ private fun MonthHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = if (largeText) 108.dp else 52.dp),
+            .heightIn(min = if (largeText) 108.dp else 48.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MonthArrow(forward = false, description = "上个月", enabled = canGoPrevious, onClick = onPreviousMonth)
@@ -265,7 +312,7 @@ private fun MonthHeader(
                     month.year.toString() + "年 " + month.monthValue + "月"
                 },
                 color = DailyRecordText,
-                style = if (largeText) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 maxLines = if (largeText) 2 else 1,
             )
@@ -274,15 +321,13 @@ private fun MonthHeader(
         Box(
             modifier = Modifier
                 .padding(start = 6.dp)
-                .clip(CircleShape)
-                .background(DailyRecordSurface)
-                .border(1.dp, DailyRecordDivider, CircleShape)
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .clip(RoundedCornerShape(12.dp))
                 .clickable(role = Role.Button, onClick = onToday)
-                .padding(horizontal = 12.dp, vertical = 8.dp)
                 .semantics { role = Role.Button; contentDescription = "回到今天" },
             contentAlignment = Alignment.Center,
         ) {
-            Text("今天", color = colors.primary, style = MaterialTheme.typography.labelSmall)
+            Text("今天", color = colors.primary, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -337,7 +382,7 @@ private fun CalendarDayCell(
     val recordStatus = when {
         unsupported -> "不可用"
         future || record == null -> null
-        count == 0 -> "0次"
+        count == 0 -> null
         count == 1 -> "1次"
         count == 2 -> "2次"
         count in 3..8 -> "${count}次"
@@ -345,7 +390,6 @@ private fun CalendarDayCell(
     }
     val visibleStatus = when {
         date == today && record == null -> "今"
-        date == today && !future && !largeText && recordStatus != null -> "$recordStatus·今"
         else -> recordStatus
     }
     val semanticStatus = when {
@@ -360,38 +404,67 @@ private fun CalendarDayCell(
         date == today -> moduleSpec.colors.primary
         else -> visualColors.outline
     }
+    val showOutline = focused || date == today || visualState == RecordVisualState.ExplicitZero
     val borderWidth = if (focused || date == today) 2.dp else 1.dp
+    val cellShape = RoundedCornerShape(9.dp)
+    val stateDescription = when {
+        date == today -> "$semanticStatus，今天"
+        else -> semanticStatus
+    }
 
-    Column(
+    Box(
         modifier = modifier
             .height(cellHeight)
-            .clip(RoundedCornerShape(16.dp))
-            .background(background)
-            .border(borderWidth, borderColor, RoundedCornerShape(16.dp))
+            .testTag("calendar_day_$date")
+            .clip(cellShape)
             .clickable(enabled = !future && !unsupported, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
                 selected = focused
                 contentDescription = date.year.toString() + "年" + date.monthValue + "月" +
-                    date.dayOfMonth + "日，" + semanticStatus + if (focused) "，已选择" else ""
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+                    date.dayOfMonth + "日，" + stateDescription + if (focused) "，已选择" else ""
+            }
+            .padding(3.dp),
+        contentAlignment = Alignment.Center,
     ) {
         val dayColor = if (date == today && record == null) moduleSpec.colors.primary else contentColor
-        Text(
-            text = date.dayOfMonth.toString(),
-            color = dayColor,
-            style = if (largeText) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-        )
-        visibleStatus?.let { status ->
-            Text(
-                text = status,
-                color = dayColor,
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 1,
+        val visualModifier = Modifier
+            .fillMaxSize()
+            .clip(cellShape)
+            .background(background)
+            .then(
+                if (showOutline) {
+                    Modifier.border(borderWidth, borderColor, cellShape)
+                } else {
+                    Modifier
+                },
             )
+
+        Column(
+            modifier = visualModifier,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = date.dayOfMonth.toString(),
+                color = dayColor,
+                style = if (largeText) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+            )
+            when {
+                visualState == RecordVisualState.ExplicitZero -> Box(
+                    modifier = Modifier
+                        .padding(top = 2.dp)
+                        .sizeIn(minWidth = 9.dp, minHeight = 9.dp)
+                        .border(1.5.dp, moduleSpec.colors.primary, CircleShape),
+                )
+                visibleStatus != null -> Text(
+                    text = visibleStatus,
+                    color = dayColor,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }

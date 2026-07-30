@@ -8,12 +8,12 @@
 一个本地优先的 Android 私密次数日历，分别记录“手冲”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。
 
 <p align="center">
-  <img src="docs/product/audit/2026-07-27-quick-runtime/06-calendar-after-spacing.png" alt="早期手冲月视图设计基线" width="31%">
+  <img src="docs/product/audit/2026-07-30-ui-v2-stage2/02-calendar-seeded-hand.png" alt="UI v2 手冲次数热力日历" width="31%">
   <img src="docs/product/audit/2026-07-27-quick-runtime/03-record-editor.png" alt="日期记录页" width="31%">
   <img src="docs/product/audit/2026-07-22-calendar-statistics/after/statistics-week-data.png" alt="早期周统计设计基线" width="31%">
 </p>
 
-上图是当前运行时证据。下一轮已经确认的“手冲紫色＋做爱深红”日历、记录与统计改版尚未进入代码，目标图和逐阶段暂停规则见 [UI v2 设计基线](docs/product/design/quiet-private-journal-v2/README.md)与[分阶段执行计划](docs/product/QUIET_PRIVATE_JOURNAL_GOALS.md)。
+第一张是当前 UI v2 方形次数热力日历；后两张仍是记录页和统计页的早期运行时证据。当前已经完成“手冲紫色＋做爱深红”的共享视觉外壳与日历页，日期记录页和统计页主体仍未改版。当前目标与逐阶段暂停规则见 [UI v2 设计基线](docs/product/design/quiet-private-journal-v2/README.md)与[分阶段执行计划](docs/product/QUIET_PRIVATE_JOURNAL_GOALS.md)。
 
 ## 已实现
 
