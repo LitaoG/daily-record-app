@@ -41,13 +41,13 @@ import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.launch
 
 private enum class AccountDeletionStep {
@@ -96,13 +96,13 @@ internal fun AccountDeletionDialog(
         if (step == AccountDeletionStep.Warning) {
             Text(
                 "继续后会先验证密码，再删除该账号的全部云端手冲、做爱记录和登录账号。",
-                color = Ink700,
+                color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 18.dp),
             )
             Text(
                 "选择本机记录的处理方式",
-                color = Ink900,
+                color = DailyRecordText,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 18.dp),
@@ -141,7 +141,7 @@ internal fun AccountDeletionDialog(
                 } else {
                     "云端记录、账号和这台手机里的账号记录都会永久删除。"
                 },
-                color = Ink700,
+                color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 18.dp),
             )
@@ -203,10 +203,10 @@ private fun DeletionChoiceCard(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .background(if (selected) Paper100 else Paper0, RoundedCornerShape(14.dp))
+            .background(if (selected) DailyRecordSurfaceMuted else DailyRecordSurface, RoundedCornerShape(14.dp))
             .border(
                 1.dp,
-                if (selected) Terracotta500 else Neutral300,
+                if (selected) DailyRecordDefaultAccent else DailyRecordDivider,
                 RoundedCornerShape(14.dp),
             )
             .clickable(role = Role.RadioButton, onClick = onClick)
@@ -219,31 +219,31 @@ private fun DeletionChoiceCard(
     ) {
         Text(
             if (selected) "●" else "○",
-            color = if (selected) Terracotta500 else Ink500,
+            color = if (selected) DailyRecordDefaultAccent else DailyRecordTextMuted,
             style = MaterialTheme.typography.titleMedium,
         )
         Column {
-            Text(title, color = Ink900, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-            Text(description, color = Ink500, style = MaterialTheme.typography.labelSmall)
+            Text(title, color = DailyRecordText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Text(description, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
         }
     }
 }
 
 @Composable
 private fun deletionFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Ink900,
-    unfocusedTextColor = Ink900,
-    disabledTextColor = Ink500,
-    focusedBorderColor = Terracotta500,
-    unfocusedBorderColor = Neutral300,
-    disabledBorderColor = Neutral300,
-    focusedLabelColor = Terracotta500,
-    unfocusedLabelColor = Ink500,
-    disabledLabelColor = Ink500,
-    cursorColor = Terracotta500,
-    focusedContainerColor = Paper0,
-    unfocusedContainerColor = Paper0,
-    disabledContainerColor = Paper0,
+    focusedTextColor = DailyRecordText,
+    unfocusedTextColor = DailyRecordText,
+    disabledTextColor = DailyRecordTextMuted,
+    focusedBorderColor = DailyRecordDefaultAccent,
+    unfocusedBorderColor = DailyRecordDivider,
+    disabledBorderColor = DailyRecordDivider,
+    focusedLabelColor = DailyRecordDefaultAccent,
+    unfocusedLabelColor = DailyRecordTextMuted,
+    disabledLabelColor = DailyRecordTextMuted,
+    cursorColor = DailyRecordDefaultAccent,
+    focusedContainerColor = DailyRecordSurface,
+    unfocusedContainerColor = DailyRecordSurface,
+    disabledContainerColor = DailyRecordSurface,
 )
 
 internal fun accountDeletionErrorMessage(error: Throwable): String {

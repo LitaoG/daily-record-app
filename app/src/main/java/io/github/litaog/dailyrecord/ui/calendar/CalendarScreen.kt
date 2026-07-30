@@ -43,17 +43,14 @@ import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper50
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta400
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
-import io.github.litaog.dailyrecord.ui.theme.Terracotta600
-import io.github.litaog.dailyrecord.ui.theme.White
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -128,8 +125,11 @@ internal fun DailyCountCalendarScreen(
             .fillMaxSize()
             .testTag("calendar_screen")
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 15.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(
+                horizontal = DailyRecordSpacing.ScreenHorizontal,
+                vertical = DailyRecordSpacing.ScreenVertical,
+            ),
+        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
     ) {
         RecordModuleSelector(
             selected = selectedModule,
@@ -144,21 +144,22 @@ internal fun DailyCountCalendarScreen(
             onNextMonth = onNextMonth,
             onToday = onToday,
             onOpenDatePicker = onOpenDatePicker,
+            colors = moduleSpec.colors,
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = if (largeText) 56.dp else 44.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(Terracotta400)
+                .background(moduleSpec.colors.soft)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(moduleSpec.monthlyLabel, color = Ink900, style = MaterialTheme.typography.labelMedium)
+            Text(moduleSpec.monthlyLabel, color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
             Text(
                 "$totalCount 次 · $recordedDays 天",
-                color = Ink900,
+                color = DailyRecordText,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
             )
@@ -168,7 +169,7 @@ internal fun DailyCountCalendarScreen(
                 Text(
                     text = weekday,
                     modifier = Modifier.weight(1f),
-                    color = Ink500,
+                    color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall,
                     textAlign = TextAlign.Center,
                 )
@@ -209,14 +210,14 @@ internal fun DailyCountCalendarScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
-                .background(Paper0)
-                .border(1.dp, Neutral300, RoundedCornerShape(14.dp))
+                .background(DailyRecordSurface)
+                .border(1.dp, DailyRecordDivider, RoundedCornerShape(14.dp))
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            Text(moduleSpec.calendarInstruction, color = Ink900, style = MaterialTheme.typography.labelLarge)
+            Text(moduleSpec.calendarInstruction, color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
             Text(
                 moduleSpec.calendarZeroRule,
-                color = Ink700,
+                color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.labelSmall,
             )
         }
@@ -233,6 +234,7 @@ private fun MonthHeader(
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
     onOpenDatePicker: () -> Unit,
+    colors: RecordModuleColorTokens,
 ) {
     val fontScale = LocalDensity.current.fontScale
     val largeText = fontScale >= 1.4f
@@ -262,7 +264,7 @@ private fun MonthHeader(
                 } else {
                     month.year.toString() + "年 " + month.monthValue + "月"
                 },
-                color = Ink900,
+                color = DailyRecordText,
                 style = if (largeText) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center,
                 maxLines = if (largeText) 2 else 1,
@@ -273,14 +275,14 @@ private fun MonthHeader(
             modifier = Modifier
                 .padding(start = 6.dp)
                 .clip(CircleShape)
-                .background(Paper0)
-                .border(1.dp, Neutral300, CircleShape)
+                .background(DailyRecordSurface)
+                .border(1.dp, DailyRecordDivider, CircleShape)
                 .clickable(role = Role.Button, onClick = onToday)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
                 .semantics { role = Role.Button; contentDescription = "回到今天" },
             contentAlignment = Alignment.Center,
         ) {
-            Text("今天", color = Terracotta500, style = MaterialTheme.typography.labelSmall)
+            Text("今天", color = colors.primary, style = MaterialTheme.typography.labelSmall)
         }
     }
 }
@@ -301,7 +303,7 @@ private fun MonthArrow(
             .semantics { role = Role.Button; contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronIcon(forward = forward, color = Ink900)
+        ChevronIcon(forward = forward, color = DailyRecordText)
     }
 }
 
@@ -321,19 +323,17 @@ private fun CalendarDayCell(
     val unsupported = date < earliestDate
     val future = date > today
     val count = record?.count
-    val background = when {
-        unsupported || future -> Paper100
-        record == null -> Paper50
-        count == 0 -> Neutral300
-        count == 1 -> Terracotta400
-        count == 2 -> Terracotta500
-        else -> Terracotta600
+    val visualState = when {
+        unsupported || future -> RecordVisualState.Disabled
+        record == null -> RecordVisualState.Unset
+        count == 0 -> RecordVisualState.ExplicitZero
+        count == 1 -> RecordVisualState.One
+        count == 2 -> RecordVisualState.Two
+        else -> RecordVisualState.ThreePlus
     }
-    val contentColor = when {
-        unsupported || future || record == null -> Ink500
-        (count ?: 0) >= 2 -> White
-        else -> Ink900
-    }
+    val visualColors = moduleSpec.colors.colorsFor(visualState)
+    val background = visualColors.background
+    val contentColor = visualColors.content
     val recordStatus = when {
         unsupported -> "不可用"
         future || record == null -> null
@@ -356,9 +356,9 @@ private fun CalendarDayCell(
         else -> "${moduleSpec.semanticCountLabel} $count 次"
     }
     val borderColor = when {
-        focused -> Terracotta600
-        date == today -> Terracotta500
-        else -> Neutral300
+        focused -> moduleSpec.colors.strong
+        date == today -> moduleSpec.colors.primary
+        else -> visualColors.outline
     }
     val borderWidth = if (focused || date == today) 2.dp else 1.dp
 
@@ -378,7 +378,7 @@ private fun CalendarDayCell(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        val dayColor = if (date == today && record == null) Terracotta400 else contentColor
+        val dayColor = if (date == today && record == null) moduleSpec.colors.primary else contentColor
         Text(
             text = date.dayOfMonth.toString(),
             color = dayColor,

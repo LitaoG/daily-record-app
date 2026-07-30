@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,13 +41,13 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Terracotta400
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 
 internal const val VPN_SYNC_DIALOG_MESSAGE =
     "请检查网络或 VPN（梯子），然后点击“立即同步”。"
@@ -116,7 +115,7 @@ internal fun AccountTopBar(
     onClick: () -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
-    Surface(color = Paper0, shadowElevation = 2.dp) {
+    Surface(color = DailyRecordSurface, shadowElevation = 2.dp) {
         if (largeText) {
             Column(
                 modifier = Modifier
@@ -155,7 +154,7 @@ internal fun LocalAccountTopBar(
     onDiagnostics: () -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
-    Surface(color = Paper0, shadowElevation = 2.dp) {
+    Surface(color = DailyRecordSurface, shadowElevation = 2.dp) {
         if (largeText) {
             Column(
                 modifier = Modifier
@@ -214,11 +213,11 @@ private fun AccountTitle(subtitle: String) {
     Column {
         Text(
             "私密日历",
-            color = Ink900,
+            color = DailyRecordText,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
-        Text(subtitle, color = Ink500, style = MaterialTheme.typography.labelSmall)
+        Text(subtitle, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -231,8 +230,8 @@ private fun SyncStatusChip(
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .background(Terracotta400)
-            .border(1.dp, Neutral300, CircleShape)
+            .background(DailyRecordDefaultAccentSoft)
+            .border(1.dp, DailyRecordDivider, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 9.dp)
             .semantics {
@@ -245,7 +244,7 @@ private fun SyncStatusChip(
         androidx.compose.foundation.Canvas(Modifier.size(8.dp)) {
             drawCircle(status.color())
         }
-        Text(status.shortLabel(), color = Ink900, style = MaterialTheme.typography.labelMedium)
+        Text(status.shortLabel(), color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
     }
 }
 
@@ -270,7 +269,7 @@ internal fun AccountDialog(
         if (confirmSignOut) {
             Text(
                 "退出后不会删除云端记录；本机缓存仍按账号隔离，下次登录会继续同步。",
-                color = Ink700,
+                color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 18.dp),
             )
@@ -287,32 +286,32 @@ internal fun AccountDialog(
                     .fillMaxWidth()
                     .padding(top = 18.dp)
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-                    .background(io.github.litaog.dailyrecord.ui.theme.Paper100)
+                    .background(io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted)
                     .border(
                         1.dp,
-                        Neutral300,
+                        DailyRecordDivider,
                         androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                     )
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(email, color = Ink900, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                Text(email, color = DailyRecordText, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     androidx.compose.foundation.Canvas(Modifier.size(9.dp)) { drawCircle(status.color()) }
-                    Text(status.label(), color = Ink700, style = MaterialTheme.typography.labelLarge)
+                    Text(status.label(), color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelLarge)
                 }
                 if (status is SyncStatus.Failed && failurePresentation != null) {
                     Text(
                         status.message,
-                        color = Ink700,
+                        color = DailyRecordTextSecondary,
                         style = MaterialTheme.typography.labelMedium,
                     )
                     Text(
                         failurePresentation.guidance,
-                        color = Terracotta500,
+                        color = DailyRecordDefaultAccent,
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontSize = 9.33.sp,
                             lineHeight = 13.33.sp,
@@ -332,7 +331,7 @@ internal fun AccountDialog(
             }
             Text(
                 "记录会先保存在本机，断网时照常使用；联网后自动上传，并可在其他手机登录恢复。",
-                color = Ink700,
+                color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 14.dp),
             )
@@ -392,7 +391,7 @@ private fun SyncStatus.shortLabel(): String = when (this) {
 
 private fun SyncStatus.color() = when (this) {
     SyncStatus.UpToDate -> androidx.compose.ui.graphics.Color(0xFF2E7D5B)
-    SyncStatus.Syncing -> Terracotta500
+    SyncStatus.Syncing -> DailyRecordDefaultAccent
     SyncStatus.Offline, is SyncStatus.Pending -> androidx.compose.ui.graphics.Color(0xFF8A6A18)
     SyncStatus.NotConfigured, is SyncStatus.Failed -> androidx.compose.ui.graphics.Color(0xFF9B3A32)
 }

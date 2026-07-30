@@ -11,6 +11,9 @@ import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.components.IntimacyIcon
 import io.github.litaog.dailyrecord.ui.components.PlaneIcon
+import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -36,6 +39,7 @@ internal data class RecordModuleUiSpec(
     val calendarInstruction: String,
     val calendarZeroRule: String,
     val semanticCountLabel: String,
+    val colors: RecordModuleColorTokens,
     val icon: @Composable (Modifier, Color) -> Unit,
 )
 
@@ -52,6 +56,7 @@ internal val HandBrewModuleSpec = RecordModuleUiSpec(
     calendarInstruction = "选择日期记录手冲次数",
     calendarZeroRule = "0 次表示明确没冲；清除记录才回到未填写",
     semanticCountLabel = "手冲",
+    colors = HandBrewColorTokens,
     icon = { modifier, color -> PlaneIcon(modifier = modifier, color = color) },
 )
 
@@ -68,6 +73,7 @@ internal val SexModuleSpec = RecordModuleUiSpec(
     calendarInstruction = "选择日期记录做爱次数",
     calendarZeroRule = "0 次表示明确没有；清除记录才回到未填写",
     semanticCountLabel = "做爱",
+    colors = SexColorTokens,
     icon = { modifier, color -> IntimacyIcon(modifier = modifier, color = color) },
 )
 

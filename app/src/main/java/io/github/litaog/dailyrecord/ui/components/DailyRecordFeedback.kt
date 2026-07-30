@@ -30,14 +30,14 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.ui.theme.Danger500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
-import io.github.litaog.dailyrecord.ui.theme.White
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 
 /** Branded confirmation surface used instead of a library-default confirmation dialog. */
 @Composable
@@ -62,12 +62,12 @@ fun DailyRecordConfirmationDialog(
         Surface(
             modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
             shape = RoundedCornerShape(16.dp),
-            color = Paper100,
-            border = BorderStroke(1.dp, Neutral300),
+            color = DailyRecordSurfaceMuted,
+            border = BorderStroke(1.dp, DailyRecordDivider),
         ) {
             Text(
                 text = message,
-                color = Ink700,
+                color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(14.dp),
             )
@@ -123,7 +123,7 @@ fun DangerActionButton(
         modifier = modifier
             .heightIn(min = 52.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (enabled) Danger500 else Paper100)
+            .background(if (enabled) DailyRecordDanger else DailyRecordSurfaceMuted)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
@@ -133,7 +133,7 @@ fun DangerActionButton(
     ) {
         Text(
             text = label,
-            color = if (enabled) White else Ink700,
+            color = if (enabled) DailyRecordOnAccent else DailyRecordTextSecondary,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
         )
@@ -164,9 +164,9 @@ fun DailyRecordTextAction(
         Text(
             text = label,
             color = when {
-                !enabled -> Ink700
-                danger -> Danger500
-                else -> Terracotta500
+                !enabled -> DailyRecordTextSecondary
+                danger -> DailyRecordDanger
+                else -> DailyRecordDefaultAccent
             },
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
@@ -186,13 +186,13 @@ fun DailyRecordSnackbarHost(hostState: SnackbarHostState) {
                     liveRegion = LiveRegionMode.Polite
                 },
             shape = RoundedCornerShape(16.dp),
-            color = Ink900,
-            border = BorderStroke(1.dp, Terracotta500),
+            color = DailyRecordText,
+            border = BorderStroke(1.dp, DailyRecordDefaultAccent),
             shadowElevation = 8.dp,
         ) {
             Text(
                 text = data.visuals.message,
-                color = Paper0,
+                color = DailyRecordSurface,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
             )

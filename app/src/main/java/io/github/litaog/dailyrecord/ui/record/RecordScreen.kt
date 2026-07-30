@@ -58,15 +58,14 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordConfirmationDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Paper50
-import io.github.litaog.dailyrecord.ui.theme.Terracotta400
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.map
@@ -168,16 +167,21 @@ internal fun DailyCountRecordScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize().testTag("record_screen"),
-        containerColor = Paper50,
+        containerColor = DailyRecordCanvas,
         snackbarHost = { DailyRecordSnackbarHost(snackbarHostState) },
         bottomBar = {
             Surface(
                 modifier = Modifier.navigationBarsPadding(),
-                color = Paper50,
+                color = DailyRecordCanvas,
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = DailyRecordSpacing.ScreenHorizontal,
+                            vertical = DailyRecordSpacing.Content,
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
                 ) {
                     PrimaryActionButton(
                         label = when {
@@ -195,12 +199,14 @@ internal fun DailyCountRecordScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
+                        accent = moduleSpec.colors.primary,
                     )
                     OutlineActionButton(
                         label = "清除记录",
                         enabled = editable && dataReady && record != null && !saving,
                         onClick = { showClearDialog = true },
                         modifier = Modifier.fillMaxWidth(),
+                        accent = moduleSpec.colors.primary,
                     )
                 }
             }
@@ -211,9 +217,12 @@ internal fun DailyCountRecordScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .padding(
+                    horizontal = DailyRecordSpacing.ScreenHorizontal,
+                    vertical = DailyRecordSpacing.ScreenVertical,
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
         ) {
             RecordHeader(date = date, onBack = requestBack)
             Column(
@@ -221,7 +230,7 @@ internal fun DailyCountRecordScreen(
                     .fillMaxWidth()
                     .heightIn(min = 132.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Terracotta400)
+                    .background(moduleSpec.colors.soft)
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically),
@@ -230,27 +239,27 @@ internal fun DailyCountRecordScreen(
                     modifier = Modifier
                         .size(46.dp)
                         .clip(CircleShape)
-                        .background(Paper0),
+                        .background(DailyRecordSurface),
                     contentAlignment = Alignment.Center,
                 ) {
-                    moduleSpec.icon(Modifier.size(26.dp), Terracotta500)
+                    moduleSpec.icon(Modifier.size(26.dp), moduleSpec.colors.primary)
                 }
                 Text(
                     text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
-                    color = Ink900,
+                    color = DailyRecordText,
                     style = MaterialTheme.typography.headlineLarge,
                 )
                 Text(
                     "调整次数后点击保存",
-                    color = Ink700,
+                    color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(Paper0)
-                    .border(1.dp, Neutral300, CircleShape)
+                    .background(DailyRecordSurface)
+                    .border(1.dp, DailyRecordDivider, CircleShape)
                     .padding(horizontal = 14.dp, vertical = 8.dp),
             ) {
                 Text(
@@ -261,7 +270,7 @@ internal fun DailyCountRecordScreen(
                         record?.count == 0 -> "已记录 · 0 次"
                         else -> "已记录 · " + record?.count + " 次"
                     },
-                    color = if (editable) Terracotta500 else Ink500,
+                    color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelMedium,
                 )
             }
@@ -273,42 +282,43 @@ internal fun DailyCountRecordScreen(
                 onIncrease = { draft = draft.increase() },
                 explicitZeroText = moduleSpec.explicitZeroText,
                 positiveStateText = moduleSpec.positiveStateText,
+                colors = moduleSpec.colors,
             )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Paper0)
-                    .border(1.dp, Neutral300, RoundedCornerShape(16.dp))
+                    .background(DailyRecordSurface)
+                    .border(1.dp, DailyRecordDivider, RoundedCornerShape(16.dp))
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text("记录规则", color = Ink900, style = MaterialTheme.typography.labelLarge)
+                Text("记录规则", color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
                 Text(
                     "0 次＝${moduleSpec.explicitZeroText}，会保留记录。",
-                    color = Ink700,
+                    color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.labelSmall,
                 )
-                Text("清除记录＝恢复未填写，不进入统计。", color = Ink700, style = MaterialTheme.typography.labelSmall)
+                Text("清除记录＝恢复未填写，不进入统计。", color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
             }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 56.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Paper100)
+                    .background(DailyRecordSurfaceMuted)
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     YearMonth.from(date).monthValue.toString() + "月已保存",
-                    color = Ink900,
+                    color = DailyRecordText,
                     style = MaterialTheme.typography.labelLarge,
                 )
                 Text(
                     "$storedMonthCount 次 · $storedMonthDays 天",
-                    color = Ink900,
+                    color = DailyRecordText,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                 )
@@ -365,17 +375,17 @@ private fun RecordHeader(date: LocalDate, onBack: () -> Unit) {
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Paper0)
-                .border(1.dp, Neutral300, CircleShape)
+                .background(DailyRecordSurface)
+                .border(1.dp, DailyRecordDivider, CircleShape)
                 .clickable(role = Role.Button, onClick = onBack)
                 .semantics { role = Role.Button; contentDescription = "返回日历" },
             contentAlignment = Alignment.Center,
         ) {
-            BackChevronIcon(color = Ink900)
+            BackChevronIcon(color = DailyRecordText)
         }
         Text(
             text = date.monthValue.toString() + "月" + date.dayOfMonth + "日 · " + weekdayName(date),
-            color = Ink700,
+            color = DailyRecordTextSecondary,
             style = MaterialTheme.typography.labelLarge,
         )
     }

@@ -1,10 +1,10 @@
 # “安静的私密数据日志”UI v2 分阶段执行计划
 
-状态：`Stage 0 awaiting acceptance`
+状态：`Stage 1 awaiting acceptance`
 
 总 Goal：[GitHub Issue #42](https://github.com/LitaoG/daily-record-app/issues/42)
 
-最后更新：2026-07-29
+最后更新：2026-07-30
 
 ## 1. 文档职责与权威顺序
 
@@ -109,8 +109,8 @@
 
 | 阶段 | GitHub | 状态 | 核心交付 |
 |---|---|---|---|
-| 0. 仓库清理与执行基线 | [#36](https://github.com/LitaoG/daily-record-app/issues/36) | 等待验收 | 唯一文档入口、设计资产、Goal、分支与 `main` 同步 |
-| 1. 设计 Token 与共享外壳 | [#37](https://github.com/LitaoG/daily-record-app/issues/37) | 等待 | 紫色/深红色阶、共享排版、二等分模块切换器 |
+| 0. 仓库清理与执行基线 | [#36](https://github.com/LitaoG/daily-record-app/issues/36) | 已验收 | 唯一文档入口、设计资产、Goal、分支与 `main` 同步 |
+| 1. 设计 Token 与共享外壳 | [#37](https://github.com/LitaoG/daily-record-app/issues/37) | 等待验收 | 紫色/深红色阶、共享排版、二等分模块切换器 |
 | 2. 方形次数热力日历 | [#38](https://github.com/LitaoG/daily-record-app/issues/38) | 等待 | 日历页面与全部组合状态 |
 | 3. 克制的次数记录页 | [#43](https://github.com/LitaoG/daily-record-app/issues/43) | 等待 | 点击日期进入、次数主焦点、保存/清除层级 |
 | 4. 统计与真实年度热力图 | [#39](https://github.com/LitaoG/daily-record-app/issues/39) | 等待 | 指标层级、周期图形、真实日期映射 |
@@ -138,6 +138,8 @@
 - 实现严格二等分、单层、完整半区点击的模块切换器。
 - 统一周期切换、底部导航和页面基础边距。
 - 不改变记录、统计、登录、同步、Room 或 Firestore 逻辑。
+
+实现证据：[2026-07-30 Stage 1 定向验收](audit/2026-07-30-ui-v2-stage1/README.md)。当前已形成可验收实现并暂停；用户确认前不得启动 Stage 2。
 
 ### Stage 2：方形次数热力日历
 

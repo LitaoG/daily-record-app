@@ -33,11 +33,11 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 
 @Composable
 internal fun DiagnosticDialog(
@@ -60,15 +60,15 @@ internal fun DiagnosticDialog(
         SelectionContainer {
             Text(
                 text = report,
-                color = Ink700,
+                color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 260.dp)
                     .verticalScroll(rememberScrollState())
                     .padding(top = 18.dp)
-                    .background(Paper100, RoundedCornerShape(14.dp))
-                    .border(1.dp, Neutral300, RoundedCornerShape(14.dp))
+                    .background(DailyRecordSurfaceMuted, RoundedCornerShape(14.dp))
+                    .border(1.dp, DailyRecordDivider, RoundedCornerShape(14.dp))
                     .padding(14.dp)
                     .testTag("diagnostic_report"),
             )
@@ -76,7 +76,7 @@ internal fun DiagnosticDialog(
         if (feedback != null) {
             Text(
                 text = feedback.orEmpty(),
-                color = Terracotta500,
+                color = DailyRecordDefaultAccent,
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier
                     .padding(top = 10.dp)
@@ -110,7 +110,7 @@ internal fun DiagnosticDialog(
         }
         Text(
             "发送前仍可长按检查或选择其中的文字。",
-            color = Ink500,
+            color = DailyRecordTextMuted,
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(top = 4.dp),
         )

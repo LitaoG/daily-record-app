@@ -37,13 +37,13 @@ import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.launch
 
 private const val RESET_SUCCESS_MESSAGE =
@@ -103,12 +103,12 @@ internal fun PasswordResetDialog(
                         .semantics { liveRegion = LiveRegionMode.Polite }
                         .testTag("password_reset_success"),
                     shape = RoundedCornerShape(16.dp),
-                    color = Paper100,
-                    border = BorderStroke(1.dp, Neutral300),
+                    color = DailyRecordSurfaceMuted,
+                    border = BorderStroke(1.dp, DailyRecordDivider),
                 ) {
                     Text(
                         text = RESET_SUCCESS_MESSAGE,
-                        color = Ink700,
+                        color = DailyRecordTextSecondary,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(14.dp),
                     )
@@ -144,19 +144,19 @@ internal fun PasswordResetDialog(
                     keyboardActions = KeyboardActions(onDone = { submit() }),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Ink900,
-                        unfocusedTextColor = Ink900,
-                        disabledTextColor = Ink500,
-                        focusedBorderColor = Terracotta500,
-                        unfocusedBorderColor = Neutral300,
-                        disabledBorderColor = Neutral300,
-                        focusedLabelColor = Terracotta500,
-                        unfocusedLabelColor = Ink500,
-                        disabledLabelColor = Ink500,
-                        cursorColor = Terracotta500,
-                        focusedContainerColor = Paper0,
-                        unfocusedContainerColor = Paper0,
-                        disabledContainerColor = Paper0,
+                        focusedTextColor = DailyRecordText,
+                        unfocusedTextColor = DailyRecordText,
+                        disabledTextColor = DailyRecordTextMuted,
+                        focusedBorderColor = DailyRecordDefaultAccent,
+                        unfocusedBorderColor = DailyRecordDivider,
+                        disabledBorderColor = DailyRecordDivider,
+                        focusedLabelColor = DailyRecordDefaultAccent,
+                        unfocusedLabelColor = DailyRecordTextMuted,
+                        disabledLabelColor = DailyRecordTextMuted,
+                        cursorColor = DailyRecordDefaultAccent,
+                        focusedContainerColor = DailyRecordSurface,
+                        unfocusedContainerColor = DailyRecordSurface,
+                        disabledContainerColor = DailyRecordSurface,
                     ),
                 )
                 if (stackActions) {

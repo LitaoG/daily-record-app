@@ -27,14 +27,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
-import io.github.litaog.dailyrecord.ui.theme.White
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import io.github.litaog.dailyrecord.ui.theme.MetricNumberLarge
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import java.util.Locale
 
 @Composable
@@ -45,11 +46,12 @@ internal fun CompactPeriodSummary(
     moduleLabel: String = "手冲",
     daysLabel: String = "手冲天数",
     modifier: Modifier = Modifier,
+    colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
     val periodLabel = if (period == StatisticsPeriod.Week) "本周" else "本月"
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Terracotta500,
+        color = colors.primary,
         shape = RoundedCornerShape(20.dp),
     ) {
         if (horizontal) {
@@ -58,15 +60,16 @@ internal fun CompactPeriodSummary(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                PeriodTotal(periodLabel, moduleLabel, summary, Modifier.weight(1.2f))
+                PeriodTotal(periodLabel, moduleLabel, summary, Modifier.weight(1.2f), colors)
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    SummaryFact(daysLabel, "${summary.recordedDays} 天")
+                    SummaryFact(daysLabel, "${summary.recordedDays} 天", colors)
                     SummaryFact(
                         "记录日均",
                         String.format(Locale.US, "%.1f 次/天", summary.average),
+                        colors,
                     )
                 }
             }
@@ -75,11 +78,12 @@ internal fun CompactPeriodSummary(
                 modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                PeriodTotal(periodLabel, moduleLabel, summary, Modifier.fillMaxWidth())
-                SummaryFact(daysLabel, "${summary.recordedDays} 天")
+                PeriodTotal(periodLabel, moduleLabel, summary, Modifier.fillMaxWidth(), colors)
+                SummaryFact(daysLabel, "${summary.recordedDays} 天", colors)
                 SummaryFact(
                     "记录日均",
                     String.format(Locale.US, "%.1f 次/天", summary.average),
+                    colors,
                 )
             }
         }
@@ -92,23 +96,23 @@ private fun PeriodTotal(
     moduleLabel: String,
     summary: StatisticsSummary,
     modifier: Modifier,
+    colors: RecordModuleColorTokens,
 ) {
     Column(modifier = modifier) {
         Text(
             text = "$periodLabel · ${moduleLabel}次数",
-            color = White,
+            color = colors.onPrimary,
             style = MaterialTheme.typography.labelMedium,
         )
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = summary.totalCount.toString(),
-                color = White,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
+                color = colors.onPrimary,
+                style = MetricNumberLarge,
             )
             Text(
                 text = "次",
-                color = White,
+                color = colors.onPrimary,
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(start = 4.dp, bottom = 5.dp),
             )
@@ -117,16 +121,20 @@ private fun PeriodTotal(
 }
 
 @Composable
-private fun SummaryFact(label: String, value: String) {
+private fun SummaryFact(
+    label: String,
+    value: String,
+    colors: RecordModuleColorTokens,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = White, style = MaterialTheme.typography.labelSmall)
+        Text(label, color = colors.onPrimary, style = MaterialTheme.typography.labelSmall)
         Text(
             value,
-            color = White,
+            color = colors.onPrimary,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.End,
@@ -138,6 +146,7 @@ private fun SummaryFact(label: String, value: String) {
 internal fun WeekDistributionCard(
     details: List<StatisticsDetail>,
     modifier: Modifier = Modifier,
+    colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
     val maxCount = details.mapNotNull { it.count }.maxOrNull()?.coerceAtLeast(1L) ?: 1L
     DistributionSurface(
@@ -164,7 +173,7 @@ internal fun WeekDistributionCard(
                 ) {
                     Text(
                         text = display.chartValue,
-                        color = if (detail.future) Ink500 else Ink700,
+                        color = if (detail.future) DailyRecordTextMuted else DailyRecordTextSecondary,
                         style = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
                     )
@@ -174,7 +183,7 @@ internal fun WeekDistributionCard(
                             .height(76.dp)
                             .padding(horizontal = 3.dp)
                             .clip(RoundedCornerShape(9.dp))
-                            .background(Paper100),
+                            .background(DailyRecordSurfaceMuted),
                         contentAlignment = Alignment.BottomCenter,
                     ) {
                         if (fraction > 0f) {
@@ -182,18 +191,18 @@ internal fun WeekDistributionCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .fillMaxHeight(fraction)
-                                    .background(Terracotta500),
+                                    .background(colors.primary),
                             )
                         }
                     }
                     Text(
                         text = detail.label.substringBefore(" ").removePrefix("周"),
-                        color = if (detail.future) Ink500 else Ink900,
+                        color = if (detail.future) DailyRecordTextMuted else DailyRecordText,
                         style = MaterialTheme.typography.labelMedium,
                     )
                     Text(
                         text = detail.label.substringAfter(" "),
-                        color = Ink500,
+                        color = DailyRecordTextMuted,
                         style = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
                     )
@@ -207,6 +216,7 @@ internal fun WeekDistributionCard(
 internal fun MonthDistributionCard(
     details: List<StatisticsDetail>,
     modifier: Modifier = Modifier,
+    colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
     val maxCount = details.mapNotNull { it.count }.maxOrNull()?.coerceAtLeast(1L) ?: 1L
     DistributionSurface(
@@ -229,7 +239,7 @@ internal fun MonthDistributionCard(
                 ) {
                     Text(
                         text = detail.label,
-                        color = if (detail.future) Ink500 else Ink900,
+                        color = if (detail.future) DailyRecordTextMuted else DailyRecordText,
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.weight(1.15f),
                     )
@@ -238,7 +248,7 @@ internal fun MonthDistributionCard(
                             .weight(1.35f)
                             .height(12.dp)
                             .clip(CircleShape)
-                            .background(Paper100),
+                            .background(DailyRecordSurfaceMuted),
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         if (fraction > 0f) {
@@ -247,7 +257,7 @@ internal fun MonthDistributionCard(
                                     .fillMaxWidth(fraction)
                                     .fillMaxHeight()
                                     .clip(CircleShape)
-                                    .background(Terracotta500),
+                                    .background(colors.primary),
                             )
                         }
                     }
@@ -257,14 +267,14 @@ internal fun MonthDistributionCard(
                     ) {
                         Text(
                             display.count,
-                            color = if (detail.future) Ink500 else Ink900,
+                            color = if (detail.future) DailyRecordTextMuted else DailyRecordText,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                         )
                         Text(
                             display.days,
-                            color = Ink500,
+                            color = DailyRecordTextMuted,
                             style = MaterialTheme.typography.labelSmall,
                             maxLines = 1,
                         )
@@ -284,9 +294,9 @@ private fun DistributionSurface(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Paper0,
+        color = DailyRecordSurface,
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, Neutral300),
+        border = BorderStroke(1.dp, DailyRecordDivider),
         shadowElevation = 2.dp,
     ) {
         Column(
@@ -298,8 +308,8 @@ private fun DistributionSurface(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(title, color = Ink900, style = MaterialTheme.typography.titleMedium)
-                Text(subtitle, color = Ink500, style = MaterialTheme.typography.labelSmall)
+                Text(title, color = DailyRecordText, style = MaterialTheme.typography.titleMedium)
+                Text(subtitle, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
             }
             content()
         }
