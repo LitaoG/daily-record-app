@@ -50,14 +50,14 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Paper50
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.launch
 
 internal enum class AuthMode {
@@ -88,19 +88,19 @@ internal fun AuthScreen(
         validateCredentials(mode, email, password, confirmPassword)
     }
     val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Ink900,
-        unfocusedTextColor = Ink900,
-        disabledTextColor = Ink500,
-        focusedBorderColor = Terracotta500,
-        unfocusedBorderColor = Neutral300,
-        disabledBorderColor = Neutral300,
-        focusedLabelColor = Terracotta500,
-        unfocusedLabelColor = Ink500,
-        disabledLabelColor = Ink500,
-        cursorColor = Terracotta500,
-        focusedContainerColor = Paper0,
-        unfocusedContainerColor = Paper0,
-        disabledContainerColor = Paper0,
+        focusedTextColor = DailyRecordText,
+        unfocusedTextColor = DailyRecordText,
+        disabledTextColor = DailyRecordTextMuted,
+        focusedBorderColor = DailyRecordDefaultAccent,
+        unfocusedBorderColor = DailyRecordDivider,
+        disabledBorderColor = DailyRecordDivider,
+        focusedLabelColor = DailyRecordDefaultAccent,
+        unfocusedLabelColor = DailyRecordTextMuted,
+        disabledLabelColor = DailyRecordTextMuted,
+        cursorColor = DailyRecordDefaultAccent,
+        focusedContainerColor = DailyRecordSurface,
+        unfocusedContainerColor = DailyRecordSurface,
+        disabledContainerColor = DailyRecordSurface,
     )
     val submit: () -> Unit = submit@{
         if (!productionConfigured || busy || validationError != null) return@submit
@@ -124,7 +124,7 @@ internal fun AuthScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Paper50)
+            .background(DailyRecordCanvas)
             .verticalScroll(rememberScrollState())
             .imePadding()
             .padding(horizontal = 24.dp, vertical = 28.dp)
@@ -133,21 +133,21 @@ internal fun AuthScreen(
         verticalArrangement = Arrangement.Center,
     ) {
         Surface(
-            color = Paper0,
+            color = DailyRecordSurface,
             shape = RoundedCornerShape(24.dp),
             shadowElevation = 6.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Neutral300),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DailyRecordDivider),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                CalendarGlyph(color = Terracotta500, modifier = Modifier.size(36.dp))
-                Text("私密日历", color = Ink900, style = MaterialTheme.typography.headlineLarge)
+                CalendarGlyph(color = DailyRecordDefaultAccent, modifier = Modifier.size(36.dp))
+                Text("私密日历", color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
                 Text(
                     "登录后，本机记录会合并到你的账号，换手机可自动恢复。",
-                    color = Ink700,
+                    color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -233,13 +233,13 @@ internal fun AuthScreen(
                 }
                 Text(
                     "密码至少 8 位；不使用短信或验证码。请妥善保存密码。",
-                    color = Ink500,
+                    color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text(
                     "登录和注册需要打开 VPN（梯子）。选择本机使用则无需开启，但不会同步到云端。",
-                    color = Ink700,
+                    color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -248,7 +248,7 @@ internal fun AuthScreen(
                 if (!productionConfigured) {
                     Text(
                         "云端开发项目尚未完成配置，当前构建只能连接本地测试环境。",
-                        color = Terracotta500,
+                        color = DailyRecordDefaultAccent,
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -279,7 +279,7 @@ internal fun AuthScreen(
                 )
                 Text(
                     "以后登录时，本机记录会合并到你下一次登录的账号。",
-                    color = Ink500,
+                    color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
@@ -287,7 +287,7 @@ internal fun AuthScreen(
         Spacer(Modifier.height(16.dp))
         Text(
             "云端只保存两个模块中已记录的日期、次数和同步所需数据。",
-            color = Ink500,
+            color = DailyRecordTextMuted,
             style = MaterialTheme.typography.labelSmall,
         )
     }
@@ -313,10 +313,10 @@ private fun AuthModeButton(label: String, selected: Boolean, onClick: () -> Unit
         modifier = Modifier
             .height(48.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(if (selected) Paper100 else Paper0)
+            .background(if (selected) DailyRecordSurfaceMuted else DailyRecordSurface)
             .border(
                 width = 1.dp,
-                color = if (selected) Terracotta500 else Neutral300,
+                color = if (selected) DailyRecordDefaultAccent else DailyRecordDivider,
                 shape = RoundedCornerShape(14.dp),
             )
             .clickable(role = Role.Tab, onClick = onClick)
@@ -329,7 +329,7 @@ private fun AuthModeButton(label: String, selected: Boolean, onClick: () -> Unit
     ) {
         Text(
             label,
-            color = if (selected) Terracotta500 else Ink500,
+            color = if (selected) DailyRecordDefaultAccent else DailyRecordTextMuted,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
         )
     }

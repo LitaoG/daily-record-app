@@ -41,8 +41,8 @@ import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.ui.auth.AuthScreen
 import io.github.litaog.dailyrecord.ui.diagnostics.createDiagnosticReport
-import io.github.litaog.dailyrecord.ui.theme.Paper50
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -284,9 +284,9 @@ private fun SignedInRoot(
 @Composable
 private fun LoadingRoot() {
     Box(
-        modifier = Modifier.fillMaxSize().background(Paper50),
+        modifier = Modifier.fillMaxSize().background(DailyRecordCanvas),
         contentAlignment = Alignment.Center,
     ) {
-        CircularProgressIndicator(color = Terracotta500)
+        CircularProgressIndicator(color = DailyRecordDefaultAccent)
     }
 }

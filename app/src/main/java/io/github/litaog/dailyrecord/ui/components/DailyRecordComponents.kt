@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -49,14 +50,22 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
-import io.github.litaog.dailyrecord.ui.theme.White
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordBorders
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordElevations
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
+import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 
 enum class StatisticsPeriod(val label: String) {
     Week("周"),
@@ -68,20 +77,37 @@ enum class StatisticsPeriod(val label: String) {
 @Composable
 internal fun DailyRecordBottomBar(
     selected: TopDestination,
+    colors: RecordModuleColorTokens,
     onSelected: (TopDestination) -> Unit,
 ) {
     Surface(
         modifier = Modifier.navigationBarsPadding(),
-        color = Paper0,
-        shadowElevation = 8.dp,
+        color = DailyRecordSurface,
+        shadowElevation = DailyRecordElevations.Flat,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = DailyRecordSizes.BottomBarMinHeight)
+                .drawWithContent {
+                    drawContent()
+                    drawLine(
+                        color = DailyRecordDivider,
+                        start = Offset.Zero,
+                        end = Offset(size.width, 0f),
+                        strokeWidth = DailyRecordBorders.Standard.toPx(),
+                    )
+                }
+                .padding(
+                    horizontal = DailyRecordSpacing.ScreenHorizontal,
+                    vertical = DailyRecordSpacing.Inline,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
         ) {
             BottomDestination(
                 label = "日历",
                 selected = selected == TopDestination.Calendar,
+                accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Calendar) },
                 icon = { color -> CalendarGlyph(color) },
@@ -89,6 +115,7 @@ internal fun DailyRecordBottomBar(
             BottomDestination(
                 label = "统计",
                 selected = selected == TopDestination.Statistics,
+                accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Statistics) },
                 icon = { color -> StatisticsGlyph(color) },
@@ -101,16 +128,17 @@ internal fun DailyRecordBottomBar(
 private fun BottomDestination(
     label: String,
     selected: Boolean,
+    accent: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     icon: @Composable (Color) -> Unit,
 ) {
-    val contentColor = if (selected) White else Ink700
+    val contentColor = if (selected) accent else DailyRecordTextSecondary
     Column(
         modifier = modifier
-            .fillMaxHeight()
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Terracotta500 else Color.Transparent)
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+            .testTag("bottom_destination_$label")
+            .clip(DailyRecordShapes.Control)
             .clickable(role = Role.Tab, onClick = onClick)
             .semantics {
                 this.selected = selected
@@ -122,6 +150,14 @@ private fun BottomDestination(
     ) {
         icon(contentColor)
         Text(text = label, color = contentColor, style = MaterialTheme.typography.labelSmall)
+        Spacer(Modifier.height(DailyRecordSpacing.Compact))
+        Box(
+            Modifier
+                .width(24.dp)
+                .height(2.dp)
+                .clip(CircleShape)
+                .background(if (selected) accent else Color.Transparent),
+        )
     }
 }
 
@@ -156,7 +192,7 @@ fun StatisticsGlyph(color: Color, modifier: Modifier = Modifier) {
 fun ChevronIcon(
     forward: Boolean,
     modifier: Modifier = Modifier,
-    color: Color = Ink900,
+    color: Color = DailyRecordText,
 ) {
     Canvas(modifier.size(20.dp)) {
         val stroke = 2.4.dp.toPx()
@@ -180,12 +216,12 @@ fun ChevronIcon(
 }
 
 @Composable
-fun BackChevronIcon(modifier: Modifier = Modifier, color: Color = Ink900) {
+fun BackChevronIcon(modifier: Modifier = Modifier, color: Color = DailyRecordText) {
     ChevronIcon(forward = false, modifier = modifier, color = color)
 }
 
 @Composable
-fun PlaneIcon(modifier: Modifier = Modifier, color: Color = Terracotta500) {
+fun PlaneIcon(modifier: Modifier = Modifier, color: Color = DailyRecordDefaultAccent) {
     Canvas(modifier.size(36.dp)) {
         val path = Path().apply {
             moveTo(size.width * .50f, size.height * .06f)
@@ -223,7 +259,7 @@ fun PlaneIcon(modifier: Modifier = Modifier, color: Color = Terracotta500) {
  * Text always accompanies this icon, so module identity never depends on shape or color alone.
  */
 @Composable
-fun IntimacyIcon(modifier: Modifier = Modifier, color: Color = Terracotta500) {
+fun IntimacyIcon(modifier: Modifier = Modifier, color: Color = DailyRecordDefaultAccent) {
     Canvas(modifier.size(36.dp)) {
         val stroke = 2.6.dp.toPx()
         val radius = size.minDimension * .23f
@@ -249,58 +285,66 @@ internal fun RecordModuleSelector(
     onSelected: (RecordModule) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(0.94f)
-                .height(48.dp)
-                .testTag("record_module_selector")
-                .clip(RoundedCornerShape(14.dp))
-                .background(Paper0)
-                .border(1.dp, Neutral300, RoundedCornerShape(14.dp))
-                .drawWithContent {
-                    drawContent()
-                    val dividerWidth = 1.dp.toPx()
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .heightIn(min = DailyRecordSizes.ModuleSelectorMinHeight)
+            .testTag("record_module_selector")
+            .clip(DailyRecordShapes.ModuleSelector)
+            .background(DailyRecordSurface)
+            .border(
+                DailyRecordBorders.Standard,
+                DailyRecordDivider,
+                DailyRecordShapes.ModuleSelector,
+            )
+            .drawWithContent {
+                drawContent()
+                if (specs.size > 1) {
                     drawLine(
-                        color = Neutral300,
+                        color = DailyRecordDivider,
                         start = Offset(size.width / 2f, 0f),
                         end = Offset(size.width / 2f, size.height),
-                        strokeWidth = dividerWidth,
-                    )
-                },
-        ) {
-            specs.forEach { spec ->
-                val active = spec.module == selected
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .testTag("record_module_${spec.module.name}")
-                        .background(if (active) Terracotta500 else Color.Transparent)
-                        .clickable(role = Role.Tab) { onSelected(spec.module) }
-                        .semantics {
-                            this.selected = active
-                            role = Role.Tab
-                            contentDescription = spec.label + "记录，" +
-                                if (active) "已选择" else "未选择"
-                        },
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    spec.icon(
-                        Modifier.size(24.dp),
-                        if (active) White else Ink700,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = spec.label,
-                        color = if (active) White else Ink700,
-                        style = MaterialTheme.typography.titleMedium,
+                        strokeWidth = DailyRecordBorders.Standard.toPx(),
                     )
                 }
+            },
+    ) {
+        specs.forEach { spec ->
+            val active = spec.module == selected
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .heightIn(min = DailyRecordSizes.ModuleSelectorMinHeight)
+                    .testTag("record_module_${spec.module.name}")
+                    .background(if (active) spec.colors.primary else Color.Transparent)
+                    .clickable(role = Role.Tab) { onSelected(spec.module) }
+                    .padding(
+                        horizontal = DailyRecordSpacing.Inline,
+                        vertical = DailyRecordSpacing.Content,
+                    )
+                    .semantics {
+                        this.selected = active
+                        role = Role.Tab
+                        contentDescription = spec.label + "记录，" +
+                            if (active) "已选择" else "未选择"
+                    },
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                spec.icon(
+                    Modifier.size(DailyRecordSizes.ModuleIcon),
+                    if (active) spec.colors.onPrimary else DailyRecordTextSecondary,
+                )
+                Spacer(Modifier.width(DailyRecordSpacing.Inline))
+                Text(
+                    text = spec.label,
+                    color = if (active) spec.colors.onPrimary else DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
             }
         }
     }
@@ -311,37 +355,56 @@ fun PeriodTabs(
     selected: StatisticsPeriod,
     onSelected: (StatisticsPeriod) -> Unit,
     modifier: Modifier = Modifier,
+    colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Paper0)
-            .border(1.dp, Neutral300, RoundedCornerShape(16.dp))
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .height(IntrinsicSize.Min)
+            .heightIn(min = DailyRecordSizes.PeriodTabMinHeight)
+            .background(DailyRecordSurface)
+            .drawWithContent {
+                drawContent()
+                drawLine(
+                    color = DailyRecordDivider,
+                    start = Offset(0f, size.height),
+                    end = Offset(size.width, size.height),
+                    strokeWidth = DailyRecordBorders.Standard.toPx(),
+                )
+            },
     ) {
         StatisticsPeriod.entries.forEach { period ->
             val active = period == selected
-            Box(
+            Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(if (active) Terracotta500 else Color.Transparent)
+                    .heightIn(min = DailyRecordSizes.PeriodTabMinHeight)
+                    .testTag("statistics_period_${period.name}")
                     .clickable(role = Role.Tab) { onSelected(period) }
+                    .padding(
+                        horizontal = DailyRecordSpacing.Compact,
+                        vertical = DailyRecordSpacing.Inline,
+                    )
                     .semantics {
                         this.selected = active
                         role = Role.Tab
                         contentDescription = period.label + "统计，" + if (active) "已选择" else "未选择"
                     },
-                contentAlignment = Alignment.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     text = period.label,
-                    color = if (active) White else Ink700,
-                    style = MaterialTheme.typography.labelMedium,
+                    color = if (active) colors.primary else DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                Box(
+                    Modifier
+                        .width(24.dp)
+                        .height(2.dp)
+                        .clip(CircleShape)
+                        .background(if (active) colors.primary else Color.Transparent),
                 )
             }
         }
@@ -349,34 +412,39 @@ fun PeriodTabs(
 }
 
 @Composable
-fun MetricCard(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
+fun MetricCard(
+    label: String,
+    value: String,
+    unit: String,
+    modifier: Modifier = Modifier,
+    colors: RecordModuleColorTokens = HandBrewColorTokens,
+) {
     Surface(
         modifier = modifier.heightIn(min = 112.dp),
-        color = Paper0,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Neutral300),
-        shadowElevation = 4.dp,
+        color = DailyRecordSurface,
+        shape = DailyRecordShapes.Card,
+        border = BorderStroke(DailyRecordBorders.Standard, DailyRecordDivider),
+        shadowElevation = DailyRecordElevations.Raised,
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(DailyRecordSpacing.Content),
+            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(Terracotta500))
-                Spacer(Modifier.width(7.dp))
-                Text(text = label, color = Ink700, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                Box(Modifier.size(8.dp).clip(CircleShape).background(colors.primary))
+                Spacer(Modifier.width(DailyRecordSpacing.Inline))
+                Text(text = label, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
             }
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = value,
-                    color = Ink900,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
+                    color = DailyRecordText,
+                    style = MetricNumberMedium,
                 )
                 Spacer(Modifier.width(3.dp))
                 Text(
                     text = unit,
-                    color = Ink500,
+                    color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(bottom = 4.dp),
                     maxLines = 1,
@@ -396,23 +464,24 @@ fun DailyCountControl(
     modifier: Modifier = Modifier,
     explicitZeroText: String = "明确没冲",
     positiveStateText: String = "已手冲",
+    colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth().heightIn(min = 84.dp),
-        color = if (enabled) Paper0 else Paper100,
+        color = if (enabled) DailyRecordSurface else DailyRecordSurfaceMuted,
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Neutral300),
+        border = BorderStroke(1.dp, DailyRecordDivider),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            CountButton("减少一次", enabled && count > 0, false, onDecrease)
+            CountButton("减少一次", enabled && count > 0, false, colors, onDecrease)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = if (enabled) count.toString() else "—",
-                    color = if (enabled) Ink900 else Ink500,
+                    color = if (enabled) DailyRecordText else DailyRecordTextMuted,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
@@ -423,11 +492,11 @@ fun DailyCountControl(
                         count == 0 -> explicitZeroText
                         else -> positiveStateText
                     },
-                    color = Ink500,
+                    color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
-            CountButton("增加一次", enabled && count < Int.MAX_VALUE, true, onIncrease)
+            CountButton("增加一次", enabled && count < Int.MAX_VALUE, true, colors, onIncrease)
         }
     }
 }
@@ -437,17 +506,18 @@ private fun CountButton(
     description: String,
     enabled: Boolean,
     primary: Boolean,
+    colors: RecordModuleColorTokens,
     onClick: () -> Unit,
 ) {
     val background = when {
-        !enabled -> Paper100
-        primary -> Terracotta500
-        else -> Color(0xFFFFE7DE)
+        !enabled -> DailyRecordSurfaceMuted
+        primary -> colors.primary
+        else -> colors.soft
     }
     val content = when {
-        !enabled -> Ink500
-        primary -> White
-        else -> Terracotta500
+        !enabled -> DailyRecordTextMuted
+        primary -> DailyRecordOnAccent
+        else -> colors.primary
     }
     Box(
         modifier = Modifier
@@ -487,17 +557,18 @@ fun PrimaryActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    accent: Color = DailyRecordDefaultAccent,
 ) {
     Box(
         modifier = modifier
             .heightIn(min = 52.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (enabled) Terracotta500 else Paper100)
+            .clip(DailyRecordShapes.Control)
+            .background(if (enabled) accent else DailyRecordSurfaceMuted)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { role = Role.Button; contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, color = if (enabled) White else Ink500, style = MaterialTheme.typography.labelLarge)
+        Text(text = label, color = if (enabled) DailyRecordOnAccent else DailyRecordTextMuted, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -507,18 +578,23 @@ fun OutlineActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    accent: Color = DailyRecordDefaultAccent,
 ) {
     Box(
         modifier = modifier
             .heightIn(min = 52.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Paper0)
-            .border(1.dp, if (enabled) Terracotta500 else Neutral300, RoundedCornerShape(16.dp))
+            .clip(DailyRecordShapes.Control)
+            .background(DailyRecordSurface)
+            .border(
+                DailyRecordBorders.Standard,
+                if (enabled) accent else DailyRecordDivider,
+                DailyRecordShapes.Control,
+            )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { role = Role.Button; contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, color = if (enabled) Terracotta500 else Ink500, style = MaterialTheme.typography.labelLarge)
+        Text(text = label, color = if (enabled) accent else DailyRecordTextMuted, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -535,8 +611,8 @@ fun StatisticRow(
             .fillMaxWidth()
             .heightIn(min = 56.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(if (future) Paper100 else Paper0)
-            .border(1.dp, Neutral300, RoundedCornerShape(12.dp))
+            .background(if (future) DailyRecordSurfaceMuted else DailyRecordSurface)
+            .border(1.dp, DailyRecordDivider, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp)
             .semantics(mergeDescendants = true) {
                 contentDescription = "$label，$countText，$daysText"
@@ -545,20 +621,20 @@ fun StatisticRow(
     ) {
         Text(
             text = label,
-            color = if (future) Ink500 else Ink900,
+            color = if (future) DailyRecordTextMuted else DailyRecordText,
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = countText,
-            color = if (future) Ink500 else Ink700,
+            color = if (future) DailyRecordTextMuted else DailyRecordTextSecondary,
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(.8f),
         )
         Text(
             text = daysText,
-            color = if (future) Ink500 else Ink700,
+            color = if (future) DailyRecordTextMuted else DailyRecordTextSecondary,
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(.8f),

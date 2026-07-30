@@ -1,6 +1,6 @@
 # 安静的私密数据日志 UI v2 设计基线
 
-状态：`Accepted visual target — not implemented`
+状态：`Accepted visual target — Stage 1 implemented; Stages 2–4 pending`
 
 确认日期：2026-07-29
 
@@ -27,6 +27,33 @@
 | 做爱深色 | `#5F272C` |
 
 这些值是实现起点。阶段 1 可以为普通文字、白字按钮、焦点和禁用状态做必要的 WCAG 对比度调整，但不得改变紫色/深红色方向，且必须在 PR 中记录最终 token。
+
+## Stage 1 最终 Token
+
+阶段 1 保留全部已确认基线值，并补齐以下语义色：
+
+| 角色 | 最终值 |
+|---|---|
+| Muted surface | `#F2EFEA` |
+| Secondary text | `#514A45` |
+| Muted text | `#706761` |
+| Success | `#3F6F5A` |
+| Success container | `#E1ECE5` |
+| Warning | `#8A6A18` |
+| Danger | `#9B3A32` |
+| Danger container | `#F5E3E1` |
+| 手冲 1 次 / 2 次 | `#E9DDEA` / `#C8AFCF` |
+| 做爱 1 次 / 2 次 | `#F2DCDD` / `#DFAEB2` |
+
+共享状态映射：
+
+- 未填写：中性浅底、正文和细分隔线。
+- 明确 0：Surface 底、当前模块主色内容和描边。
+- 1、2、3+：当前模块由浅到深的同色阶。
+- 焦点：当前模块深色。
+- 禁用：中性浅底与 Muted text。
+
+白字对两个模块主色、正文对 Canvas、Muted text 对 Muted surface 均由单元测试验证达到普通文本 WCAG AA。运行时实现和 200% 字体证据见 [Stage 1 验收](../../audit/2026-07-30-ui-v2-stage1/README.md)。
 
 ## 日历页
 

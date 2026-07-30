@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -46,15 +45,15 @@ import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta400
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
-import io.github.litaog.dailyrecord.ui.theme.White
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -144,27 +143,27 @@ private fun SelectedDateSummary(date: LocalDate) {
             .fillMaxWidth()
             .padding(top = 16.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Terracotta400.copy(alpha = .22f))
-            .border(1.dp, Terracotta400, RoundedCornerShape(16.dp))
+            .background(DailyRecordDefaultAccentSoft.copy(alpha = .22f))
+            .border(1.dp, DailyRecordDefaultAccentSoft, RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Text("已选择", color = Ink700, style = MaterialTheme.typography.labelSmall)
+        Text("已选择", color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
         if (largeText) {
             Text(
                 text = date.format(DateTimeFormatter.ofPattern("yyyy年M月d日")),
-                color = Ink900,
+                color = DailyRecordText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = weekday,
-                color = Ink700,
+                color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.labelMedium,
             )
         } else {
             Text(
                 text = date.format(DateTimeFormatter.ofPattern("yyyy年M月d日")) + " · " + weekday,
-                color = Ink900,
+                color = DailyRecordText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
@@ -211,7 +210,7 @@ private fun MonthPicker(
         ) {
             Text(
                 text = "${displayedMonth.year}年 ${displayedMonth.monthValue}月",
-                color = Ink900,
+                color = DailyRecordText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
@@ -228,7 +227,7 @@ private fun MonthPicker(
             Text(
                 text = day,
                 modifier = Modifier.weight(1f).padding(vertical = 8.dp),
-                color = Ink500,
+                color = DailyRecordTextMuted,
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
             )
@@ -267,7 +266,7 @@ private fun MonthArrow(forward: Boolean, enabled: Boolean, onClick: () -> Unit) 
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(if (enabled) Paper100 else Color.Transparent)
+            .background(if (enabled) DailyRecordSurfaceMuted else Color.Transparent)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
@@ -276,7 +275,7 @@ private fun MonthArrow(forward: Boolean, enabled: Boolean, onClick: () -> Unit) 
             },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronIcon(forward = forward, color = if (enabled) Ink900 else Neutral300)
+        ChevronIcon(forward = forward, color = if (enabled) DailyRecordText else DailyRecordDivider)
     }
 }
 
@@ -294,8 +293,8 @@ private fun DateCell(
             .height(44.dp)
             .padding(2.dp)
             .clip(CircleShape)
-            .background(if (selected) Terracotta500 else Color.Transparent)
-            .border(if (selected) 0.dp else 1.dp, if (selected) Color.Transparent else Paper0, CircleShape)
+            .background(if (selected) DailyRecordDefaultAccent else Color.Transparent)
+            .border(if (selected) 0.dp else 1.dp, if (selected) Color.Transparent else DailyRecordSurface, CircleShape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
@@ -308,9 +307,9 @@ private fun DateCell(
         Text(
             text = date.dayOfMonth.toString(),
             color = when {
-                selected -> White
-                enabled -> Ink900
-                else -> Neutral300
+                selected -> DailyRecordOnAccent
+                enabled -> DailyRecordText
+                else -> DailyRecordDivider
             },
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
@@ -346,7 +345,7 @@ private fun YearPicker(
         }
         Text(
             "选择年份",
-            color = Ink900,
+            color = DailyRecordText,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
@@ -364,8 +363,8 @@ private fun YearPicker(
                 modifier = Modifier
                     .heightIn(min = 52.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(if (selected) Terracotta500 else Paper100)
-                    .border(1.dp, if (selected) Terracotta500 else Neutral300, RoundedCornerShape(14.dp))
+                    .background(if (selected) DailyRecordDefaultAccent else DailyRecordSurfaceMuted)
+                    .border(1.dp, if (selected) DailyRecordDefaultAccent else DailyRecordDivider, RoundedCornerShape(14.dp))
                     .clickable(role = Role.Button) { onYearSelected(year) }
                     .semantics {
                         role = Role.Button
@@ -376,7 +375,7 @@ private fun YearPicker(
             ) {
                 Text(
                     "$year",
-                    color = if (selected) White else Ink900,
+                    color = if (selected) DailyRecordOnAccent else DailyRecordText,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                 )

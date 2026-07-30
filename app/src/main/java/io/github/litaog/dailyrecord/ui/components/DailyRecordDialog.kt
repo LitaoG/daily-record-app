@@ -21,10 +21,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 
 /** Shared app-native dialog surface for the private-calendar visual language. */
 @Composable
@@ -52,8 +52,8 @@ fun DailyRecordDialog(
                     .widthIn(max = 420.dp)
                     .semantics { this.testTag = testTag },
                 shape = RoundedCornerShape(26.dp),
-                color = Paper0,
-                border = BorderStroke(1.dp, Neutral300),
+                color = DailyRecordSurface,
+                border = BorderStroke(1.dp, DailyRecordDivider),
                 shadowElevation = 14.dp,
                 tonalElevation = 0.dp,
             ) {
@@ -62,7 +62,7 @@ fun DailyRecordDialog(
                 ) {
                     Text(
                         text = title,
-                        color = Ink900,
+                        color = DailyRecordText,
                         style = if (largeText) {
                             MaterialTheme.typography.titleMedium
                         } else {
@@ -73,7 +73,7 @@ fun DailyRecordDialog(
                     if (subtitle != null) {
                         Text(
                             text = subtitle,
-                            color = Ink500,
+                            color = DailyRecordTextMuted,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 4.dp),
                         )

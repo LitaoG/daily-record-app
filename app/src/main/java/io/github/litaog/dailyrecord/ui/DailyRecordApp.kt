@@ -30,19 +30,15 @@ import io.github.litaog.dailyrecord.ui.account.AccountDialog
 import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
 import io.github.litaog.dailyrecord.ui.account.AccountTopBar
 import io.github.litaog.dailyrecord.ui.account.LocalAccountTopBar
-import io.github.litaog.dailyrecord.ui.calendar.CalendarScreen
 import io.github.litaog.dailyrecord.ui.components.DailyRecordBottomBar
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.diagnostics.DiagnosticDialog
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
 import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
-import io.github.litaog.dailyrecord.ui.record.RecordScreen
-import io.github.litaog.dailyrecord.ui.statistics.StatisticsScreen
 import io.github.litaog.dailyrecord.ui.calendar.DailyCountCalendarScreen
 import io.github.litaog.dailyrecord.ui.record.DailyCountRecordScreen
 import io.github.litaog.dailyrecord.ui.statistics.DailyCountStatisticsScreen
-import io.github.litaog.dailyrecord.ui.theme.Paper50
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -148,12 +144,12 @@ fun DailyRecordApp(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Paper50)
+                .background(DailyRecordCanvas)
                 .testTag("records_loading")
                 .semantics { contentDescription = "正在读取本机记录" },
             contentAlignment = Alignment.Center,
         ) {
-            CircularProgressIndicator(color = Terracotta500)
+            CircularProgressIndicator(color = moduleSpec.colors.primary)
         }
         return
     }
@@ -174,7 +170,7 @@ fun DailyRecordApp(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Paper50,
+        containerColor = DailyRecordCanvas,
         snackbarHost = {
             if (!showAccountDialog) {
                 DailyRecordSnackbarHost(snackbarHostState)
@@ -193,6 +189,7 @@ fun DailyRecordApp(
         bottomBar = {
             DailyRecordBottomBar(
                 selected = destination,
+                colors = moduleSpec.colors,
                 onSelected = { destinationName = it.name },
             )
         },

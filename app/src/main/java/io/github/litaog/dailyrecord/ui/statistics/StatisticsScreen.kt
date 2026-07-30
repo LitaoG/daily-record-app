@@ -51,13 +51,13 @@ import io.github.litaog.dailyrecord.ui.components.StatisticRow
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.navigation.nextPeriodAnchor
 import io.github.litaog.dailyrecord.ui.navigation.previousPeriodAnchor
-import io.github.litaog.dailyrecord.ui.theme.Ink500
-import io.github.litaog.dailyrecord.ui.theme.Ink700
-import io.github.litaog.dailyrecord.ui.theme.Ink900
-import io.github.litaog.dailyrecord.ui.theme.Neutral300
-import io.github.litaog.dailyrecord.ui.theme.Paper0
-import io.github.litaog.dailyrecord.ui.theme.Paper100
-import io.github.litaog.dailyrecord.ui.theme.Terracotta500
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import java.time.LocalDate
 import java.util.Locale
 
@@ -111,8 +111,11 @@ internal fun DailyCountStatisticsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize().testTag("statistics_screen"),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 15.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            horizontal = DailyRecordSpacing.ScreenHorizontal,
+            vertical = DailyRecordSpacing.ScreenVertical,
+        ),
+        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
     ) {
         item {
             RecordModuleSelector(
@@ -122,12 +125,13 @@ internal fun DailyCountStatisticsScreen(
             )
         }
         item {
-            Text("统计", color = Ink900, style = MaterialTheme.typography.headlineLarge)
+            Text("统计", color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
         }
         item {
             PeriodTabs(
                 selected = period,
                 onSelected = { periodName = it.name },
+                colors = moduleSpec.colors,
             )
         }
         item {
@@ -139,6 +143,7 @@ internal fun DailyCountStatisticsScreen(
                 today = today,
                 onAnchorDateChanged = onAnchorDateChanged,
                 onOpenDatePicker = onOpenDatePicker,
+                colors = moduleSpec.colors,
             )
         }
         item {
@@ -149,40 +154,67 @@ internal fun DailyCountStatisticsScreen(
                     horizontal = useHorizontalMetrics,
                     moduleLabel = moduleSpec.label,
                     daysLabel = moduleSpec.daysLabel,
+                    colors = moduleSpec.colors,
                 )
             } else if (useHorizontalMetrics) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
-                    MetricCard(moduleSpec.totalLabel, model.summary.totalCount.toString(), "次", Modifier.weight(1f))
-                    MetricCard(moduleSpec.daysLabel, model.summary.recordedDays.toString(), "天", Modifier.weight(1f))
+                    MetricCard(
+                        moduleSpec.totalLabel,
+                        model.summary.totalCount.toString(),
+                        "次",
+                        Modifier.weight(1f),
+                        moduleSpec.colors,
+                    )
+                    MetricCard(
+                        moduleSpec.daysLabel,
+                        model.summary.recordedDays.toString(),
+                        "天",
+                        Modifier.weight(1f),
+                        moduleSpec.colors,
+                    )
                     MetricCard(
                         "记录日均",
                         String.format(Locale.US, "%.1f", model.summary.average),
                         "次/天",
                         Modifier.weight(1f),
+                        moduleSpec.colors,
                     )
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MetricCard(moduleSpec.totalLabel, model.summary.totalCount.toString(), "次", Modifier.fillMaxWidth())
-                    MetricCard(moduleSpec.daysLabel, model.summary.recordedDays.toString(), "天", Modifier.fillMaxWidth())
+                    MetricCard(
+                        moduleSpec.totalLabel,
+                        model.summary.totalCount.toString(),
+                        "次",
+                        Modifier.fillMaxWidth(),
+                        moduleSpec.colors,
+                    )
+                    MetricCard(
+                        moduleSpec.daysLabel,
+                        model.summary.recordedDays.toString(),
+                        "天",
+                        Modifier.fillMaxWidth(),
+                        moduleSpec.colors,
+                    )
                     MetricCard(
                         "记录日均",
                         String.format(Locale.US, "%.1f", model.summary.average),
                         "次/天",
                         Modifier.fillMaxWidth(),
+                        moduleSpec.colors,
                     )
                 }
             }
         }
         if (model.details.isEmpty()) {
-            item { EmptyStatistics(moduleSpec.label, onOpenCalendar) }
+            item { EmptyStatistics(moduleSpec.label, moduleSpec.colors, onOpenCalendar) }
         } else {
             when (period) {
-                StatisticsPeriod.Week -> item { WeekDistributionCard(model.details) }
-                StatisticsPeriod.Month -> item { MonthDistributionCard(model.details) }
+                StatisticsPeriod.Week -> item { WeekDistributionCard(model.details, colors = moduleSpec.colors) }
+                StatisticsPeriod.Month -> item { MonthDistributionCard(model.details, colors = moduleSpec.colors) }
                 StatisticsPeriod.Year,
                 StatisticsPeriod.All,
                 -> {
@@ -191,8 +223,8 @@ internal fun DailyCountStatisticsScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text(model.detailsTitle, color = Ink900, style = MaterialTheme.typography.labelMedium)
-                            Text("次数 · 天数", color = Ink500, style = MaterialTheme.typography.labelSmall)
+                            Text(model.detailsTitle, color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
+                            Text("次数 · 天数", color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                     items(model.details, key = { it.label }) { detail ->
@@ -219,21 +251,21 @@ internal fun DailyCountStatisticsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Paper0)
-                        .border(1.dp, Terracotta500, RoundedCornerShape(16.dp))
+                        .background(DailyRecordSurface)
+                        .border(1.dp, moduleSpec.colors.primary, RoundedCornerShape(16.dp))
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text("历史事实", color = Ink900, style = MaterialTheme.typography.labelLarge)
+                    Text("历史事实", color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
                     Text(
                         "首次记录：" + records.filter { it.localDate <= today }.minOfOrNull { it.localDate }
                             .orEmptyDate(),
-                        color = Ink700,
+                        color = DailyRecordTextSecondary,
                         style = MaterialTheme.typography.labelSmall,
                     )
                     Text(
                         "只展示已发生数据，不预测未来趋势",
-                        color = Ink500,
+                        color = DailyRecordTextMuted,
                         style = MaterialTheme.typography.labelSmall,
                     )
                 }
@@ -251,6 +283,7 @@ private fun PeriodNavigator(
     today: LocalDate,
     onAnchorDateChanged: (LocalDate) -> Unit,
     onOpenDatePicker: () -> Unit,
+    colors: RecordModuleColorTokens,
 ) {
     if (period == StatisticsPeriod.All) {
         Row(
@@ -258,8 +291,8 @@ private fun PeriodNavigator(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(model.title, color = Ink900, style = MaterialTheme.typography.labelLarge)
-            Text(model.status, color = Terracotta500, style = MaterialTheme.typography.labelMedium)
+            Text(model.title, color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
+            Text(model.status, color = colors.primary, style = MaterialTheme.typography.labelMedium)
         }
         return
     }
@@ -301,7 +334,7 @@ private fun PeriodNavigator(
             ) {
                 Text(
                     text = model.title,
-                    color = Ink900,
+                    color = DailyRecordText,
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center,
                 )
@@ -313,7 +346,7 @@ private fun PeriodNavigator(
                 onClick = { next?.let(onAnchorDateChanged) },
             )
         }
-        Text(model.status, color = Terracotta500, style = MaterialTheme.typography.labelMedium)
+        Text(model.status, color = colors.primary, style = MaterialTheme.typography.labelMedium)
     }
 }
 
@@ -336,35 +369,40 @@ private fun PeriodArrow(
             },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronIcon(forward = forward, color = Ink900)
+        ChevronIcon(forward = forward, color = DailyRecordText)
     }
 }
 
 @Composable
-private fun EmptyStatistics(moduleLabel: String, onOpenCalendar: () -> Unit) {
+private fun EmptyStatistics(
+    moduleLabel: String,
+    colors: RecordModuleColorTokens,
+    onOpenCalendar: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Paper100)
+            .background(DailyRecordSurfaceMuted)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             "还没有可统计的${moduleLabel}记录",
-            color = Ink900,
+            color = DailyRecordText,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
         Text(
             "回到日历选择日期，保存第一条记录。",
-            color = Ink700,
+            color = DailyRecordTextSecondary,
             style = MaterialTheme.typography.bodyMedium,
         )
         PrimaryActionButton(
             label = "去日历记录",
             onClick = onOpenCalendar,
             modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+            accent = colors.primary,
         )
     }
 }
