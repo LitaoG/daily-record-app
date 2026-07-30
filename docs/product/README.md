@@ -1,6 +1,6 @@
 # 私密日历产品交付索引
 
-最后复核：2026-07-29
+最后复核：2026-07-30
 
 完整工程文档请先看[文档中心](../README.md)。本页只索引产品、设计和交付资料。
 
@@ -20,10 +20,13 @@
 - [隐私说明](../../PRIVACY.md)
 - [签名与 GitHub Release](../RELEASE.md)
 
-下一轮实现只能从 UI v2 分阶段计划和本目录设计基线进入。设计图已经确认“手冲紫色＋做爱深红”的方向，但尚未实现到 Compose；当前运行行为仍以代码与事实文档为准。
+后续实现只能从 UI v2 分阶段计划和本目录设计基线进入。Stage 1 的共享视觉外壳已经验收，Stage 2 的方形次数热力日历已形成验收候选；日期记录页与统计页主体尚未改版。当前运行行为仍以代码与事实文档为准。
 
 ## 历史交付证据
 
+- [2026-07-30 UI v2 Stage 2 用户反馈修正](audit/2026-07-30-ui-v2-stage2-follow-up/README.md)
+- [2026-07-30 UI v2 Stage 2 方形次数热力日历](audit/2026-07-30-ui-v2-stage2/README.md)
+- [2026-07-30 UI v2 Stage 1 设计 Token 与共享外壳](audit/2026-07-30-ui-v2-stage1/README.md)
 - [历史 Figma Hand-brew-only v2 设计系统](FIGMA_DESIGN_SYSTEM.md)
 - [历史 Figma 设计文件](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
 - [历史 Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
