@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,11 +15,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
@@ -44,6 +47,9 @@ import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -52,7 +58,6 @@ import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import java.time.LocalDate
 import java.time.YearMonth
-import java.util.Locale
 
 @Composable
 fun CalendarScreen(
@@ -107,7 +112,6 @@ internal fun DailyCountCalendarScreen(
     val recordsByDate = monthRecords.associateBy { it.localDate }
     val totalCount = monthRecords.sumOf { it.count.toLong() }
     val recordedDays = monthRecords.count { it.count > 0 }
-    val averagePerRecordedDay = if (recordedDays == 0) 0.0 else totalCount.toDouble() / recordedDays
     val gridDates = calendarGridDates(month)
     val canGoPrevious = month > earliestMonth
     val canGoNext = month < YearMonth.from(today)
@@ -121,89 +125,115 @@ internal fun DailyCountCalendarScreen(
             .testTag("calendar_screen"),
     ) {
         val horizontalPadding = if (maxWidth < 376.dp) 12.dp else DailyRecordSpacing.ScreenHorizontal
-        Column(
+        LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(
-                    horizontal = horizontalPadding,
-                    vertical = 12.dp,
-                ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .fillMaxSize(),
+            contentPadding = PaddingValues(
+                horizontal = horizontalPadding,
+                vertical = 12.dp,
+            ),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            RecordModuleSelector(
-                selected = selectedModule,
-                specs = availableModules,
-                onSelected = onModuleSelected,
-            )
-            MonthHeader(
-                month = month,
-                canGoPrevious = canGoPrevious,
-                canGoNext = canGoNext,
-                onPreviousMonth = onPreviousMonth,
-                onNextMonth = onNextMonth,
-                onToday = onToday,
-                onOpenDatePicker = onOpenDatePicker,
-                colors = moduleSpec.colors,
-            )
-            MonthlySummary(
-                totalCount = totalCount,
-                recordedDays = recordedDays,
-                averagePerRecordedDay = averagePerRecordedDay,
-                largeText = largeText,
-            )
-            Row(Modifier.fillMaxWidth()) {
-                listOf("一", "二", "三", "四", "五", "六", "日").forEach { weekday ->
-                    Text(
-                        text = weekday,
-                        modifier = Modifier.weight(1f),
-                        color = DailyRecordTextMuted,
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center,
+            item {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    RecordModuleSelector(
+                        selected = selectedModule,
+                        specs = availableModules,
+                        onSelected = onModuleSelected,
+                    )
+                    MonthHeader(
+                        month = month,
+                        canGoPrevious = canGoPrevious,
+                        canGoNext = canGoNext,
+                        onPreviousMonth = onPreviousMonth,
+                        onNextMonth = onNextMonth,
+                        onToday = onToday,
+                        onOpenDatePicker = onOpenDatePicker,
+                        colors = moduleSpec.colors,
+                    )
+                    MonthlySummary(
+                        totalCount = totalCount,
+                        recordedDays = recordedDays,
+                    )
+                    CalendarWeekdayHeader()
+                    CalendarMonthGrid(
+                        gridDates = gridDates,
+                        earliestDate = earliestMonth.atDay(1),
+                        today = today,
+                        focusedDate = focusedDate,
+                        recordsByDate = recordsByDate,
+                        moduleSpec = moduleSpec,
+                        cellHeight = dayCellHeight,
+                        largeText = largeText,
+                        onDateSelected = onDateSelected,
                     )
                 }
             }
-            Column {
-                gridDates.chunked(7).forEach { week ->
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        week.forEach { date ->
-                            if (date == null) {
-                                Spacer(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(dayCellHeight),
-                                )
-                            } else {
-                                CalendarDayCell(
-                                    date = date,
-                                    earliestDate = earliestMonth.atDay(1),
-                                    today = today,
-                                    focused = date == focusedDate,
-                                    record = recordsByDate[date],
-                                    moduleSpec = moduleSpec,
-                                    cellHeight = dayCellHeight,
-                                    largeText = largeText,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onDateSelected(date) },
-                                )
-                            }
-                        }
+            item {
+                CalendarGuide(
+                    moduleSpec = moduleSpec,
+                    largeText = largeText,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarWeekdayHeader() {
+    Row(Modifier.fillMaxWidth()) {
+        listOf("一", "二", "三", "四", "五", "六", "日").forEach { weekday ->
+            Text(
+                text = weekday,
+                modifier = Modifier.weight(1f),
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalendarMonthGrid(
+    gridDates: List<LocalDate?>,
+    earliestDate: LocalDate,
+    today: LocalDate,
+    focusedDate: LocalDate,
+    recordsByDate: Map<LocalDate, DailyCountEntry>,
+    moduleSpec: RecordModuleUiSpec,
+    cellHeight: androidx.compose.ui.unit.Dp,
+    largeText: Boolean,
+    onDateSelected: (LocalDate) -> Unit,
+) {
+    Column {
+        gridDates.chunked(7).forEach { week ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                week.forEach { date ->
+                    if (date == null) {
+                        Spacer(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(cellHeight),
+                        )
+                    } else {
+                        CalendarDayCell(
+                            date = date,
+                            earliestDate = earliestDate,
+                            today = today,
+                            focused = date == focusedDate,
+                            record = recordsByDate[date],
+                            moduleSpec = moduleSpec,
+                            cellHeight = cellHeight,
+                            largeText = largeText,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onDateSelected(date) },
+                        )
                     }
                 }
             }
-            Text(
-                text = "点击日期记录",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp)
-                    .semantics {
-                        contentDescription = "点击日期记录${moduleSpec.semanticCountLabel}次数"
-                    },
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(2.dp))
         }
     }
 }
@@ -221,53 +251,149 @@ internal fun calendarGridDates(month: YearMonth): List<LocalDate?> {
 private fun MonthlySummary(
     totalCount: Long,
     recordedDays: Int,
-    averagePerRecordedDay: Double,
-    largeText: Boolean,
 ) {
     val summary = "本月 $totalCount 次 · $recordedDays 天"
-    val average = String.format(Locale.SIMPLIFIED_CHINESE, "%.1f次/天", averagePerRecordedDay)
+    Text(
+        text = summary,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 32.dp)
+            .testTag("calendar_month_summary")
+            .semantics { contentDescription = summary },
+        color = DailyRecordText,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Medium,
+    )
+}
 
-    if (largeText) {
-        Column(
+@Composable
+private fun CalendarGuide(
+    moduleSpec: RecordModuleUiSpec,
+    largeText: Boolean,
+) {
+    val legendItems = listOf(
+        CalendarLegendItem.Unset,
+        CalendarLegendItem.Disabled,
+        CalendarLegendItem.Zero,
+        CalendarLegendItem.Recorded,
+    )
+    val legendRows = if (largeText) legendItems.chunked(2) else listOf(legendItems)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 20.dp, bottom = 2.dp)
+            .testTag("calendar_guide")
+            .clearAndSetSemantics {
+                contentDescription =
+                    "点击日期记录${moduleSpec.semanticCountLabel}次数。图例：未填写、未来不可记录、明确记录零次、已记录"
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("calendar_month_summary")
-                .semantics { contentDescription = "$summary，记录日均 $average" },
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+                .height(1.dp)
+                .background(DailyRecordDivider),
+        )
+        Text(
+            text = "点击日期记录",
+            color = DailyRecordTextSecondary,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+        )
+        legendRows.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                row.forEach { item ->
+                    CalendarLegendEntry(
+                        item = item,
+                        colors = moduleSpec.colors,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private enum class CalendarLegendItem(
+    val label: String,
+) {
+    Unset("未填"),
+    Disabled("未来"),
+    Zero("0 次"),
+    Recorded("1+ 次"),
+}
+
+@Composable
+private fun CalendarLegendEntry(
+    item: CalendarLegendItem,
+    colors: RecordModuleColorTokens,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CalendarLegendMarker(item = item, colors = colors)
+        Spacer(Modifier.width(5.dp))
+        Text(
+            text = item.label,
+            color = DailyRecordTextMuted,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun CalendarLegendMarker(
+    item: CalendarLegendItem,
+    colors: RecordModuleColorTokens,
+) {
+    when (item) {
+        CalendarLegendItem.Unset -> Box(
+            Modifier
+                .size(14.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(colors.colorsFor(RecordVisualState.Unset).background),
+        )
+        CalendarLegendItem.Disabled -> Box(
+            Modifier
+                .size(14.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(DailyRecordSurfaceDisabled),
+        )
+        CalendarLegendItem.Zero -> Box(
+            modifier = Modifier
+                .size(14.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(DailyRecordSurface)
+                .border(1.dp, colors.primary, RoundedCornerShape(4.dp)),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = summary,
-                color = DailyRecordText,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = average,
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.labelMedium,
+            Box(
+                Modifier
+                    .size(5.dp)
+                    .border(1.dp, colors.primary, CircleShape),
             )
         }
-    } else {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 32.dp)
-                .testTag("calendar_month_summary")
-                .semantics { contentDescription = "$summary，记录日均 $average" },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+        CalendarLegendItem.Recorded -> Row(
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text(
-                text = summary,
-                color = DailyRecordText,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = average,
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.labelMedium,
-            )
+            listOf(colors.soft, colors.medium, colors.primary).forEach { color ->
+                Box(
+                    Modifier
+                        .size(width = 5.dp, height = 14.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(color),
+                )
+            }
         }
     }
 }
