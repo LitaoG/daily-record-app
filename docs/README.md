@@ -1,6 +1,6 @@
 # 私密日历文档中心
 
-最后复核：2026-07-29
+最后复核：2026-07-30
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
@@ -45,6 +45,9 @@
 
 以下内容用于解释某次迭代当时验证了什么，不应覆盖上面的当前规则：
 
+- [2026-07-30 UI v2 Stage 2 用户反馈修正](product/audit/2026-07-30-ui-v2-stage2-follow-up/README.md)
+- [2026-07-30 UI v2 Stage 2 方形次数热力日历](product/audit/2026-07-30-ui-v2-stage2/README.md)
+- [2026-07-30 UI v2 Stage 1 设计 Token 与共享外壳](product/audit/2026-07-30-ui-v2-stage1/README.md)
 - [历史 Figma Hand-brew-only v2 设计系统](product/FIGMA_DESIGN_SYSTEM.md)
 - [重构与交付日志](product/HAND_BREW_REFACTOR_LOG.md)
 - [2026-07-28 局部一致性、扩展边界与安全加固](product/audit/2026-07-28-consistency-hardening/README.md)

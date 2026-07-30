@@ -13,7 +13,7 @@
 - 底部导航不再使用大面积选中胶囊，改为模块色图标、文字和 2dp 下划线。
 - 页面水平边距统一为 20dp；共享触控目标不小于 48dp。
 - 正常字号与 200% 字体均未发现共享壳层文字截断；Crash Buffer 为空。
-- [设计 QA](../../../../design-qa.md)没有遗留 P0、P1 或 P2 问题，`final result: passed`。
+- [设计 QA](DESIGN_QA.md)没有遗留 P0、P1 或 P2 问题，`final result: passed`。
 
 ## 运行环境
 

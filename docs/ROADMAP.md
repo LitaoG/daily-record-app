@@ -1,6 +1,6 @@
 # 路线图
 
-最后复核：2026-07-29
+最后复核：2026-07-30
 
 ## 已完成：手冲专用产品重构
 
@@ -45,9 +45,9 @@
 
 总 Goal 与唯一阶段顺序见 [`product/QUIET_PRIVATE_JOURNAL_GOALS.md`](product/QUIET_PRIVATE_JOURNAL_GOALS.md)：
 
-- [ ] Stage 0：仓库清理、文档权威层级、设计资产和 GitHub Goal 同步。
-- [ ] Stage 1：手冲紫色、做爱深红的设计 Token 与共享外壳。
-- [ ] Stage 2：方形次数热力日历页。
+- [x] Stage 0：仓库清理、文档权威层级、设计资产和 GitHub Goal 同步。
+- [x] Stage 1：手冲紫色、做爱深红的设计 Token 与共享外壳。
+- [ ] Stage 2：方形次数热力日历页（实现完成，等待用户验收）。
 - [ ] Stage 3：点击日期进入的克制次数记录页。
 - [ ] Stage 4：统计页与真实日期年度热力图。
 - [ ] Stage 5：跨页面集成 QA、一次完整套件和候选 APK。
