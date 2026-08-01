@@ -15,6 +15,56 @@ data class StatisticsSummary(
         get() = if (recordedDays == 0) 0.0 else totalCount.toDouble() / recordedDays
 }
 
+/** One real calendar date in the selected month. Grid padding is not represented here. */
+data class StatisticsDay(
+    val date: LocalDate,
+    val count: Long?,
+    val recorded: Boolean,
+    val future: Boolean,
+)
+
+data class MonthStatistics(
+    val month: YearMonth,
+    val leadingEmptyCells: Int,
+    val days: List<StatisticsDay>,
+) {
+    init {
+        require(leadingEmptyCells in 0..6) { "Month grid offset must be a weekday offset." }
+        require(days.size == month.lengthOfMonth()) { "Month statistics must contain every real date exactly once." }
+    }
+
+    val gridCellCount: Int
+        get() = ((leadingEmptyCells + days.size + 6) / 7) * 7
+}
+
+data class YearMonthStatistics(
+    val month: YearMonth,
+    val count: Long?,
+    val recordedDays: Int?,
+    val recorded: Boolean,
+    val future: Boolean,
+    val inProgress: Boolean,
+) {
+    val complete: Boolean
+        get() = !future && !inProgress
+}
+
+data class QuarterStatistics(
+    val quarter: Int,
+    val totalCount: Long,
+)
+
+data class YearStatistics(
+    val months: List<YearMonthStatistics>,
+    val quarters: List<QuarterStatistics>,
+    val monthlyAverage: Double,
+    val maximumMonths: List<YearMonthStatistics>,
+    val minimumMonths: List<YearMonthStatistics>,
+) {
+    val rankedMonthCount: Int
+        get() = months.count { it.complete && it.recorded }
+}
+
 data class StatisticsDetail(
     val label: String,
     val count: Long?,
@@ -29,6 +79,8 @@ data class StatisticsUiModel(
     val summary: StatisticsSummary,
     val detailsTitle: String,
     val details: List<StatisticsDetail>,
+    val month: MonthStatistics? = null,
+    val year: YearStatistics? = null,
 )
 
 fun buildStatistics(
@@ -145,6 +197,7 @@ private fun buildMonth(
         summary = summaryOf(rangeRecords),
         detailsTitle = "周明细",
         details = details,
+        month = buildMonthStatistics(month, today, rangeRecords),
     )
 }
 
@@ -187,6 +240,76 @@ private fun buildYear(
         summary = summaryOf(rangeRecords),
         detailsTitle = "月份明细",
         details = details,
+        year = buildYearStatistics(anchorDate.year, today, rangeRecords),
+    )
+}
+
+private fun buildMonthStatistics(
+    month: YearMonth,
+    today: LocalDate,
+    records: List<DailyCountEntry>,
+): MonthStatistics {
+    val recordsByDate = records.associateBy { it.localDate }
+    val days = (1..month.lengthOfMonth()).map { dayOfMonth ->
+        val date = month.atDay(dayOfMonth)
+        val future = date > today
+        val record = recordsByDate[date]
+        StatisticsDay(
+            date = date,
+            count = if (future || record == null) null else record.count.toLong(),
+            recorded = !future && record != null,
+            future = future,
+        )
+    }
+    return MonthStatistics(
+        month = month,
+        leadingEmptyCells = month.atDay(1).dayOfWeek.value - 1,
+        days = days,
+    )
+}
+
+private fun buildYearStatistics(
+    year: Int,
+    today: LocalDate,
+    records: List<DailyCountEntry>,
+): YearStatistics {
+    val months = (1..12).map { monthNumber ->
+        val month = YearMonth.of(year, monthNumber)
+        val future = month.atDay(1) > today
+        val inProgress = !future && month.atEndOfMonth() >= today
+        val monthRecords = records.filter { it.localDate in month.atDay(1)..month.atEndOfMonth() }
+        val recorded = !future && monthRecords.isNotEmpty()
+        YearMonthStatistics(
+            month = month,
+            count = if (recorded) monthRecords.sumOf { it.count.toLong() } else null,
+            recordedDays = if (recorded) monthRecords.count { it.count > 0 } else null,
+            recorded = recorded,
+            future = future,
+            inProgress = inProgress,
+        )
+    }
+    val elapsedMonthCount = when {
+        year < today.year -> 12
+        year == today.year -> today.monthValue
+        else -> 0
+    }
+    val totalCount = months.sumOf { it.count ?: 0L }
+    val rankableMonths = months.filter { it.complete && it.recorded }
+    val maximumValue = rankableMonths.maxOfOrNull { it.count ?: 0L }
+    val minimumValue = rankableMonths.minOfOrNull { it.count ?: 0L }
+    return YearStatistics(
+        months = months,
+        quarters = (1..4).map { quarter ->
+            QuarterStatistics(
+                quarter = quarter,
+                totalCount = months
+                    .filter { ((it.month.monthValue - 1) / 3) + 1 == quarter }
+                    .sumOf { it.count ?: 0L },
+            )
+        },
+        monthlyAverage = if (elapsedMonthCount == 0) 0.0 else totalCount.toDouble() / elapsedMonthCount,
+        maximumMonths = maximumValue?.let { value -> rankableMonths.filter { it.count == value } }.orEmpty(),
+        minimumMonths = minimumValue?.let { value -> rankableMonths.filter { it.count == value } }.orEmpty(),
     )
 }
 

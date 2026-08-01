@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -43,7 +42,6 @@ import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
-import io.github.litaog.dailyrecord.ui.components.MetricCard
 import io.github.litaog.dailyrecord.ui.components.PeriodTabs
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
@@ -59,7 +57,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import java.time.LocalDate
-import java.util.Locale
 
 @Composable
 fun StatisticsScreen(
@@ -107,8 +104,6 @@ internal fun DailyCountStatisticsScreen(
     val model = remember(period, anchorDate, today, records) {
         buildDailyCountStatistics(period, anchorDate, today, records)
     }
-    val useHorizontalMetrics = LocalDensity.current.fontScale < 1.4f
-
     LazyColumn(
         modifier = modifier.fillMaxSize().testTag("statistics_screen"),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
@@ -147,77 +142,48 @@ internal fun DailyCountStatisticsScreen(
             )
         }
         item {
-            if (period == StatisticsPeriod.Week || period == StatisticsPeriod.Month) {
-                CompactPeriodSummary(
-                    period = period,
-                    summary = model.summary,
-                    horizontal = useHorizontalMetrics,
-                    moduleLabel = moduleSpec.label,
-                    daysLabel = moduleSpec.daysLabel,
-                    colors = moduleSpec.colors,
-                )
-            } else if (useHorizontalMetrics) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(7.dp),
-                ) {
-                    MetricCard(
-                        moduleSpec.totalLabel,
-                        model.summary.totalCount.toString(),
-                        "次",
-                        Modifier.weight(1f),
-                        moduleSpec.colors,
-                    )
-                    MetricCard(
-                        moduleSpec.daysLabel,
-                        model.summary.recordedDays.toString(),
-                        "天",
-                        Modifier.weight(1f),
-                        moduleSpec.colors,
-                    )
-                    MetricCard(
-                        "记录日均",
-                        String.format(Locale.US, "%.1f", model.summary.average),
-                        "次/天",
-                        Modifier.weight(1f),
-                        moduleSpec.colors,
-                    )
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MetricCard(
-                        moduleSpec.totalLabel,
-                        model.summary.totalCount.toString(),
-                        "次",
-                        Modifier.fillMaxWidth(),
-                        moduleSpec.colors,
-                    )
-                    MetricCard(
-                        moduleSpec.daysLabel,
-                        model.summary.recordedDays.toString(),
-                        "天",
-                        Modifier.fillMaxWidth(),
-                        moduleSpec.colors,
-                    )
-                    MetricCard(
-                        "记录日均",
-                        String.format(Locale.US, "%.1f", model.summary.average),
-                        "次/天",
-                        Modifier.fillMaxWidth(),
-                        moduleSpec.colors,
-                    )
+            StatisticsSummaryCard(
+                periodLabel = periodSummaryLabel(period),
+                moduleLabel = moduleSpec.label,
+                totalCount = model.summary.totalCount,
+                recordedDays = model.summary.recordedDays,
+                average = model.summary.average,
+                colors = moduleSpec.colors,
+            )
+        }
+        when (period) {
+            StatisticsPeriod.Week -> {
+                if (model.details.isEmpty()) {
+                    item { EmptyStatistics(moduleSpec.label, moduleSpec.colors, onOpenCalendar) }
+                } else {
+                    item { WeekDistributionCard(model.details, colors = moduleSpec.colors) }
                 }
             }
-        }
-        if (model.details.isEmpty()) {
-            item { EmptyStatistics(moduleSpec.label, moduleSpec.colors, onOpenCalendar) }
-        } else {
-            when (period) {
-                StatisticsPeriod.Week -> item { WeekDistributionCard(model.details, colors = moduleSpec.colors) }
-                StatisticsPeriod.Month -> item { MonthDistributionCard(model.details, colors = moduleSpec.colors) }
-                StatisticsPeriod.Year,
-                StatisticsPeriod.All,
-                -> {
+            StatisticsPeriod.Month -> {
+                item {
+                    model.month?.let { MonthHeatmapCard(it, colors = moduleSpec.colors) }
+                }
+            }
+            StatisticsPeriod.Year -> {
+                item {
+                    model.year?.let {
+                        YearBarChartCard(
+                            year = it,
+                            colors = moduleSpec.colors,
+                        )
+                    }
+                }
+                item {
+                    model.year?.let { QuarterShareCard(it, colors = moduleSpec.colors) }
+                }
+                item {
+                    model.year?.let { ExtremesCard(it, colors = moduleSpec.colors) }
+                }
+            }
+            StatisticsPeriod.All -> {
+                if (model.details.isEmpty()) {
+                    item { EmptyStatistics(moduleSpec.label, moduleSpec.colors, onOpenCalendar) }
+                } else {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -272,6 +238,13 @@ internal fun DailyCountStatisticsScreen(
             }
         }
     }
+}
+
+private fun periodSummaryLabel(period: StatisticsPeriod): String = when (period) {
+    StatisticsPeriod.Week -> "本周"
+    StatisticsPeriod.Month -> "本月"
+    StatisticsPeriod.Year -> "本年"
+    StatisticsPeriod.All -> "全部"
 }
 
 @Composable
