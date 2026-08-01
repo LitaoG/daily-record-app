@@ -2,7 +2,7 @@
 
 最后复核：2026-08-01
 
-> 本文描述当前 Compose 运行时已经实现的交互。UI v2 Stage 1、Stage 2 和 Stage 4 的代码已落地；Stage 3 与 Stage 4 仍分别等待用户验收，不能把后续目标图误写成已验收行为。Stage 4 的截图和边界证据见[审计记录](product/audit/2026-08-01-ui-v2-stage4/README.md)。
+> 本文描述当前 Compose 运行时已经实现的交互。UI v2 Stage 1 至 Stage 4 已验收，Stage 5 正在进行集成 QA；不能把后续目标图误写成已验收行为。Stage 4 的截图和边界证据见[审计记录](product/audit/2026-08-01-ui-v2-stage4/README.md)，Stage 5 的最终证据见[审计记录](product/audit/2026-08-01-ui-v2-stage5/README.md)。
 
 视觉基线：接近白色的暖中性 Canvas、白色 Surface 和石墨文字。手冲使用克制紫色与飞机符号，做爱使用克制深红与非露骨双环符号；两个模块始终同时显示清晰文字，不能只依赖颜色或图标。
 

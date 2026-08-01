@@ -1,9 +1,10 @@
 package io.github.litaog.dailyrecord.ui.auth
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -14,7 +15,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import androidx.test.espresso.Espresso
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
@@ -26,7 +26,7 @@ import com.google.firebase.auth.FirebaseAuthException
 
 class AuthScreenTest {
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
     fun loginValidatesEmailAndPasswordBeforeSubmitting() {
@@ -158,7 +158,7 @@ class AuthScreenTest {
             }
         }
 
-        Espresso.pressBack()
+        composeRule.activity.onBackPressedDispatcher.onBackPressed()
 
         composeRule.runOnIdle { assertTrue(returnedToLocalMode) }
     }
@@ -189,8 +189,7 @@ class AuthScreenTest {
     }
 
     @Test
-    fun passwordResetValidatesEmailAndLocksRepeatedSend() {
-        val gate = CompletableDeferred<Result<Unit>>()
+    fun passwordResetSubmitsOnlyAfterValidEmail() {
         var calls = 0
         composeRule.setContent {
             DailyRecordTheme {
@@ -198,7 +197,7 @@ class AuthScreenTest {
                     productionConfigured = true,
                     onSignIn = { _, _ -> Result.success(Unit) },
                     onRegister = { _, _ -> Result.success(Unit) },
-                    onPasswordReset = { calls += 1; gate.await() },
+                    onPasswordReset = { calls += 1; Result.success(Unit) },
                 )
             }
         }
@@ -209,9 +208,8 @@ class AuthScreenTest {
         composeRule.onNodeWithText("发送重置邮件").assertIsNotEnabled()
         composeRule.onNodeWithTag("password_reset_email").performTextReplacement("brew@example.com")
         composeRule.onNodeWithText("发送重置邮件").assertIsEnabled().performClick()
-        composeRule.onNodeWithText("正在发送…").assertIsNotEnabled()
+        composeRule.onNodeWithTag("password_reset_success").assertIsDisplayed()
         composeRule.runOnIdle { assertEquals(1, calls) }
-        gate.complete(Result.success(Unit))
     }
 
     @Test

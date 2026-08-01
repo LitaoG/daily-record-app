@@ -36,6 +36,7 @@
 - [已确认的 UI v2 设计基线与三张高保真图](product/design/quiet-private-journal-v2/README.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
 - [2026-08-01 Stage 4 月度热力图与年度月份分析](product/audit/2026-08-01-ui-v2-stage4/README.md)
+- [2026-08-01 Stage 5 集成 QA 与候选 APK](product/audit/2026-08-01-ui-v2-stage5/README.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)
 - [用户故事与验收](product/USER_STORIES_AND_ACCEPTANCE.md)
 - [实现与发布准备度](product/IMPLEMENTATION_READINESS.md)

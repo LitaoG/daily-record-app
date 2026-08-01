@@ -13,6 +13,7 @@
 - [已确认的 UI v2 设计基线与三张高保真图](design/quiet-private-journal-v2/README.md)
 - [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
 - [2026-08-01 Stage 4 月度热力图与年度月份分析](audit/2026-08-01-ui-v2-stage4/README.md)
+- [2026-08-01 Stage 5 集成 QA 与候选 APK](audit/2026-08-01-ui-v2-stage5/README.md)
 - [实现与发布准备度](IMPLEMENTATION_READINESS.md)
 - [产品 Backlog](PRODUCT_BACKLOG.md)
 - [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)
@@ -21,7 +22,7 @@
 - [隐私说明](../../PRIVACY.md)
 - [签名与 GitHub Release](../RELEASE.md)
 
-后续实现只能从 UI v2 分阶段计划和本目录设计基线进入。Stage 1、Stage 2 已验收，Stage 3 保持等待验收；Stage 4 的月度热力和年度分析已形成验收候选，当前运行行为仍以代码与事实文档为准。
+后续实现只能从 UI v2 分阶段计划和本目录设计基线进入。Stage 1 至 Stage 4 已验收，Stage 5 正在进行集成 QA 与候选 APK 交付；当前运行行为仍以代码与事实文档为准。
 
 ## 历史交付证据
 
