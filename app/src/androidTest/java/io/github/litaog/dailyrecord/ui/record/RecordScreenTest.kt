@@ -140,6 +140,23 @@ class RecordScreenTest {
     }
 
     @Test
+    fun unsavedCountIsDistinctFromAnEmptyRecord() {
+        val repository = FakeHandBrewRecordRepository()
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("尚未填写").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithText("待保存 · 1 次").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("save_record_button").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("已记录 · 1 次").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("已记录 · 1 次").assertIsDisplayed()
+    }
+
+    @Test
     fun failedSaveRestoresControlsAndShowsMessage() {
         val repository = FakeHandBrewRecordRepository().apply { failSave = true }
         setRecordContent(repository)

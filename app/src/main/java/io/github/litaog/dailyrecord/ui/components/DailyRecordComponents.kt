@@ -458,22 +458,19 @@ fun MetricCard(
 fun DailyCountControl(
     count: Int,
     enabled: Boolean,
-    hasRecord: Boolean,
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
     modifier: Modifier = Modifier,
-    explicitZeroText: String = "明确没冲",
-    positiveStateText: String = "已手冲",
     colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth().heightIn(min = 84.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = 132.dp),
         color = if (enabled) DailyRecordSurface else DailyRecordSurfaceMuted,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, DailyRecordDivider),
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, if (enabled) colors.primary else DailyRecordDivider),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -482,18 +479,8 @@ fun DailyCountControl(
                 Text(
                     text = if (enabled) count.toString() else "—",
                     color = if (enabled) DailyRecordText else DailyRecordTextMuted,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MetricNumberMedium,
                     fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = when {
-                        !enabled -> "未来日期"
-                        !hasRecord -> "尚未保存"
-                        count == 0 -> explicitZeroText
-                        else -> positiveStateText
-                    },
-                    color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall,
                 )
             }
             CountButton("增加一次", enabled && count < Int.MAX_VALUE, true, colors, onIncrease)
@@ -512,7 +499,7 @@ private fun CountButton(
     val background = when {
         !enabled -> DailyRecordSurfaceMuted
         primary -> colors.primary
-        else -> colors.soft
+        else -> DailyRecordSurface
     }
     val content = when {
         !enabled -> DailyRecordTextMuted
@@ -525,6 +512,11 @@ private fun CountButton(
             .size(48.dp)
             .clip(CircleShape)
             .background(background)
+            .border(
+                width = if (!primary && enabled) DailyRecordBorders.Standard else 0.dp,
+                color = if (enabled) colors.primary else DailyRecordDivider,
+                shape = CircleShape,
+            )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,

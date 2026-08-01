@@ -2,7 +2,6 @@ package io.github.litaog.dailyrecord.ui.record
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -56,16 +54,15 @@ import io.github.litaog.dailyrecord.ui.components.DailyCountControl
 import io.github.litaog.dailyrecord.ui.components.BackChevronIcon
 import io.github.litaog.dailyrecord.ui.components.DailyRecordConfirmationDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
-import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.map
@@ -201,12 +198,11 @@ internal fun DailyCountRecordScreen(
                         modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
                         accent = moduleSpec.colors.primary,
                     )
-                    OutlineActionButton(
+                    RecordTextAction(
                         label = "清除记录",
                         enabled = editable && dataReady && record != null && !saving,
-                        onClick = { showClearDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
                         accent = moduleSpec.colors.primary,
+                        onClick = { showClearDialog = true },
                     )
                 }
             }
@@ -224,97 +220,57 @@ internal fun DailyCountRecordScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
         ) {
-            RecordHeader(date = date, onBack = requestBack)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 132.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(moduleSpec.colors.soft)
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(DailyRecordSurface),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    moduleSpec.icon(Modifier.size(26.dp), moduleSpec.colors.primary)
-                }
-                Text(
-                    text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
-                    color = DailyRecordText,
-                    style = MaterialTheme.typography.headlineLarge,
-                )
-                Text(
-                    "调整次数后点击保存",
-                    color = DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(DailyRecordSurface)
-                    .border(1.dp, DailyRecordDivider, CircleShape)
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-            ) {
-                Text(
-                    text = when {
-                        !dataReady -> "正在读取记录…"
-                        !editable -> "未来日期 · 不可记录"
-                        record == null -> "尚未填写"
-                        record?.count == 0 -> "已记录 · 0 次"
-                        else -> "已记录 · " + record?.count + " 次"
-                    },
-                    color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
+            RecordHeader(date = date, today = today, moduleSpec = moduleSpec, onBack = requestBack)
+            Text(
+                text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.headlineLarge,
+            )
+            Text(
+                "只记录次数",
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
             DailyCountControl(
                 count = draft.count,
                 enabled = editable && dataReady && draft.initialized && !saving,
-                hasRecord = record != null,
                 onDecrease = { draft = draft.decrease() },
                 onIncrease = { draft = draft.increase() },
-                explicitZeroText = moduleSpec.explicitZeroText,
-                positiveStateText = moduleSpec.positiveStateText,
                 colors = moduleSpec.colors,
             )
-            Column(
+            Text(
+                text = when {
+                    !dataReady -> "正在读取记录…"
+                    !editable -> "未来日期 · 不可记录"
+                    hasUnsavedChanges -> "待保存 · ${draft.count} 次"
+                    record == null -> "尚未填写"
+                    record.count == 0 -> "已记录 · 0 次"
+                    else -> "已记录 · ${record.count} 次"
+                },
+                color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                "保存后更新日历与统计",
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.labelSmall,
+            )
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(DailyRecordSurface)
-                    .border(1.dp, DailyRecordDivider, RoundedCornerShape(16.dp))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                    .padding(top = DailyRecordSpacing.Inline)
+                    .height(1.dp)
+                    .background(DailyRecordDivider),
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
             ) {
-                Text("记录规则", color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
                 Text(
-                    "0 次＝${moduleSpec.explicitZeroText}，会保留记录。",
+                    text = YearMonth.from(date).monthValue.toString() + "月已保存",
                     color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.labelSmall,
-                )
-                Text("清除记录＝恢复未填写，不进入统计。", color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(DailyRecordSurfaceMuted)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    YearMonth.from(date).monthValue.toString() + "月已保存",
-                    color = DailyRecordText,
-                    style = MaterialTheme.typography.labelLarge,
                 )
                 Text(
                     "$storedMonthCount 次 · $storedMonthDays 天",
@@ -365,27 +321,87 @@ internal fun DailyCountRecordScreen(
 }
 
 @Composable
-private fun RecordHeader(date: LocalDate, onBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().height(48.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+private fun RecordHeader(
+    date: LocalDate,
+    today: LocalDate,
+    moduleSpec: RecordModuleUiSpec,
+    onBack: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(DailyRecordSurface)
-                .border(1.dp, DailyRecordDivider, CircleShape)
-                .clickable(role = Role.Button, onClick = onBack)
-                .semantics { role = Role.Button; contentDescription = "返回日历" },
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .heightIn(min = DailyRecordSizes.MinimumTouchTarget),
         ) {
-            BackChevronIcon(color = DailyRecordText)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .size(DailyRecordSizes.MinimumTouchTarget)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = onBack)
+                    .semantics { role = Role.Button; contentDescription = "返回日历" },
+                contentAlignment = Alignment.Center,
+            ) {
+                BackChevronIcon(color = DailyRecordText)
+            }
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                Text(
+                    text = date.monthValue.toString() + "月" + date.dayOfMonth + "日 · " + weekdayName(date),
+                    color = DailyRecordText,
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    text = when {
+                        date == today -> "今天"
+                        date < today -> "历史日期"
+                        else -> "未来日期"
+                    },
+                    color = DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
         }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            moduleSpec.icon(Modifier.size(DailyRecordSizes.ModuleIcon), moduleSpec.colors.primary)
+            Text(
+                text = moduleSpec.label + "记录",
+                color = moduleSpec.colors.primary,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecordTextAction(
+    label: String,
+    enabled: Boolean,
+    accent: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { role = Role.Button; contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
         Text(
-            text = date.monthValue.toString() + "月" + date.dayOfMonth + "日 · " + weekdayName(date),
-            color = DailyRecordTextSecondary,
+            text = label,
+            color = if (enabled) accent else DailyRecordTextMuted,
             style = MaterialTheme.typography.labelLarge,
         )
     }
