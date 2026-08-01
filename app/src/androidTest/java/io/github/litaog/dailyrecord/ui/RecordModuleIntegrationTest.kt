@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui
 
 import android.content.Context
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -8,7 +9,7 @@ import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -31,7 +32,7 @@ import org.junit.Test
 
 class RecordModuleIntegrationTest {
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private val today = LocalDate.of(2026, 7, 17)
     private val instant = Instant.parse("2026-07-17T00:00:00Z")
@@ -143,13 +144,19 @@ class RecordModuleIntegrationTest {
     }
 
     private fun assertSelectorHalfColors(left: Color, right: Color) {
-        val bitmap = composeRule.onNodeWithTag("record_module_selector").captureToImage()
-        val pixels = bitmap.toPixelMap()
-        val sampleY = bitmap.height / 2
-        val inset = 10.coerceAtMost(bitmap.width / 8)
+        var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            runCatching {
+                bitmap = composeRule.onNodeWithTag("record_module_selector").captureToImage()
+            }.isSuccess
+        }
+        val resolvedBitmap = requireNotNull(bitmap)
+        val pixels = resolvedBitmap.toPixelMap()
+        val sampleY = resolvedBitmap.height / 2
+        val inset = 10.coerceAtMost(resolvedBitmap.width / 8)
 
         assertEquals(left.toArgb(), pixels[inset, sampleY].toArgb())
-        assertEquals(right.toArgb(), pixels[bitmap.width - inset - 1, sampleY].toArgb())
+        assertEquals(right.toArgb(), pixels[resolvedBitmap.width - inset - 1, sampleY].toArgb())
     }
 
     private fun assertMinimumHeight(tag: String, minimumDp: Float) {
