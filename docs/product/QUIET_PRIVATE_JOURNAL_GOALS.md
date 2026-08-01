@@ -1,10 +1,10 @@
 # “安静的私密数据日志”UI v2 分阶段执行计划
 
-状态：`Stage 2 awaiting acceptance`
+状态：`Stage 3 awaiting acceptance`
 
 总 Goal：[GitHub Issue #42](https://github.com/LitaoG/daily-record-app/issues/42)
 
-最后更新：2026-07-30
+最后更新：2026-08-01
 
 ## 1. 文档职责与权威顺序
 
@@ -117,8 +117,8 @@
 |---|---|---|---|
 | 0. 仓库清理与执行基线 | [#36](https://github.com/LitaoG/daily-record-app/issues/36) | 已验收 | 唯一文档入口、设计资产、Goal、分支与 `main` 同步 |
 | 1. 设计 Token 与共享外壳 | [#37](https://github.com/LitaoG/daily-record-app/issues/37) | 已验收 | 紫色/深红色阶、共享排版、二等分模块切换器 |
-| 2. 方形次数热力日历 | [#38](https://github.com/LitaoG/daily-record-app/issues/38) | 等待验收 | 日历页面与全部组合状态 |
-| 3. 克制的次数记录页 | [#43](https://github.com/LitaoG/daily-record-app/issues/43) | 等待 | 点击日期进入、次数主焦点、保存/清除层级 |
+| 2. 方形次数热力日历 | [#38](https://github.com/LitaoG/daily-record-app/issues/38) | 已验收 | 日历页面与全部组合状态 |
+| 3. 克制的次数记录页 | [#43](https://github.com/LitaoG/daily-record-app/issues/43) | 等待验收 | 点击日期进入、次数主焦点、保存/清除层级 |
 | 4. 月度热力图与年度月份分析 | [#39](https://github.com/LitaoG/daily-record-app/issues/39) | 等待 | 月度真实日期热力图、年度柱状图、季度占比与极值月份 |
 | 5. 集成 QA 与候选 APK | [#40](https://github.com/LitaoG/daily-record-app/issues/40) | 等待 | 跨页面回归、一次完整套件、候选 APK |
 | 6. 真机验收、Release 与恢复镜像 | [#41](https://github.com/LitaoG/daily-record-app/issues/41) | 等待 | 定向修复、签名 Release、私有恢复镜像 |
@@ -155,7 +155,7 @@
 - 完成正常字号、200% 字体、390×844、窄屏和 TalkBack 证据。
 
 实现证据：[2026-07-30 Stage 2 定向验收](audit/2026-07-30-ui-v2-stage2/README.md)及
-[用户反馈修正](audit/2026-07-30-ui-v2-stage2-follow-up/README.md)。当前已形成可验收实现并暂停；用户确认前不得启动 Stage 3。
+[用户反馈修正](audit/2026-07-30-ui-v2-stage2-follow-up/README.md)。用户已确认并关闭 GitHub Issue #38，现进入 Stage 3。
 
 ### Stage 3：克制的次数记录页
 
@@ -163,6 +163,8 @@
 - 记录加载前继续禁用编辑，避免把旧值覆盖为 0。
 - 快速连点、生命周期取消、跨设备更新和离线保存行为不得退化。
 - 时间、感受和文本框继续延后，不能以“预留”为理由提前修改数据模型。
+- 当前实现分支：`agent/ui-v2-stage3-record-editor`；实现和定向验证已完成，现暂停等待用户验收。
+- 实现证据：[2026-08-01 Stage 3 记录页定向验收](audit/2026-08-01-ui-v2-stage3/README.md)。用户确认前不得启动 Stage 4。
 
 ### Stage 4：月度热力图与年度月份分析
 
