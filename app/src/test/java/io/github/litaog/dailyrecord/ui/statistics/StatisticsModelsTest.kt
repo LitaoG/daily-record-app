@@ -204,6 +204,71 @@ class StatisticsModelsTest {
         assertEquals(4_294_967_294L, model.details.sumOf { it.count ?: 0L })
     }
 
+    @Test
+    fun monthHeatmapUsesEachRealDateOnceAndKeepsFutureDatesEmpty() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Month,
+            anchorDate = LocalDate.of(2026, 8, 15),
+            today = LocalDate.of(2026, 8, 15),
+            records = listOf(record(LocalDate.of(2026, 8, 1), 0)),
+        )
+
+        val month = requireNotNull(model.month)
+        assertEquals(31, month.days.size)
+        assertEquals((1..31).toList(), month.days.map { it.date.dayOfMonth })
+        assertEquals(42, month.gridCellCount)
+        assertTrue(month.days.first().recorded)
+        assertEquals(0L, month.days.first().count)
+        assertFalse(month.days[14].future)
+        assertTrue(month.days[15].future)
+        assertNull(month.days[15].count)
+        assertFalse(month.days[15].recorded)
+    }
+
+    @Test
+    fun leapFebruaryHeatmapHasTwentyNineRealDates() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Month,
+            anchorDate = LocalDate.of(2028, 2, 10),
+            today = LocalDate.of(2028, 2, 29),
+            records = emptyList(),
+        )
+
+        val month = requireNotNull(model.month)
+        assertEquals(29, month.days.size)
+        assertEquals((1..29).toList(), month.days.map { it.date.dayOfMonth })
+        assertEquals(35, month.gridCellCount)
+    }
+
+    @Test
+    fun yearAnalysisExcludesIncompleteMonthFromExtremaButKeepsItsTotals() {
+        val today = LocalDate.of(2026, 7, 17)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = today,
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 3), 10),
+                record(LocalDate.of(2026, 2, 3), 0),
+                record(LocalDate.of(2026, 3, 3), 10),
+                record(LocalDate.of(2026, 4, 3), 5),
+                record(LocalDate.of(2026, 5, 3), 5),
+                record(LocalDate.of(2026, 7, 3), 99),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertEquals(129L, model.summary.totalCount)
+        assertEquals(129L, year.quarters.sumOf { it.totalCount })
+        assertEquals(129L, year.months.sumOf { it.count ?: 0L })
+        assertEquals(listOf(1, 3), year.maximumMonths.map { it.month.monthValue })
+        assertEquals(listOf(2), year.minimumMonths.map { it.month.monthValue })
+        assertTrue(year.months[6].inProgress)
+        assertFalse(year.months[6].complete)
+        assertEquals(5, year.months.count { it.future })
+        assertEquals(129.0 / 7.0, year.monthlyAverage, 0.001)
+    }
+
     private fun record(date: LocalDate, count: Int) = HandBrewRecord(
         id = date.toString(),
         localDate = date,

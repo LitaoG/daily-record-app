@@ -250,6 +250,11 @@ internal fun DailyCountRecordScreen(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
+                "0 次＝${moduleSpec.explicitZeroText}，会保留记录。",
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.labelSmall,
+            )
+            Text(
                 "保存后更新日历与统计",
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.labelSmall,
