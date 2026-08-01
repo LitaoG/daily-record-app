@@ -4,7 +4,7 @@
 
 总 Goal：[GitHub Issue #42](https://github.com/LitaoG/daily-record-app/issues/42)
 
-最后更新：2026-07-30
+最后更新：2026-08-01
 
 ## 1. 文档职责与权威顺序
 

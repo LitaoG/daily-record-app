@@ -59,7 +59,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
