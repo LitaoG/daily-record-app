@@ -379,16 +379,26 @@ internal fun ExtremesCard(
     modifier: Modifier = Modifier,
 ) {
     StatisticsSurface(modifier = modifier, title = AppCopy.Statistics.monthSummary, subtitle = AppCopy.Statistics.fullMonths) {
-        if (year.maximumMonths.isEmpty() || year.minimumMonths.isEmpty()) {
-            Text(
-                AppCopy.Statistics.monthExtremesHint,
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        } else {
-            ExtremesRow(AppCopy.Statistics.maximumMonth, year.maximumMonths, colors.primary)
-            Box(Modifier.fillMaxWidth().height(1.dp).background(DailyRecordDivider))
-            ExtremesRow(AppCopy.Statistics.minimumMonth, year.minimumMonths, colors.primary)
+        when {
+            year.maximumMonths.isEmpty() && year.minimumMonths.isEmpty() -> {
+                Text(
+                    AppCopy.Statistics.monthExtremesHint,
+                    color = DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+
+            else -> {
+                if (year.maximumMonths.isNotEmpty()) {
+                    ExtremesRow(AppCopy.Statistics.maximumMonth, year.maximumMonths, colors.primary)
+                }
+                if (year.maximumMonths.isNotEmpty() && year.minimumMonths.isNotEmpty()) {
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(DailyRecordDivider))
+                }
+                if (year.minimumMonths.isNotEmpty()) {
+                    ExtremesRow(AppCopy.Statistics.minimumMonth, year.minimumMonths, colors.primary)
+                }
+            }
         }
     }
 }
@@ -399,22 +409,31 @@ private fun ExtremesRow(
     months: List<YearMonthStatistics>,
     accent: Color,
 ) {
-    Row(
+    // Keep the month list on its own line.  A single horizontal row lets the
+    // count squeeze or clip the final month (most visible with December) on
+    // narrow screens and at large font scales.
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(label, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelMedium)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(label, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelMedium)
+            Text(
+                AppCopy.Statistics.countText(months.first().count ?: 0L),
+                color = DailyRecordText,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
         Text(
             months.joinToString("、") { AppCopy.Statistics.monthLabel(it.month.monthValue) },
+            modifier = Modifier.fillMaxWidth(),
             color = accent,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            AppCopy.Statistics.countText(months.first().count ?: 0L),
-            color = DailyRecordText,
-            style = MaterialTheme.typography.labelLarge,
         )
     }
 }

@@ -54,6 +54,7 @@ class DesignTokensTest {
             val disabled = module.colorsFor(RecordVisualState.Disabled)
 
             assertNotEquals(unset.background, disabled.background)
+            assertContrastAtLeast(4.5, disabled.content, disabled.background)
         }
     }
 

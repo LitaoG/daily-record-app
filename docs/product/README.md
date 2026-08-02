@@ -14,6 +14,7 @@
 - [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
 - [2026-08-01 Stage 4 月度热力图与年度月份分析](audit/2026-08-01-ui-v2-stage4/README.md)
 - [月统计改版契约：按周聚合与月内洞察](MONTH_STATISTICS_REDESIGN.md)
+- [2026-08-02 统计与日历边界修复](audit/2026-08-02-boundary-fixes/README.md)
 - [2026-08-01 Stage 5 集成 QA 与候选 APK](audit/2026-08-01-ui-v2-stage5/README.md)
 - [实现与发布准备度](IMPLEMENTATION_READINESS.md)
 - [产品 Backlog](PRODUCT_BACKLOG.md)

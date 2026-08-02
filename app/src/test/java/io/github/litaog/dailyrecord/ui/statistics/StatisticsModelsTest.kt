@@ -278,6 +278,65 @@ class StatisticsModelsTest {
         assertEquals(129.0 / 7.0, year.monthlyAverage, 0.001)
     }
 
+    @Test
+    fun completedDecemberParticipatesInExtremaAtTheYearBoundary() {
+        val today = LocalDate.of(2027, 1, 1)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2026, 12, 31),
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 4), 2),
+                record(LocalDate.of(2026, 12, 31), 12),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertTrue(year.months[11].complete)
+        assertEquals(listOf(12), year.maximumMonths.map { it.month.monthValue })
+        assertEquals(listOf(1), year.minimumMonths.map { it.month.monthValue })
+    }
+
+    @Test
+    fun currentDecemberIsKeptOutOfExtremaUntilTheYearHasEnded() {
+        val today = LocalDate.of(2026, 12, 31)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = today,
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 4), 2),
+                record(LocalDate.of(2026, 11, 30), 8),
+                record(LocalDate.of(2026, 12, 31), 99),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertTrue(year.months[11].inProgress)
+        assertFalse(year.months[11].complete)
+        assertEquals(listOf(11), year.maximumMonths.map { it.month.monthValue })
+        assertEquals(listOf(1), year.minimumMonths.map { it.month.monthValue })
+    }
+
+    @Test
+    fun decemberRemainsInTiedExtremaListsInsteadOfBeingDroppedAtTheEnd() {
+        val today = LocalDate.of(2027, 1, 1)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2026, 12, 20),
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 4), 5),
+                record(LocalDate.of(2026, 6, 4), 1),
+                record(LocalDate.of(2026, 12, 31), 5),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertEquals(listOf(1, 12), year.maximumMonths.map { it.month.monthValue })
+        assertEquals(listOf(6), year.minimumMonths.map { it.month.monthValue })
+    }
+
     private fun record(date: LocalDate, count: Int) = HandBrewRecord(
         id = date.toString(),
         localDate = date,

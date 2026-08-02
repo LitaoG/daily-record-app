@@ -6,7 +6,12 @@ import androidx.compose.ui.graphics.Color
 val DailyRecordCanvas = Color(0xFFFAF8F3)
 val DailyRecordSurface = Color(0xFFFFFEFB)
 val DailyRecordSurfaceMuted = Color(0xFFF2EFEA)
-val DailyRecordSurfaceDisabled = Color(0xFFF8F5EF)
+/**
+ * Disabled/future cells need to read as unavailable rather than as another
+ * empty record. Keep this neutral (not module tinted), but give it enough
+ * separation from [DailyRecordSurfaceMuted] used by past unset cells.
+ */
+val DailyRecordSurfaceDisabled = Color(0xFFE9E2D8)
 val DailyRecordText = Color(0xFF2D2926)
 val DailyRecordTextSecondary = Color(0xFF514A45)
 val DailyRecordTextMuted = Color(0xFF706761)
@@ -75,7 +80,9 @@ data class RecordModuleColorTokens(
         )
         RecordVisualState.Disabled -> RecordVisualColors(
             background = DailyRecordSurfaceDisabled,
-            content = DailyRecordTextMuted,
+            // The stronger neutral text preserves the disabled distinction
+            // without sacrificing readable contrast on the darker future fill.
+            content = DailyRecordTextSecondary,
             outline = DailyRecordDivider,
         )
     }
