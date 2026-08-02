@@ -412,49 +412,6 @@ fun PeriodTabs(
 }
 
 @Composable
-fun MetricCard(
-    label: String,
-    value: String,
-    unit: String,
-    modifier: Modifier = Modifier,
-    colors: RecordModuleColorTokens = HandBrewColorTokens,
-) {
-    Surface(
-        modifier = modifier.heightIn(min = 112.dp),
-        color = DailyRecordSurface,
-        shape = DailyRecordShapes.Card,
-        border = BorderStroke(DailyRecordBorders.Standard, DailyRecordDivider),
-        shadowElevation = DailyRecordElevations.Raised,
-    ) {
-        Column(
-            modifier = Modifier.padding(DailyRecordSpacing.Content),
-            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(colors.primary))
-                Spacer(Modifier.width(DailyRecordSpacing.Inline))
-                Text(text = label, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-            }
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = value,
-                    color = DailyRecordText,
-                    style = MetricNumberMedium,
-                )
-                Spacer(Modifier.width(3.dp))
-                Text(
-                    text = unit,
-                    color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(bottom = 4.dp),
-                    maxLines = 1,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun DailyCountControl(
     count: Int,
     enabled: Boolean,

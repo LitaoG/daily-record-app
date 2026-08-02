@@ -2,19 +2,19 @@ package io.github.litaog.dailyrecord.core.data
 
 import androidx.room.withTransaction
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
+import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.core.database.asEntity
 import io.github.litaog.dailyrecord.core.database.asExternalModel
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
-import java.time.LocalDate
 import java.time.Clock
 import java.time.Instant
-import kotlinx.coroutines.CancellationException
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 internal class RoomHandBrewRecordRepository(
     private val database: DailyRecordDatabase,
-    private val ownerId: String = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+    private val ownerId: String = LOCAL_OWNER_ID,
     private val clock: Clock = Clock.systemUTC(),
     private val onLocalChange: () -> Unit = {},
 ) : HandBrewRecordRepository {
@@ -27,7 +27,7 @@ internal class RoomHandBrewRecordRepository(
         startDate: LocalDate,
         endExclusive: LocalDate,
     ): Flow<List<HandBrewRecord>> {
-        requireValidRange(startDate, endExclusive)
+        requireValidRecordRange(startDate, endExclusive)
         return recordDao.observeForRange(ownerId, startDate, endExclusive).map { records ->
             records.map { it.asExternalModel() }
         }
@@ -40,7 +40,7 @@ internal class RoomHandBrewRecordRepository(
             val updatedAt = maxOf(
                 record.updatedAt,
                 createdAt,
-                existing?.updatedAt?.nextInstant() ?: record.updatedAt,
+                existing?.updatedAt?.nextRecordTimestamp() ?: record.updatedAt,
             )
             val saved = record.copy(
                 id = existing?.id ?: record.id,
@@ -55,7 +55,7 @@ internal class RoomHandBrewRecordRepository(
             )
             saved
         }
-        notifyLocalChange()
+        notifyLocalChangeSafely(onLocalChange)
         return saved
     }
 
@@ -67,29 +67,11 @@ internal class RoomHandBrewRecordRepository(
             val updatedAt = maxOf(
                 Instant.now(clock),
                 existing.createdAt,
-                existing.updatedAt.nextInstant(),
+                existing.updatedAt.nextRecordTimestamp(),
             )
             recordDao.markDeleted(ownerId, existing.id, updatedAt) == 1
         }
-        if (cleared) notifyLocalChange()
+        if (cleared) notifyLocalChangeSafely(onLocalChange)
         return cleared
     }
-
-    private fun notifyLocalChange() {
-        try {
-            onLocalChange()
-        } catch (error: CancellationException) {
-            throw error
-        } catch (_: Exception) {
-            // Local persistence is the product guarantee; cloud scheduling is best effort.
-        }
-    }
-
-    private fun requireValidRange(startDate: LocalDate, endExclusive: LocalDate) {
-        require(startDate < endExclusive) {
-            "Date range must be non-empty and use [start, endExclusive)."
-        }
-    }
 }
-
-private fun Instant.nextInstant(): Instant = runCatching { plusMillis(1) }.getOrDefault(this)

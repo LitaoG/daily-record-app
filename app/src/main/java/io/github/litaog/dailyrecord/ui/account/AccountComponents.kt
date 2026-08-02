@@ -48,6 +48,9 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordWarning
 
 internal const val VPN_SYNC_DIALOG_MESSAGE =
     "请检查网络或 VPN（梯子），然后点击“立即同步”。"
@@ -390,8 +393,8 @@ private fun SyncStatus.shortLabel(): String = when (this) {
 }
 
 private fun SyncStatus.color() = when (this) {
-    SyncStatus.UpToDate -> androidx.compose.ui.graphics.Color(0xFF2E7D5B)
+    SyncStatus.UpToDate -> DailyRecordSuccess
     SyncStatus.Syncing -> DailyRecordDefaultAccent
-    SyncStatus.Offline, is SyncStatus.Pending -> androidx.compose.ui.graphics.Color(0xFF8A6A18)
-    SyncStatus.NotConfigured, is SyncStatus.Failed -> androidx.compose.ui.graphics.Color(0xFF9B3A32)
+    SyncStatus.Offline, is SyncStatus.Pending -> DailyRecordWarning
+    SyncStatus.NotConfigured, is SyncStatus.Failed -> DailyRecordDanger
 }
