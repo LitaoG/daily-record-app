@@ -48,6 +48,17 @@ class YearLineChartTest {
         assertNull(points[2].fraction)
     }
 
+    @Test
+    fun countLabelsRevealOnlyAfterTheSweepReachesTheirMonth() {
+        val januaryCenter = .5f / 12f
+
+        assertEquals(0f, yearLineChartPointRevealAlpha(0, 0f), 0.0001f)
+        assertEquals(0f, yearLineChartPointRevealAlpha(0, januaryCenter), 0.0001f)
+        assertEquals(.5f, yearLineChartPointRevealAlpha(0, januaryCenter + .02f), 0.0001f)
+        assertEquals(1f, yearLineChartPointRevealAlpha(0, januaryCenter + .04f), 0.0001f)
+        assertEquals(1f, yearLineChartPointRevealAlpha(11, 1f), 0.0001f)
+    }
+
     private fun month(
         number: Int,
         count: Long?,

@@ -1,5 +1,8 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,15 +17,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -50,6 +56,10 @@ internal data class YearLineChartScale(
     val maximum: Long,
     val ticks: List<Long>,
 )
+
+private const val YEAR_LINE_REVEAL_DURATION_MILLIS = 850
+private const val YEAR_LINE_REVEAL_DELAY_MILLIS = 70
+private const val YEAR_LINE_LABEL_FADE_SPAN = .04f
 
 internal fun yearLineChartScale(year: YearStatistics): YearLineChartScale {
     val maximumCount = year.months
@@ -89,6 +99,16 @@ internal fun yearLineChartPoints(
     )
 }
 
+internal fun yearLineChartPointRevealAlpha(
+    monthIndex: Int,
+    revealProgress: Float,
+): Float {
+    require(monthIndex in 0 until 12)
+    val pointPosition = (monthIndex + .5f) / 12f
+    return ((revealProgress.coerceIn(0f, 1f) - pointPosition) / YEAR_LINE_LABEL_FADE_SPAN)
+        .coerceIn(0f, 1f)
+}
+
 @Composable
 internal fun YearLineChartCard(
     year: YearStatistics,
@@ -97,6 +117,18 @@ internal fun YearLineChartCard(
 ) {
     val scale = remember(year) { yearLineChartScale(year) }
     val points = remember(year, scale) { yearLineChartPoints(year, scale) }
+    val revealProgress = remember(year) { Animatable(0f) }
+    LaunchedEffect(year) {
+        revealProgress.snapTo(0f)
+        revealProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = YEAR_LINE_REVEAL_DURATION_MILLIS,
+                delayMillis = YEAR_LINE_REVEAL_DELAY_MILLIS,
+                easing = LinearOutSlowInEasing,
+            ),
+        )
+    }
     StatisticsSurface(
         modifier = modifier,
         title = AppCopy.Statistics.annualCount,
@@ -114,6 +146,7 @@ internal fun YearLineChartCard(
                 points = points,
                 scale = scale,
                 colors = colors,
+                revealProgress = revealProgress.value,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -174,6 +207,7 @@ private fun YearLineChartPlot(
     points: List<YearLineChartPoint>,
     scale: YearLineChartScale,
     colors: RecordModuleColorTokens,
+    revealProgress: Float,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(
@@ -213,32 +247,6 @@ private fun YearLineChartPlot(
                 )
             }
 
-            offsets.contiguousSegments().forEach { segment ->
-                if (segment.size > 1) {
-                    val fillPath = smoothYearLinePath(segment).apply {
-                        lineTo(segment.last().x, plotBottomPx)
-                        lineTo(segment.first().x, plotBottomPx)
-                        close()
-                    }
-                    drawPath(
-                        path = fillPath,
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                colors.primary.copy(alpha = .26f),
-                                colors.primary.copy(alpha = .025f),
-                            ),
-                            startY = plotTopPx,
-                            endY = plotBottomPx,
-                        ),
-                    )
-                    drawPath(
-                        path = smoothYearLinePath(segment),
-                        color = colors.primary,
-                        style = Stroke(width = 2.25.dp.toPx(), cap = StrokeCap.Round),
-                    )
-                }
-            }
-
             points.forEachIndexed { index, point ->
                 val offset = offsets[index]
                 if (offset == null) {
@@ -248,14 +256,48 @@ private fun YearLineChartPlot(
                         center = Offset(chartWidthPx * (index + .5f) / 12f, plotBottomPx),
                         style = Stroke(width = 1.dp.toPx()),
                     )
-                } else {
-                    drawCircle(
-                        color = colors.primary.copy(alpha = .14f),
-                        radius = 7.dp.toPx(),
-                        center = offset,
-                    )
-                    drawCircle(color = DailyRecordSurface, radius = 5.dp.toPx(), center = offset)
-                    drawCircle(color = colors.primary, radius = 3.25.dp.toPx(), center = offset)
+                }
+            }
+
+            val revealRight = size.width * revealProgress.coerceIn(0f, 1f)
+            if (revealRight > 0f) {
+                clipRect(right = revealRight) {
+                    offsets.contiguousSegments().forEach { segment ->
+                        if (segment.size > 1) {
+                            val fillPath = smoothYearLinePath(segment).apply {
+                                lineTo(segment.last().x, plotBottomPx)
+                                lineTo(segment.first().x, plotBottomPx)
+                                close()
+                            }
+                            drawPath(
+                                path = fillPath,
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        colors.primary.copy(alpha = .26f),
+                                        colors.primary.copy(alpha = .025f),
+                                    ),
+                                    startY = plotTopPx,
+                                    endY = plotBottomPx,
+                                ),
+                            )
+                            drawPath(
+                                path = smoothYearLinePath(segment),
+                                color = colors.primary,
+                                style = Stroke(width = 2.25.dp.toPx(), cap = StrokeCap.Round),
+                            )
+                        }
+                    }
+
+                    points.forEachIndexed { index, _ ->
+                        val offset = offsets[index] ?: return@forEachIndexed
+                        drawCircle(
+                            color = colors.primary.copy(alpha = .14f),
+                            radius = 7.dp.toPx(),
+                            center = offset,
+                        )
+                        drawCircle(color = DailyRecordSurface, radius = 5.dp.toPx(), center = offset)
+                        drawCircle(color = colors.primary, radius = 3.25.dp.toPx(), center = offset)
+                    }
                 }
             }
         }
@@ -268,7 +310,8 @@ private fun YearLineChartPlot(
                     modifier = Modifier
                         .offset(x = monthWidth * index, y = labelY.coerceAtLeast(0.dp))
                         .width(monthWidth)
-                        .height(20.dp),
+                        .height(20.dp)
+                        .alpha(yearLineChartPointRevealAlpha(index, revealProgress)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
