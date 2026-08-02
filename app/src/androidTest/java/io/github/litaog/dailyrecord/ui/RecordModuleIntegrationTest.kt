@@ -2,6 +2,8 @@ package io.github.litaog.dailyrecord.ui
 
 import android.content.Context
 import androidx.activity.ComponentActivity
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
@@ -15,7 +17,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.material3.SnackbarHostState
 import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
@@ -157,7 +158,7 @@ class RecordModuleIntegrationTest {
                     colors = activeColors.value,
                 )
                 LaunchedEffect(Unit) {
-                    hostState.showSnackbar("网络提示")
+                    hostState.showSnackbar("网络提示", duration = SnackbarDuration.Indefinite)
                 }
             }
         }
