@@ -14,7 +14,6 @@ object DailyRecordSpacing {
 object DailyRecordSizes {
     val MinimumTouchTarget = 48.dp
     val ModuleSelectorMinHeight = 52.dp
-    val PeriodTabHeight = 58.dp
     val BottomBarMinHeight = 72.dp
     val ModuleIcon = 24.dp
 }

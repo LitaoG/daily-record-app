@@ -376,22 +376,24 @@ fun PeriodTabs(
     val selectedIndex = periods.indexOf(selected).coerceAtLeast(0)
     val trackShape = RoundedCornerShape(percent = 50)
     val sliderShape = RoundedCornerShape(percent = 50)
+    val sliderInset = DailyRecordSpacing.Compact
     val glassTint = colors.periodGlassTint
     val glassGlow = colors.periodGlassGlow
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(DailyRecordSizes.PeriodTabHeight)
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
             .testTag("statistics_period_tabs"),
         color = Color.Transparent,
         shape = trackShape,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = .72f)),
-        shadowElevation = 2.dp,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = .58f)),
+        shadowElevation = 1.dp,
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
                 .clip(trackShape)
                 .background(
                     brush = Brush.linearGradient(
@@ -402,16 +404,16 @@ fun PeriodTabs(
                         ),
                     ),
                 )
-                .padding(5.dp),
         ) {
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(DailyRecordSizes.MinimumTouchTarget),
+                    .heightIn(min = DailyRecordSizes.MinimumTouchTarget),
             ) {
                 val segmentWidth = maxWidth / periods.size
+                val sliderWidth = (segmentWidth - (sliderInset * 2f)).coerceAtLeast(1.dp)
                 val animatedOffset = animateDpAsState(
-                    targetValue = segmentWidth * selectedIndex,
+                    targetValue = (segmentWidth * selectedIndex) + sliderInset,
                     animationSpec = spring(
                         dampingRatio = .88f,
                         stiffness = 480f,
@@ -422,49 +424,57 @@ fun PeriodTabs(
                 Box(
                     modifier = Modifier
                         .offset(x = animatedOffset)
-                        .width(segmentWidth)
+                        .width(sliderWidth)
                         .fillMaxHeight()
-                        .shadow(3.dp, sliderShape, clip = false)
-                        .clip(sliderShape)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = .94f),
-                                    glassTint.copy(alpha = .30f),
-                                ),
-                            ),
-                        )
-                        .drawWithContent {
-                            drawContent()
-                            drawRoundRect(
+                        .padding(vertical = sliderInset)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .shadow(2.dp, sliderShape, clip = false)
+                            .clip(sliderShape)
+                            .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        Color.White.copy(alpha = .34f),
-                                        Color.Transparent,
+                                        Color.White.copy(alpha = .94f),
+                                        glassTint.copy(alpha = .30f),
                                     ),
-                                    startY = 0f,
-                                    endY = size.height * .55f,
                                 ),
-                                cornerRadius = CornerRadius(size.height / 2f),
                             )
-                            drawRoundRect(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        glassGlow.copy(alpha = .16f),
-                                        Color.Transparent,
+                            .drawWithContent {
+                                drawContent()
+                                drawRoundRect(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.White.copy(alpha = .34f),
+                                            Color.Transparent,
+                                        ),
+                                        startY = 0f,
+                                        endY = size.height * .55f,
                                     ),
-                                    center = Offset(size.width / 2f, size.height),
-                                    radius = size.width * .78f,
-                                ),
-                                cornerRadius = CornerRadius(size.height / 2f),
-                            )
-                        }
-                        .border(1.dp, Color.White.copy(alpha = .82f), sliderShape)
-                        .testTag("statistics_period_slider"),
-                )
+                                    cornerRadius = CornerRadius(size.height / 2f),
+                                )
+                                drawRoundRect(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            glassGlow.copy(alpha = .16f),
+                                            Color.Transparent,
+                                        ),
+                                        center = Offset(size.width / 2f, size.height),
+                                        radius = size.width * .78f,
+                                    ),
+                                    cornerRadius = CornerRadius(size.height / 2f),
+                                )
+                            }
+                            .border(1.dp, Color.White.copy(alpha = .82f), sliderShape)
+                            .testTag("statistics_period_slider"),
+                    )
+                }
 
                 Row(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = DailyRecordSizes.MinimumTouchTarget),
                 ) {
                     periods.forEach { period ->
                         val active = period == selected

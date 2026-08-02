@@ -2,6 +2,8 @@ package io.github.litaog.dailyrecord.ui
 
 import android.content.Context
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.CompositionLocalProvider
@@ -9,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.assertIsDisplayed
@@ -19,9 +22,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
+import io.github.litaog.dailyrecord.ui.components.PeriodTabs
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
@@ -164,17 +169,51 @@ class RecordModuleIntegrationTest {
         val maxWidth = segments.maxOf { it.width }
 
         assertEquals(minWidth, maxWidth, 0.5f)
-        assertEquals(segments.first().width, slider.width, 0.5f)
-        assertEquals(segments.first().left, slider.left, 0.5f)
-        assertEquals(segments.first().right, slider.right, 0.5f)
+        assertTrue(slider.width < segments.first().width)
+        assertTrue(slider.left > segments.first().left)
+        assertTrue(slider.right < segments.first().right)
         assertTrue(slider.top > container.top)
         assertTrue(slider.bottom < container.bottom)
 
         composeRule.onNodeWithTag("statistics_period_Month").performClick()
         composeRule.waitForIdle()
         val movedSlider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
-        assertEquals(segments[1].left, movedSlider.left, 1.5f)
-        assertEquals(segments[1].right, movedSlider.right, 1.5f)
+        assertEquals(segments[1].left + (segments[1].width - movedSlider.width) / 2f, movedSlider.left, 1.5f)
+        assertEquals(segments[1].right - (segments[1].width - movedSlider.width) / 2f, movedSlider.right, 1.5f)
+    }
+
+    @Test
+    fun periodTabsKeepRatiosAcrossParentWidths() {
+        listOf(240.dp, 360.dp, 600.dp).forEach { width ->
+            composeRule.setContent {
+                DailyRecordTheme {
+                    Box(modifier = Modifier.width(width)) {
+                        PeriodTabs(
+                            selected = StatisticsPeriod.Week,
+                            onSelected = {},
+                            colors = HandBrewColorTokens,
+                        )
+                    }
+                }
+            }
+            composeRule.waitForIdle()
+
+            val container = composeRule.onNodeWithTag("statistics_period_tabs").fetchSemanticsNode().boundsInRoot
+            val segments = StatisticsPeriod.entries.map { period ->
+                composeRule.onNodeWithTag("statistics_period_${period.name}").fetchSemanticsNode().boundsInRoot
+            }
+            val slider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
+
+            assertTrue(container.width > 0f)
+            assertEquals(segments.first().width, segments[1].width, 0.5f)
+            assertEquals(segments.first().width, segments[2].width, 0.5f)
+            assertEquals(segments.first().width, segments[3].width, 0.5f)
+            assertTrue(slider.width < segments.first().width)
+            assertTrue(slider.left > segments.first().left)
+            assertTrue(slider.right < segments.first().right)
+            assertTrue(slider.top > container.top)
+            assertTrue(slider.bottom < container.bottom)
+        }
     }
 
     @Test
