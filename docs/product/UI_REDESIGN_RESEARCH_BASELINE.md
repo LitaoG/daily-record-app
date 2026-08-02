@@ -485,8 +485,8 @@
 |---|---|
 | Canvas | `#FAF8F3` |
 | Primary text | `#2D2926` |
-| HandBrew | `#72517C` |
-| Sex | `#8D3E45` |
+| HandBrew | `#85569A` |
+| Sex | `#A54658` |
 | Success | `#5F7667` |
 | Subtle line | `#D8D0C6` |
 

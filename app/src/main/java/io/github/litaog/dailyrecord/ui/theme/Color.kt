@@ -106,17 +106,21 @@ val RecordModuleColorTokens.periodGlassGlow: Color
     get() = primary
 
 val HandBrewColorTokens = RecordModuleColorTokens(
-    primary = Color(0xFF72517C),
-    strong = Color(0xFF4B3354),
-    soft = Color(0xFFE9DDEA),
-    medium = Color(0xFFC8AFCF),
+    // Brighter, cleaner purple keeps the module expressive without turning
+    // the selected surfaces grey or near-black.
+    primary = Color(0xFF85569A),
+    strong = Color(0xFF603670),
+    soft = Color(0xFFEEDAF3),
+    medium = Color(0xFFD5AFDF),
 )
 
 val SexColorTokens = RecordModuleColorTokens(
-    primary = Color(0xFF8D3E45),
-    strong = Color(0xFF5F272C),
-    soft = Color(0xFFF2DCDD),
-    medium = Color(0xFFDFAEB2),
+    // Use a clear wine red with enough warmth and saturation to avoid a
+    // muddy brown cast in selected cards and glass controls.
+    primary = Color(0xFFA54658),
+    strong = Color(0xFF7A3040),
+    soft = Color(0xFFF4D8DD),
+    medium = Color(0xFFE4A9B2),
 )
 
 /**
