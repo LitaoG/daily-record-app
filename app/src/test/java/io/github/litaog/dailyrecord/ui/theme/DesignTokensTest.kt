@@ -21,6 +21,9 @@ class DesignTokensTest {
         assertArgb(0xFF4B3354, HandBrewColorTokens.strong)
         assertArgb(0xFF8D3E45, SexColorTokens.primary)
         assertArgb(0xFF5F272C, SexColorTokens.strong)
+        assertArgb(0xFFEFF1FF, DailyRecordPeriodGlassTint)
+        assertArgb(0xFFB9AEFF, DailyRecordPeriodGlassGlow)
+        assertArgb(0xFF5C677C, DailyRecordPeriodInactiveText)
     }
 
     @Test
@@ -35,6 +38,7 @@ class DesignTokensTest {
         assertContrastAtLeast(4.5, DailyRecordText, HandBrewColorTokens.medium)
         assertContrastAtLeast(4.5, DailyRecordText, SexColorTokens.soft)
         assertContrastAtLeast(4.5, DailyRecordText, SexColorTokens.medium)
+        assertContrastAtLeast(4.5, DailyRecordPeriodInactiveText, DailyRecordPeriodGlassTint)
     }
 
     @Test

@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,15 +14,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,9 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -63,6 +73,9 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordElevations
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordPeriodGlassGlow
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordPeriodGlassTint
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordPeriodInactiveText
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
@@ -357,57 +370,131 @@ fun PeriodTabs(
     modifier: Modifier = Modifier,
     colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
-    // Keep the period switcher visually quiet: a rectangular white surface with
-    // one shared baseline. The active state is carried only by its module-colour
-    // underline, rather than a nested pill or elevated chip.
+    val periods = StatisticsPeriod.entries
+    val selectedIndex = periods.indexOf(selected).coerceAtLeast(0)
+    val trackShape = RoundedCornerShape(percent = 50)
+    val sliderShape = RoundedCornerShape(percent = 50)
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .heightIn(min = DailyRecordSizes.PeriodTabMinHeight),
-        color = DailyRecordSurface,
-        shape = RoundedCornerShape(2.dp),
-        border = BorderStroke(DailyRecordBorders.Standard, DailyRecordDivider),
-        shadowElevation = DailyRecordElevations.Flat,
+            .height(DailyRecordSizes.PeriodTabHeight)
+            .testTag("statistics_period_tabs"),
+        color = Color.Transparent,
+        shape = trackShape,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = .72f)),
+        shadowElevation = 2.dp,
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min),
+                .fillMaxSize()
+                .clip(trackShape)
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = .68f),
+                            DailyRecordPeriodGlassTint.copy(alpha = .72f),
+                            Color(0xFFEDEEFF).copy(alpha = .62f),
+                        ),
+                    ),
+                )
+                .padding(5.dp),
         ) {
-            StatisticsPeriod.entries.forEach { period ->
-                val active = period == selected
-                Column(
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(DailyRecordSizes.MinimumTouchTarget),
+            ) {
+                val segmentWidth = maxWidth / periods.size
+                val animatedOffset = animateDpAsState(
+                    targetValue = segmentWidth * selectedIndex,
+                    animationSpec = spring(
+                        dampingRatio = .88f,
+                        stiffness = 480f,
+                    ),
+                    label = "period_slider_offset",
+                ).value
+
+                Box(
                     modifier = Modifier
-                        .weight(1f)
+                        .offset(x = animatedOffset)
+                        .width(segmentWidth)
                         .fillMaxHeight()
-                        .heightIn(min = DailyRecordSizes.PeriodTabMinHeight)
-                        .testTag("statistics_period_${period.name}")
-                        .clickable(role = Role.Tab) { onSelected(period) }
-                        .padding(
-                            horizontal = DailyRecordSpacing.Compact,
-                            vertical = DailyRecordSpacing.Inline,
+                        .shadow(3.dp, sliderShape, clip = false)
+                        .clip(sliderShape)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = .94f),
+                                    Color(0xFFF8F6FF).copy(alpha = .88f),
+                                ),
+                            ),
                         )
-                        .semantics {
-                            this.selected = active
-                            role = Role.Tab
-                            contentDescription = AppCopy.selectedState(AppCopy.Statistics.statisticsLabel(period.label), active)
-                        },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween,
+                        .drawWithContent {
+                            drawContent()
+                            drawRoundRect(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = .34f),
+                                        Color.Transparent,
+                                    ),
+                                    startY = 0f,
+                                    endY = size.height * .55f,
+                                ),
+                                cornerRadius = CornerRadius(size.height / 2f),
+                            )
+                            drawRoundRect(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        DailyRecordPeriodGlassGlow.copy(alpha = .16f),
+                                        Color.Transparent,
+                                    ),
+                                    center = Offset(size.width / 2f, size.height),
+                                    radius = size.width * .78f,
+                                ),
+                                cornerRadius = CornerRadius(size.height / 2f),
+                            )
+                        }
+                        .border(1.dp, Color.White.copy(alpha = .82f), sliderShape)
+                        .testTag("statistics_period_slider"),
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxSize(),
                 ) {
-                    Text(
-                        text = period.label,
-                        color = if (active) colors.primary else DailyRecordTextSecondary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    Box(
-                        Modifier
-                            .width(24.dp)
-                            .height(2.dp)
-                            .clip(CircleShape)
-                            .background(if (active) colors.primary else Color.Transparent),
-                    )
+                    periods.forEach { period ->
+                        val active = period == selected
+                        val textColor = animateColorAsState(
+                            targetValue = if (active) colors.strong else DailyRecordPeriodInactiveText,
+                            animationSpec = tween(durationMillis = 180),
+                            label = "period_text_color_${period.name}",
+                        ).value
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .testTag("statistics_period_${period.name}")
+                                .clickable(role = Role.Tab) { onSelected(period) }
+                                .semantics {
+                                    this.selected = active
+                                    role = Role.Tab
+                                    contentDescription = AppCopy.selectedState(
+                                        AppCopy.Statistics.statisticsLabel(period.label),
+                                        active,
+                                    )
+                                },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = period.label,
+                                color = textColor,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                            )
+                        }
+                    }
                 }
             }
         }
