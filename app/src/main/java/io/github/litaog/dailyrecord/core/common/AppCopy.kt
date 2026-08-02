@@ -243,7 +243,9 @@ internal object AppCopy {
         const val subtitle = "直接选择年份和日期，不必逐月翻找"
         const val monthSubtitle = "直接选择年份和月份"
         const val yearSubtitle = "直接选择年份"
-        const val jump = "跳转到此日"
+        const val jumpToDate = "跳转到此日"
+        const val jumpToMonth = "跳转到此月"
+        const val jumpToYear = "跳转到此年"
         const val selected = "已选择"
         const val switchYear = "切换年份"
         const val returnToDatePicker = "返回日期选择"
@@ -347,7 +349,7 @@ internal object AppCopy {
         const val unsetShort = "未填"
         const val dash = "—"
         const val annualCount = "年度次数"
-        const val blankBarHint = "空白表示未填写或未来；0 次不绘制柱高"
+        const val annualLineHint = "实心点为已记录月份；空心点为未填写或未来，0 次位于基线"
         const val quarterShare = "季度占比"
         const val noPositiveCount = "暂无正次数"
         const val byCount = "按次数"
@@ -419,7 +421,7 @@ internal object AppCopy {
         fun monthChartLabel(month: Int, isFuture: Boolean, recorded: Boolean, count: Long?): String =
             "${month}月 ${chartMonthValue(isFuture, recorded, count)}"
         fun totalCountAccessibility(total: Long, quarters: String): String = "季度占比，总次数 $total 次；$quarters"
-        fun annualChartAccessibility(months: String): String = "年度次数柱状图；$months"
+        fun annualChartAccessibility(months: String): String = "年度次数折线面积图；$months"
         fun chartMonthValue(isFuture: Boolean, recorded: Boolean, count: Long?): String = when {
             isFuture -> future
             !recorded -> unset

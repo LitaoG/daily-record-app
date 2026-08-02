@@ -57,4 +57,11 @@ class DateNavigationTest {
             assertEquals(date, utcDateMillisToLocalDate(date.toUtcDateMillis()))
         }
     }
+
+    @Test
+    fun jumpButtonLabelMatchesSelectionGranularity() {
+        assertEquals("跳转到此日", navigationJumpLabel(DateNavigationSelection.Date))
+        assertEquals("跳转到此月", navigationJumpLabel(DateNavigationSelection.Month))
+        assertEquals("跳转到此年", navigationJumpLabel(DateNavigationSelection.Year))
+    }
 }

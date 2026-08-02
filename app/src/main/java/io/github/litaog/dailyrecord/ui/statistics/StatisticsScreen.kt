@@ -171,7 +171,7 @@ internal fun DailyCountStatisticsScreen(
             StatisticsPeriod.Year -> {
                 item {
                     model.year?.let {
-                        YearBarChartCard(
+                        YearLineChartCard(
                             year = it,
                             colors = moduleSpec.colors,
                         )

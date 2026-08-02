@@ -223,83 +223,6 @@ private fun MonthWeekStatistics.asDetail(): StatisticsDetail = StatisticsDetail(
     recorded = recorded,
 )
 
-@Composable
-internal fun YearBarChartCard(
-    year: YearStatistics,
-    colors: RecordModuleColorTokens,
-    modifier: Modifier = Modifier,
-) {
-    val maxCount = year.months.mapNotNull { it.count }.maxOrNull() ?: 0L
-    StatisticsSurface(
-        modifier = modifier,
-        title = AppCopy.Statistics.annualCount,
-        subtitle = AppCopy.Statistics.annualAverage(year.monthlyAverage),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = yearBarChartDescription(year) },
-            horizontalArrangement = Arrangement.spacedBy(3.dp),
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            year.months.forEach { month ->
-                val fraction = if (maxCount == 0L || month.count == null) 0f else {
-                    (month.count.toDouble() / maxCount.toDouble()).toFloat()
-                }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(5.dp),
-                ) {
-                    Text(
-                        text = when {
-                            !month.recorded || month.future -> ""
-                            else -> (month.count ?: 0L).toString()
-                        },
-                        color = if (month.inProgress) colors.primary.copy(alpha = .72f) else colors.primary,
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .height(142.dp)
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(DailyRecordSurfaceMuted),
-                        contentAlignment = Alignment.BottomCenter,
-                    ) {
-                        if (fraction > 0f) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight(fraction)
-                                    .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp))
-                                    .background(
-                                        colors.primary.copy(alpha = if (month.inProgress) .65f else 1f),
-                                    ),
-                            )
-                        }
-                    }
-                    Text(
-                        text = AppCopy.Statistics.monthLabel(month.month.monthValue),
-                        color = if (month.future) DailyRecordTextMuted else DailyRecordText,
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-        }
-        Text(
-            text = AppCopy.Statistics.blankBarHint,
-            color = DailyRecordTextMuted,
-            style = MaterialTheme.typography.labelSmall,
-        )
-    }
-}
 
 @Composable
 internal fun QuarterShareCard(
@@ -327,7 +250,7 @@ internal fun QuarterShareCard(
             ) {
                 Canvas(
                     modifier = Modifier
-                        .size(118.dp)
+                        .size(104.dp)
                         .semantics { contentDescription = quarterSummaryDescription(year, total) },
                 ) {
                     // Separators only make sense when the ring contains more than
@@ -345,7 +268,7 @@ internal fun QuarterShareCard(
                                 startAngle = startAngle + gapDegrees / 2f,
                                 sweepAngle = (sweep - gapDegrees).coerceAtLeast(0f),
                                 useCenter = false,
-                                style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Butt),
+                                style = Stroke(width = 21.dp.toPx(), cap = StrokeCap.Butt),
                             )
                             startAngle += sweep
                         }
@@ -448,7 +371,7 @@ private fun ExtremesRow(
 }
 
 @Composable
-private fun StatisticsSurface(
+internal fun StatisticsSurface(
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
@@ -482,15 +405,3 @@ private fun quarterSummaryDescription(year: YearStatistics, total: Long): String
         val percentage = quarter.totalCount * 100.0 / total
         "${AppCopy.Statistics.quarterLabel(quarter.quarter)} ${AppCopy.Statistics.percentage(percentage)}"
     })
-
-private fun yearBarChartDescription(year: YearStatistics): String =
-    AppCopy.Statistics.annualChartAccessibility(
-        year.months.joinToString("，") { month ->
-            AppCopy.Statistics.monthChartLabel(
-                month = month.month.monthValue,
-                isFuture = month.future,
-                recorded = month.recorded,
-                count = month.count,
-            )
-        },
-    )
