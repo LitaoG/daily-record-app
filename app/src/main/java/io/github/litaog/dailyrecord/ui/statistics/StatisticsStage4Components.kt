@@ -330,14 +330,20 @@ internal fun QuarterShareCard(
                         .size(118.dp)
                         .semantics { contentDescription = quarterSummaryDescription(year, total) },
                 ) {
+                    // Separators only make sense when the ring contains more than
+                    // one non-zero segment. A single 100% quarter must close the
+                    // circle instead of leaving a misleading white seam.
+                    val gapDegrees = quarterShareGapDegrees(
+                        positiveQuarterCount = year.quarters.count { it.totalCount > 0L },
+                    )
                     var startAngle = -90f
                     year.quarters.forEachIndexed { index, quarter ->
                         if (quarter.totalCount > 0L) {
                             val sweep = 360f * quarter.totalCount.toFloat() / total.toFloat()
                             drawArc(
                                 color = quarterColors[index],
-                                startAngle = startAngle + 1.5f,
-                                sweepAngle = (sweep - 3f).coerceAtLeast(0f),
+                                startAngle = startAngle + gapDegrees / 2f,
+                                sweepAngle = (sweep - gapDegrees).coerceAtLeast(0f),
                                 useCenter = false,
                                 style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Butt),
                             )
@@ -371,6 +377,9 @@ internal fun QuarterShareCard(
         }
     }
 }
+
+internal fun quarterShareGapDegrees(positiveQuarterCount: Int): Float =
+    if (positiveQuarterCount > 1) 3f else 0f
 
 @Composable
 internal fun ExtremesCard(
