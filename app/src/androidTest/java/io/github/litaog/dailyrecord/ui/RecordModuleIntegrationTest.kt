@@ -3,6 +3,7 @@ package io.github.litaog.dailyrecord.ui
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
@@ -14,10 +15,12 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.material3.SnackbarHostState
 import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
+import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -143,6 +146,27 @@ class RecordModuleIntegrationTest {
         composeRule.onNodeWithText("全部").assertIsDisplayed()
     }
 
+    @Test
+    fun snackbarUsesTheActiveModuleColorTokens() {
+        val hostState = SnackbarHostState()
+        val activeColors = androidx.compose.runtime.mutableStateOf(HandBrewColorTokens)
+        composeRule.setContent {
+            DailyRecordTheme {
+                DailyRecordSnackbarHost(
+                    hostState = hostState,
+                    colors = activeColors.value,
+                )
+                LaunchedEffect(Unit) {
+                    hostState.showSnackbar("网络提示")
+                }
+            }
+        }
+
+        assertSnackbarColor(HandBrewColorTokens.strong)
+        composeRule.runOnIdle { activeColors.value = SexColorTokens }
+        assertSnackbarColor(SexColorTokens.strong)
+    }
+
     private fun assertSelectorHalfColors(left: Color, right: Color) {
         var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
         composeRule.waitUntil(timeoutMillis = 10_000) {
@@ -157,6 +181,19 @@ class RecordModuleIntegrationTest {
 
         assertEquals(left.toArgb(), pixels[inset, sampleY].toArgb())
         assertEquals(right.toArgb(), pixels[resolvedBitmap.width - inset - 1, sampleY].toArgb())
+    }
+
+    private fun assertSnackbarColor(expected: Color) {
+        var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            runCatching {
+                bitmap = composeRule.onNodeWithTag("daily_record_snackbar").captureToImage()
+            }.isSuccess
+        }
+        val pixels = requireNotNull(bitmap).toPixelMap()
+        val sampleX = (pixels.width - 8).coerceAtLeast(0)
+        val sampleY = pixels.height / 2
+        assertEquals(expected.toArgb(), pixels[sampleX, sampleY].toArgb())
     }
 
     private fun assertMinimumHeight(tag: String, minimumDp: Float) {

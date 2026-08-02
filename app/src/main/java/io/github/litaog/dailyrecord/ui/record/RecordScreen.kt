@@ -165,7 +165,12 @@ internal fun DailyCountRecordScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize().testTag("record_screen"),
         containerColor = DailyRecordCanvas,
-        snackbarHost = { DailyRecordSnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            DailyRecordSnackbarHost(
+                hostState = snackbarHostState,
+                colors = moduleSpec.colors,
+            )
+        },
         bottomBar = {
             Surface(
                 modifier = Modifier.navigationBarsPadding(),

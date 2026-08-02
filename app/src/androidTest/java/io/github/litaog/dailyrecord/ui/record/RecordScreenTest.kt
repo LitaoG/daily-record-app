@@ -163,7 +163,7 @@ class RecordScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("保存记录").performClick()
-        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily_record_snackbar").assertIsDisplayed()
         composeRule.onNodeWithText("保存失败，请重试").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("保存记录").assertIsEnabled()
     }
@@ -176,7 +176,7 @@ class RecordScreenTest {
 
         composeRule.onNodeWithContentDescription("清除记录").performClick()
         composeRule.onNodeWithText("确认清除").performClick()
-        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily_record_snackbar").assertIsDisplayed()
         composeRule.onNodeWithText("清除失败，请重试").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("清除记录").assertIsEnabled()
         composeRule.onNodeWithText("已记录 · 2 次").assertIsDisplayed()

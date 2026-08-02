@@ -32,12 +32,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
+import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 
 /** Branded confirmation surface used instead of a library-default confirmation dialog. */
 @Composable
@@ -174,25 +174,28 @@ fun DailyRecordTextAction(
     }
 }
 
-/** Branded transient feedback used instead of the default dark Material snackbar. */
+/** Branded transient feedback that follows the active record module. */
 @Composable
-fun DailyRecordSnackbarHost(hostState: SnackbarHostState) {
+fun DailyRecordSnackbarHost(
+    hostState: SnackbarHostState,
+    colors: RecordModuleColorTokens = HandBrewColorTokens,
+) {
     SnackbarHost(hostState = hostState) { data ->
         Surface(
             modifier = Modifier
                 .padding(horizontal = 18.dp, vertical = 10.dp)
-                .testTag("hand_brew_snackbar")
+                .testTag("daily_record_snackbar")
                 .semantics(mergeDescendants = true) {
                     liveRegion = LiveRegionMode.Polite
                 },
             shape = RoundedCornerShape(16.dp),
-            color = DailyRecordText,
-            border = BorderStroke(1.dp, DailyRecordDefaultAccent),
+            color = colors.strong,
+            border = BorderStroke(1.dp, colors.primary),
             shadowElevation = 8.dp,
         ) {
             Text(
                 text = data.visuals.message,
-                color = DailyRecordSurface,
+                color = colors.onPrimary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
             )
