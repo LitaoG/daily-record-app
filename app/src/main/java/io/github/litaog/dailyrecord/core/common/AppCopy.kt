@@ -311,12 +311,13 @@ internal object AppCopy {
         const val title = "统计"
         const val countAndDays = "次数 · 天数"
         const val countUnit = "次"
+        const val dayUnit = "天"
+        const val perDayUnit = "次/天"
         const val recordedDaysLabel = "发生天数"
         const val averageLabel = "记录日均"
         const val historyFacts = "历史事实"
         const val noFutureTrend = "只展示已发生数据，不预测未来趋势"
         const val dailyDetails = "每日明细"
-        const val weeklyDetails = "周明细"
         const val monthlyDetails = "月份明细"
         const val yearlyDetails = "年度明细"
         const val allHistory = "全部历史"
@@ -329,6 +330,7 @@ internal object AppCopy {
         const val allTab = "全部"
         const val currentWeek = "本周"
         const val currentMonth = "本月"
+        const val monthTotalCount = "本月总次数"
         const val currentYear = "本年"
         const val historyPeriod = "历史"
         const val previousPeriod = "上一个%s"
@@ -339,11 +341,22 @@ internal object AppCopy {
         const val calendarAction = "去日历记录"
         const val dailyDistribution = "每日分布"
         const val times = "次数"
-        const val monthWeeklyAnalysis = "月内周分布"
-        const val monthWeeklySubtitle = "按周汇总"
-        const val activeWeeks = "活跃周"
-        const val peakWeek = "峰值周"
-        const val monthWeeklyHint = "柱高表示次数；下方显示每周发生天数。"
+        const val dailyCount = "每日次数"
+        const val byDate = "按日期"
+        const val countComposition = "次数构成"
+        const val explicitZero = "0次"
+        const val once = "1次"
+        const val twice = "2次"
+        const val threePlus = "3+次"
+        const val unfilledDays = "未填写"
+        const val futureDays = "未来"
+        const val noSavedDays = "本月还没有已填写日期"
+        const val singleDayExtremes = "单日极值"
+        const val byPositiveCount = "按正次数"
+        const val maximumDay = "最高单日"
+        const val minimumPositiveDay = "最低正次数"
+        const val noPositiveDay = "本月还没有正次数记录"
+        const val monthDayExtremesHint = "最低单日只统计正次数，未填写和0次不参与。"
         const val future = "未来"
         const val unset = "未填写"
         const val unsetShort = "未填"
@@ -375,8 +388,7 @@ internal object AppCopy {
         fun dateDescription(date: LocalDate, status: String): String =
             "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$status"
         fun weekdayDateLabel(weekday: String, date: LocalDate): String = "$weekday ${date.dayOfMonth}日"
-        fun monthWeekLabel(index: Int, start: LocalDate, end: LocalDate): String =
-            "第${index}周 ${start.dayOfMonth}–${end.dayOfMonth}日"
+        fun dayLabel(day: Int): String = "${day}日"
         fun dateRangeTitle(start: LocalDate, end: LocalDate): String =
             if (start.year == end.year) {
                 "${start.year}年 ${start.monthValue}月${start.dayOfMonth}日–" +
@@ -394,28 +406,35 @@ internal object AppCopy {
         fun periodCountLabel(period: String, moduleLabel: String): String = "$period · ${moduleLabel}次数"
         fun statisticsLabel(period: String): String = "${period}统计"
         fun average(value: Double): String = String.format(java.util.Locale.US, "%.1f 次/天", value)
+        fun averageNumber(value: Double): String = String.format(java.util.Locale.US, "%.1f", value)
         fun annualAverage(value: Double): String = String.format(java.util.Locale.US, monthAverageFormat, value)
         fun countText(count: Long): String = "$count 次"
         fun daysText(days: Int): String = "$days 天"
-        fun weekLabel(index: Int): String = "第${index}周"
-        fun weekCount(count: Long?, isFuture: Boolean, recorded: Boolean): String = when {
-            isFuture -> Statistics.future
-            !recorded -> unsetShort
-            else -> countText(count ?: 0L)
+        fun savedDaysSubtitle(days: Int): String = "按已填写日（共${days}天）"
+        fun categoryDays(days: Int): String = "${days}天"
+        fun dayList(dates: List<LocalDate>): String = dates.joinToString("、") { dayLabel(it.dayOfMonth) }
+        fun dayChartValue(day: Int, count: Long?, future: Boolean, recorded: Boolean): String = when {
+            future -> "${dayLabel(day)}，未来"
+            !recorded -> "${dayLabel(day)}，未填写"
+            else -> "${dayLabel(day)}，${countText(count ?: 0L)}"
         }
-        fun weekAccessibilityCount(count: Long?, isFuture: Boolean, recorded: Boolean): String = when {
-            isFuture -> Statistics.future
-            !recorded -> unset
-            else -> countText(count ?: 0L)
-        }
-        fun weekDays(days: Int?, isFuture: Boolean, recorded: Boolean): String = when {
-            isFuture || !recorded -> dash
-            else -> daysText(days ?: 0)
-        }
-        fun activeWeeksText(count: Int): String = "$count 周"
-        fun peakWeekText(weeks: String, count: Long?): String =
-            if (count == null) noRecords else "$weeks · ${countText(count)}"
-        fun monthWeeklyAccessibility(weeks: String): String = "月内周分布；$weeks"
+        fun monthDailyChartAccessibility(days: String): String = "每日次数图；$days"
+        fun monthSummaryAccessibility(totalCount: Long, recordedDays: Int, average: Double): String =
+            "本月总次数${countText(totalCount)}；发生天数${daysText(recordedDays)}；记录日均${average(average)}"
+        fun monthCompositionAccessibility(
+            savedDays: Int,
+            explicitZeroDays: Int,
+            oneCountDays: Int,
+            twoCountDays: Int,
+            threePlusCountDays: Int,
+            unfilledDays: Int,
+            futureDays: Int,
+        ): String =
+            "次数构成；已填写${savedDays}天；0次${explicitZeroDays}天；1次${oneCountDays}天；" +
+                "2次${twoCountDays}天；3次以上${threePlusCountDays}天；" +
+                "未填写${unfilledDays}天；未来${futureDays}天"
+        fun monthExtremeAccessibility(label: String, count: Long, dates: List<LocalDate>): String =
+            "$label，${countText(count)}，${dayList(dates)}"
         fun percentage(value: Double): String = String.format(java.util.Locale.US, "%.0f%%", value)
         fun quarterLabel(quarter: Int): String = "Q$quarter"
         fun monthChartLabel(month: Int, isFuture: Boolean, recorded: Boolean, count: Long?): String =

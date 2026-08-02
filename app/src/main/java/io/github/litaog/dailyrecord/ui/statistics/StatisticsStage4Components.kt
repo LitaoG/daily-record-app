@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,15 +24,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -107,122 +105,6 @@ private fun SummaryFact(label: String, value: String, modifier: Modifier = Modif
         )
     }
 }
-
-@Composable
-internal fun MonthWeeklyAnalysisCard(
-    month: MonthStatistics,
-    colors: RecordModuleColorTokens,
-    modifier: Modifier = Modifier,
-) {
-    val maxCount = month.peakCount?.coerceAtLeast(1L) ?: 1L
-    val weeksDescription = month.weeks.joinToString("，") { week ->
-        "${week.label} ${AppCopy.Statistics.weekAccessibilityCount(week.count, week.future, week.recorded)}，" +
-            AppCopy.Statistics.weekDays(week.recordedDays, week.future, week.recorded)
-    }
-    StatisticsSurface(
-        modifier = modifier.testTag("month_distribution_card"),
-        title = AppCopy.Statistics.monthWeeklyAnalysis,
-        subtitle = AppCopy.Statistics.monthWeeklySubtitle,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics {
-                    contentDescription = AppCopy.Statistics.monthWeeklyAccessibility(weeksDescription)
-                },
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            month.weeks.forEach { week ->
-                val fraction = distributionFraction(
-                    detail = week.asDetail(),
-                    maxCount = maxCount,
-                    minNonZeroFraction = .12f,
-                )
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics(mergeDescendants = true) {
-                            contentDescription =
-                                "${week.label}，${AppCopy.Statistics.weekAccessibilityCount(week.count, week.future, week.recorded)}，" +
-                                    AppCopy.Statistics.weekDays(week.recordedDays, week.future, week.recorded)
-                        },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(5.dp),
-                ) {
-                    Text(
-                        text = AppCopy.Statistics.weekCount(week.count, week.future, week.recorded),
-                        color = if (week.future) DailyRecordTextMuted else DailyRecordTextSecondary,
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(112.dp)
-                            .clip(RoundedCornerShape(9.dp))
-                            .background(DailyRecordSurfaceMuted),
-                        contentAlignment = Alignment.BottomCenter,
-                    ) {
-                        if (fraction > 0f) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight(fraction)
-                                    .clip(RoundedCornerShape(topStart = 9.dp, topEnd = 9.dp))
-                                    .background(colors.primary),
-                            )
-                        }
-                    }
-                    Text(
-                        text = AppCopy.Statistics.weekLabel(week.index),
-                        color = if (week.future) DailyRecordTextMuted else DailyRecordText,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                    )
-                    Text(
-                        text = AppCopy.Statistics.weekDays(week.recordedDays, week.future, week.recorded),
-                        color = DailyRecordTextMuted,
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                    )
-                }
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            SummaryFact(
-                label = AppCopy.Statistics.activeWeeks,
-                value = AppCopy.Statistics.activeWeeksText(month.activeWeekCount),
-                modifier = Modifier.weight(1f),
-            )
-            SummaryFact(
-                label = AppCopy.Statistics.peakWeek,
-                value = AppCopy.Statistics.peakWeekText(
-                    weeks = month.peakWeeks.joinToString("、") { AppCopy.Statistics.weekLabel(it.index) },
-                    count = month.peakCount,
-                ),
-                modifier = Modifier.weight(1.4f),
-            )
-        }
-        Text(
-            text = AppCopy.Statistics.monthWeeklyHint,
-            color = DailyRecordTextMuted,
-            style = MaterialTheme.typography.labelSmall,
-        )
-    }
-}
-
-private fun MonthWeekStatistics.asDetail(): StatisticsDetail = StatisticsDetail(
-    label = label,
-    count = count,
-    days = recordedDays,
-    future = future,
-    recorded = recorded,
-)
-
 
 @Composable
 internal fun QuarterShareCard(
@@ -377,6 +259,7 @@ internal fun StatisticsSurface(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val useStackedHeader = LocalConfiguration.current.fontScale >= 1.6f
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = DailyRecordSurface,
@@ -387,13 +270,20 @@ internal fun StatisticsSurface(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 15.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(title, color = DailyRecordText, style = MaterialTheme.typography.titleMedium)
-                Text(subtitle, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
+            if (useStackedHeader) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(title, color = DailyRecordText, style = MaterialTheme.typography.titleMedium)
+                    Text(subtitle, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(title, color = DailyRecordText, style = MaterialTheme.typography.titleMedium)
+                    Text(subtitle, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
+                }
             }
             content()
         }

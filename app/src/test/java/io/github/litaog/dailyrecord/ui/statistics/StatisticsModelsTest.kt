@@ -101,7 +101,7 @@ class StatisticsModelsTest {
     }
 
     @Test
-    fun historicalMonthUsesAnchorAndWeeklyDetailsReconcile() {
+    fun historicalMonthUsesAnchorAndDailyDetailsReconcile() {
         val model = buildStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2026, 5, 31),
@@ -120,12 +120,20 @@ class StatisticsModelsTest {
         assertEquals(2, model.summary.recordedDays)
         assertEquals(5L, model.details.sumOf { it.count ?: 0L })
         assertEquals(2, model.details.sumOf { it.days ?: 0 })
-        assertEquals("第1周 1–3日", model.details.first().label)
-        assertEquals("第5周 25–31日", model.details.last().label)
+        assertEquals("1日", model.details.first().label)
+        assertEquals("31日", model.details.last().label)
+        val month = requireNotNull(model.month)
+        assertEquals(31, month.days.size)
+        assertEquals(3, month.savedDays)
+        assertEquals(1, month.explicitZeroDays)
+        assertEquals(3L, month.maximum?.count)
+        assertEquals(listOf(31), month.maximum?.dates?.map { it.dayOfMonth })
+        assertEquals(2L, month.minimumPositive?.count)
+        assertEquals(listOf(1), month.minimumPositive?.dates?.map { it.dayOfMonth })
     }
 
     @Test
-    fun changingMonthRebuildsWeeklyDetailsWithoutKeepingPreviousMonth() {
+    fun changingMonthRebuildsDailyDetailsWithoutKeepingPreviousMonth() {
         val records = listOf(
             record(LocalDate.of(2026, 5, 4), 2),
             record(LocalDate.of(2026, 6, 8), 7),
@@ -205,7 +213,7 @@ class StatisticsModelsTest {
     }
 
     @Test
-    fun monthStatisticsAggregatesInMonthWeeksAndKeepsFutureWeeksEmpty() {
+    fun monthStatisticsSeparatesSavedZeroUnfilledAndFutureDays() {
         val model = buildStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2026, 8, 15),
@@ -218,22 +226,28 @@ class StatisticsModelsTest {
         )
 
         val month = requireNotNull(model.month)
-        assertEquals(6, month.weeks.size)
-        assertEquals(listOf(0L, 2L, 1L, null, null, null), month.weeks.map { it.count })
-        assertEquals(listOf(0, 1, 1, null, null, null), month.weeks.map { it.recordedDays })
-        assertTrue(month.weeks.first().recorded)
-        assertEquals(0L, month.weeks.first().count)
-        assertFalse(month.weeks[2].future)
-        assertTrue(month.weeks[3].future)
-        assertNull(month.weeks[3].count)
-        assertFalse(month.weeks[3].recorded)
-        assertEquals(2, month.activeWeekCount)
-        assertEquals(2L, month.peakCount)
-        assertEquals(listOf(2), month.peakWeeks.map { it.index })
+        assertEquals(31, month.days.size)
+        assertTrue(month.days[0].recorded)
+        assertEquals(0L, month.days[0].count)
+        assertFalse(month.days[14].future)
+        assertTrue(month.days[15].future)
+        assertNull(month.days[15].count)
+        assertFalse(month.days[15].recorded)
+        assertEquals(3, month.savedDays)
+        assertEquals(1, month.explicitZeroDays)
+        assertEquals(1, month.oneCountDays)
+        assertEquals(1, month.twoCountDays)
+        assertEquals(0, month.threePlusCountDays)
+        assertEquals(12, month.unfilledElapsedDays)
+        assertEquals(16, month.futureDays)
+        assertEquals(2L, month.maximum?.count)
+        assertEquals(listOf(3), month.maximum?.dates?.map { it.dayOfMonth })
+        assertEquals(1L, month.minimumPositive?.count)
+        assertEquals(listOf(10), month.minimumPositive?.dates?.map { it.dayOfMonth })
     }
 
     @Test
-    fun leapFebruaryUsesFiveInMonthWeekBuckets() {
+    fun leapFebruaryContainsEveryRealDayWithoutWeekBuckets() {
         val model = buildStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2028, 2, 10),
@@ -242,11 +256,47 @@ class StatisticsModelsTest {
         )
 
         val month = requireNotNull(model.month)
-        assertEquals(5, month.weeks.size)
-        assertEquals("第1周 1–6日", month.weeks.first().label)
-        assertEquals("第5周 28–29日", month.weeks.last().label)
-        assertTrue(month.weeks.all { !it.future })
-        assertFalse(month.weeks.last().recorded)
+        assertEquals(29, month.days.size)
+        assertEquals(LocalDate.of(2028, 2, 1), month.days.first().date)
+        assertEquals(LocalDate.of(2028, 2, 29), month.days.last().date)
+        assertTrue(month.days.all { !it.future })
+        assertFalse(month.days.last().recorded)
+        assertEquals(29, month.unfilledElapsedDays)
+        assertEquals(0, month.futureDays)
+    }
+
+    @Test
+    fun monthCompositionAndExtremesKeepTiesAndExcludeZeroFromMinimum() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Month,
+            anchorDate = LocalDate.of(2026, 7, 15),
+            today = LocalDate.of(2026, 8, 2),
+            records = listOf(
+                record(LocalDate.of(2026, 7, 2), 0),
+                record(LocalDate.of(2026, 7, 3), 2),
+                record(LocalDate.of(2026, 7, 7), 1),
+                record(LocalDate.of(2026, 7, 8), 0),
+                record(LocalDate.of(2026, 7, 12), 2),
+                record(LocalDate.of(2026, 7, 18), 1),
+                record(LocalDate.of(2026, 7, 23), 3),
+                record(LocalDate.of(2026, 7, 27), 3),
+            ),
+        )
+
+        val month = requireNotNull(model.month)
+        assertEquals(12L, model.summary.totalCount)
+        assertEquals(6, model.summary.recordedDays)
+        assertEquals(8, month.savedDays)
+        assertEquals(2, month.explicitZeroDays)
+        assertEquals(2, month.oneCountDays)
+        assertEquals(2, month.twoCountDays)
+        assertEquals(2, month.threePlusCountDays)
+        assertEquals(23, month.unfilledElapsedDays)
+        assertEquals(0, month.futureDays)
+        assertEquals(3L, month.maximum?.count)
+        assertEquals(listOf(23, 27), month.maximum?.dates?.map { it.dayOfMonth })
+        assertEquals(1L, month.minimumPositive?.count)
+        assertEquals(listOf(7, 18), month.minimumPositive?.dates?.map { it.dayOfMonth })
     }
 
     @Test

@@ -1,4 +1,4 @@
-# Design QA — 统计页标题与年度折线
+# Design QA — 统计页年度折线与月度分析
 
 ## Evidence
 
@@ -30,6 +30,17 @@
 - “周 / 月 / 年 / 全部”四个入口仍可点击，筛选状态未改动。
 - Android 定向设备测试确认统计页只有一个“统计”文本节点，即底部导航标签。
 - 未填写、未来和明确 0 的统计语义没有因本轮视觉修改而改变。
+
+## 月统计重构
+
+- 设计目标：`docs/product/audit/2026-08-02-month-statistics/reference.png`
+- Android 顶部实现：`docs/product/audit/2026-08-02-month-statistics/implementation-top.png`
+- 手冲下半页：`docs/product/audit/2026-08-02-month-statistics/implementation-lower.png`
+- 做爱主题：`docs/product/audit/2026-08-02-month-statistics/implementation-sex.png`
+- `200%` 字体：`docs/product/audit/2026-08-02-month-statistics/implementation-font200.png`
+- 设计目标与 Android 截图已合并到同一张对照图检查；组件顺序、信息层级、日坐标、主题色和卡片边界与目标一致。
+- 月汇总、逐日脉冲图、次数构成和单日极值均可滚动到达；大字体下卡片标题与说明自动堆叠，没有标题互相覆盖或横向溢出。
+- 模拟器崩溃缓冲区为空；手冲与做爱两个模块的空数据、当前日和未来日状态均完成视觉检查。
 
 ## Findings
 

@@ -143,14 +143,23 @@ internal fun DailyCountStatisticsScreen(
             )
         }
         item {
-            StatisticsSummaryCard(
-                periodLabel = periodSummaryLabel(period),
-                moduleLabel = moduleSpec.label,
-                totalCount = model.summary.totalCount,
-                recordedDays = model.summary.recordedDays,
-                average = model.summary.average,
-                colors = moduleSpec.colors,
-            )
+            if (period == StatisticsPeriod.Month) {
+                MonthSummaryCard(
+                    totalCount = model.summary.totalCount,
+                    recordedDays = model.summary.recordedDays,
+                    average = model.summary.average,
+                    colors = moduleSpec.colors,
+                )
+            } else {
+                StatisticsSummaryCard(
+                    periodLabel = periodSummaryLabel(period),
+                    moduleLabel = moduleSpec.label,
+                    totalCount = model.summary.totalCount,
+                    recordedDays = model.summary.recordedDays,
+                    average = model.summary.average,
+                    colors = moduleSpec.colors,
+                )
+            }
         }
         when (period) {
             StatisticsPeriod.Week -> {
@@ -162,7 +171,13 @@ internal fun DailyCountStatisticsScreen(
             }
             StatisticsPeriod.Month -> {
                 item {
-                    model.month?.let { MonthWeeklyAnalysisCard(it, colors = moduleSpec.colors) }
+                    model.month?.let { MonthDailyCountCard(it, colors = moduleSpec.colors) }
+                }
+                item {
+                    model.month?.let { MonthCountCompositionCard(it, colors = moduleSpec.colors) }
+                }
+                item {
+                    model.month?.let { MonthDayExtremesCard(it, colors = moduleSpec.colors) }
                 }
             }
             StatisticsPeriod.Year -> {

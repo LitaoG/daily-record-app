@@ -147,8 +147,8 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
         composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
-        composeRule.onNodeWithTag("month_distribution_card").assertIsDisplayed()
-        composeRule.onNodeWithText("月内周分布").assertIsDisplayed()
+        composeRule.onNodeWithTag("month_daily_count_card").assertIsDisplayed()
+        composeRule.onNodeWithText("每日次数").assertIsDisplayed()
         composeRule.onAllNodesWithText("点此快速跳转").assertCountEquals(0)
 
         composeRule
@@ -161,7 +161,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("选择2025年").performClick()
         composeRule.onNodeWithText("2025年").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("选择2025年6月").performClick()
-        composeRule.onNodeWithText("跳转到此日").performClick()
+        composeRule.onNodeWithText("跳转到此月").performClick()
         composeRule.onNodeWithText("2025年 6月").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("年统计，未选择").performClick()
@@ -172,10 +172,14 @@ class DailyRecordAppTest {
         composeRule.onNodeWithText("直接选择年份").assertIsDisplayed()
         composeRule.onNodeWithText("选择年份").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("选择2024年").performClick()
-        composeRule.onNodeWithText("跳转到此日").performClick()
+        composeRule.onNodeWithText("跳转到此年").performClick()
         composeRule.onNodeWithText("2024年").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
         composeRule.onNodeWithText("2024年 6月").assertIsDisplayed()
+        composeRule.onNodeWithTag("month_composition_card").performScrollTo()
+        composeRule.onNodeWithText("次数构成").assertIsDisplayed()
+        composeRule.onNodeWithTag("month_extremes_card").performScrollTo().assertExists()
+        composeRule.onNodeWithText("单日极值").assertExists()
     }
 
     @Test
