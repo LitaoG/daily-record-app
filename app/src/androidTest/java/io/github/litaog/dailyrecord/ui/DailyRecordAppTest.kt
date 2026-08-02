@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.VPN_SYNC_DIALOG_MESSAGE
@@ -53,6 +54,7 @@ class DailyRecordAppTest {
 
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()
         composeRule.onNodeWithTag("statistics_screen").assertIsDisplayed()
+        composeRule.onAllNodesWithText(AppCopy.Statistics.title).assertCountEquals(1)
         listOf("月", "年", "全部", "周").forEach { period ->
             composeRule.onNodeWithContentDescription("${period}统计，未选择").performClick()
             composeRule.waitForIdle()

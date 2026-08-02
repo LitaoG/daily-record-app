@@ -57,7 +57,7 @@ internal data class YearLineChartScale(
     val ticks: List<Long>,
 )
 
-private const val YEAR_LINE_REVEAL_DURATION_MILLIS = 850
+private const val YEAR_LINE_REVEAL_DURATION_MILLIS = 1500
 private const val YEAR_LINE_REVEAL_DELAY_MILLIS = 70
 private const val YEAR_LINE_LABEL_FADE_SPAN = .04f
 
@@ -264,7 +264,7 @@ private fun YearLineChartPlot(
                 clipRect(right = revealRight) {
                     offsets.contiguousSegments().forEach { segment ->
                         if (segment.size > 1) {
-                            val fillPath = smoothYearLinePath(segment).apply {
+                            val fillPath = straightYearLinePath(segment).apply {
                                 lineTo(segment.last().x, plotBottomPx)
                                 lineTo(segment.first().x, plotBottomPx)
                                 close()
@@ -281,7 +281,7 @@ private fun YearLineChartPlot(
                                 ),
                             )
                             drawPath(
-                                path = smoothYearLinePath(segment),
+                                path = straightYearLinePath(segment),
                                 color = colors.primary,
                                 style = Stroke(width = 2.25.dp.toPx(), cap = StrokeCap.Round),
                             )
@@ -343,19 +343,11 @@ private fun List<Offset?>.contiguousSegments(): List<List<Offset>> = buildList {
     if (current.isNotEmpty()) add(current)
 }
 
-private fun smoothYearLinePath(points: List<Offset>): Path = Path().apply {
+private fun straightYearLinePath(points: List<Offset>): Path = Path().apply {
     if (points.isEmpty()) return@apply
     moveTo(points.first().x, points.first().y)
-    points.zipWithNext().forEach { (current, next) ->
-        val middleX = (current.x + next.x) / 2f
-        cubicTo(
-            middleX,
-            current.y,
-            middleX,
-            next.y,
-            next.x,
-            next.y,
-        )
+    points.drop(1).forEach { point ->
+        lineTo(point.x, point.y)
     }
 }
 

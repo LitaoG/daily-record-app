@@ -124,9 +124,6 @@ internal fun DailyCountStatisticsScreen(
             )
         }
         item {
-            Text(AppCopy.Statistics.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
-        }
-        item {
             PeriodTabs(
                 selected = period,
                 onSelected = { periodName = it.name },

@@ -1,53 +1,42 @@
-# Design QA — 年度折线面积图
+# Design QA — 统计页标题与年度折线
 
 ## Evidence
 
-- Source visual truth: `docs/product/design/quiet-private-journal-v2/annual-line-chart-reference-rough.png`
-- Rendered implementation: `docs/product/audit/2026-08-02-year-line-chart/implementation.png`
-- Side-by-side focused comparison: `docs/product/audit/2026-08-02-year-line-chart/comparison.png`
-- Viewport: Pixel 4 API 34 emulator；物理宽度 `1080px`、`440dpi`，应用宽度约 `393dp`；截图包含系统栏，共 `1080×2400px`。
-- Source pixels: `1448×1592px`。
-- State: 手冲模块，2026 年；6 月明确 0 次、7 月 4 次、8 月 1 次，9–12 月为未来。
+- 标题移除参考：`docs/product/audit/2026-08-02-year-line-chart/title-removal-reference.png`
+- 年度图视觉参考：`docs/product/design/quiet-private-journal-v2/annual-line-chart-reference-rough.png`
+- 动画早期帧：`docs/product/audit/2026-08-02-year-line-chart/animation-early.png`
+- 最终实现：`docs/product/audit/2026-08-02-year-line-chart/implementation.png`
+- 设备：Pixel 4 API 34 模拟器，截图 `1080×2280px`，应用宽度约 `393dp`。
+- 数据状态：手冲模块，2026 年 7 月 4 次、8 月 1 次，其余月份保持明确 0、未填写或未来的既有语义。
 
-## Full-view comparison
+## 同屏对照
 
-完整实现截图确认统计汇总、年度卡、底部导航和滚动关系没有溢出或遮挡；年度卡保持当前项目的暖白 Surface、细边界和紫色模块身份。
+本轮将用户标注图和最终模拟器截图放在同一次视觉比较输入中检查，而不是分别凭记忆判断。结果如下：
 
-## Focused comparison
+- 页面级大标题“统计”已删除，底部导航的“统计”仍保留。
+- 模块切换器下方直接进入“周 / 月 / 年 / 全部”筛选器，筛选器和后续内容整体自然上移，没有负间距或覆盖。
+- 年度图中 7 月与 8 月以直线相连，不再进行曲线插值。
+- 字体、卡片圆角、模块颜色、网格、横轴月份和底部导航均保持现有设计体系，未出现裁切或横向溢出。
 
-同图对照确认以下五个表面：
+## 动画验收
 
-- 字体与排版：标题、月均、副轴刻度、节点数值和月份标签层级清楚；10–12 月完整显示。
-- 间距与节奏：纵轴、绘图区、月份轴和说明文字互不挤压，12 个分区等宽。
-- 颜色与 Token：折线、节点、辉光和面积渐变都来自当前模块色；网格与空心点使用低权重中性色。
-- 图像质量：图表由 Compose Canvas 矢量绘制，没有位图放大、锯齿资产或占位图。
-- 文案与内容：节点显示精确次数；未填写、未来和明确 0 没有被混同；TalkBack 描述覆盖全部月份。
+- 年度真实折线、渐变面积、实心节点和次数标签从左向右只揭示一次，时长约 `1.6s`（`70ms` 延迟 + `1500ms` 主动画）。
+- 早期帧 SHA-256：`4A75AFE469957582EE0197663B9C74075157655CC4C88F3D79E58FBCB51AAD07`。
+- 完成帧与额外等待 `1.2s` 后的空闲帧 SHA-256 均为 `79A9019CF4D6E9F54003DFD65031E90F1B578BEA350C7EB2E8A5F4A35E379240`，证明动画结束后保持静止、没有循环。
+- 坐标轴、网格、月份、空心状态点始终静止，不会抢走真实数据的视觉焦点。
 
-参考图把未填写或未来月份画为 0；实现有意改为空心基线点且不连线。这是产品事实约束，不是视觉遗漏。
+## 交互与语义
 
-## Comparison history
-
-1. 首次模拟器截图发现窄屏下 `10月`、`11月`、`12月` 的“月”可能被裁切，判定为 P2。
-2. 横轴采用专用的紧凑字号与行高，重新安装并在同一设备宽度复拍。
-3. 复拍确认 12 个月标签完整，无剩余 P0、P1 或 P2 问题。
-
-## Primary interactions and runtime checks
-
-- 日历切换到统计页并选择“年”。
-- 年度折线仅对真实折线、渐变面积、实心节点和次数标签执行一次约 `0.9s` 的从左向右揭示；坐标轴、网格、月份和空心状态点保持静止。
-- 动画结束帧与等待 `1.2s` 后的空闲帧 SHA-256 一致，确认没有循环；退出到“月”再进入“年”可重新捕捉到起始帧。
-- 滚动查看年度折线、季度占比和月份摘要。
-- 切换到做爱模块，确认统计语义仍存在且使用模块 Token。
-- 打开年份选择器，确认“跳转到此年”。
-- 打开月份选择器，确认“跳转到此月”。
-- 检查 Android crash buffer：为空。
+- “周 / 月 / 年 / 全部”四个入口仍可点击，筛选状态未改动。
+- Android 定向设备测试确认统计页只有一个“统计”文本节点，即底部导航标签。
+- 未填写、未来和明确 0 的统计语义没有因本轮视觉修改而改变。
 
 ## Findings
 
-没有未解决的 P0、P1 或 P2 差异。
+没有未解决的 P0、P1 或 P2 视觉问题。
 
 ## Follow-up polish
 
-无必须在本轮继续处理的 P3；等待用户在真机上验收触感与实际数据密度。
+本轮不继续扩大范围；等待用户真机验收触感与实际数据密度。
 
 final result: passed
