@@ -2,7 +2,9 @@ package io.github.litaog.dailyrecord.ui.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items as lazyColumnItems
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -82,7 +87,11 @@ internal fun DateNavigationDialog(
     var mode by remember { mutableStateOf(NavigationMode.Date) }
 
     DailyRecordDialog(
-        title = AppCopy.Navigation.title,
+        title = if (selection == DateNavigationSelection.Year) {
+            AppCopy.Navigation.selectYear
+        } else {
+            AppCopy.Navigation.title
+        },
         subtitle = when (selection) {
             DateNavigationSelection.Date -> AppCopy.Navigation.subtitle
             DateNavigationSelection.Month -> AppCopy.Navigation.monthSubtitle
@@ -94,9 +103,9 @@ internal fun DateNavigationDialog(
         when (selection) {
             DateNavigationSelection.Date -> SelectedDateSummary(selectedDate, colors)
             DateNavigationSelection.Month -> SelectedMonthSummary(YearMonth.from(selectedDate), colors)
-            DateNavigationSelection.Year -> SelectedYearSummary(selectedDate.year, colors)
+            DateNavigationSelection.Year -> Unit
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(if (selection == DateNavigationSelection.Year) 8.dp else 16.dp))
 
         when (selection) {
             DateNavigationSelection.Date -> {
@@ -149,7 +158,7 @@ internal fun DateNavigationDialog(
                 },
             )
 
-            DateNavigationSelection.Year -> YearPicker(
+            DateNavigationSelection.Year -> YearWheelPicker(
                 selectedYear = selectedDate.year,
                 years = (earliestDate.year..latestDate.year).toList(),
                 colors = colors,
@@ -236,17 +245,6 @@ private fun SelectedMonthSummary(
 }
 
 @Composable
-private fun SelectedYearSummary(
-    year: Int,
-    colors: RecordModuleColorTokens,
-) {
-    SelectionSummary(
-        value = AppCopy.Navigation.yearTitle(year),
-        colors = colors,
-    )
-}
-
-@Composable
 private fun SelectionSummary(
     value: String,
     colors: RecordModuleColorTokens,
@@ -256,17 +254,124 @@ private fun SelectionSummary(
             .fillMaxWidth()
             .padding(top = 16.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(colors.soft.copy(alpha = .22f))
-            .border(1.dp, colors.soft, RoundedCornerShape(16.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .background(colors.primary.copy(alpha = .10f))
+            .border(1.dp, colors.primary.copy(alpha = .25f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 18.dp, vertical = 14.dp),
     ) {
-        Text(AppCopy.Navigation.selected, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
+        Text(AppCopy.Navigation.selected, color = colors.primary, style = MaterialTheme.typography.labelSmall)
         Text(
             text = value,
             color = DailyRecordText,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
+    }
+}
+
+@Composable
+private fun YearWheelPicker(
+    selectedYear: Int,
+    years: List<Int>,
+    colors: RecordModuleColorTokens,
+    onYearSelected: (Int) -> Unit,
+    onBack: () -> Unit,
+) {
+    val firstYear = years.firstOrNull() ?: selectedYear
+    val lastYear = years.lastOrNull() ?: selectedYear
+    val visibleYears = ((firstYear - 3)..(lastYear + 3)).toList()
+    val selectedIndex = visibleYears.indexOf(selectedYear).coerceAtLeast(0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (selectedIndex - 2).coerceAtLeast(0))
+    LaunchedEffect(selectedYear) {
+        // Keep the selected row and its neighbours in the semantics tree immediately.
+        // An animated first scroll can briefly expose only the selected row, making the
+        // adjacent years impossible to discover through TalkBack or UI tests.
+        listState.scrollToItem((visibleYears.indexOf(selectedYear) - 2).coerceAtLeast(0))
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .clickable(role = Role.Button, onClick = onBack)
+                .semantics {
+                    role = Role.Button
+                    contentDescription = AppCopy.Navigation.returnToDatePicker
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            ChevronIcon(forward = false)
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                AppCopy.Navigation.yearScrollHint,
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(270.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(DailyRecordSurfaceMuted.copy(alpha = .52f))
+            .border(1.dp, colors.soft.copy(alpha = .45f), RoundedCornerShape(20.dp)),
+    ) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 42.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            lazyColumnItems(visibleYears, key = { it }) { year ->
+                val selected = year == selectedYear
+                val enabled = year in years
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            if (selected) colors.primary.copy(alpha = .16f) else Color.Transparent,
+                        )
+                        .border(
+                            width = if (selected) 1.dp else 0.dp,
+                            color = if (selected) colors.primary.copy(alpha = .72f) else Color.Transparent,
+                            shape = RoundedCornerShape(16.dp),
+                        )
+                        .clickable(enabled = enabled, role = Role.Button) {
+                            onYearSelected(year)
+                        }
+                        .semantics {
+                            role = Role.Button
+                            this.selected = selected
+                            contentDescription = AppCopy.Navigation.selectYearDescription(year)
+                            if (!enabled) disabled()
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = AppCopy.Navigation.yearTitle(year),
+                        color = when {
+                            selected -> colors.primary
+                            enabled -> DailyRecordTextSecondary
+                            else -> DailyRecordDivider
+                        },
+                        style = if (selected) {
+                            MaterialTheme.typography.titleLarge
+                        } else {
+                            MaterialTheme.typography.titleMedium
+                        },
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -282,7 +387,7 @@ private fun MonthSelectionPicker(
     var showYears by remember(selectedMonth.year) { mutableStateOf(false) }
 
     if (showYears) {
-        YearPicker(
+        YearWheelPicker(
             selectedYear = displayedYear,
             years = (earliestMonth.year..latestMonth.year).toList(),
             colors = colors,
@@ -297,52 +402,76 @@ private fun MonthSelectionPicker(
         return
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Box(
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .clickable(role = Role.Button, onClick = { showYears = true })
-                .semantics {
-                    role = Role.Button
-                    contentDescription = AppCopy.Navigation.switchYearDescription(displayedYear)
-                }
-                .padding(horizontal = 18.dp),
-            contentAlignment = Alignment.Center,
+    val canGoBack = displayedYear > earliestMonth.year
+    val canGoForward = displayedYear < latestMonth.year
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = AppCopy.Navigation.yearTitle(displayedYear),
-                color = DailyRecordText,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+            YearArrow(
+                forward = false,
+                enabled = canGoBack,
+                colors = colors,
+                onClick = { displayedYear-- },
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 52.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable(role = Role.Button, onClick = { showYears = true })
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = AppCopy.Navigation.switchYearDescription(displayedYear)
+                    }
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = AppCopy.Navigation.yearTitle(displayedYear),
+                        color = DailyRecordText,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    DownChevronIcon(color = DailyRecordTextSecondary)
+                }
+            }
+            YearArrow(
+                forward = true,
+                enabled = canGoForward,
+                colors = colors,
+                onClick = { displayedYear++ },
             )
         }
-        Text(
-            text = AppCopy.Navigation.selectMonth,
-            color = DailyRecordTextSecondary,
-            style = MaterialTheme.typography.labelMedium,
+        Spacer(Modifier.height(10.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(DailyRecordDivider.copy(alpha = .42f)),
         )
+        Spacer(Modifier.height(10.dp))
     }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
-        modifier = Modifier.fillMaxWidth().height(238.dp),
+        modifier = Modifier.fillMaxWidth().height(252.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         items((1..12).map { YearMonth.of(displayedYear, it) }, key = { it.toString() }) { month ->
             val enabled = month in earliestMonth..latestMonth
             val selected = month == selectedMonth
             Box(
                 modifier = Modifier
-                    .heightIn(min = 52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(if (selected) colors.primary else DailyRecordSurfaceMuted)
-                    .border(1.dp, if (selected) colors.primary else DailyRecordDivider, RoundedCornerShape(14.dp))
+                    .height(54.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(if (selected) colors.primary.copy(alpha = .92f) else Color.Transparent)
                     .clickable(enabled = enabled, role = Role.Button) { onMonthSelected(month) }
                     .semantics {
                         role = Role.Button
@@ -356,14 +485,62 @@ private fun MonthSelectionPicker(
                     text = AppCopy.Navigation.monthLabel(month.monthValue),
                     color = when {
                         selected -> colors.onPrimary
-                        enabled -> DailyRecordText
-                        else -> DailyRecordDivider
+                        enabled -> DailyRecordTextSecondary
+                        else -> DailyRecordTextMuted
                     },
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun YearArrow(
+    forward: Boolean,
+    enabled: Boolean,
+    colors: RecordModuleColorTokens,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(if (enabled) colors.soft.copy(alpha = .16f) else Color.Transparent)
+            .border(
+                width = if (enabled) 1.dp else 0.dp,
+                color = if (enabled) colors.soft.copy(alpha = .60f) else Color.Transparent,
+                shape = CircleShape,
+            )
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics {
+                role = Role.Button
+                contentDescription = AppCopy.Navigation.nextYearDescription(forward)
+                if (!enabled) disabled()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        ChevronIcon(forward = forward, color = if (enabled) colors.primary else DailyRecordDivider)
+    }
+}
+
+@Composable
+private fun DownChevronIcon(color: Color) {
+    Canvas(modifier = Modifier.size(20.dp)) {
+        val stroke = 2.dp.toPx()
+        drawLine(
+            color = color,
+            start = androidx.compose.ui.geometry.Offset(size.width * .18f, size.height * .35f),
+            end = androidx.compose.ui.geometry.Offset(size.width * .50f, size.height * .68f),
+            strokeWidth = stroke,
+        )
+        drawLine(
+            color = color,
+            start = androidx.compose.ui.geometry.Offset(size.width * .50f, size.height * .68f),
+            end = androidx.compose.ui.geometry.Offset(size.width * .82f, size.height * .35f),
+            strokeWidth = stroke,
+        )
     }
 }
 

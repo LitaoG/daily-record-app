@@ -249,8 +249,14 @@ internal object AppCopy {
         const val returnToDatePicker = "返回日期选择"
         const val selectYear = "选择年份"
         const val selectMonth = "选择月份"
+        const val yearScrollHint = "上下滑动选择年份"
+        private val monthNames = listOf(
+            "一月", "二月", "三月", "四月", "五月", "六月",
+            "七月", "八月", "九月", "十月", "十一月", "十二月",
+        )
         fun switchYearDescription(year: Int): String = "$switchYear，当前${year}年"
         fun nextMonthDescription(forward: Boolean): String = if (forward) "快速跳转下个月" else "快速跳转上个月"
+        fun nextYearDescription(forward: Boolean): String = if (forward) "快速跳转下一年" else "快速跳转上一年"
         fun dateDescription(date: LocalDate, weekday: String): String =
             "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$weekday"
         fun dateText(date: LocalDate): String =
@@ -260,7 +266,7 @@ internal object AppCopy {
         fun selectYearDescription(year: Int): String = "选择${year}年"
         fun yearTitle(year: Int): String = "${year}年"
         fun monthTitle(month: YearMonth): String = "${month.year}年 ${month.monthValue}月"
-        fun monthLabel(month: Int): String = "${month}月"
+        fun monthLabel(month: Int): String = monthNames.getOrElse(month - 1) { "${month}月" }
         fun monthDescription(month: YearMonth): String = "选择${month.year}年${month.monthValue}月"
     }
 
