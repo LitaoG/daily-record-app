@@ -35,7 +35,7 @@ No actionable P0, P1, or P2 differences remain within the Stage 1 scope.
 
 - Fonts and typography: Android sans-serif hierarchy remains legible; module labels, four period labels, and two navigation labels remain visible at 200% text. Metric numerals now use an explicit monospace style.
 - Spacing and layout rhythm: the runtime uses a consistent 20dp horizontal page margin. The selector is one layer, full width inside that margin, with exact equal halves. Period and bottom navigation selection use a restrained 2dp underline instead of nested filled pills.
-- Colors and visual tokens: the implementation uses the approved `#72517C` / `#4B3354` purple and `#8D3E45` / `#5F272C` red directions. White-on-primary and semantic text pairs meet WCAG AA in the token test.
+- Colors and visual tokens: the implementation uses the brighter `#85569A` / `#603670` purple and clear wine `#A54658` / `#7A3040` red directions. White-on-primary and semantic text pairs meet WCAG AA in the token test.
 - Image and icon fidelity: no raster product imagery is involved. The existing airplane and interlocking-ring Compose icons are retained and always paired with visible text.
 - Copy and content: module names and period labels match the product truth. The runtime account bar contains real local-mode actions that are intentionally absent from the generated direction image.
 

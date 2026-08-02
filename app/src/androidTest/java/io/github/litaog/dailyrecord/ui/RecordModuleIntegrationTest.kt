@@ -169,7 +169,9 @@ class RecordModuleIntegrationTest {
         val minWidth = segments.minOf { it.width }
         val maxWidth = segments.maxOf { it.width }
 
-        assertEquals(minWidth, maxWidth, 0.5f)
+        // Segment widths are integer pixels on a device; one pixel of rounding
+        // is expected when the full width is not divisible by four.
+        assertEquals(minWidth, maxWidth, 1f)
         assertEquals(segments.first().center.y, weekLabel.center.y, 1.5f)
         assertTrue(slider.width < segments.first().width)
         assertTrue(slider.left > segments.first().left)
@@ -186,18 +188,21 @@ class RecordModuleIntegrationTest {
 
     @Test
     fun periodTabsKeepRatiosAcrossParentWidths() {
-        listOf(240.dp, 360.dp, 600.dp).forEach { width ->
-            composeRule.setContent {
-                DailyRecordTheme {
-                    Box(modifier = Modifier.width(width)) {
-                        PeriodTabs(
-                            selected = StatisticsPeriod.Week,
-                            onSelected = {},
-                            colors = HandBrewColorTokens,
-                        )
-                    }
+        val parentWidth = androidx.compose.runtime.mutableStateOf(240.dp)
+        composeRule.setContent {
+            DailyRecordTheme {
+                Box(modifier = Modifier.width(parentWidth.value)) {
+                    PeriodTabs(
+                        selected = StatisticsPeriod.Week,
+                        onSelected = {},
+                        colors = HandBrewColorTokens,
+                    )
                 }
             }
+        }
+
+        listOf(240.dp, 360.dp, 600.dp).forEach { width ->
+            composeRule.runOnIdle { parentWidth.value = width }
             composeRule.waitForIdle()
 
             val container = composeRule.onNodeWithTag("statistics_period_tabs").fetchSemanticsNode().boundsInRoot
@@ -207,9 +212,9 @@ class RecordModuleIntegrationTest {
             val slider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
 
             assertTrue(container.width > 0f)
-            assertEquals(segments.first().width, segments[1].width, 0.5f)
-            assertEquals(segments.first().width, segments[2].width, 0.5f)
-            assertEquals(segments.first().width, segments[3].width, 0.5f)
+            assertEquals(segments.first().width, segments[1].width, 1f)
+            assertEquals(segments.first().width, segments[2].width, 1f)
+            assertEquals(segments.first().width, segments[3].width, 1f)
             assertTrue(slider.width < segments.first().width)
             assertTrue(slider.left > segments.first().left)
             assertTrue(slider.right < segments.first().right)
