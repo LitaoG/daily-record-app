@@ -60,6 +60,8 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
+internal enum class DateNavigationSelection { Date, Month, Year }
+
 private enum class NavigationMode { Date, Year }
 
 @Composable
@@ -68,6 +70,7 @@ internal fun DateNavigationDialog(
     earliestDate: LocalDate,
     latestDate: LocalDate,
     colors: RecordModuleColorTokens = HandBrewColorTokens,
+    selection: DateNavigationSelection = DateNavigationSelection.Date,
     onDismiss: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
 ) {
@@ -80,46 +83,85 @@ internal fun DateNavigationDialog(
 
     DailyRecordDialog(
         title = AppCopy.Navigation.title,
-        subtitle = AppCopy.Navigation.subtitle,
+        subtitle = when (selection) {
+            DateNavigationSelection.Date -> AppCopy.Navigation.subtitle
+            DateNavigationSelection.Month -> AppCopy.Navigation.monthSubtitle
+            DateNavigationSelection.Year -> AppCopy.Navigation.yearSubtitle
+        },
         testTag = "date_navigation_dialog",
         onDismissRequest = onDismiss,
     ) {
-        SelectedDateSummary(selectedDate, colors)
+        when (selection) {
+            DateNavigationSelection.Date -> SelectedDateSummary(selectedDate, colors)
+            DateNavigationSelection.Month -> SelectedMonthSummary(YearMonth.from(selectedDate), colors)
+            DateNavigationSelection.Year -> SelectedYearSummary(selectedDate.year, colors)
+        }
         Spacer(Modifier.height(16.dp))
 
-        if (mode == NavigationMode.Year) {
-            YearPicker(
-                selectedYear = displayedMonth.year,
+        when (selection) {
+            DateNavigationSelection.Date -> {
+                if (mode == NavigationMode.Year) {
+                    YearPicker(
+                        selectedYear = displayedMonth.year,
+                        years = (earliestDate.year..latestDate.year).toList(),
+                        colors = colors,
+                        onYearSelected = { year ->
+                            val newMonth = displayedMonth.withYear(year).coerceIn(
+                                YearMonth.from(earliestDate),
+                                YearMonth.from(latestDate),
+                            )
+                            displayedMonth = newMonth
+                            selectedDate = newMonth
+                                .atDay(selectedDate.dayOfMonth.coerceAtMost(newMonth.lengthOfMonth()))
+                                .coerceIn(earliestDate, latestDate)
+                            mode = NavigationMode.Date
+                        },
+                        onBack = { mode = NavigationMode.Date },
+                    )
+                } else {
+                    MonthPicker(
+                        displayedMonth = displayedMonth,
+                        selectedDate = selectedDate,
+                        earliestDate = earliestDate,
+                        latestDate = latestDate,
+                        colors = colors,
+                        onSwitchToYear = { mode = NavigationMode.Year },
+                        onMonthChanged = { newMonth ->
+                            displayedMonth = newMonth
+                            selectedDate = newMonth
+                                .atDay(selectedDate.dayOfMonth.coerceAtMost(newMonth.lengthOfMonth()))
+                                .coerceIn(earliestDate, latestDate)
+                        },
+                        onDateSelected = { selectedDate = it },
+                    )
+                }
+            }
+
+            DateNavigationSelection.Month -> MonthSelectionPicker(
+                selectedMonth = YearMonth.from(selectedDate),
+                earliestMonth = YearMonth.from(earliestDate),
+                latestMonth = YearMonth.from(latestDate),
+                colors = colors,
+                onMonthSelected = { month ->
+                    selectedDate = month
+                        .atDay(selectedDate.dayOfMonth.coerceAtMost(month.lengthOfMonth()))
+                        .coerceIn(earliestDate, latestDate)
+                },
+            )
+
+            DateNavigationSelection.Year -> YearPicker(
+                selectedYear = selectedDate.year,
                 years = (earliestDate.year..latestDate.year).toList(),
                 colors = colors,
                 onYearSelected = { year ->
-                    val newMonth = displayedMonth.withYear(year).coerceIn(
-                        YearMonth.from(earliestDate),
-                        YearMonth.from(latestDate),
-                    )
-                    displayedMonth = newMonth
-                    selectedDate = newMonth
-                        .atDay(selectedDate.dayOfMonth.coerceAtMost(newMonth.lengthOfMonth()))
-                        .coerceIn(earliestDate, latestDate)
-                    mode = NavigationMode.Date
+                    val month = selectedDate.monthValue
+                    selectedDate = LocalDate.of(
+                        year,
+                        month,
+                        minOf(selectedDate.dayOfMonth, YearMonth.of(year, month).lengthOfMonth()),
+                    ).coerceIn(earliestDate, latestDate)
                 },
-                onBack = { mode = NavigationMode.Date },
-            )
-        } else {
-            MonthPicker(
-                displayedMonth = displayedMonth,
-                selectedDate = selectedDate,
-                earliestDate = earliestDate,
-                latestDate = latestDate,
-                colors = colors,
-                onSwitchToYear = { mode = NavigationMode.Year },
-                onMonthChanged = { newMonth ->
-                    displayedMonth = newMonth
-                    selectedDate = newMonth
-                        .atDay(selectedDate.dayOfMonth.coerceAtMost(newMonth.lengthOfMonth()))
-                        .coerceIn(earliestDate, latestDate)
-                },
-                onDateSelected = { selectedDate = it },
+                onBack = onDismiss,
             )
         }
 
@@ -178,6 +220,149 @@ private fun SelectedDateSummary(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
+        }
+    }
+}
+
+@Composable
+private fun SelectedMonthSummary(
+    month: YearMonth,
+    colors: RecordModuleColorTokens,
+) {
+    SelectionSummary(
+        value = AppCopy.Navigation.monthTitle(month),
+        colors = colors,
+    )
+}
+
+@Composable
+private fun SelectedYearSummary(
+    year: Int,
+    colors: RecordModuleColorTokens,
+) {
+    SelectionSummary(
+        value = AppCopy.Navigation.yearTitle(year),
+        colors = colors,
+    )
+}
+
+@Composable
+private fun SelectionSummary(
+    value: String,
+    colors: RecordModuleColorTokens,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(colors.soft.copy(alpha = .22f))
+            .border(1.dp, colors.soft, RoundedCornerShape(16.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(AppCopy.Navigation.selected, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
+        Text(
+            text = value,
+            color = DailyRecordText,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun MonthSelectionPicker(
+    selectedMonth: YearMonth,
+    earliestMonth: YearMonth,
+    latestMonth: YearMonth,
+    colors: RecordModuleColorTokens,
+    onMonthSelected: (YearMonth) -> Unit,
+) {
+    var displayedYear by remember(selectedMonth.year) { mutableStateOf(selectedMonth.year) }
+    var showYears by remember(selectedMonth.year) { mutableStateOf(false) }
+
+    if (showYears) {
+        YearPicker(
+            selectedYear = displayedYear,
+            years = (earliestMonth.year..latestMonth.year).toList(),
+            colors = colors,
+            onYearSelected = { year ->
+                displayedYear = year
+                val candidate = YearMonth.of(year, selectedMonth.monthValue).coerceIn(earliestMonth, latestMonth)
+                onMonthSelected(candidate)
+                showYears = false
+            },
+            onBack = { showYears = false },
+        )
+        return
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Box(
+            modifier = Modifier
+                .heightIn(min = 48.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .clickable(role = Role.Button, onClick = { showYears = true })
+                .semantics {
+                    role = Role.Button
+                    contentDescription = AppCopy.Navigation.switchYearDescription(displayedYear)
+                }
+                .padding(horizontal = 18.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = AppCopy.Navigation.yearTitle(displayedYear),
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Text(
+            text = AppCopy.Navigation.selectMonth,
+            color = DailyRecordTextSecondary,
+            style = MaterialTheme.typography.labelMedium,
+        )
+    }
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier.fillMaxWidth().height(238.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items((1..12).map { YearMonth.of(displayedYear, it) }, key = { it.toString() }) { month ->
+            val enabled = month in earliestMonth..latestMonth
+            val selected = month == selectedMonth
+            Box(
+                modifier = Modifier
+                    .heightIn(min = 52.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (selected) colors.primary else DailyRecordSurfaceMuted)
+                    .border(1.dp, if (selected) colors.primary else DailyRecordDivider, RoundedCornerShape(14.dp))
+                    .clickable(enabled = enabled, role = Role.Button) { onMonthSelected(month) }
+                    .semantics {
+                        role = Role.Button
+                        this.selected = selected
+                        contentDescription = AppCopy.Navigation.monthDescription(month)
+                        if (!enabled) disabled()
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = AppCopy.Navigation.monthLabel(month.monthValue),
+                    color = when {
+                        selected -> colors.onPrimary
+                        enabled -> DailyRecordText
+                        else -> DailyRecordDivider
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                )
+            }
         }
     }
 }
