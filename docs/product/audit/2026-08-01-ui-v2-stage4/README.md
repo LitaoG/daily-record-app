@@ -4,6 +4,8 @@
 
 对应 Goal：[UI v2 分阶段执行计划](../../QUIET_PRIVATE_JOURNAL_GOALS.md)；对应 Issue：[#39](https://github.com/LitaoG/daily-record-app/issues/39)。
 
+> 历史说明（2026-08-02）：本审计记录的是当时已验收的月度日网格实现。根据后续使用反馈，当前运行时已改为按周聚合的月统计卡，现行契约见 [`MONTH_STATISTICS_REDESIGN.md`](../../MONTH_STATISTICS_REDESIGN.md)；本页截图和结论不被改写。
+
 本阶段在用户明确要求“继续下一个阶段”后启动。Stage 3 的验收 Issue #43 仍保持开放，本阶段不关闭、不覆盖它；Stage 4 完成后停在本页状态，等待用户验收，不启动 Stage 5。
 
 ## 本阶段冻结的产品结果
