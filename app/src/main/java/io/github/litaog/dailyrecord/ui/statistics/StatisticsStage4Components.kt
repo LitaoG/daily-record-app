@@ -3,13 +3,10 @@ package io.github.litaog.dailyrecord.ui.statistics
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,7 +39,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberLarge
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
-import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import io.github.litaog.dailyrecord.core.common.AppCopy
 
 @Composable
@@ -113,152 +109,119 @@ private fun SummaryFact(label: String, value: String, modifier: Modifier = Modif
 }
 
 @Composable
-internal fun MonthHeatmapCard(
+internal fun MonthWeeklyAnalysisCard(
     month: MonthStatistics,
     colors: RecordModuleColorTokens,
     modifier: Modifier = Modifier,
 ) {
-    val cells = remember(month) {
-        buildList<StatisticsDay?> {
-            repeat(month.leadingEmptyCells) { add(null) }
-            addAll(month.days)
-            while (size < month.gridCellCount) add(null)
-        }
+    val maxCount = month.peakCount?.coerceAtLeast(1L) ?: 1L
+    val weeksDescription = month.weeks.joinToString("，") { week ->
+        "${week.label} ${AppCopy.Statistics.weekAccessibilityCount(week.count, week.future, week.recorded)}，" +
+            AppCopy.Statistics.weekDays(week.recordedDays, week.future, week.recorded)
     }
     StatisticsSurface(
         modifier = modifier.testTag("month_distribution_card"),
-        title = AppCopy.Statistics.dailyRecords,
-        subtitle = AppCopy.Statistics.realDates,
+        title = AppCopy.Statistics.monthWeeklyAnalysis,
+        subtitle = AppCopy.Statistics.monthWeeklySubtitle,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription = AppCopy.Statistics.monthWeeklyAccessibility(weeksDescription)
+                },
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.Bottom,
         ) {
-            AppCopy.Statistics.weekdays.forEach { weekday ->
-                Text(
-                    text = weekday,
-                    modifier = Modifier.weight(1f),
-                    color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall,
-                    textAlign = TextAlign.Center,
+            month.weeks.forEach { week ->
+                val fraction = distributionFraction(
+                    detail = week.asDetail(),
+                    maxCount = maxCount,
+                    minNonZeroFraction = .12f,
                 )
-            }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            cells.chunked(7).forEach { week ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .semantics(mergeDescendants = true) {
+                            contentDescription =
+                                "${week.label}，${AppCopy.Statistics.weekAccessibilityCount(week.count, week.future, week.recorded)}，" +
+                                    AppCopy.Statistics.weekDays(week.recordedDays, week.future, week.recorded)
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
                 ) {
-                    week.forEach { day ->
-                        if (day == null) {
-                            Spacer(Modifier.weight(1f).aspectRatio(1f))
-                        } else {
-                            MonthHeatmapDay(day, colors, Modifier.weight(1f))
+                    Text(
+                        text = AppCopy.Statistics.weekCount(week.count, week.future, week.recorded),
+                        color = if (week.future) DailyRecordTextMuted else DailyRecordTextSecondary,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(112.dp)
+                            .clip(RoundedCornerShape(9.dp))
+                            .background(DailyRecordSurfaceMuted),
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        if (fraction > 0f) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(fraction)
+                                    .clip(RoundedCornerShape(topStart = 9.dp, topEnd = 9.dp))
+                                    .background(colors.primary),
+                            )
                         }
                     }
+                    Text(
+                        text = AppCopy.Statistics.weekLabel(week.index),
+                        color = if (week.future) DailyRecordTextMuted else DailyRecordText,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                    )
+                    Text(
+                        text = AppCopy.Statistics.weekDays(week.recordedDays, week.future, week.recorded),
+                        color = DailyRecordTextMuted,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                    )
                 }
             }
         }
-        HeatmapLegend(colors)
-    }
-}
-
-@Composable
-private fun MonthHeatmapDay(
-    day: StatisticsDay,
-    colors: RecordModuleColorTokens,
-    modifier: Modifier,
-) {
-    val state = when {
-        day.future -> RecordVisualState.Disabled
-        !day.recorded -> RecordVisualState.Unset
-        day.count == 0L -> RecordVisualState.ExplicitZero
-        day.count == 1L -> RecordVisualState.One
-        day.count == 2L -> RecordVisualState.Two
-        else -> RecordVisualState.ThreePlus
-    }
-    val visual = colors.colorsFor(state)
-    val status = when {
-        day.future -> AppCopy.Statistics.futureDay
-        !day.recorded -> AppCopy.Statistics.unset
-        day.count == 0L -> AppCopy.Statistics.explicitZero
-        else -> AppCopy.Statistics.countText(day.count ?: 0L)
-    }
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(7.dp))
-            .background(visual.background)
-            .semantics {
-                contentDescription = AppCopy.Statistics.dateDescription(day.date, status)
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = day.date.dayOfMonth.toString(),
-                color = visual.content,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            SummaryFact(
+                label = AppCopy.Statistics.activeWeeks,
+                value = AppCopy.Statistics.activeWeeksText(month.activeWeekCount),
+                modifier = Modifier.weight(1f),
             )
-            when {
-                day.recorded && day.count == 0L -> Box(
-                    modifier = Modifier
-                        .padding(top = 2.dp)
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(DailyRecordSurface)
-                        .semantics { contentDescription = AppCopy.Statistics.zeroAccessibility },
-                )
-                day.recorded && (day.count ?: 0L) > 0L -> Box(
-                    modifier = Modifier
-                        .padding(top = 2.dp)
-                        .size(5.dp)
-                        .clip(CircleShape)
-                        .background(visual.content),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun HeatmapLegend(colors: RecordModuleColorTokens) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        HeatmapLegendItem(AppCopy.Statistics.unset, colors.colorsFor(RecordVisualState.Unset).background)
-        HeatmapLegendItem("0", DailyRecordSurface, outline = colors.primary)
-        HeatmapLegendItem("1", colors.soft)
-        HeatmapLegendItem("2", colors.medium)
-        HeatmapLegendItem("3+", colors.primary)
-        Spacer(Modifier.weight(1f))
-        Text(AppCopy.Statistics.future, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
-    }
-}
-
-@Composable
-private fun HeatmapLegendItem(label: String, color: Color, outline: Color? = null) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(color)
-                .then(
-                    if (outline == null) {
-                        Modifier
-                    } else {
-                        Modifier.border(1.dp, outline, RoundedCornerShape(3.dp))
-                    },
+            SummaryFact(
+                label = AppCopy.Statistics.peakWeek,
+                value = AppCopy.Statistics.peakWeekText(
+                    weeks = month.peakWeeks.joinToString("、") { AppCopy.Statistics.weekLabel(it.index) },
+                    count = month.peakCount,
                 ),
+                modifier = Modifier.weight(1.4f),
+            )
+        }
+        Text(
+            text = AppCopy.Statistics.monthWeeklyHint,
+            color = DailyRecordTextMuted,
+            style = MaterialTheme.typography.labelSmall,
         )
-        Text(label, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
     }
 }
+
+private fun MonthWeekStatistics.asDetail(): StatisticsDetail = StatisticsDetail(
+    label = label,
+    count = count,
+    days = recordedDays,
+    future = future,
+    recorded = recorded,
+)
 
 @Composable
 internal fun YearBarChartCard(

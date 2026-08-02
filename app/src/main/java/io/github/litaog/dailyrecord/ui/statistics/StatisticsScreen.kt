@@ -162,7 +162,7 @@ internal fun DailyCountStatisticsScreen(
             }
             StatisticsPeriod.Month -> {
                 item {
-                    model.month?.let { MonthHeatmapCard(it, colors = moduleSpec.colors) }
+                    model.month?.let { MonthWeeklyAnalysisCard(it, colors = moduleSpec.colors) }
                 }
             }
             StatisticsPeriod.Year -> {
