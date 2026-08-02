@@ -324,15 +324,15 @@ internal object AppCopy {
         const val calendarAction = "去日历记录"
         const val dailyDistribution = "每日分布"
         const val times = "次数"
-        const val dailyRecords = "每日记录"
-        const val realDates = "真实日期"
-        const val futureDay = "未来日期"
+        const val monthWeeklyAnalysis = "月内周分布"
+        const val monthWeeklySubtitle = "按周汇总"
+        const val activeWeeks = "活跃周"
+        const val peakWeek = "峰值周"
+        const val monthWeeklyHint = "柱高表示次数；下方显示每周发生天数。"
         const val future = "未来"
         const val unset = "未填写"
         const val unsetShort = "未填"
         const val dash = "—"
-        const val explicitZero = "明确记录 0 次"
-        const val zeroAccessibility = "明确 0 次"
         const val annualCount = "年度次数"
         const val blankBarHint = "空白表示未填写或未来；0 次不绘制柱高"
         const val quarterShare = "季度占比"
@@ -382,6 +382,25 @@ internal object AppCopy {
         fun annualAverage(value: Double): String = String.format(java.util.Locale.US, monthAverageFormat, value)
         fun countText(count: Long): String = "$count 次"
         fun daysText(days: Int): String = "$days 天"
+        fun weekLabel(index: Int): String = "第${index}周"
+        fun weekCount(count: Long?, isFuture: Boolean, recorded: Boolean): String = when {
+            isFuture -> Statistics.future
+            !recorded -> unsetShort
+            else -> countText(count ?: 0L)
+        }
+        fun weekAccessibilityCount(count: Long?, isFuture: Boolean, recorded: Boolean): String = when {
+            isFuture -> Statistics.future
+            !recorded -> unset
+            else -> countText(count ?: 0L)
+        }
+        fun weekDays(days: Int?, isFuture: Boolean, recorded: Boolean): String = when {
+            isFuture || !recorded -> dash
+            else -> daysText(days ?: 0)
+        }
+        fun activeWeeksText(count: Int): String = "$count 周"
+        fun peakWeekText(weeks: String, count: Long?): String =
+            if (count == null) noRecords else "$weeks · ${countText(count)}"
+        fun monthWeeklyAccessibility(weeks: String): String = "月内周分布；$weeks"
         fun percentage(value: Double): String = String.format(java.util.Locale.US, "%.0f%%", value)
         fun quarterLabel(quarter: Int): String = "Q$quarter"
         fun monthChartLabel(month: Int, isFuture: Boolean, recorded: Boolean, count: Long?): String =

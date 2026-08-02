@@ -146,6 +146,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
         composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
         composeRule.onNodeWithTag("month_distribution_card").assertIsDisplayed()
+        composeRule.onNodeWithText("月内周分布").assertIsDisplayed()
         composeRule.onAllNodesWithText("点此快速跳转").assertCountEquals(0)
 
         composeRule

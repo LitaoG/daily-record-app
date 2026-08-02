@@ -205,28 +205,35 @@ class StatisticsModelsTest {
     }
 
     @Test
-    fun monthHeatmapUsesEachRealDateOnceAndKeepsFutureDatesEmpty() {
+    fun monthStatisticsAggregatesInMonthWeeksAndKeepsFutureWeeksEmpty() {
         val model = buildStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2026, 8, 15),
             today = LocalDate.of(2026, 8, 15),
-            records = listOf(record(LocalDate.of(2026, 8, 1), 0)),
+            records = listOf(
+                record(LocalDate.of(2026, 8, 1), 0),
+                record(LocalDate.of(2026, 8, 3), 2),
+                record(LocalDate.of(2026, 8, 10), 1),
+            ),
         )
 
         val month = requireNotNull(model.month)
-        assertEquals(31, month.days.size)
-        assertEquals((1..31).toList(), month.days.map { it.date.dayOfMonth })
-        assertEquals(42, month.gridCellCount)
-        assertTrue(month.days.first().recorded)
-        assertEquals(0L, month.days.first().count)
-        assertFalse(month.days[14].future)
-        assertTrue(month.days[15].future)
-        assertNull(month.days[15].count)
-        assertFalse(month.days[15].recorded)
+        assertEquals(6, month.weeks.size)
+        assertEquals(listOf(0L, 2L, 1L, null, null, null), month.weeks.map { it.count })
+        assertEquals(listOf(0, 1, 1, null, null, null), month.weeks.map { it.recordedDays })
+        assertTrue(month.weeks.first().recorded)
+        assertEquals(0L, month.weeks.first().count)
+        assertFalse(month.weeks[2].future)
+        assertTrue(month.weeks[3].future)
+        assertNull(month.weeks[3].count)
+        assertFalse(month.weeks[3].recorded)
+        assertEquals(2, month.activeWeekCount)
+        assertEquals(2L, month.peakCount)
+        assertEquals(listOf(2), month.peakWeeks.map { it.index })
     }
 
     @Test
-    fun leapFebruaryHeatmapHasTwentyNineRealDates() {
+    fun leapFebruaryUsesFiveInMonthWeekBuckets() {
         val model = buildStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2028, 2, 10),
@@ -235,9 +242,11 @@ class StatisticsModelsTest {
         )
 
         val month = requireNotNull(model.month)
-        assertEquals(29, month.days.size)
-        assertEquals((1..29).toList(), month.days.map { it.date.dayOfMonth })
-        assertEquals(35, month.gridCellCount)
+        assertEquals(5, month.weeks.size)
+        assertEquals("第1周 1–6日", month.weeks.first().label)
+        assertEquals("第5周 28–29日", month.weeks.last().label)
+        assertTrue(month.weeks.all { !it.future })
+        assertFalse(month.weeks.last().recorded)
     }
 
     @Test

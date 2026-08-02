@@ -16,26 +16,42 @@ data class StatisticsSummary(
         get() = if (recordedDays == 0) 0.0 else totalCount.toDouble() / recordedDays
 }
 
-/** One real calendar date in the selected month. Grid padding is not represented here. */
-data class StatisticsDay(
-    val date: LocalDate,
+data class MonthWeekStatistics(
+    val index: Int,
+    val start: LocalDate,
+    val end: LocalDate,
     val count: Long?,
+    val recordedDays: Int?,
     val recorded: Boolean,
     val future: Boolean,
-)
+) {
+    val label: String
+        get() = AppCopy.Statistics.monthWeekLabel(index, start, end)
+}
 
 data class MonthStatistics(
     val month: YearMonth,
-    val leadingEmptyCells: Int,
-    val days: List<StatisticsDay>,
+    val weeks: List<MonthWeekStatistics>,
 ) {
     init {
-        require(leadingEmptyCells in 0..6) { "Month grid offset must be a weekday offset." }
-        require(days.size == month.lengthOfMonth()) { "Month statistics must contain every real date exactly once." }
+        require(weeks.isNotEmpty()) { "Month statistics must contain at least one in-month week." }
     }
 
-    val gridCellCount: Int
-        get() = ((leadingEmptyCells + days.size + 6) / 7) * 7
+    val activeWeekCount: Int
+        get() = weeks.count { it.recorded && !it.future && (it.recordedDays ?: 0) > 0 }
+
+    val peakCount: Long?
+        get() = weeks
+            .asSequence()
+            .filter { it.recorded && !it.future }
+            .mapNotNull { it.count }
+            .maxOrNull()
+
+    val peakWeeks: List<MonthWeekStatistics>
+        get() {
+            val peak = peakCount ?: return emptyList()
+            return weeks.filter { it.recorded && !it.future && it.count == peak }
+        }
 }
 
 data class YearMonthStatistics(
@@ -159,7 +175,7 @@ private fun buildMonth(
     val end = month.atEndOfMonth()
     val rangeRecords = records.filter { it.localDate in start..end }
     val gridStart = start.minusDays((start.dayOfWeek.value - 1).toLong())
-    val details = buildList {
+    val weeks = buildList {
         var weekStart = gridStart
         var index = 1
         while (weekStart <= end) {
@@ -168,10 +184,12 @@ private fun buildMonth(
             val bucketEnd = minOf(weekEnd, end)
             if (bucketStart > today) {
                 add(
-                    StatisticsDetail(
-                        label = monthWeekLabel(index, bucketStart, bucketEnd),
+                    MonthWeekStatistics(
+                        index = index,
+                        start = bucketStart,
+                        end = bucketEnd,
                         count = null,
-                        days = null,
+                        recordedDays = null,
                         future = true,
                         recorded = false,
                     ),
@@ -180,10 +198,13 @@ private fun buildMonth(
                 val bucketRecords = rangeRecords.filter { it.localDate in bucketStart..minOf(bucketEnd, today) }
                 val summary = summaryOf(bucketRecords)
                 add(
-                    StatisticsDetail(
-                        label = monthWeekLabel(index, bucketStart, bucketEnd),
+                    MonthWeekStatistics(
+                        index = index,
+                        start = bucketStart,
+                        end = bucketEnd,
                         count = summary.totalCount,
-                        days = summary.recordedDays,
+                        recordedDays = summary.recordedDays,
+                        future = false,
                         recorded = bucketRecords.isNotEmpty(),
                     ),
                 )
@@ -192,13 +213,22 @@ private fun buildMonth(
             index += 1
         }
     }
+    val details = weeks.map { week ->
+        StatisticsDetail(
+            label = week.label,
+            count = week.count,
+            days = week.recordedDays,
+            future = week.future,
+            recorded = week.recorded,
+        )
+    }
     return StatisticsUiModel(
         title = AppCopy.Statistics.monthTitle(month.year, month.monthValue),
         status = AppCopy.Statistics.periodStatus(end, today),
         summary = summaryOf(rangeRecords),
         detailsTitle = AppCopy.Statistics.weeklyDetails,
         details = details,
-        month = buildMonthStatistics(month, today, rangeRecords),
+        month = MonthStatistics(month = month, weeks = weeks),
     )
 }
 
@@ -238,30 +268,6 @@ private fun buildYear(
         detailsTitle = AppCopy.Statistics.monthlyDetails,
         details = details,
         year = buildYearStatistics(anchorDate.year, today, rangeRecords),
-    )
-}
-
-private fun buildMonthStatistics(
-    month: YearMonth,
-    today: LocalDate,
-    records: List<DailyCountEntry>,
-): MonthStatistics {
-    val recordsByDate = records.associateBy { it.localDate }
-    val days = (1..month.lengthOfMonth()).map { dayOfMonth ->
-        val date = month.atDay(dayOfMonth)
-        val future = date > today
-        val record = recordsByDate[date]
-        StatisticsDay(
-            date = date,
-            count = if (future || record == null) null else record.count.toLong(),
-            recorded = !future && record != null,
-            future = future,
-        )
-    }
-    return MonthStatistics(
-        month = month,
-        leadingEmptyCells = month.atDay(1).dayOfWeek.value - 1,
-        days = days,
     )
 }
 
@@ -333,12 +339,6 @@ private fun summaryOf(records: List<DailyCountEntry>) = StatisticsSummary(
 )
 
 private fun weekdayName(date: LocalDate): String = AppCopy.weekdayName(date.dayOfWeek.value)
-
-private fun monthWeekLabel(
-    index: Int,
-    start: LocalDate,
-    end: LocalDate,
-): String = AppCopy.Statistics.monthWeekLabel(index, start, end)
 
 private fun dateRangeTitle(start: LocalDate, end: LocalDate): String =
     AppCopy.Statistics.dateRangeTitle(start, end)
