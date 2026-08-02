@@ -241,11 +241,14 @@ internal object AppCopy {
         val weekdays = Calendar.weekdays
         const val title = "快速跳转"
         const val subtitle = "直接选择年份和日期，不必逐月翻找"
+        const val monthSubtitle = "直接选择年份和月份"
+        const val yearSubtitle = "直接选择年份"
         const val jump = "跳转到此日"
         const val selected = "已选择"
         const val switchYear = "切换年份"
         const val returnToDatePicker = "返回日期选择"
         const val selectYear = "选择年份"
+        const val selectMonth = "选择月份"
         fun switchYearDescription(year: Int): String = "$switchYear，当前${year}年"
         fun nextMonthDescription(forward: Boolean): String = if (forward) "快速跳转下个月" else "快速跳转上个月"
         fun dateDescription(date: LocalDate, weekday: String): String =
@@ -255,6 +258,10 @@ internal object AppCopy {
         fun dateLabel(date: LocalDate, weekday: String): String =
             "${dateText(date)} · $weekday"
         fun selectYearDescription(year: Int): String = "选择${year}年"
+        fun yearTitle(year: Int): String = "${year}年"
+        fun monthTitle(month: YearMonth): String = "${month.year}年 ${month.monthValue}月"
+        fun monthLabel(month: Int): String = "${month}月"
+        fun monthDescription(month: YearMonth): String = "选择${month.year}年${month.monthValue}月"
     }
 
     object Record {

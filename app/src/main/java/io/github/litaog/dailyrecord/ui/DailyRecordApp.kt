@@ -35,10 +35,12 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordBottomBar
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.diagnostics.DiagnosticDialog
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
+import io.github.litaog.dailyrecord.ui.navigation.DateNavigationSelection
 import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
 import io.github.litaog.dailyrecord.ui.calendar.DailyCountCalendarScreen
 import io.github.litaog.dailyrecord.ui.record.DailyCountRecordScreen
 import io.github.litaog.dailyrecord.ui.statistics.DailyCountStatisticsScreen
+import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import java.time.LocalDate
 import java.time.YearMonth
@@ -89,6 +91,12 @@ fun DailyRecordApp(
     var selectedDateText by rememberSaveable { mutableStateOf<String?>(null) }
     var browseDateText by rememberSaveable { mutableStateOf(effectiveToday.toString()) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
+    var datePickerSelectionName by rememberSaveable {
+        mutableStateOf(DateNavigationSelection.Date.name)
+    }
+    val datePickerSelection = DateNavigationSelection.entries.firstOrNull {
+        it.name == datePickerSelectionName
+    } ?: DateNavigationSelection.Date
     var showAccountDialog by rememberSaveable { mutableStateOf(false) }
     var showDiagnostics by rememberSaveable { mutableStateOf(false) }
     var showAccountDeletion by rememberSaveable { mutableStateOf(false) }
@@ -233,7 +241,10 @@ fun DailyRecordApp(
                     }
                 },
                 onToday = { browseDateText = effectiveToday.toString() },
-                onOpenDatePicker = { showDatePicker = true },
+                onOpenDatePicker = {
+                    datePickerSelectionName = DateNavigationSelection.Date.name
+                    showDatePicker = true
+                },
                 onDateSelected = {
                     browseDateText = it.toString()
                     selectedDateText = it.toString()
@@ -251,7 +262,19 @@ fun DailyRecordApp(
                 onModuleSelected = selectModule,
                 modifier = Modifier.padding(contentPadding),
                 onAnchorDateChanged = { browseDateText = it.toString() },
-                onOpenDatePicker = { showDatePicker = true },
+                onOpenDatePicker = {
+                    datePickerSelectionName = DateNavigationSelection.Date.name
+                    showDatePicker = true
+                },
+                onOpenPeriodPicker = { period ->
+                    datePickerSelectionName = when (period) {
+                        StatisticsPeriod.Week -> DateNavigationSelection.Date.name
+                        StatisticsPeriod.Month -> DateNavigationSelection.Month.name
+                        StatisticsPeriod.Year -> DateNavigationSelection.Year.name
+                        StatisticsPeriod.All -> DateNavigationSelection.Date.name
+                    }
+                    showDatePicker = true
+                },
                 onOpenCalendar = { destinationName = TopDestination.Calendar.name },
             )
         }
@@ -263,6 +286,7 @@ fun DailyRecordApp(
             earliestDate = EarliestSupportedDate,
             latestDate = effectiveToday,
             colors = moduleSpec.colors,
+            selection = datePickerSelection,
             onDismiss = { showDatePicker = false },
             onDateSelected = {
                 browseDateText = it.toString()

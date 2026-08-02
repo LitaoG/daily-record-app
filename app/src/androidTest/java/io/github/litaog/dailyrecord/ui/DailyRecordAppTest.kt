@@ -153,12 +153,24 @@ class DailyRecordAppTest {
             .onNodeWithContentDescription("选择统计日期，当前2026年 5月")
             .performClick()
         composeRule.onNodeWithTag("date_navigation_dialog").assertIsDisplayed()
-        composeRule.onNodeWithText("取消").performClick()
+        composeRule.onNodeWithText("直接选择年份和月份").assertIsDisplayed()
+        composeRule.onNodeWithText("1月").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("选择2026年6月").performClick()
+        composeRule.onNodeWithText("跳转到此日").performClick()
+        composeRule.onNodeWithText("2026年 6月").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("年统计，未选择").performClick()
         composeRule.onNodeWithText("2026年").assertIsDisplayed()
+        composeRule
+            .onNodeWithContentDescription("选择统计日期，当前2026年")
+            .performClick()
+        composeRule.onNodeWithText("直接选择年份").assertIsDisplayed()
+        composeRule.onNodeWithText("选择年份").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("选择2025年").performClick()
+        composeRule.onNodeWithText("跳转到此日").performClick()
+        composeRule.onNodeWithText("2025年").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
-        composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
+        composeRule.onNodeWithText("2025年 6月").assertIsDisplayed()
     }
 
     @Test

@@ -68,6 +68,7 @@ fun StatisticsScreen(
     onAnchorDateChanged: (LocalDate) -> Unit,
     onOpenDatePicker: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenPeriodPicker: (StatisticsPeriod) -> Unit = { onOpenDatePicker() },
     onOpenCalendar: () -> Unit = {},
 ) = DailyCountStatisticsScreen(
     today = today,
@@ -81,6 +82,7 @@ fun StatisticsScreen(
     onAnchorDateChanged = onAnchorDateChanged,
     onOpenDatePicker = onOpenDatePicker,
     modifier = modifier,
+    onOpenPeriodPicker = onOpenPeriodPicker,
     onOpenCalendar = onOpenCalendar,
 )
 
@@ -97,6 +99,7 @@ internal fun DailyCountStatisticsScreen(
     onAnchorDateChanged: (LocalDate) -> Unit,
     onOpenDatePicker: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenPeriodPicker: (StatisticsPeriod) -> Unit = { onOpenDatePicker() },
     onOpenCalendar: () -> Unit = {},
 ) {
     var periodName by rememberSaveable { mutableStateOf(StatisticsPeriod.Week.name) }
@@ -138,7 +141,7 @@ internal fun DailyCountStatisticsScreen(
                 earliestDate = earliestDate,
                 today = today,
                 onAnchorDateChanged = onAnchorDateChanged,
-                onOpenDatePicker = onOpenDatePicker,
+                onOpenPeriodPicker = onOpenPeriodPicker,
                 colors = moduleSpec.colors,
             )
         }
@@ -257,7 +260,7 @@ private fun PeriodNavigator(
     earliestDate: LocalDate,
     today: LocalDate,
     onAnchorDateChanged: (LocalDate) -> Unit,
-    onOpenDatePicker: () -> Unit,
+    onOpenPeriodPicker: (StatisticsPeriod) -> Unit,
     colors: RecordModuleColorTokens,
 ) {
     if (period == StatisticsPeriod.All) {
@@ -300,7 +303,7 @@ private fun PeriodNavigator(
                     .weight(1f)
                     .sizeIn(minHeight = 48.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .clickable(role = Role.Button, onClick = onOpenDatePicker)
+                    .clickable(role = Role.Button, onClick = { onOpenPeriodPicker(period) })
                     .semantics {
                         role = Role.Button
                         contentDescription = AppCopy.Statistics.datePickerDescription(model.title)
