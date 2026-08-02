@@ -259,6 +259,7 @@ fun DailyRecordApp(
             initialDate = browseDate,
             earliestDate = EarliestSupportedDate,
             latestDate = effectiveToday,
+            colors = moduleSpec.colors,
             onDismiss = { showDatePicker = false },
             onDateSelected = {
                 browseDateText = it.toString()

@@ -279,7 +279,11 @@ private fun buildYearStatistics(
     val months = (1..12).map { monthNumber ->
         val month = YearMonth.of(year, monthNumber)
         val future = month.atDay(1) > today
-        val inProgress = !future && month.atEndOfMonth() >= today
+        // A month is only complete after its last calendar day has elapsed.  In
+        // particular, 12/31 remains the in-progress month until the clock moves
+        // to 1/1, at which point December is eligible for extrema ranking.
+        val complete = month.atEndOfMonth() < today
+        val inProgress = !future && !complete
         val monthRecords = records.filter { it.localDate in month.atDay(1)..month.atEndOfMonth() }
         val recorded = !future && monthRecords.isNotEmpty()
         YearMonthStatistics(

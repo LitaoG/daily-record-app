@@ -357,55 +357,58 @@ fun PeriodTabs(
     modifier: Modifier = Modifier,
     colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
-    Row(
+    // Keep the period switcher visually quiet: a rectangular white surface with
+    // one shared baseline. The active state is carried only by its module-colour
+    // underline, rather than a nested pill or elevated chip.
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
-            .heightIn(min = DailyRecordSizes.PeriodTabMinHeight)
-            .background(DailyRecordSurface)
-            .drawWithContent {
-                drawContent()
-                drawLine(
-                    color = DailyRecordDivider,
-                    start = Offset(0f, size.height),
-                    end = Offset(size.width, size.height),
-                    strokeWidth = DailyRecordBorders.Standard.toPx(),
-                )
-            },
+            .heightIn(min = DailyRecordSizes.PeriodTabMinHeight),
+        color = DailyRecordSurface,
+        shape = RoundedCornerShape(2.dp),
+        border = BorderStroke(DailyRecordBorders.Standard, DailyRecordDivider),
+        shadowElevation = DailyRecordElevations.Flat,
     ) {
-        StatisticsPeriod.entries.forEach { period ->
-            val active = period == selected
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .heightIn(min = DailyRecordSizes.PeriodTabMinHeight)
-                    .testTag("statistics_period_${period.name}")
-                    .clickable(role = Role.Tab) { onSelected(period) }
-                    .padding(
-                        horizontal = DailyRecordSpacing.Compact,
-                        vertical = DailyRecordSpacing.Inline,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+        ) {
+            StatisticsPeriod.entries.forEach { period ->
+                val active = period == selected
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .heightIn(min = DailyRecordSizes.PeriodTabMinHeight)
+                        .testTag("statistics_period_${period.name}")
+                        .clickable(role = Role.Tab) { onSelected(period) }
+                        .padding(
+                            horizontal = DailyRecordSpacing.Compact,
+                            vertical = DailyRecordSpacing.Inline,
+                        )
+                        .semantics {
+                            this.selected = active
+                            role = Role.Tab
+                            contentDescription = AppCopy.selectedState(AppCopy.Statistics.statisticsLabel(period.label), active)
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = period.label,
+                        color = if (active) colors.primary else DailyRecordTextSecondary,
+                        style = MaterialTheme.typography.labelLarge,
                     )
-                    .semantics {
-                        this.selected = active
-                        role = Role.Tab
-                        contentDescription = AppCopy.selectedState(AppCopy.Statistics.statisticsLabel(period.label), active)
-                    },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = period.label,
-                    color = if (active) colors.primary else DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                Box(
-                    Modifier
-                        .width(24.dp)
-                        .height(2.dp)
-                        .clip(CircleShape)
-                        .background(if (active) colors.primary else Color.Transparent),
-                )
+                    Box(
+                        Modifier
+                            .width(24.dp)
+                            .height(2.dp)
+                            .clip(CircleShape)
+                            .background(if (active) colors.primary else Color.Transparent),
+                    )
+                }
             }
         }
     }

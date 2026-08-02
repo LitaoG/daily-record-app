@@ -52,9 +52,8 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
+import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -68,6 +67,7 @@ internal fun DateNavigationDialog(
     initialDate: LocalDate,
     earliestDate: LocalDate,
     latestDate: LocalDate,
+    colors: RecordModuleColorTokens = HandBrewColorTokens,
     onDismiss: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
 ) {
@@ -84,13 +84,14 @@ internal fun DateNavigationDialog(
         testTag = "date_navigation_dialog",
         onDismissRequest = onDismiss,
     ) {
-        SelectedDateSummary(selectedDate)
+        SelectedDateSummary(selectedDate, colors)
         Spacer(Modifier.height(16.dp))
 
         if (mode == NavigationMode.Year) {
             YearPicker(
                 selectedYear = displayedMonth.year,
                 years = (earliestDate.year..latestDate.year).toList(),
+                colors = colors,
                 onYearSelected = { year ->
                     val newMonth = displayedMonth.withYear(year).coerceIn(
                         YearMonth.from(earliestDate),
@@ -110,6 +111,7 @@ internal fun DateNavigationDialog(
                 selectedDate = selectedDate,
                 earliestDate = earliestDate,
                 latestDate = latestDate,
+                colors = colors,
                 onSwitchToYear = { mode = NavigationMode.Year },
                 onMonthChanged = { newMonth ->
                     displayedMonth = newMonth
@@ -123,18 +125,27 @@ internal fun DateNavigationDialog(
 
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlineActionButton(AppCopy.Auth.cancel, onDismiss, Modifier.weight(1f))
+            OutlineActionButton(
+                AppCopy.Auth.cancel,
+                onDismiss,
+                Modifier.weight(1f),
+                accent = colors.primary,
+            )
             PrimaryActionButton(
                 label = AppCopy.Navigation.jump,
                 onClick = { onDateSelected(selectedDate) },
                 modifier = Modifier.weight(1.35f),
+                accent = colors.primary,
             )
         }
     }
 }
 
 @Composable
-private fun SelectedDateSummary(date: LocalDate) {
+private fun SelectedDateSummary(
+    date: LocalDate,
+    colors: RecordModuleColorTokens,
+) {
     val locale = Locale.SIMPLIFIED_CHINESE
     val weekday = date.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
     val largeText = LocalDensity.current.fontScale >= 1.4f
@@ -143,8 +154,8 @@ private fun SelectedDateSummary(date: LocalDate) {
             .fillMaxWidth()
             .padding(top = 16.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(DailyRecordDefaultAccentSoft.copy(alpha = .22f))
-            .border(1.dp, DailyRecordDefaultAccentSoft, RoundedCornerShape(16.dp))
+            .background(colors.soft.copy(alpha = .22f))
+            .border(1.dp, colors.soft, RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(AppCopy.Navigation.selected, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
@@ -177,6 +188,7 @@ private fun MonthPicker(
     selectedDate: LocalDate,
     earliestDate: LocalDate,
     latestDate: LocalDate,
+    colors: RecordModuleColorTokens,
     onSwitchToYear: () -> Unit,
     onMonthChanged: (YearMonth) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
@@ -249,6 +261,7 @@ private fun MonthPicker(
                             selected = date == selectedDate,
                             enabled = date in earliestDate..latestDate,
                             onClick = { onDateSelected(date) },
+                            colors = colors,
                             modifier = Modifier.weight(1f),
                         )
                     } else {
@@ -284,6 +297,7 @@ private fun DateCell(
     date: LocalDate,
     selected: Boolean,
     enabled: Boolean,
+    colors: RecordModuleColorTokens,
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
@@ -293,7 +307,7 @@ private fun DateCell(
             .height(44.dp)
             .padding(2.dp)
             .clip(CircleShape)
-            .background(if (selected) DailyRecordDefaultAccent else Color.Transparent)
+            .background(if (selected) colors.primary else Color.Transparent)
             .border(if (selected) 0.dp else 1.dp, if (selected) Color.Transparent else DailyRecordSurface, CircleShape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {
@@ -307,7 +321,7 @@ private fun DateCell(
         Text(
             text = date.dayOfMonth.toString(),
             color = when {
-                selected -> DailyRecordOnAccent
+                selected -> colors.onPrimary
                 enabled -> DailyRecordText
                 else -> DailyRecordDivider
             },
@@ -321,6 +335,7 @@ private fun DateCell(
 private fun YearPicker(
     selectedYear: Int,
     years: List<Int>,
+    colors: RecordModuleColorTokens,
     onYearSelected: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -363,8 +378,8 @@ private fun YearPicker(
                 modifier = Modifier
                     .heightIn(min = 52.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(if (selected) DailyRecordDefaultAccent else DailyRecordSurfaceMuted)
-                    .border(1.dp, if (selected) DailyRecordDefaultAccent else DailyRecordDivider, RoundedCornerShape(14.dp))
+                    .background(if (selected) colors.primary else DailyRecordSurfaceMuted)
+                    .border(1.dp, if (selected) colors.primary else DailyRecordDivider, RoundedCornerShape(14.dp))
                     .clickable(role = Role.Button) { onYearSelected(year) }
                     .semantics {
                         role = Role.Button
@@ -375,7 +390,7 @@ private fun YearPicker(
             ) {
                 Text(
                     "$year",
-                    color = if (selected) DailyRecordOnAccent else DailyRecordText,
+                    color = if (selected) colors.onPrimary else DailyRecordText,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                 )
