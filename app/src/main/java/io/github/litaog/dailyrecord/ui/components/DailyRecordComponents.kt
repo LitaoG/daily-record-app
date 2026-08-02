@@ -408,7 +408,9 @@ fun PeriodTabs(
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = DailyRecordSizes.MinimumTouchTarget),
+                    // Keep a finite inner canvas so the slider and labels are
+                    // measured consistently inside lazy scrolling content.
+                    .height(DailyRecordSizes.MinimumTouchTarget),
             ) {
                 val segmentWidth = maxWidth / periods.size
                 val sliderWidth = (segmentWidth - (sliderInset * 2f)).coerceAtLeast(1.dp)
@@ -473,8 +475,7 @@ fun PeriodTabs(
 
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = DailyRecordSizes.MinimumTouchTarget),
+                        .fillMaxSize(),
                 ) {
                     periods.forEach { period ->
                         val active = period == selected
