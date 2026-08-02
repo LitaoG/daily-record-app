@@ -174,7 +174,10 @@ fun DailyRecordApp(
         containerColor = DailyRecordCanvas,
         snackbarHost = {
             if (!showAccountDialog) {
-                DailyRecordSnackbarHost(snackbarHostState)
+                DailyRecordSnackbarHost(
+                    hostState = snackbarHostState,
+                    colors = moduleSpec.colors,
+                )
             }
         },
         topBar = {

@@ -36,7 +36,7 @@
 ## 自动化与源码门禁
 
 - 运行时源码不再包含 Material `AlertDialog` 或 `TextButton`。
-- `clear_record_dialog`、`discard_record_dialog` 和 `hand_brew_snackbar` 均有稳定测试标识。
+- `clear_record_dialog`、`discard_record_dialog` 和 `daily_record_snackbar` 均有稳定测试标识。
 - 记录、认证和账号定向设备回归共 14 项，14 通过、0 失败、0 跳过。
 - 最终标题字阶调整后，在系统字体 200% 下复跑记录页 8 项设备测试，8 通过、0 失败、0 跳过。
 - JVM 单元测试通过；Debug、AndroidTest 编译通过；Lint 0 error、7 条版本升级提示。

@@ -213,7 +213,7 @@ class DailyRecordAppTest {
             )
         }
         composeRule.onNodeWithText(VPN_SYNC_FAILURE_MESSAGE).assertIsDisplayed()
-        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily_record_snackbar").assertIsDisplayed()
     }
 
     @Test
@@ -236,7 +236,7 @@ class DailyRecordAppTest {
                 kind = SyncFailureKind.Network,
             )
         }
-        composeRule.onNodeWithTag("hand_brew_snackbar").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily_record_snackbar").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription(
             "账号与云同步，网络连接异常",
@@ -245,7 +245,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
         composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
         composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
-        composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 
     @Test
@@ -274,7 +274,7 @@ class DailyRecordAppTest {
 
         composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
         composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
-        composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 
     @Test
@@ -299,7 +299,7 @@ class DailyRecordAppTest {
         }
         composeRule.waitForIdle()
         composeRule.onAllNodesWithText(VPN_SYNC_FAILURE_MESSAGE).assertCountEquals(0)
-        composeRule.onAllNodesWithTag("hand_brew_snackbar").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 
     @Test
