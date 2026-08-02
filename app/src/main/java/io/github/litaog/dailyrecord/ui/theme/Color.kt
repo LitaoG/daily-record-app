@@ -22,9 +22,7 @@ val DailyRecordWarning = Color(0xFF8A6A18)
 val DailyRecordDanger = Color(0xFF9B3A32)
 val DailyRecordDangerContainer = Color(0xFFF5E3E1)
 
-/** Shared glass-period control atmosphere; kept neutral so both modules stay coherent. */
-val DailyRecordPeriodGlassTint = Color(0xFFEFF1FF)
-val DailyRecordPeriodGlassGlow = Color(0xFFB9AEFF)
+/** The period control keeps its inactive labels neutral across both modules. */
 val DailyRecordPeriodInactiveText = Color(0xFF5C677C)
 
 enum class RecordVisualState {
@@ -92,6 +90,20 @@ data class RecordModuleColorTokens(
         )
     }
 }
+
+/**
+ * Module-aware glass atmosphere for shared controls.
+ *
+ * The light tint keeps the surface airy while the primary colour gives the
+ * selected slider a restrained module-specific glow (purple for hand brew,
+ * deep red for intimacy). Keeping this derived from the module token prevents
+ * a shared control from silently falling back to the hand-brew palette.
+ */
+val RecordModuleColorTokens.periodGlassTint: Color
+    get() = soft
+
+val RecordModuleColorTokens.periodGlassGlow: Color
+    get() = primary
 
 val HandBrewColorTokens = RecordModuleColorTokens(
     primary = Color(0xFF72517C),

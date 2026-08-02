@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,13 +75,13 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordElevations
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordPeriodGlassGlow
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordPeriodGlassTint
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordPeriodInactiveText
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.periodGlassGlow
+import io.github.litaog.dailyrecord.ui.theme.periodGlassTint
 
 enum class StatisticsPeriod(val label: String) {
     Week(AppCopy.Statistics.weekTab),
@@ -374,6 +376,8 @@ fun PeriodTabs(
     val selectedIndex = periods.indexOf(selected).coerceAtLeast(0)
     val trackShape = RoundedCornerShape(percent = 50)
     val sliderShape = RoundedCornerShape(percent = 50)
+    val glassTint = colors.periodGlassTint
+    val glassGlow = colors.periodGlassGlow
 
     Surface(
         modifier = modifier
@@ -393,8 +397,8 @@ fun PeriodTabs(
                     brush = Brush.linearGradient(
                         colors = listOf(
                             Color.White.copy(alpha = .68f),
-                            DailyRecordPeriodGlassTint.copy(alpha = .72f),
-                            Color(0xFFEDEEFF).copy(alpha = .62f),
+                            glassTint.copy(alpha = .72f),
+                            Color.White.copy(alpha = .46f),
                         ),
                     ),
                 )
@@ -426,7 +430,7 @@ fun PeriodTabs(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color.White.copy(alpha = .94f),
-                                    Color(0xFFF8F6FF).copy(alpha = .88f),
+                                    glassTint.copy(alpha = .30f),
                                 ),
                             ),
                         )
@@ -446,7 +450,7 @@ fun PeriodTabs(
                             drawRoundRect(
                                 brush = Brush.radialGradient(
                                     colors = listOf(
-                                        DailyRecordPeriodGlassGlow.copy(alpha = .16f),
+                                        glassGlow.copy(alpha = .16f),
                                         Color.Transparent,
                                     ),
                                     center = Offset(size.width / 2f, size.height),
@@ -469,12 +473,18 @@ fun PeriodTabs(
                             animationSpec = tween(durationMillis = 180),
                             label = "period_text_color_${period.name}",
                         ).value
+                        val interactionSource = remember { MutableInteractionSource() }
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .testTag("statistics_period_${period.name}")
-                                .clickable(role = Role.Tab) { onSelected(period) }
+                                .clickable(
+                                    interactionSource = interactionSource,
+                                    indication = null,
+                                    role = Role.Tab,
+                                    onClick = { onSelected(period) },
+                                )
                                 .semantics {
                                     this.selected = active
                                     role = Role.Tab
