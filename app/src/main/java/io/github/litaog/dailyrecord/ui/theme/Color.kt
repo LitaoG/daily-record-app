@@ -22,6 +22,11 @@ val DailyRecordWarning = Color(0xFF8A6A18)
 val DailyRecordDanger = Color(0xFF9B3A32)
 val DailyRecordDangerContainer = Color(0xFFF5E3E1)
 
+/** Shared glass-period control atmosphere; kept neutral so both modules stay coherent. */
+val DailyRecordPeriodGlassTint = Color(0xFFEFF1FF)
+val DailyRecordPeriodGlassGlow = Color(0xFFB9AEFF)
+val DailyRecordPeriodInactiveText = Color(0xFF5C677C)
+
 enum class RecordVisualState {
     Unset,
     ExplicitZero,

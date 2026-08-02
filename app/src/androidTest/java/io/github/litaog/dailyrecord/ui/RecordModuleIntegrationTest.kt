@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.Density
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
+import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -145,6 +146,35 @@ class RecordModuleIntegrationTest {
         assertMinimumHeight("statistics_period_Year", 48f)
         assertMinimumHeight("statistics_period_All", 48f)
         composeRule.onNodeWithText("全部").assertIsDisplayed()
+    }
+
+    @Test
+    fun periodTabsKeepEqualTouchTargetsAndInsetGlassSlider() {
+        setDualModuleContent()
+
+        composeRule.onNodeWithContentDescription("统计，未选择").performClick()
+        composeRule.waitForIdle()
+
+        val container = composeRule.onNodeWithTag("statistics_period_tabs").fetchSemanticsNode().boundsInRoot
+        val slider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
+        val segments = StatisticsPeriod.entries.map { period ->
+            composeRule.onNodeWithTag("statistics_period_${period.name}").fetchSemanticsNode().boundsInRoot
+        }
+        val minWidth = segments.minOf { it.width }
+        val maxWidth = segments.maxOf { it.width }
+
+        assertEquals(minWidth, maxWidth, 0.5f)
+        assertEquals(segments.first().width, slider.width, 0.5f)
+        assertEquals(segments.first().left, slider.left, 0.5f)
+        assertEquals(segments.first().right, slider.right, 0.5f)
+        assertTrue(slider.top > container.top)
+        assertTrue(slider.bottom < container.bottom)
+
+        composeRule.onNodeWithTag("statistics_period_Month").performClick()
+        composeRule.waitForIdle()
+        val movedSlider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
+        assertEquals(segments[1].left, movedSlider.left, 1.5f)
+        assertEquals(segments[1].right, movedSlider.right, 1.5f)
     }
 
     @Test
