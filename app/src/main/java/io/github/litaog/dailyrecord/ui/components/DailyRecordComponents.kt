@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -68,10 +69,10 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 
 enum class StatisticsPeriod(val label: String) {
-    Week("周"),
-    Month("月"),
-    Year("年"),
-    All("全部"),
+    Week(AppCopy.Statistics.weekTab),
+    Month(AppCopy.Statistics.monthTab),
+    Year(AppCopy.Statistics.yearTab),
+    All(AppCopy.Statistics.allTab),
 }
 
 @Composable
@@ -105,7 +106,7 @@ internal fun DailyRecordBottomBar(
             horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
         ) {
             BottomDestination(
-                label = "日历",
+                label = AppCopy.NavigationBar.calendar,
                 selected = selected == TopDestination.Calendar,
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
@@ -113,7 +114,7 @@ internal fun DailyRecordBottomBar(
                 icon = { color -> CalendarGlyph(color) },
             )
             BottomDestination(
-                label = "统计",
+                label = AppCopy.NavigationBar.statistics,
                 selected = selected == TopDestination.Statistics,
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
@@ -143,7 +144,7 @@ private fun BottomDestination(
             .semantics {
                 this.selected = selected
                 role = Role.Tab
-                contentDescription = label + "，" + if (selected) "已选择" else "未选择"
+                contentDescription = AppCopy.selectedState(label, selected)
             },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -327,8 +328,7 @@ internal fun RecordModuleSelector(
                     .semantics {
                         this.selected = active
                         role = Role.Tab
-                        contentDescription = spec.label + "记录，" +
-                            if (active) "已选择" else "未选择"
+                        contentDescription = AppCopy.selectedState(AppCopy.RecordModule.recordLabel(spec.label), active)
                     },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
@@ -389,7 +389,7 @@ fun PeriodTabs(
                     .semantics {
                         this.selected = active
                         role = Role.Tab
-                        contentDescription = period.label + "统计，" + if (active) "已选择" else "未选择"
+                        contentDescription = AppCopy.selectedState(AppCopy.Statistics.statisticsLabel(period.label), active)
                     },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
@@ -405,49 +405,6 @@ fun PeriodTabs(
                         .height(2.dp)
                         .clip(CircleShape)
                         .background(if (active) colors.primary else Color.Transparent),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun MetricCard(
-    label: String,
-    value: String,
-    unit: String,
-    modifier: Modifier = Modifier,
-    colors: RecordModuleColorTokens = HandBrewColorTokens,
-) {
-    Surface(
-        modifier = modifier.heightIn(min = 112.dp),
-        color = DailyRecordSurface,
-        shape = DailyRecordShapes.Card,
-        border = BorderStroke(DailyRecordBorders.Standard, DailyRecordDivider),
-        shadowElevation = DailyRecordElevations.Raised,
-    ) {
-        Column(
-            modifier = Modifier.padding(DailyRecordSpacing.Content),
-            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(colors.primary))
-                Spacer(Modifier.width(DailyRecordSpacing.Inline))
-                Text(text = label, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-            }
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = value,
-                    color = DailyRecordText,
-                    style = MetricNumberMedium,
-                )
-                Spacer(Modifier.width(3.dp))
-                Text(
-                    text = unit,
-                    color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(bottom = 4.dp),
-                    maxLines = 1,
                 )
             }
         }
@@ -474,7 +431,7 @@ fun DailyCountControl(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            CountButton("减少一次", enabled && count > 0, false, colors, onDecrease)
+            CountButton(AppCopy.Components.decrease, enabled && count > 0, false, colors, onDecrease)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = if (enabled) count.toString() else "—",
@@ -483,7 +440,7 @@ fun DailyCountControl(
                     fontWeight = FontWeight.Bold,
                 )
             }
-            CountButton("增加一次", enabled && count < Int.MAX_VALUE, true, colors, onIncrease)
+            CountButton(AppCopy.Components.increase, enabled && count < Int.MAX_VALUE, true, colors, onIncrease)
         }
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.DailyCountRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.model.DailyCountRecord
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
@@ -29,12 +30,9 @@ internal enum class RecordModule {
 internal data class RecordModuleUiSpec(
     val module: RecordModule,
     val label: String,
-    val totalLabel: String,
-    val daysLabel: String,
     val questionToday: String,
     val questionPast: String,
     val explicitZeroText: String,
-    val positiveStateText: String,
     val semanticCountLabel: String,
     val colors: RecordModuleColorTokens,
     val icon: @Composable (Modifier, Color) -> Unit,
@@ -42,28 +40,22 @@ internal data class RecordModuleUiSpec(
 
 internal val HandBrewModuleSpec = RecordModuleUiSpec(
     module = RecordModule.HandBrew,
-    label = "手冲",
-    totalLabel = "手冲总次数",
-    daysLabel = "手冲天数",
-    questionToday = "今天手冲了几次？",
-    questionPast = "这天手冲了几次？",
-    explicitZeroText = "明确没冲",
-    positiveStateText = "已手冲",
-    semanticCountLabel = "手冲",
+    label = AppCopy.RecordModule.handBrewLabel,
+    questionToday = AppCopy.RecordModule.handBrewQuestionToday,
+    questionPast = AppCopy.RecordModule.handBrewQuestionPast,
+    explicitZeroText = AppCopy.RecordModule.handBrewZero,
+    semanticCountLabel = AppCopy.RecordModule.handBrewLabel,
     colors = HandBrewColorTokens,
     icon = { modifier, color -> PlaneIcon(modifier = modifier, color = color) },
 )
 
 internal val SexModuleSpec = RecordModuleUiSpec(
     module = RecordModule.Sex,
-    label = "做爱",
-    totalLabel = "做爱总次数",
-    daysLabel = "做爱天数",
-    questionToday = "今天做爱了几次？",
-    questionPast = "这天做爱了几次？",
-    explicitZeroText = "明确没有",
-    positiveStateText = "已记录",
-    semanticCountLabel = "做爱",
+    label = AppCopy.RecordModule.sexLabel,
+    questionToday = AppCopy.RecordModule.sexQuestionToday,
+    questionPast = AppCopy.RecordModule.sexQuestionPast,
+    explicitZeroText = AppCopy.RecordModule.sexZero,
+    semanticCountLabel = AppCopy.RecordModule.sexLabel,
     colors = SexColorTokens,
     icon = { modifier, color -> IntimacyIcon(modifier = modifier, color = color) },
 )

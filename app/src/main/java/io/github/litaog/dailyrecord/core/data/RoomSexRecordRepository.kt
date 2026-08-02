@@ -9,7 +9,6 @@ import io.github.litaog.dailyrecord.core.model.SexRecord
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -28,9 +27,7 @@ internal class RoomSexRecordRepository(
         startDate: LocalDate,
         endExclusive: LocalDate,
     ): Flow<List<SexRecord>> {
-        require(startDate < endExclusive) {
-            "Date range must be non-empty and use [start, endExclusive)."
-        }
+        requireValidRecordRange(startDate, endExclusive)
         return recordDao.observeForRange(ownerId, startDate, endExclusive).map { records ->
             records.map { it.asExternalModel() }
         }
@@ -43,7 +40,7 @@ internal class RoomSexRecordRepository(
             val updatedAt = maxOf(
                 record.updatedAt,
                 createdAt,
-                existing?.updatedAt?.nextInstant() ?: record.updatedAt,
+                existing?.updatedAt?.nextRecordTimestamp() ?: record.updatedAt,
             )
             val saved = record.copy(
                 id = existing?.id ?: record.id,
@@ -58,7 +55,7 @@ internal class RoomSexRecordRepository(
             )
             saved
         }
-        notifyLocalChange()
+        notifyLocalChangeSafely(onLocalChange)
         return saved
     }
 
@@ -70,23 +67,11 @@ internal class RoomSexRecordRepository(
             val updatedAt = maxOf(
                 Instant.now(clock),
                 existing.createdAt,
-                existing.updatedAt.nextInstant(),
+                existing.updatedAt.nextRecordTimestamp(),
             )
             recordDao.markDeleted(ownerId, existing.id, updatedAt) == 1
         }
-        if (cleared) notifyLocalChange()
+        if (cleared) notifyLocalChangeSafely(onLocalChange)
         return cleared
     }
-
-    private fun notifyLocalChange() {
-        try {
-            onLocalChange()
-        } catch (error: CancellationException) {
-            throw error
-        } catch (_: Exception) {
-            // Local persistence is the product guarantee; cloud scheduling is best effort.
-        }
-    }
 }
-
-private fun Instant.nextInstant(): Instant = runCatching { plusMillis(1) }.getOrDefault(this)

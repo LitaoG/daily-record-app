@@ -215,7 +215,11 @@
 
 ### 9.2 手冲／做爱切换器
 
-#### 当前实现
+#### 研究快照（Stage 4 前）
+
+以下记录的是 2026-07-29 研究时的旧实现形态，不是当前运行时代码的组件清单。旧的
+`CompactPeriodSummary`、`MetricCard` 和未接入的月分布组件已在后续整理中移除；当前统计页
+以 `StatisticsScreen.kt` 与 `StatisticsPeriodCards.kt` 中实际调用的组件为准。
 
 当前 `RecordModuleSelector` 已经是单一外框、严格二等分、完整半区点击和完整半区选中背景。此前“外框里再套小胶囊”的问题已经解决。
 
@@ -311,7 +315,11 @@
 
 ### 9.5 统计页
 
-#### 当前实现
+#### 研究快照（Stage 4 前）
+
+以下记录的是 2026-07-29 研究时的旧实现形态，不是当前运行时代码的组件清单。旧的
+`CompactPeriodSummary`、`MetricCard` 和未接入的月分布组件已在后续整理中移除；当前统计页
+以 `StatisticsScreen.kt` 与 `StatisticsPeriodCards.kt` 中实际调用的组件为准。
 
 [`StatisticsScreen.kt`](../../app/src/main/java/io/github/litaog/dailyrecord/ui/statistics/StatisticsScreen.kt) 中：
 

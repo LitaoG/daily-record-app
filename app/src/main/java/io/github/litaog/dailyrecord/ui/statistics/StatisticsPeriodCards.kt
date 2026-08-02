@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -23,10 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -34,113 +30,8 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
-import io.github.litaog.dailyrecord.ui.theme.MetricNumberLarge
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
-import java.util.Locale
-
-@Composable
-internal fun CompactPeriodSummary(
-    period: StatisticsPeriod,
-    summary: StatisticsSummary,
-    horizontal: Boolean,
-    moduleLabel: String = "手冲",
-    daysLabel: String = "手冲天数",
-    modifier: Modifier = Modifier,
-    colors: RecordModuleColorTokens = HandBrewColorTokens,
-) {
-    val periodLabel = if (period == StatisticsPeriod.Week) "本周" else "本月"
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = colors.primary,
-        shape = RoundedCornerShape(20.dp),
-    ) {
-        if (horizontal) {
-            Row(
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
-            ) {
-                PeriodTotal(periodLabel, moduleLabel, summary, Modifier.weight(1.2f), colors)
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    SummaryFact(daysLabel, "${summary.recordedDays} 天", colors)
-                    SummaryFact(
-                        "记录日均",
-                        String.format(Locale.US, "%.1f 次/天", summary.average),
-                        colors,
-                    )
-                }
-            }
-        } else {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                PeriodTotal(periodLabel, moduleLabel, summary, Modifier.fillMaxWidth(), colors)
-                SummaryFact(daysLabel, "${summary.recordedDays} 天", colors)
-                SummaryFact(
-                    "记录日均",
-                    String.format(Locale.US, "%.1f 次/天", summary.average),
-                    colors,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PeriodTotal(
-    periodLabel: String,
-    moduleLabel: String,
-    summary: StatisticsSummary,
-    modifier: Modifier,
-    colors: RecordModuleColorTokens,
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = "$periodLabel · ${moduleLabel}次数",
-            color = colors.onPrimary,
-            style = MaterialTheme.typography.labelMedium,
-        )
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = summary.totalCount.toString(),
-                color = colors.onPrimary,
-                style = MetricNumberLarge,
-            )
-            Text(
-                text = "次",
-                color = colors.onPrimary,
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(start = 4.dp, bottom = 5.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun SummaryFact(
-    label: String,
-    value: String,
-    colors: RecordModuleColorTokens,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, color = colors.onPrimary, style = MaterialTheme.typography.labelSmall)
-        Text(
-            value,
-            color = colors.onPrimary,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.End,
-        )
-    }
-}
+import io.github.litaog.dailyrecord.core.common.AppCopy
 
 @Composable
 internal fun WeekDistributionCard(
@@ -150,8 +41,8 @@ internal fun WeekDistributionCard(
 ) {
     val maxCount = details.mapNotNull { it.count }.maxOrNull()?.coerceAtLeast(1L) ?: 1L
     DistributionSurface(
-        title = "每日分布",
-        subtitle = "次数",
+        title = AppCopy.Statistics.dailyDistribution,
+        subtitle = AppCopy.Statistics.times,
         modifier = modifier.testTag("week_distribution_card"),
     ) {
         Row(
@@ -213,79 +104,6 @@ internal fun WeekDistributionCard(
 }
 
 @Composable
-internal fun MonthDistributionCard(
-    details: List<StatisticsDetail>,
-    modifier: Modifier = Modifier,
-    colors: RecordModuleColorTokens = HandBrewColorTokens,
-) {
-    val maxCount = details.mapNotNull { it.count }.maxOrNull()?.coerceAtLeast(1L) ?: 1L
-    DistributionSurface(
-        title = "每周分布",
-        subtitle = "次数 · 天数",
-        modifier = modifier.testTag("month_distribution_card"),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            details.forEach { detail ->
-                val display = detail.displayValues()
-                val fraction = distributionFraction(detail, maxCount, minNonZeroFraction = .08f)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics(mergeDescendants = true) {
-                            contentDescription = "${detail.label}，${display.count}，${display.days}"
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Text(
-                        text = detail.label,
-                        color = if (detail.future) DailyRecordTextMuted else DailyRecordText,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.weight(1.15f),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .weight(1.35f)
-                            .height(12.dp)
-                            .clip(CircleShape)
-                            .background(DailyRecordSurfaceMuted),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        if (fraction > 0f) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(fraction)
-                                    .fillMaxHeight()
-                                    .clip(CircleShape)
-                                    .background(colors.primary),
-                            )
-                        }
-                    }
-                    Column(
-                        modifier = Modifier.width(68.dp),
-                        horizontalAlignment = Alignment.End,
-                    ) {
-                        Text(
-                            display.count,
-                            color = if (detail.future) DailyRecordTextMuted else DailyRecordText,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                        )
-                        Text(
-                            display.days,
-                            color = DailyRecordTextMuted,
-                            style = MaterialTheme.typography.labelSmall,
-                            maxLines = 1,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun DistributionSurface(
     title: String,
     subtitle: String,
@@ -336,7 +154,14 @@ internal fun distributionFraction(
 }
 
 private fun StatisticsDetail.displayValues(): DetailDisplay = when {
-    future -> DetailDisplay("未来", "—", "未来")
-    !recorded -> DetailDisplay("未填写", "—", "未填")
-    else -> DetailDisplay("${count ?: 0L} 次", "${days ?: 0} 天", (count ?: 0L).toString())
+    future -> DetailDisplay(AppCopy.Statistics.future, AppCopy.Statistics.dash, AppCopy.Statistics.future)
+    !recorded -> DetailDisplay(AppCopy.Statistics.unset, AppCopy.Statistics.dash, AppCopy.Statistics.unsetShort)
+    else -> {
+        val safeCount = count ?: 0L
+        DetailDisplay(
+            AppCopy.Statistics.countText(safeCount),
+            AppCopy.Statistics.daysText(days ?: 0),
+            safeCount.toString(),
+        )
+    }
 }

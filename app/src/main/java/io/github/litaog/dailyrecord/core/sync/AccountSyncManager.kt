@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestoreException
 import io.github.litaog.dailyrecord.core.cloud.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
 import io.github.litaog.dailyrecord.core.cloud.InteractiveCloudTimeoutException
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
@@ -196,7 +197,7 @@ internal interface AccountSyncOperations {
 }
 
 private fun malformedRemoteRecordsFailure() = SyncStatus.Failed(
-    message = "部分云端记录格式异常，其余记录已继续同步",
+    message = AppCopy.Account.dataFormatFailure,
     kind = SyncFailureKind.Data,
 )
 
@@ -267,16 +268,16 @@ private fun Throwable.toSyncFailure(): SyncStatus.Failed {
     val kind = syncFailureKind()
     val message = when (kind) {
         SyncFailureKind.Network -> if (this is InteractiveCloudTimeoutException) {
-            "连接云服务超过 5 秒，记录已保存在本机"
+            AppCopy.Account.timeoutFailure
         } else {
-            "网络连接异常，记录已保存在本机"
+            AppCopy.Account.networkFailure
         }
-        SyncFailureKind.Authentication -> "登录状态已失效，记录已保存在本机"
-        SyncFailureKind.Permission -> "账号暂无云端访问权限，记录已保存在本机"
-        SyncFailureKind.Quota -> "云服务额度暂时受限，记录已保存在本机"
-        SyncFailureKind.Service -> "云服务暂时不可用，记录已保存在本机"
-        SyncFailureKind.Data -> "部分记录暂时无法同步，原始记录已保存在本机"
-        SyncFailureKind.Unknown -> "暂时无法同步，记录已保存在本机"
+        SyncFailureKind.Authentication -> AppCopy.Account.authFailure
+        SyncFailureKind.Permission -> AppCopy.Account.permissionFailure
+        SyncFailureKind.Quota -> AppCopy.Account.quotaFailure
+        SyncFailureKind.Service -> AppCopy.Account.serviceFailure
+        SyncFailureKind.Data -> AppCopy.Account.dataFailure
+        SyncFailureKind.Unknown -> AppCopy.Account.unknownFailure
     }
     return SyncStatus.Failed(message = message, kind = kind)
 }

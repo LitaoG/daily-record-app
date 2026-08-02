@@ -45,6 +45,7 @@ import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -57,7 +58,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -79,8 +79,8 @@ internal fun DateNavigationDialog(
     var mode by remember { mutableStateOf(NavigationMode.Date) }
 
     DailyRecordDialog(
-        title = "快速跳转",
-        subtitle = "直接选择年份和日期，不必逐月翻找",
+        title = AppCopy.Navigation.title,
+        subtitle = AppCopy.Navigation.subtitle,
         testTag = "date_navigation_dialog",
         onDismissRequest = onDismiss,
     ) {
@@ -123,9 +123,9 @@ internal fun DateNavigationDialog(
 
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlineActionButton("取消", onDismiss, Modifier.weight(1f))
+            OutlineActionButton(AppCopy.Auth.cancel, onDismiss, Modifier.weight(1f))
             PrimaryActionButton(
-                label = "跳转到此日",
+                label = AppCopy.Navigation.jump,
                 onClick = { onDateSelected(selectedDate) },
                 modifier = Modifier.weight(1.35f),
             )
@@ -147,10 +147,10 @@ private fun SelectedDateSummary(date: LocalDate) {
             .border(1.dp, DailyRecordDefaultAccentSoft, RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Text("已选择", color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
+        Text(AppCopy.Navigation.selected, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
         if (largeText) {
             Text(
-                text = date.format(DateTimeFormatter.ofPattern("yyyy年M月d日")),
+                text = AppCopy.Navigation.dateText(date),
                 color = DailyRecordText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -162,7 +162,7 @@ private fun SelectedDateSummary(date: LocalDate) {
             )
         } else {
             Text(
-                text = date.format(DateTimeFormatter.ofPattern("yyyy年M月d日")) + " · " + weekday,
+                text = AppCopy.Navigation.dateLabel(date, weekday),
                 color = DailyRecordText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -203,13 +203,13 @@ private fun MonthPicker(
                 .clickable(role = Role.Button, onClick = onSwitchToYear)
                 .semantics {
                     role = Role.Button
-                    contentDescription = "切换年份，当前${displayedMonth.year}年"
+                    contentDescription = AppCopy.Navigation.switchYearDescription(displayedMonth.year)
                 }
                 .padding(horizontal = 18.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "${displayedMonth.year}年 ${displayedMonth.monthValue}月",
+                text = AppCopy.Calendar.monthTitle(displayedMonth),
                 color = DailyRecordText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -223,7 +223,7 @@ private fun MonthPicker(
     }
 
     Row(Modifier.fillMaxWidth()) {
-        listOf("一", "二", "三", "四", "五", "六", "日").forEach { day ->
+        AppCopy.Navigation.weekdays.forEach { day ->
             Text(
                 text = day,
                 modifier = Modifier.weight(1f).padding(vertical = 8.dp),
@@ -270,7 +270,7 @@ private fun MonthArrow(forward: Boolean, enabled: Boolean, onClick: () -> Unit) 
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
-                contentDescription = if (forward) "快速跳转下个月" else "快速跳转上个月"
+                contentDescription = AppCopy.Navigation.nextMonthDescription(forward)
                 if (!enabled) disabled()
             },
         contentAlignment = Alignment.Center,
@@ -299,7 +299,7 @@ private fun DateCell(
             .semantics {
                 role = Role.Button
                 this.selected = selected
-                contentDescription = "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$weekday"
+                contentDescription = AppCopy.Navigation.dateDescription(date, weekday)
                 if (!enabled) disabled()
             },
         contentAlignment = Alignment.Center,
@@ -338,13 +338,13 @@ private fun YearPicker(
                 .size(48.dp)
                 .clip(CircleShape)
                 .clickable(role = Role.Button, onClick = onBack)
-                .semantics { contentDescription = "返回日期选择" },
+                .semantics { contentDescription = AppCopy.Navigation.returnToDatePicker },
             contentAlignment = Alignment.Center,
         ) {
             ChevronIcon(forward = false)
         }
         Text(
-            "选择年份",
+            AppCopy.Navigation.selectYear,
             color = DailyRecordText,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
@@ -369,7 +369,7 @@ private fun YearPicker(
                     .semantics {
                         role = Role.Button
                         this.selected = selected
-                        contentDescription = "选择${year}年"
+                        contentDescription = AppCopy.Navigation.selectYearDescription(year)
                     },
                 contentAlignment = Alignment.Center,
             ) {

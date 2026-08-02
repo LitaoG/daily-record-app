@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.syncFailureKind
 import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
@@ -84,24 +85,24 @@ internal fun AccountDeletionDialog(
     }
 
     DailyRecordDialog(
-        title = if (step == AccountDeletionStep.Warning) "删除账号与云端数据？" else "再次确认永久删除",
+        title = if (step == AccountDeletionStep.Warning) AppCopy.Deletion.warningTitle else AppCopy.Deletion.confirmationTitle,
         subtitle = if (step == AccountDeletionStep.Warning) {
-            "此操作无法撤销"
+            AppCopy.Deletion.irreversible
         } else {
-            "输入当前密码验证身份"
+            AppCopy.Deletion.verifyPassword
         },
         testTag = "account_deletion_dialog",
         onDismissRequest = { if (!busy) onDismiss() },
     ) {
         if (step == AccountDeletionStep.Warning) {
             Text(
-                "继续后会先验证密码，再删除该账号的全部云端手冲、做爱记录和登录账号。",
+                AppCopy.Deletion.warningMessage,
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 18.dp),
             )
             Text(
-                "选择本机记录的处理方式",
+                AppCopy.Deletion.localChoice,
                 color = DailyRecordText,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
@@ -112,34 +113,34 @@ internal fun AccountDeletionDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 DeletionChoiceCard(
-                    title = "保留在本机（推荐）",
-                    description = "删除账号后继续离线使用这些记录",
+                    title = AppCopy.Deletion.keepLocalTitle,
+                    description = AppCopy.Deletion.keepLocalDescription,
                     selected = localData == LocalDataAfterAccountDeletion.Keep,
                     onClick = { localDataName = LocalDataAfterAccountDeletion.Keep.name },
                 )
                 DeletionChoiceCard(
-                    title = "同时删除本机记录",
-                    description = "云端和这台手机都不再保留",
+                    title = AppCopy.Deletion.deleteLocalTitle,
+                    description = AppCopy.Deletion.deleteLocalDescription,
                     selected = localData == LocalDataAfterAccountDeletion.Delete,
                     onClick = { localDataName = LocalDataAfterAccountDeletion.Delete.name },
                 )
             }
             PrimaryActionButton(
-                label = "继续验证身份",
+                label = AppCopy.Deletion.continueVerification,
                 onClick = { stepName = AccountDeletionStep.Verify.name },
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             )
             OutlineActionButton(
-                label = "取消",
+                label = AppCopy.Auth.cancel,
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
             )
         } else {
             Text(
                 if (localData == LocalDataAfterAccountDeletion.Keep) {
-                    "云端记录和账号会永久删除；本机记录将转为离线记录。"
+                    AppCopy.Deletion.confirmationKeepLocal
                 } else {
-                    "云端记录、账号和这台手机里的账号记录都会永久删除。"
+                    AppCopy.Deletion.confirmationDeleteLocal
                 },
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
@@ -152,7 +153,7 @@ internal fun AccountDeletionDialog(
                     errorText = null
                 },
                 enabled = !busy,
-                label = { Text("当前密码") },
+                label = { Text(AppCopy.Deletion.currentPassword) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -173,13 +174,13 @@ internal fun AccountDeletionDialog(
                 )
             }
             DangerActionButton(
-                label = if (busy) "正在永久删除…" else "永久删除账号",
+                label = if (busy) AppCopy.Deletion.deleting else AppCopy.Deletion.deletePermanently,
                 onClick = submit,
                 enabled = !busy && password.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             )
             OutlineActionButton(
-                label = "返回",
+                label = AppCopy.Account.back,
                 onClick = {
                     password = ""
                     errorText = null
@@ -213,7 +214,7 @@ private fun DeletionChoiceCard(
             .padding(14.dp)
             .semantics {
                 role = Role.RadioButton
-                contentDescription = "$title，${if (selected) "已选择" else "未选择"}"
+                contentDescription = AppCopy.Deletion.selectionDescription(title, selected)
             },
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -251,23 +252,23 @@ internal fun accountDeletionErrorMessage(error: Throwable): String {
     if (code.isNotEmpty()) return accountDeletionErrorMessageForCode(code)
     return when (error.syncFailureKind()) {
         SyncFailureKind.Network ->
-            "网络中断，删除未完成；本机记录仍保留，请开启 VPN（梯子）后重试"
+            AppCopy.Deletion.networkError
         SyncFailureKind.Authentication ->
-            "登录状态已变化，请退出后重新登录再删除"
+            AppCopy.Deletion.authError
         SyncFailureKind.Permission ->
-            "账号暂无删除权限；本机记录仍保留，请重新登录后重试"
+            AppCopy.Deletion.permissionError
         SyncFailureKind.Quota, SyncFailureKind.Service ->
-            "云服务暂时不可用；本机记录仍保留，请稍后重试"
+            AppCopy.Deletion.serviceError
         SyncFailureKind.Data, SyncFailureKind.Unknown ->
-            "删除未完成，本机记录仍保留；部分云端记录可能已先删除，请直接重试"
+            AppCopy.Deletion.unknownError
     }
 }
 
 internal fun accountDeletionErrorMessageForCode(code: String): String = when (code) {
-    "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL" -> "密码不正确，请重新输入"
-    "ERROR_NETWORK_REQUEST_FAILED" -> "网络不可用，请确认 VPN（梯子）已开启后重试"
-    "ERROR_TOO_MANY_REQUESTS" -> "尝试次数过多，请稍后再试"
+    "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL" -> AppCopy.Deletion.wrongPassword
+    "ERROR_NETWORK_REQUEST_FAILED" -> AppCopy.Deletion.networkAuthError
+    "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Deletion.tooManyAttempts
     "ERROR_USER_MISMATCH", "ERROR_USER_NOT_FOUND", "ERROR_REQUIRES_RECENT_LOGIN" ->
-        "登录状态已变化，请退出后重新登录再删除"
-    else -> "删除未完成，本机记录仍保留；部分云端记录可能已先删除，请直接重试"
+        AppCopy.Deletion.authError
+    else -> AppCopy.Deletion.unknownError
 }

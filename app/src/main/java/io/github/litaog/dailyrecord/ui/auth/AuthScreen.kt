@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -144,20 +145,20 @@ internal fun AuthScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 CalendarGlyph(color = DailyRecordDefaultAccent, modifier = Modifier.size(36.dp))
-                Text("私密日历", color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
+                Text(AppCopy.Auth.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
                 Text(
-                    "登录后，本机记录会合并到你的账号，换手机可自动恢复。",
+                    AppCopy.Auth.subtitle,
                     color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AuthModeButton("登录", mode == AuthMode.SignIn) {
+                    AuthModeButton(AppCopy.Auth.signIn, mode == AuthMode.SignIn) {
                         if (!busy) {
                             modeName = AuthMode.SignIn.name
                             errorText = null
                         }
                     }
-                    AuthModeButton("注册", mode == AuthMode.Register) {
+                    AuthModeButton(AppCopy.Auth.register, mode == AuthMode.Register) {
                         if (!busy) {
                             modeName = AuthMode.Register.name
                             errorText = null
@@ -169,7 +170,7 @@ internal fun AuthScreen(
                     onValueChange = { email = it; errorText = null },
                     enabled = !busy,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("邮箱") },
+                    label = { Text(AppCopy.Auth.email) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -183,7 +184,7 @@ internal fun AuthScreen(
                     onValueChange = { password = it; errorText = null },
                     enabled = !busy,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("密码") },
+                    label = { Text(AppCopy.Auth.password) },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -195,10 +196,10 @@ internal fun AuthScreen(
                     ),
                     trailingIcon = {
                         DailyRecordTextAction(
-                            label = if (passwordVisible) "隐藏" else "显示",
+                            label = if (passwordVisible) AppCopy.Auth.hide else AppCopy.Auth.show,
                             onClick = { passwordVisible = !passwordVisible },
                             enabled = !busy,
-                            accessibilityLabel = if (passwordVisible) "隐藏密码" else "显示密码",
+                            accessibilityLabel = if (passwordVisible) AppCopy.Auth.hidePassword else AppCopy.Auth.showPassword,
                         )
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -206,11 +207,11 @@ internal fun AuthScreen(
                 )
                 if (mode == AuthMode.SignIn) {
                     DailyRecordTextAction(
-                        label = "忘记密码？",
+                        label = AppCopy.Auth.forgotPassword,
                         onClick = { showPasswordReset = true },
                         enabled = productionConfigured && !busy,
                         modifier = Modifier.align(Alignment.End),
-                        accessibilityLabel = "打开重置密码",
+                        accessibilityLabel = AppCopy.Auth.openPasswordReset,
                     )
                 }
                 if (mode == AuthMode.Register) {
@@ -219,7 +220,7 @@ internal fun AuthScreen(
                         onValueChange = { confirmPassword = it; errorText = null },
                         enabled = !busy,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("再次输入密码") },
+                        label = { Text(AppCopy.Auth.confirmPassword) },
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(
@@ -232,13 +233,13 @@ internal fun AuthScreen(
                     )
                 }
                 Text(
-                    "密码至少 8 位；不使用短信或验证码。请妥善保存密码。",
+                    AppCopy.Auth.passwordPolicy,
                     color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text(
-                    "登录和注册需要打开 VPN（梯子）。选择本机使用则无需开启，但不会同步到云端。",
+                    AppCopy.Auth.vpnNotice,
                     color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
@@ -247,7 +248,7 @@ internal fun AuthScreen(
                 )
                 if (!productionConfigured) {
                     Text(
-                        "云端开发项目尚未完成配置，当前构建只能连接本地测试环境。",
+                        AppCopy.Auth.emulatorNotice,
                         color = DailyRecordDefaultAccent,
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.fillMaxWidth(),
@@ -263,22 +264,22 @@ internal fun AuthScreen(
                 }
                 PrimaryActionButton(
                     label = when {
-                        busy -> "请稍候…"
-                        mode == AuthMode.SignIn -> "登录并恢复记录"
-                        else -> "创建账号"
+                        busy -> AppCopy.Auth.wait
+                        mode == AuthMode.SignIn -> AppCopy.Auth.signInAndRestore
+                        else -> AppCopy.Auth.createAccount
                     },
                     enabled = productionConfigured && !busy && validationError == null,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = submit,
                 )
                 DailyRecordTextAction(
-                    label = "先在本机使用",
+                    label = AppCopy.Auth.continueOffline,
                     onClick = onContinueOffline,
                     enabled = !busy,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text(
-                    "以后登录时，本机记录会合并到你下一次登录的账号。",
+                    AppCopy.Auth.offlineMergeNotice,
                     color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall,
                 )
@@ -286,7 +287,7 @@ internal fun AuthScreen(
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            "云端只保存两个模块中已记录的日期、次数和同步所需数据。",
+            AppCopy.Auth.cloudDataNotice,
             color = DailyRecordTextMuted,
             style = MaterialTheme.typography.labelSmall,
         )
@@ -323,7 +324,7 @@ private fun AuthModeButton(label: String, selected: Boolean, onClick: () -> Unit
             .padding(horizontal = 24.dp)
             .semantics {
                 role = Role.Tab
-                contentDescription = "$label，${if (selected) "已选择" else "未选择"}"
+                contentDescription = AppCopy.selectedState(label, selected)
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -341,10 +342,10 @@ private fun validateCredentials(
     password: String,
     confirmPassword: String,
 ): String? = when {
-    email.isBlank() -> "请输入邮箱"
-    !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> "请输入有效邮箱"
-    password.length < 8 -> "密码至少需要 8 位"
-    mode == AuthMode.Register && password != confirmPassword -> "两次输入的密码不一致"
+    email.isBlank() -> AppCopy.Auth.emailRequired
+    !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> AppCopy.Auth.emailInvalid
+    password.length < 8 -> AppCopy.Auth.passwordTooShort
+    mode == AuthMode.Register && password != confirmPassword -> AppCopy.Auth.passwordMismatch
     else -> null
 }
 
@@ -355,20 +356,20 @@ internal fun authErrorMessage(error: Throwable, mode: AuthMode): String {
         ?.errorCode
         .orEmpty()
     if (error.isNetworkReachabilityFailure() || code == "ERROR_NETWORK_REQUEST_FAILED") {
-        return "连接云服务超时或网络不可用，请打开 VPN（梯子）后重试"
+        return AppCopy.Auth.network
     }
     return when (code) {
-        "ERROR_EMAIL_ALREADY_IN_USE" -> "此邮箱已注册，请直接登录"
-        "ERROR_WEAK_PASSWORD" -> "密码强度不足，请使用更长的密码"
-        "ERROR_TOO_MANY_REQUESTS" -> "尝试次数过多，请稍后再试"
+        "ERROR_EMAIL_ALREADY_IN_USE" -> AppCopy.Auth.emailAlreadyRegistered
+        "ERROR_WEAK_PASSWORD" -> AppCopy.Auth.weakPassword
+        "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Auth.tooManyRequests
         "ERROR_INVALID_CREDENTIAL",
         "ERROR_INVALID_LOGIN_CREDENTIALS",
         "ERROR_WRONG_PASSWORD",
         "ERROR_USER_NOT_FOUND",
-        -> "邮箱或密码不正确，请检查后重试"
+        -> AppCopy.Auth.invalidCredentials
         else -> when (mode) {
-            AuthMode.SignIn -> "暂时无法登录，请稍后重试"
-            AuthMode.Register -> "暂时无法创建账号，请稍后重试"
+            AuthMode.SignIn -> AppCopy.Auth.signInUnavailable
+            AuthMode.Register -> AppCopy.Auth.registerUnavailable
         }
     }
 }

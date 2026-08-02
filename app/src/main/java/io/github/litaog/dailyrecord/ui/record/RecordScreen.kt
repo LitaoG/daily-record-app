@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.ui.DailyCountEntry
@@ -181,16 +182,16 @@ internal fun DailyCountRecordScreen(
                 ) {
                     PrimaryActionButton(
                         label = when {
-                            !dataReady -> "正在读取…"
-                            saving -> "正在保存…"
-                            !canSave && record != null -> "已保存"
-                            else -> "保存记录"
+                            !dataReady -> AppCopy.Record.loading
+                            saving -> AppCopy.Record.saving
+                            !canSave && record != null -> AppCopy.Record.saved
+                            else -> AppCopy.Record.save
                         },
                         enabled = editable && canSave && !saving,
                         onClick = {
                             if (!editable || !canSave || saving) return@PrimaryActionButton
                             val currentDraftCount = draft.count
-                            launchMutation("保存失败，请重试") {
+                            launchMutation(AppCopy.Record.saveFailure) {
                                 controller.saveRecord(date, currentDraftCount)
                             }
                         },
@@ -198,7 +199,7 @@ internal fun DailyCountRecordScreen(
                         accent = moduleSpec.colors.primary,
                     )
                     RecordTextAction(
-                        label = "清除记录",
+                        label = AppCopy.Record.clear,
                         enabled = editable && dataReady && record != null && !saving,
                         accent = moduleSpec.colors.primary,
                         onClick = { showClearDialog = true },
@@ -226,7 +227,7 @@ internal fun DailyCountRecordScreen(
                 style = MaterialTheme.typography.headlineLarge,
             )
             Text(
-                "只记录次数",
+                AppCopy.Record.countOnly,
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -239,23 +240,23 @@ internal fun DailyCountRecordScreen(
             )
             Text(
                 text = when {
-                    !dataReady -> "正在读取记录…"
-                    !editable -> "未来日期 · 不可记录"
-                    hasUnsavedChanges -> "待保存 · ${draft.count} 次"
-                    record == null -> "尚未填写"
-                    record.count == 0 -> "已记录 · 0 次"
-                    else -> "已记录 · ${record.count} 次"
+                    !dataReady -> AppCopy.Record.loadingRecords
+                    !editable -> AppCopy.Record.futureUnavailable
+                    hasUnsavedChanges -> AppCopy.Record.savedStatus(draft.count)
+                    record == null -> AppCopy.Record.notSaved
+                    record.count == 0 -> AppCopy.Record.zeroRecorded
+                    else -> AppCopy.Record.recordedStatus(record.count)
                 },
                 color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                "0 次＝${moduleSpec.explicitZeroText}，会保留记录。",
+                AppCopy.Record.explicitZeroHint(moduleSpec.explicitZeroText),
                 color = DailyRecordTextMuted,
                 style = MaterialTheme.typography.labelSmall,
             )
             Text(
-                "保存后更新日历与统计",
+                AppCopy.Record.saveHint,
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.labelSmall,
             )
@@ -272,12 +273,12 @@ internal fun DailyCountRecordScreen(
                 verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
             ) {
                 Text(
-                    text = YearMonth.from(date).monthValue.toString() + "月已保存",
+                    text = AppCopy.Record.monthSaved(YearMonth.from(date).monthValue),
                     color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.labelSmall,
                 )
                 Text(
-                    "$storedMonthCount 次 · $storedMonthDays 天",
+                    AppCopy.Record.monthSummary(storedMonthCount, storedMonthDays),
                     color = DailyRecordText,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
@@ -288,18 +289,18 @@ internal fun DailyCountRecordScreen(
 
     if (showClearDialog) {
         DailyRecordConfirmationDialog(
-            title = "清除这天的记录？",
-            subtitle = "记录会恢复为“未填写”",
-            message = "这次操作不能在应用内撤销，也不会计入统计。",
-            cancelLabel = "取消",
-            confirmLabel = "确认清除",
+            title = AppCopy.Record.clearTitle,
+            subtitle = AppCopy.Record.clearSubtitle,
+            message = AppCopy.Record.clearMessage,
+            cancelLabel = AppCopy.Auth.cancel,
+            confirmLabel = AppCopy.Record.confirmClear,
             testTag = "clear_record_dialog",
             confirmEnabled = !saving,
             onDismiss = { if (!saving) showClearDialog = false },
             onConfirm = {
                 if (!saving) {
                     showClearDialog = false
-                    launchMutation("清除失败，请重试") {
+                    launchMutation(AppCopy.Record.clearFailure) {
                         controller.clearRecord(date)
                     }
                 }
@@ -309,11 +310,11 @@ internal fun DailyCountRecordScreen(
 
     if (showDiscardDialog) {
         DailyRecordConfirmationDialog(
-            title = "放弃未保存的修改？",
-            subtitle = "当前次数还没有保存",
-            message = "返回日历后，本次调整会丢失。",
-            cancelLabel = "继续编辑",
-            confirmLabel = "放弃修改",
+            title = AppCopy.Record.discardTitle,
+            subtitle = AppCopy.Record.unsavedSubtitle,
+            message = AppCopy.Record.discardMessage,
+            cancelLabel = AppCopy.Record.continueEditing,
+            confirmLabel = AppCopy.Record.discard,
             testTag = "discard_record_dialog",
             onDismiss = { showDiscardDialog = false },
             onConfirm = {
@@ -347,7 +348,7 @@ private fun RecordHeader(
                     .size(DailyRecordSizes.MinimumTouchTarget)
                     .clip(CircleShape)
                     .clickable(role = Role.Button, onClick = onBack)
-                    .semantics { role = Role.Button; contentDescription = "返回日历" },
+                    .semantics { role = Role.Button; contentDescription = AppCopy.Record.backToCalendar },
                 contentAlignment = Alignment.Center,
             ) {
                 BackChevronIcon(color = DailyRecordText)
@@ -358,15 +359,15 @@ private fun RecordHeader(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 Text(
-                    text = date.monthValue.toString() + "月" + date.dayOfMonth + "日 · " + weekdayName(date),
+                    text = AppCopy.Record.dateLabel(date, weekdayName(date)),
                     color = DailyRecordText,
                     style = MaterialTheme.typography.titleLarge,
                 )
                 Text(
                     text = when {
-                        date == today -> "今天"
-                        date < today -> "历史日期"
-                        else -> "未来日期"
+                        date == today -> AppCopy.today
+                        date < today -> AppCopy.historyDate
+                        else -> AppCopy.futureDate
                     },
                     color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.labelSmall,
@@ -379,7 +380,7 @@ private fun RecordHeader(
         ) {
             moduleSpec.icon(Modifier.size(DailyRecordSizes.ModuleIcon), moduleSpec.colors.primary)
             Text(
-                text = moduleSpec.label + "记录",
+                text = AppCopy.Record.moduleRecordLabel(moduleSpec.label),
                 color = moduleSpec.colors.primary,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
@@ -411,12 +412,4 @@ private fun RecordTextAction(
     }
 }
 
-private fun weekdayName(date: LocalDate): String = when (date.dayOfWeek.value) {
-    1 -> "周一"
-    2 -> "周二"
-    3 -> "周三"
-    4 -> "周四"
-    5 -> "周五"
-    6 -> "周六"
-    else -> "周日"
-}
+private fun weekdayName(date: LocalDate): String = AppCopy.weekdayName(date.dayOfWeek.value)

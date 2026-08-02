@@ -34,6 +34,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuthException
 import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
@@ -45,9 +46,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.launch
-
-private const val RESET_SUCCESS_MESSAGE =
-    "如果该邮箱已注册，重置邮件将在几分钟内送达。请检查收件箱和垃圾邮件。"
 
 @Composable
 internal fun PasswordResetDialog(
@@ -62,8 +60,8 @@ internal fun PasswordResetDialog(
     var errorText by rememberSaveable { mutableStateOf<String?>(null) }
     val normalizedEmail = email.trim().lowercase()
     val validationError = when {
-        email.isBlank() -> "请输入邮箱"
-        !Patterns.EMAIL_ADDRESS.matcher(normalizedEmail).matches() -> "请输入有效邮箱"
+        email.isBlank() -> AppCopy.Auth.emailRequired
+        !Patterns.EMAIL_ADDRESS.matcher(normalizedEmail).matches() -> AppCopy.Auth.emailInvalid
         else -> null
     }
     val scope = rememberCoroutineScope()
@@ -85,8 +83,8 @@ internal fun PasswordResetDialog(
     val stackActions = LocalDensity.current.fontScale >= 1.35f
 
     DailyRecordDialog(
-        title = if (sent) "请查收邮件" else "重置密码",
-        subtitle = if (sent) "为了保护账号隐私，我们不会显示该邮箱是否已注册。" else "输入注册邮箱，我们会发送安全的重置链接。",
+        title = if (sent) AppCopy.Auth.resetSentTitle else AppCopy.Auth.resetTitle,
+        subtitle = if (sent) AppCopy.Auth.resetSentSubtitle else AppCopy.Auth.resetSubtitle,
         testTag = "password_reset_dialog",
         onDismissRequest = { if (!busy) onDismiss() },
     ) {
@@ -107,14 +105,14 @@ internal fun PasswordResetDialog(
                     border = BorderStroke(1.dp, DailyRecordDivider),
                 ) {
                     Text(
-                        text = RESET_SUCCESS_MESSAGE,
+                        text = AppCopy.Auth.resetSuccess,
                         color = DailyRecordTextSecondary,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(14.dp),
                     )
                 }
                 PrimaryActionButton(
-                    label = "返回登录",
+                    label = AppCopy.Auth.backToSignIn,
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
                 )
@@ -130,7 +128,7 @@ internal fun PasswordResetDialog(
                         .semantics {
                             if (errorText != null) liveRegion = LiveRegionMode.Polite
                         },
-                    label = { Text("邮箱") },
+                    label = { Text(AppCopy.Auth.email) },
                     supportingText = {
                         val message = errorText ?: validationError?.takeIf { email.isNotEmpty() }
                         if (message != null) Text(message)
@@ -165,13 +163,13 @@ internal fun PasswordResetDialog(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         PrimaryActionButton(
-                            label = if (busy) "正在发送…" else "发送重置邮件",
+                            label = if (busy) AppCopy.Auth.sendingResetEmail else AppCopy.Auth.sendResetEmail,
                             onClick = submit,
                             enabled = !busy && validationError == null,
                             modifier = Modifier.fillMaxWidth(),
                         )
                         OutlineActionButton(
-                            label = "取消",
+                            label = AppCopy.Auth.cancel,
                             onClick = onDismiss,
                             enabled = !busy,
                             modifier = Modifier.fillMaxWidth(),
@@ -183,13 +181,13 @@ internal fun PasswordResetDialog(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         OutlineActionButton(
-                            label = "取消",
+                            label = AppCopy.Auth.cancel,
                             onClick = onDismiss,
                             enabled = !busy,
                             modifier = Modifier.weight(1f),
                         )
                         PrimaryActionButton(
-                            label = if (busy) "正在发送…" else "发送重置邮件",
+                            label = if (busy) AppCopy.Auth.sendingResetEmail else AppCopy.Auth.sendResetEmail,
                             onClick = submit,
                             enabled = !busy && validationError == null,
                             modifier = Modifier.weight(1f),
@@ -212,13 +210,13 @@ internal fun passwordResetErrorMessage(error: Throwable): String {
 
 internal fun passwordResetErrorMessageFor(code: String, networkFailure: Boolean): String {
     return when (code) {
-        "ERROR_NETWORK_REQUEST_FAILED" -> "网络不可用，邮件尚未发送。请打开 VPN（梯子）后重试。"
-        "ERROR_TOO_MANY_REQUESTS" -> "请求过于频繁，请稍后再试。"
-        "ERROR_QUOTA_EXCEEDED" -> "今日发送额度已用完，请稍后再试。"
+        "ERROR_NETWORK_REQUEST_FAILED" -> AppCopy.Auth.resetNetwork
+        "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Auth.resetTooManyRequests
+        "ERROR_QUOTA_EXCEEDED" -> AppCopy.Auth.resetQuotaExceeded
         else -> if (networkFailure) {
-            "网络不可用，邮件尚未发送。请打开 VPN（梯子）后重试。"
+            AppCopy.Auth.resetNetwork
         } else {
-            "暂时无法发送重置邮件，请稍后重试。"
+            AppCopy.Auth.resetUnavailable
         }
     }
 }
