@@ -165,10 +165,12 @@ class RecordModuleIntegrationTest {
         val segments = StatisticsPeriod.entries.map { period ->
             composeRule.onNodeWithTag("statistics_period_${period.name}").fetchSemanticsNode().boundsInRoot
         }
+        val weekLabel = composeRule.onNodeWithText("周").fetchSemanticsNode().boundsInRoot
         val minWidth = segments.minOf { it.width }
         val maxWidth = segments.maxOf { it.width }
 
         assertEquals(minWidth, maxWidth, 0.5f)
+        assertEquals(segments.first().center.y, weekLabel.center.y, 1.5f)
         assertTrue(slider.width < segments.first().width)
         assertTrue(slider.left > segments.first().left)
         assertTrue(slider.right < segments.first().right)
