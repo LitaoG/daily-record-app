@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.DailyCountRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.model.DailyCountRecord
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
@@ -39,22 +40,22 @@ internal data class RecordModuleUiSpec(
 
 internal val HandBrewModuleSpec = RecordModuleUiSpec(
     module = RecordModule.HandBrew,
-    label = "手冲",
-    questionToday = "今天手冲了几次？",
-    questionPast = "这天手冲了几次？",
-    explicitZeroText = "明确没冲",
-    semanticCountLabel = "手冲",
+    label = AppCopy.RecordModule.handBrewLabel,
+    questionToday = AppCopy.RecordModule.handBrewQuestionToday,
+    questionPast = AppCopy.RecordModule.handBrewQuestionPast,
+    explicitZeroText = AppCopy.RecordModule.handBrewZero,
+    semanticCountLabel = AppCopy.RecordModule.handBrewLabel,
     colors = HandBrewColorTokens,
     icon = { modifier, color -> PlaneIcon(modifier = modifier, color = color) },
 )
 
 internal val SexModuleSpec = RecordModuleUiSpec(
     module = RecordModule.Sex,
-    label = "做爱",
-    questionToday = "今天做爱了几次？",
-    questionPast = "这天做爱了几次？",
-    explicitZeroText = "明确没有",
-    semanticCountLabel = "做爱",
+    label = AppCopy.RecordModule.sexLabel,
+    questionToday = AppCopy.RecordModule.sexQuestionToday,
+    questionPast = AppCopy.RecordModule.sexQuestionPast,
+    explicitZeroText = AppCopy.RecordModule.sexZero,
+    semanticCountLabel = AppCopy.RecordModule.sexLabel,
     colors = SexColorTokens,
     icon = { modifier, color -> IntimacyIcon(modifier = modifier, color = color) },
 )

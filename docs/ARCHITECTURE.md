@@ -44,6 +44,7 @@ app
    ├─ core:data        two independent repositories
    ├─ core:auth        email/password and reset-email boundary
    ├─ core:cloud       Firebase bootstrap
+   ├─ core:common      shared invariants and user-facing copy
    ├─ core:sync        remote source / coordinator / worker
    └─ ui
       ├─ calendar      CalendarScreen
@@ -54,6 +55,14 @@ app
 ```
 
 早期保持单一 Gradle 模块；只有构建时间或团队规模证明需要时才拆物理模块。
+
+## 文案与显示格式
+
+用户可见的标题、按钮、状态、错误提示、无障碍描述和日期/次数格式统一收敛到
+`core/common/AppCopy.kt` 的分组对象中。Compose 页面和同步层只引用这些入口，动态
+文案由集中函数接收数据生成；领域错误码、Firestore 字段名和数据库迁移 SQL 仍保留
+在各自的技术边界中，不把技术标识伪装成界面文案。新增文案先加入 `AppCopy`，再在
+调用处引用，避免同义文案分散、模块之间漂移和后续本地化时逐文件搜索。
 
 ## 功能演进边界
 

@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
@@ -184,7 +185,7 @@ internal fun DailyCountCalendarScreen(
 @Composable
 private fun CalendarWeekdayHeader() {
     Row(Modifier.fillMaxWidth()) {
-        listOf("一", "二", "三", "四", "五", "六", "日").forEach { weekday ->
+        AppCopy.Calendar.weekdays.forEach { weekday ->
             Text(
                 text = weekday,
                 modifier = Modifier.weight(1f),
@@ -252,7 +253,7 @@ private fun MonthlySummary(
     totalCount: Long,
     recordedDays: Int,
 ) {
-    val summary = "本月 $totalCount 次 · $recordedDays 天"
+    val summary = AppCopy.Calendar.monthSummary(totalCount, recordedDays)
     Text(
         text = summary,
         modifier = Modifier
@@ -286,7 +287,7 @@ private fun CalendarGuide(
             .testTag("calendar_guide")
             .clearAndSetSemantics {
                 contentDescription =
-                    "点击日期记录${moduleSpec.semanticCountLabel}次数。图例：未填写、未来不可记录、明确记录零次、已记录"
+                    AppCopy.Calendar.legendDescription(moduleSpec.semanticCountLabel)
             },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -298,7 +299,7 @@ private fun CalendarGuide(
                 .background(DailyRecordDivider),
         )
         Text(
-            text = "点击日期记录",
+            text = AppCopy.Calendar.recordHint,
             color = DailyRecordTextSecondary,
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
@@ -323,10 +324,10 @@ private fun CalendarGuide(
 private enum class CalendarLegendItem(
     val label: String,
 ) {
-    Unset("未填"),
-    Disabled("未来"),
-    Zero("0 次"),
-    Recorded("1+ 次"),
+    Unset(AppCopy.Calendar.unset),
+    Disabled(AppCopy.Calendar.future),
+    Zero(AppCopy.Calendar.zero),
+    Recorded(AppCopy.Calendar.recorded),
 }
 
 @Composable
@@ -417,7 +418,7 @@ private fun MonthHeader(
             .heightIn(min = if (largeText) 108.dp else 48.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MonthArrow(forward = false, description = "上个月", enabled = canGoPrevious, onClick = onPreviousMonth)
+        MonthArrow(forward = false, description = AppCopy.Calendar.previousMonth, enabled = canGoPrevious, onClick = onPreviousMonth)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -426,16 +427,16 @@ private fun MonthHeader(
                 .clickable(role = Role.Button, onClick = onOpenDatePicker)
                 .semantics {
                     role = Role.Button
-                    contentDescription = "选择年份和日期，当前${month.year}年${month.monthValue}月"
+                    contentDescription = AppCopy.Calendar.monthSelectionDescription(month)
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = if (largeText) {
-                    month.year.toString() + "年\n" + month.monthValue + "月"
+                    AppCopy.Calendar.monthTitleMultiline(month)
                 } else {
-                    month.year.toString() + "年 " + month.monthValue + "月"
+                    AppCopy.Calendar.monthTitle(month)
                 },
                 color = DailyRecordText,
                 style = MaterialTheme.typography.headlineMedium,
@@ -443,17 +444,17 @@ private fun MonthHeader(
                 maxLines = if (largeText) 2 else 1,
             )
         }
-        MonthArrow(forward = true, description = "下个月", enabled = canGoNext, onClick = onNextMonth)
+        MonthArrow(forward = true, description = AppCopy.Calendar.nextMonth, enabled = canGoNext, onClick = onNextMonth)
         Box(
             modifier = Modifier
                 .padding(start = 6.dp)
                 .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .clickable(role = Role.Button, onClick = onToday)
-                .semantics { role = Role.Button; contentDescription = "回到今天" },
+                .semantics { role = Role.Button; contentDescription = AppCopy.Calendar.backToToday },
             contentAlignment = Alignment.Center,
         ) {
-            Text("今天", color = colors.primary, style = MaterialTheme.typography.labelMedium)
+            Text(AppCopy.today, color = colors.primary, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -506,25 +507,23 @@ private fun CalendarDayCell(
     val background = visualColors.background
     val contentColor = visualColors.content
     val recordStatus = when {
-        unsupported -> "不可用"
+        unsupported -> AppCopy.Calendar.unavailable
         future || record == null -> null
         count == 0 -> null
-        count == 1 -> "1次"
-        count == 2 -> "2次"
-        count in 3..8 -> "${count}次"
-        else -> "9+次"
+        else -> AppCopy.Calendar.countDescription(count ?: 0)
     }
     val visibleStatus = when {
-        date == today && record == null -> "今"
+        date == today && record == null -> AppCopy.Calendar.todayShort
         else -> recordStatus
     }
-    val semanticStatus = when {
-        unsupported -> "超出支持范围，不可记录"
-        future -> "未来日期，不可记录"
-        record == null -> "未填写"
-        count == 0 -> "明确记录 0 次${moduleSpec.semanticCountLabel}"
-        else -> "${moduleSpec.semanticCountLabel} $count 次"
-    }
+    val semanticStatus = AppCopy.Calendar.statusDescription(
+        date = date,
+        today = today,
+        unsupported = unsupported,
+        future = future,
+        count = count,
+        moduleLabel = moduleSpec.semanticCountLabel,
+    )
     val borderColor = when {
         focused -> moduleSpec.colors.strong
         date == today -> moduleSpec.colors.primary
@@ -533,10 +532,7 @@ private fun CalendarDayCell(
     val showOutline = focused || date == today || visualState == RecordVisualState.ExplicitZero
     val borderWidth = if (focused || date == today) 2.dp else 1.dp
     val cellShape = RoundedCornerShape(9.dp)
-    val stateDescription = when {
-        date == today -> "$semanticStatus，今天"
-        else -> semanticStatus
-    }
+    val stateDescription = semanticStatus
 
     Box(
         modifier = modifier
@@ -547,8 +543,7 @@ private fun CalendarDayCell(
             .semantics {
                 role = Role.Button
                 selected = focused
-                contentDescription = date.year.toString() + "年" + date.monthValue + "月" +
-                    date.dayOfMonth + "日，" + stateDescription + if (focused) "，已选择" else ""
+                contentDescription = AppCopy.Calendar.monthDateDescription(date, stateDescription, focused)
             }
             .padding(3.dp),
         contentAlignment = Alignment.Center,

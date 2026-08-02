@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
@@ -53,7 +54,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordWarning
 
 internal const val VPN_SYNC_DIALOG_MESSAGE =
-    "请检查网络或 VPN（梯子），然后点击“立即同步”。"
+    AppCopy.Account.syncDialogMessage
 
 internal enum class SyncFailureAction {
     Retry,
@@ -69,45 +70,45 @@ internal data class SyncFailurePresentation(
 
 internal fun SyncFailureKind.presentation(): SyncFailurePresentation = when (this) {
     SyncFailureKind.Network -> SyncFailurePresentation(
-        title = "网络连接异常",
+        title = AppCopy.Account.networkFailureTitle,
         guidance = VPN_SYNC_DIALOG_MESSAGE,
-        actionLabel = "立即同步",
+        actionLabel = AppCopy.Account.syncNow,
         action = SyncFailureAction.Retry,
     )
     SyncFailureKind.Authentication -> SyncFailurePresentation(
-        title = "登录状态已失效",
-        guidance = "请重新登录账号，然后再次同步本机记录。",
-        actionLabel = "重新登录",
+        title = AppCopy.Account.authFailureTitle,
+        guidance = AppCopy.Account.authFailureGuidance,
+        actionLabel = AppCopy.Account.reSignIn,
         action = SyncFailureAction.Reauthenticate,
     )
     SyncFailureKind.Permission -> SyncFailurePresentation(
-        title = "账号没有云端访问权限",
-        guidance = "请重新登录；如果仍然失败，请稍后重试或联系开发者。",
-        actionLabel = "重新登录",
+        title = AppCopy.Account.permissionFailureTitle,
+        guidance = AppCopy.Account.permissionFailureGuidance,
+        actionLabel = AppCopy.Account.reSignIn,
         action = SyncFailureAction.Reauthenticate,
     )
     SyncFailureKind.Quota -> SyncFailurePresentation(
-        title = "云服务额度暂时受限",
-        guidance = "本机记录不会丢失，请稍后再点击“立即同步”。",
-        actionLabel = "立即同步",
+        title = AppCopy.Account.quotaFailureTitle,
+        guidance = AppCopy.Account.quotaFailureGuidance,
+        actionLabel = AppCopy.Account.syncNow,
         action = SyncFailureAction.Retry,
     )
     SyncFailureKind.Service -> SyncFailurePresentation(
-        title = "云服务暂时不可用",
-        guidance = "可能是 Firebase 临时故障，本机记录不会丢失，请稍后重试。",
-        actionLabel = "立即同步",
+        title = AppCopy.Account.serviceFailureTitle,
+        guidance = AppCopy.Account.serviceFailureGuidance,
+        actionLabel = AppCopy.Account.syncNow,
         action = SyncFailureAction.Retry,
     )
     SyncFailureKind.Data -> SyncFailurePresentation(
-        title = "部分记录无法同步",
-        guidance = "原始记录已保存在本机，请不要清除应用数据，并在稍后重试。",
-        actionLabel = "立即同步",
+        title = AppCopy.Account.dataFailureTitle,
+        guidance = AppCopy.Account.dataFailureGuidance,
+        actionLabel = AppCopy.Account.syncNow,
         action = SyncFailureAction.Retry,
     )
     SyncFailureKind.Unknown -> SyncFailurePresentation(
-        title = "暂时无法完成同步",
-        guidance = "未能确定失败原因，本机记录不会丢失，请稍后重试。",
-        actionLabel = "立即同步",
+        title = AppCopy.Account.unknownFailureTitle,
+        guidance = AppCopy.Account.unknownFailureGuidance,
+        actionLabel = AppCopy.Account.syncNow,
         action = SyncFailureAction.Retry,
     )
 }
@@ -127,7 +128,7 @@ internal fun AccountTopBar(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                AccountTitle("记录每天的私密次数")
+                AccountTitle(AppCopy.privateRecordSubtitle)
                 SyncStatusChip(
                     status = status,
                     onClick = onClick,
@@ -144,7 +145,7 @@ internal fun AccountTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AccountTitle("记录每天的私密次数")
+                AccountTitle(AppCopy.privateRecordSubtitle)
                 SyncStatusChip(status = status, onClick = onClick)
             }
         }
@@ -166,20 +167,20 @@ internal fun LocalAccountTopBar(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                AccountTitle("本机记录无需 VPN（梯子），可离线使用")
+                AccountTitle(AppCopy.offlineSubtitle)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     DailyRecordTextAction(
-                        label = "诊断",
+                        label = AppCopy.Account.diagnostics,
                         onClick = onDiagnostics,
-                        accessibilityLabel = "查看本机诊断信息",
+                        accessibilityLabel = AppCopy.Account.diagnosticsAccessibility,
                     )
                     DailyRecordTextAction(
-                        label = "登录同步",
+                        label = AppCopy.Account.signInSync,
                         onClick = onClick,
-                        accessibilityLabel = "登录账号并开启云同步",
+                        accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                     )
                 }
             }
@@ -193,17 +194,17 @@ internal fun LocalAccountTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AccountTitle("本机记录无需 VPN（梯子），可离线使用")
+                AccountTitle(AppCopy.offlineSubtitle)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     DailyRecordTextAction(
-                        label = "诊断",
+                        label = AppCopy.Account.diagnostics,
                         onClick = onDiagnostics,
-                        accessibilityLabel = "查看本机诊断信息",
+                        accessibilityLabel = AppCopy.Account.diagnosticsAccessibility,
                     )
                     DailyRecordTextAction(
-                        label = "登录同步",
+                        label = AppCopy.Account.signInSync,
                         onClick = onClick,
-                        accessibilityLabel = "登录账号并开启云同步",
+                        accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                     )
                 }
             }
@@ -215,7 +216,7 @@ internal fun LocalAccountTopBar(
 private fun AccountTitle(subtitle: String) {
     Column {
         Text(
-            "私密日历",
+            AppCopy.appName,
             color = DailyRecordText,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
@@ -239,7 +240,7 @@ private fun SyncStatusChip(
             .padding(horizontal = 12.dp, vertical = 9.dp)
             .semantics {
                 role = Role.Button
-                contentDescription = "账号与云同步，${status.label()}"
+                contentDescription = AppCopy.Account.syncChipDescription(status.label())
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally),
@@ -264,14 +265,14 @@ internal fun AccountDialog(
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
     val failurePresentation = (status as? SyncStatus.Failed)?.kind?.presentation()
     DailyRecordDialog(
-        title = if (confirmSignOut) "确认退出登录？" else "账号与云同步",
-        subtitle = if (confirmSignOut) "云端数据会保留" else "换手机后仍可恢复全部记录",
+        title = if (confirmSignOut) AppCopy.Account.signOutConfirm else AppCopy.Account.accountAndSync,
+        subtitle = if (confirmSignOut) AppCopy.Account.cloudDataRetained else AppCopy.Account.restoreOnAnotherDevice,
         testTag = "account_sync_dialog",
         onDismissRequest = onDismiss,
     ) {
         if (confirmSignOut) {
             Text(
-                "退出后不会删除云端记录；本机缓存仍按账号隔离，下次登录会继续同步。",
+                AppCopy.Account.signOutMessage,
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 18.dp),
@@ -280,8 +281,8 @@ internal fun AccountDialog(
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                OutlineActionButton("返回", { confirmSignOut = false }, Modifier.weight(1f))
-                DangerActionButton("确认退出", onSignOut, Modifier.weight(1f))
+                OutlineActionButton(AppCopy.Account.back, { confirmSignOut = false }, Modifier.weight(1f))
+                DangerActionButton(AppCopy.Account.confirmSignOut, onSignOut, Modifier.weight(1f))
             }
         } else {
             Column(
@@ -333,16 +334,16 @@ internal fun AccountDialog(
                 }
             }
             Text(
-                "记录会先保存在本机，断网时照常使用；联网后自动上传，并可在其他手机登录恢复。",
+                AppCopy.Account.syncDescription,
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 14.dp),
             )
             PrimaryActionButton(
                 label = when {
-                    status is SyncStatus.Syncing -> "正在同步"
+                    status is SyncStatus.Syncing -> AppCopy.Account.syncing
                     failurePresentation != null -> failurePresentation.actionLabel
-                    else -> "立即同步"
+                    else -> AppCopy.Account.syncNow
                 },
                 onClick = if (failurePresentation?.action == SyncFailureAction.Reauthenticate) {
                     onSignOut
@@ -352,20 +353,20 @@ internal fun AccountDialog(
                 enabled = status !is SyncStatus.Syncing,
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             )
-            OutlineActionButton("关闭", onDismiss, Modifier.fillMaxWidth().padding(top = 10.dp))
+            OutlineActionButton(AppCopy.Account.close, onDismiss, Modifier.fillMaxWidth().padding(top = 10.dp))
             DailyRecordTextAction(
-                label = "查看诊断信息",
+                label = AppCopy.Account.viewDiagnostics,
                 onClick = onOpenDiagnostics,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             )
             DailyRecordTextAction(
-                label = "退出登录",
+                label = AppCopy.Account.signOut,
                 onClick = { confirmSignOut = true },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 danger = true,
             )
             DailyRecordTextAction(
-                label = "删除账号与云端数据",
+                label = AppCopy.Account.deleteAccount,
                 onClick = onDeleteAccount,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 danger = true,
@@ -375,21 +376,21 @@ internal fun AccountDialog(
 }
 
 internal fun SyncStatus.label(): String = when (this) {
-    SyncStatus.NotConfigured -> "云端尚未配置"
-    SyncStatus.Offline -> "当前离线，记录已保存在本机"
-    SyncStatus.Syncing -> "正在同步"
-    SyncStatus.UpToDate -> "云端已同步"
-    is SyncStatus.Pending -> "有 $count 条记录等待同步"
+    SyncStatus.NotConfigured -> AppCopy.Account.notConfigured
+    SyncStatus.Offline -> AppCopy.Account.offline
+    SyncStatus.Syncing -> AppCopy.Account.syncing
+    SyncStatus.UpToDate -> AppCopy.Account.synced
+    is SyncStatus.Pending -> AppCopy.Account.pending(count)
     is SyncStatus.Failed -> kind.presentation().title
 }
 
 private fun SyncStatus.shortLabel(): String = when (this) {
-    SyncStatus.NotConfigured -> "未配置"
-    SyncStatus.Offline -> "离线"
-    SyncStatus.Syncing -> "同步中"
-    SyncStatus.UpToDate -> "已同步"
-    is SyncStatus.Pending -> "待同步 $count"
-    is SyncStatus.Failed -> "需重试"
+    SyncStatus.NotConfigured -> AppCopy.Account.shortNotConfigured
+    SyncStatus.Offline -> AppCopy.Account.shortOffline
+    SyncStatus.Syncing -> AppCopy.Account.shortSyncing
+    SyncStatus.UpToDate -> AppCopy.Account.shortSynced
+    is SyncStatus.Pending -> AppCopy.Account.shortPending(count)
+    is SyncStatus.Failed -> AppCopy.Account.shortRetry
 }
 
 private fun SyncStatus.color() = when (this) {

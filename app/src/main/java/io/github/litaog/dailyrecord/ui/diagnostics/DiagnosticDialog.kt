@@ -33,6 +33,7 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
@@ -52,8 +53,8 @@ internal fun DiagnosticDialog(
     var feedback by remember { mutableStateOf<String?>(null) }
 
     DailyRecordDialog(
-        title = "本机诊断信息",
-        subtitle = "不包含邮箱、私密记录日期、次数或密码",
+        title = AppCopy.Diagnostics.title,
+        subtitle = AppCopy.Diagnostics.subtitle,
         testTag = "diagnostic_dialog",
         onDismissRequest = onDismiss,
     ) {
@@ -89,27 +90,27 @@ internal fun DiagnosticDialog(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             PrimaryActionButton(
-                label = "复制诊断信息",
+                label = AppCopy.Diagnostics.copy,
                 onClick = {
-                    feedback = if (copyAction(report)) "诊断信息已复制" else "复制失败，请手动选择文字"
+                    feedback = if (copyAction(report)) AppCopy.Diagnostics.copied else AppCopy.Diagnostics.copyFailed
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlineActionButton(
-                label = "分享诊断信息",
+                label = AppCopy.Diagnostics.share,
                 onClick = {
-                    feedback = if (shareAction(report)) null else "没有找到可用的分享应用"
+                    feedback = if (shareAction(report)) null else AppCopy.Diagnostics.noShareTarget
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
             DailyRecordTextAction(
-                label = "返回",
+                label = AppCopy.Diagnostics.back,
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
         Text(
-            "发送前仍可长按检查或选择其中的文字。",
+            AppCopy.Diagnostics.shareHint,
             color = DailyRecordTextMuted,
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(top = 4.dp),
@@ -119,16 +120,16 @@ internal fun DiagnosticDialog(
 
 private fun copyReport(context: Context, report: String): Boolean = runCatching {
     val clipboard = context.getSystemService(ClipboardManager::class.java)
-    clipboard.setPrimaryClip(ClipData.newPlainText("私密日历诊断信息", report))
+    clipboard.setPrimaryClip(ClipData.newPlainText(AppCopy.Diagnostics.clipboardLabel, report))
 }.isSuccess
 
 private fun shareReport(context: Context, report: String): Boolean = runCatching {
     val shareIntent = Intent(Intent.ACTION_SEND)
         .setType("text/plain")
-        .putExtra(Intent.EXTRA_SUBJECT, "私密日历诊断信息")
+        .putExtra(Intent.EXTRA_SUBJECT, AppCopy.Diagnostics.clipboardLabel)
         .putExtra(Intent.EXTRA_TEXT, report)
     context.startActivity(
-        Intent.createChooser(shareIntent, "分享诊断信息")
+        Intent.createChooser(shareIntent, AppCopy.Diagnostics.share)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )
 }.isSuccess

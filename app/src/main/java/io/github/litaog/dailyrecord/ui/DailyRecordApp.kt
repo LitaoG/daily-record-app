@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.AccountDialog
 import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
@@ -46,7 +47,7 @@ private val EarliestSupportedDate: LocalDate = LocalDate.of(1970, 1, 1)
 private val EarliestSupportedMonth: YearMonth = YearMonth.from(EarliestSupportedDate)
 
 internal const val VPN_SYNC_FAILURE_MESSAGE =
-    "云同步需要打开 VPN（梯子）。记录已保存在本机，请开启后重试。"
+    AppCopy.vpnSyncFailure
 
 internal enum class TopDestination {
     Calendar,
@@ -63,7 +64,7 @@ fun DailyRecordApp(
     onSyncNow: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onSignIn: (() -> Unit)? = null,
-    diagnosticReport: String = "诊断信息暂不可用",
+    diagnosticReport: String = AppCopy.diagnosticUnavailable,
     onDeleteAccount: suspend (String, LocalDataAfterAccountDeletion) -> Result<Unit> = { _, _ ->
         Result.failure(IllegalStateException("Account deletion is unavailable"))
     },
@@ -146,7 +147,7 @@ fun DailyRecordApp(
                 .fillMaxSize()
                 .background(DailyRecordCanvas)
                 .testTag("records_loading")
-                .semantics { contentDescription = "正在读取本机记录" },
+                .semantics { contentDescription = AppCopy.readingLocalRecords },
             contentAlignment = Alignment.Center,
         ) {
             CircularProgressIndicator(color = moduleSpec.colors.primary)

@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
@@ -120,7 +121,7 @@ internal fun DailyCountStatisticsScreen(
             )
         }
         item {
-            Text("统计", color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
+            Text(AppCopy.Statistics.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
         }
         item {
             PeriodTabs(
@@ -190,20 +191,20 @@ internal fun DailyCountStatisticsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(model.detailsTitle, color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
-                            Text("次数 · 天数", color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
+                            Text(AppCopy.Statistics.countAndDays, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                     items(model.details, key = { it.label }) { detail ->
                         StatisticRow(
                             label = detail.label,
                             countText = when {
-                                detail.future -> "—"
-                                !detail.recorded -> "未填写"
-                                else -> "${detail.count} 次"
+                                detail.future -> AppCopy.Statistics.dash
+                                !detail.recorded -> AppCopy.Statistics.unset
+                                else -> AppCopy.Statistics.detailCount(detail.count)
                             },
                             daysText = when {
-                                detail.future || !detail.recorded -> "—"
-                                else -> "${detail.days} 天"
+                                detail.future || !detail.recorded -> AppCopy.Statistics.dash
+                                else -> AppCopy.Statistics.detailDays(detail.days)
                             },
                             future = detail.future,
                         )
@@ -222,15 +223,16 @@ internal fun DailyCountStatisticsScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text("历史事实", color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
+                    Text(AppCopy.Statistics.historyFacts, color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
                     Text(
-                        "首次记录：" + records.filter { it.localDate <= today }.minOfOrNull { it.localDate }
-                            .orEmptyDate(),
+                        AppCopy.Statistics.firstRecord(
+                            records.filter { it.localDate <= today }.minOfOrNull { it.localDate },
+                        ),
                         color = DailyRecordTextSecondary,
                         style = MaterialTheme.typography.labelSmall,
                     )
                     Text(
-                        "只展示已发生数据，不预测未来趋势",
+                        AppCopy.Statistics.noFutureTrend,
                         color = DailyRecordTextMuted,
                         style = MaterialTheme.typography.labelSmall,
                     )
@@ -241,10 +243,10 @@ internal fun DailyCountStatisticsScreen(
 }
 
 private fun periodSummaryLabel(period: StatisticsPeriod): String = when (period) {
-    StatisticsPeriod.Week -> "本周"
-    StatisticsPeriod.Month -> "本月"
-    StatisticsPeriod.Year -> "本年"
-    StatisticsPeriod.All -> "全部"
+    StatisticsPeriod.Week -> AppCopy.Statistics.currentWeek
+    StatisticsPeriod.Month -> AppCopy.Statistics.currentMonth
+    StatisticsPeriod.Year -> AppCopy.Statistics.currentYear
+    StatisticsPeriod.All -> AppCopy.Statistics.allTab
 }
 
 @Composable
@@ -273,10 +275,10 @@ private fun PeriodNavigator(
     val previous = previousPeriodAnchor(period, anchorDate, earliestDate)
     val next = nextPeriodAnchor(period, anchorDate, today)
     val periodLabel = when (period) {
-        StatisticsPeriod.Week -> "周"
-        StatisticsPeriod.Month -> "月"
-        StatisticsPeriod.Year -> "年"
-        StatisticsPeriod.All -> "历史"
+        StatisticsPeriod.Week -> AppCopy.Statistics.weekTab
+        StatisticsPeriod.Month -> AppCopy.Statistics.monthTab
+        StatisticsPeriod.Year -> AppCopy.Statistics.yearTab
+        StatisticsPeriod.All -> AppCopy.Statistics.historyPeriod
     }
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -289,7 +291,7 @@ private fun PeriodNavigator(
         ) {
             PeriodArrow(
                 forward = false,
-                description = "上一个${periodLabel}",
+                description = AppCopy.Statistics.periodAction(periodLabel, previous = true),
                 enabled = previous != null,
                 onClick = { previous?.let(onAnchorDateChanged) },
             )
@@ -301,7 +303,7 @@ private fun PeriodNavigator(
                     .clickable(role = Role.Button, onClick = onOpenDatePicker)
                     .semantics {
                         role = Role.Button
-                        contentDescription = "选择统计日期，当前${model.title}"
+                        contentDescription = AppCopy.Statistics.datePickerDescription(model.title)
                     },
                 contentAlignment = Alignment.Center,
             ) {
@@ -314,7 +316,7 @@ private fun PeriodNavigator(
             }
             PeriodArrow(
                 forward = true,
-                description = "下一个${periodLabel}",
+                description = AppCopy.Statistics.periodAction(periodLabel, previous = false),
                 enabled = next != null,
                 onClick = { next?.let(onAnchorDateChanged) },
             )
@@ -361,23 +363,21 @@ private fun EmptyStatistics(
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            "还没有可统计的${moduleLabel}记录",
+            AppCopy.Statistics.emptyTitle(moduleLabel),
             color = DailyRecordText,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            "回到日历选择日期，保存第一条记录。",
+            AppCopy.Statistics.emptyMessage,
             color = DailyRecordTextSecondary,
             style = MaterialTheme.typography.bodyMedium,
         )
         PrimaryActionButton(
-            label = "去日历记录",
+            label = AppCopy.Statistics.calendarAction,
             onClick = onOpenCalendar,
             modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
             accent = colors.primary,
         )
     }
 }
-
-private fun LocalDate?.orEmptyDate(): String = this?.toString() ?: "暂无记录"

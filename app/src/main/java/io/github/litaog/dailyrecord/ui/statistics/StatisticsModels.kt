@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
@@ -123,7 +124,7 @@ private fun buildWeek(
         val date = start.plusDays(offset)
         if (date > today) {
             StatisticsDetail(
-                label = weekdayName(date) + " " + date.dayOfMonth + "日",
+                label = AppCopy.Statistics.weekdayDateLabel(weekdayName(date), date),
                 count = null,
                 days = null,
                 future = true,
@@ -132,7 +133,7 @@ private fun buildWeek(
         } else {
             val record = rangeRecords.firstOrNull { it.localDate == date }
             StatisticsDetail(
-                label = weekdayName(date) + " " + date.dayOfMonth + "日",
+                label = AppCopy.Statistics.weekdayDateLabel(weekdayName(date), date),
                 count = record?.count?.toLong() ?: 0L,
                 days = if ((record?.count ?: 0) > 0) 1 else 0,
                 recorded = record != null,
@@ -141,9 +142,9 @@ private fun buildWeek(
     }
     return StatisticsUiModel(
         title = dateRangeTitle(start, end),
-        status = if (end < today) "已结束" else "进行中",
+        status = AppCopy.Statistics.periodStatus(end, today),
         summary = summaryOf(rangeRecords),
-        detailsTitle = "每日明细",
+        detailsTitle = AppCopy.Statistics.dailyDetails,
         details = details,
     )
 }
@@ -192,10 +193,10 @@ private fun buildMonth(
         }
     }
     return StatisticsUiModel(
-        title = month.year.toString() + "年 " + month.monthValue + "月",
-        status = if (end < today) "已结束" else "进行中",
+        title = AppCopy.Statistics.monthTitle(month.year, month.monthValue),
+        status = AppCopy.Statistics.periodStatus(end, today),
         summary = summaryOf(rangeRecords),
-        detailsTitle = "周明细",
+        detailsTitle = AppCopy.Statistics.weeklyDetails,
         details = details,
         month = buildMonthStatistics(month, today, rangeRecords),
     )
@@ -213,7 +214,7 @@ private fun buildYear(
         val month = YearMonth.of(anchorDate.year, monthNumber)
         if (month.atDay(1) > today) {
             StatisticsDetail(
-                label = monthNumber.toString() + "月",
+                label = AppCopy.Statistics.monthLabel(monthNumber),
                 count = null,
                 days = null,
                 future = true,
@@ -223,7 +224,7 @@ private fun buildYear(
             val monthRecords = rangeRecords.filter { YearMonth.from(it.localDate) == month }
             val summary = summaryOf(monthRecords)
             StatisticsDetail(
-                label = monthNumber.toString() + "月",
+                label = AppCopy.Statistics.monthLabel(monthNumber),
                 count = summary.totalCount,
                 days = summary.recordedDays,
                 recorded = monthRecords.isNotEmpty(),
@@ -231,14 +232,10 @@ private fun buildYear(
         }
     }
     return StatisticsUiModel(
-        title = anchorDate.year.toString() + "年",
-        status = if (anchorDate.year < today.year) {
-            "已结束"
-        } else {
-            "截至 " + today.monthValue + "月" + today.dayOfMonth + "日"
-        },
+        title = AppCopy.Statistics.yearTitle(anchorDate.year),
+        status = AppCopy.Statistics.yearStatus(end, today),
         summary = summaryOf(rangeRecords),
-        detailsTitle = "月份明细",
+        detailsTitle = AppCopy.Statistics.monthlyDetails,
         details = details,
         year = buildYearStatistics(anchorDate.year, today, rangeRecords),
     )
@@ -318,17 +315,14 @@ private fun buildAll(today: LocalDate, records: List<DailyCountEntry>): Statisti
     val details = years.map { year ->
         val yearRecords = records.filter { it.localDate.year == year }
         val summary = summaryOf(yearRecords)
-        StatisticsDetail(year.toString() + "年", summary.totalCount, summary.recordedDays)
+        StatisticsDetail(AppCopy.Statistics.yearTitle(year), summary.totalCount, summary.recordedDays)
     }
-    val status = records.minOfOrNull { it.localDate }?.let { first ->
-        first.year.toString() + "." + first.monthValue.toString().padStart(2, '0') +
-            "–" + today.year + "." + today.monthValue.toString().padStart(2, '0')
-    } ?: "暂无记录"
+    val status = AppCopy.Statistics.historyStatus(records.minOfOrNull { it.localDate }, today)
     return StatisticsUiModel(
-        title = "全部历史",
+        title = AppCopy.Statistics.allHistory,
         status = status,
         summary = summaryOf(records),
-        detailsTitle = "年度明细",
+        detailsTitle = AppCopy.Statistics.yearlyDetails,
         details = details,
     )
 }
@@ -338,26 +332,13 @@ private fun summaryOf(records: List<DailyCountEntry>) = StatisticsSummary(
     recordedDays = records.count { it.count > 0 },
 )
 
-private fun weekdayName(date: LocalDate): String = when (date.dayOfWeek.value) {
-    1 -> "周一"
-    2 -> "周二"
-    3 -> "周三"
-    4 -> "周四"
-    5 -> "周五"
-    6 -> "周六"
-    else -> "周日"
-}
+private fun weekdayName(date: LocalDate): String = AppCopy.weekdayName(date.dayOfWeek.value)
 
 private fun monthWeekLabel(
     index: Int,
     start: LocalDate,
     end: LocalDate,
-): String = "第${index}周 ${start.dayOfMonth}–${end.dayOfMonth}日"
+): String = AppCopy.Statistics.monthWeekLabel(index, start, end)
 
-private fun dateRangeTitle(start: LocalDate, end: LocalDate): String = if (start.year == end.year) {
-    start.year.toString() + "年 " + start.monthValue + "月" + start.dayOfMonth + "日–" +
-        end.monthValue + "月" + end.dayOfMonth + "日"
-} else {
-    start.year.toString() + "年" + start.monthValue + "月" + start.dayOfMonth + "日–" +
-        end.year + "年" + end.monthValue + "月" + end.dayOfMonth + "日"
-}
+private fun dateRangeTitle(start: LocalDate, end: LocalDate): String =
+    AppCopy.Statistics.dateRangeTitle(start, end)

@@ -43,7 +43,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberLarge
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
-import java.util.Locale
+import io.github.litaog.dailyrecord.core.common.AppCopy
 
 @Composable
 internal fun StatisticsSummaryCard(
@@ -66,7 +66,7 @@ internal fun StatisticsSummaryCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "$periodLabel · ${moduleLabel}次数",
+                text = AppCopy.Statistics.periodCountLabel(periodLabel, moduleLabel),
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.labelMedium,
             )
@@ -78,7 +78,7 @@ internal fun StatisticsSummaryCard(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "次",
+                    text = AppCopy.Statistics.countUnit,
                     color = DailyRecordTextSecondary,
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(start = 5.dp, bottom = 7.dp),
@@ -88,10 +88,10 @@ internal fun StatisticsSummaryCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                SummaryFact("发生天数", "$recordedDays 天", Modifier.weight(1f))
+                SummaryFact(AppCopy.Statistics.recordedDaysLabel, AppCopy.Statistics.daysText(recordedDays), Modifier.weight(1f))
                 SummaryFact(
-                    "记录日均",
-                    String.format(Locale.US, "%.1f 次/天", average),
+                    AppCopy.Statistics.averageLabel,
+                    AppCopy.Statistics.average(average),
                     Modifier.weight(1f),
                 )
             }
@@ -127,14 +127,14 @@ internal fun MonthHeatmapCard(
     }
     StatisticsSurface(
         modifier = modifier.testTag("month_distribution_card"),
-        title = "每日记录",
-        subtitle = "真实日期",
+        title = AppCopy.Statistics.dailyRecords,
+        subtitle = AppCopy.Statistics.realDates,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
-            listOf("一", "二", "三", "四", "五", "六", "日").forEach { weekday ->
+            AppCopy.Statistics.weekdays.forEach { weekday ->
                 Text(
                     text = weekday,
                     modifier = Modifier.weight(1f),
@@ -180,10 +180,10 @@ private fun MonthHeatmapDay(
     }
     val visual = colors.colorsFor(state)
     val status = when {
-        day.future -> "未来日期"
-        !day.recorded -> "未填写"
-        day.count == 0L -> "明确记录 0 次"
-        else -> "${day.count} 次"
+        day.future -> AppCopy.Statistics.futureDay
+        !day.recorded -> AppCopy.Statistics.unset
+        day.count == 0L -> AppCopy.Statistics.explicitZero
+        else -> AppCopy.Statistics.countText(day.count ?: 0L)
     }
     Box(
         modifier = modifier
@@ -191,7 +191,7 @@ private fun MonthHeatmapDay(
             .clip(RoundedCornerShape(7.dp))
             .background(visual.background)
             .semantics {
-                contentDescription = "${day.date.year}年${day.date.monthValue}月${day.date.dayOfMonth}日，$status"
+                contentDescription = AppCopy.Statistics.dateDescription(day.date, status)
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -209,7 +209,7 @@ private fun MonthHeatmapDay(
                         .size(6.dp)
                         .clip(CircleShape)
                         .background(DailyRecordSurface)
-                        .semantics { contentDescription = "明确 0 次" },
+                        .semantics { contentDescription = AppCopy.Statistics.zeroAccessibility },
                 )
                 day.recorded && (day.count ?: 0L) > 0L -> Box(
                     modifier = Modifier
@@ -230,13 +230,13 @@ private fun HeatmapLegend(colors: RecordModuleColorTokens) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        HeatmapLegendItem("未填写", colors.colorsFor(RecordVisualState.Unset).background)
+        HeatmapLegendItem(AppCopy.Statistics.unset, colors.colorsFor(RecordVisualState.Unset).background)
         HeatmapLegendItem("0", DailyRecordSurface, outline = colors.primary)
         HeatmapLegendItem("1", colors.soft)
         HeatmapLegendItem("2", colors.medium)
         HeatmapLegendItem("3+", colors.primary)
         Spacer(Modifier.weight(1f))
-        Text("未来", color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
+        Text(AppCopy.Statistics.future, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -269,8 +269,8 @@ internal fun YearBarChartCard(
     val maxCount = year.months.mapNotNull { it.count }.maxOrNull() ?: 0L
     StatisticsSurface(
         modifier = modifier,
-        title = "年度次数",
-        subtitle = String.format(Locale.US, "12 个月 · 月均 %.1f 次", year.monthlyAverage),
+        title = AppCopy.Statistics.annualCount,
+        subtitle = AppCopy.Statistics.annualAverage(year.monthlyAverage),
     ) {
         Row(
             modifier = Modifier
@@ -320,7 +320,7 @@ internal fun YearBarChartCard(
                         }
                     }
                     Text(
-                        text = month.month.monthValue.toString() + "月",
+                        text = AppCopy.Statistics.monthLabel(month.month.monthValue),
                         color = if (month.future) DailyRecordTextMuted else DailyRecordText,
                         style = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
@@ -331,7 +331,7 @@ internal fun YearBarChartCard(
             }
         }
         Text(
-            text = "空白表示未填写或未来；0 次不绘制柱高",
+            text = AppCopy.Statistics.blankBarHint,
             color = DailyRecordTextMuted,
             style = MaterialTheme.typography.labelSmall,
         )
@@ -353,9 +353,9 @@ internal fun QuarterShareCard(
             colors.soft,
         )
     }
-    StatisticsSurface(modifier = modifier, title = "季度占比", subtitle = if (total == 0L) "暂无正次数" else "按次数") {
+    StatisticsSurface(modifier = modifier, title = AppCopy.Statistics.quarterShare, subtitle = if (total == 0L) AppCopy.Statistics.noPositiveCount else AppCopy.Statistics.byCount) {
         if (total == 0L) {
-            Text("至少有一次正次数记录后显示季度占比。", color = DailyRecordTextSecondary, style = MaterialTheme.typography.bodyMedium)
+            Text(AppCopy.Statistics.quarterShareHint, color = DailyRecordTextSecondary, style = MaterialTheme.typography.bodyMedium)
         } else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -393,9 +393,9 @@ internal fun QuarterShareCard(
                             Box(
                                 modifier = Modifier.size(9.dp).clip(CircleShape).background(quarterColors[index]),
                             )
-                            Text("Q${quarter.quarter}", color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
+                            Text(AppCopy.Statistics.quarterLabel(quarter.quarter), color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
                             Text(
-                                String.format(Locale.US, "%.0f%%", percentage),
+                                AppCopy.Statistics.percentage(percentage),
                                 color = DailyRecordTextSecondary,
                                 style = MaterialTheme.typography.labelMedium,
                                 textAlign = TextAlign.End,
@@ -415,17 +415,17 @@ internal fun ExtremesCard(
     colors: RecordModuleColorTokens,
     modifier: Modifier = Modifier,
 ) {
-    StatisticsSurface(modifier = modifier, title = "月份摘要", subtitle = "完整月份") {
+    StatisticsSurface(modifier = modifier, title = AppCopy.Statistics.monthSummary, subtitle = AppCopy.Statistics.fullMonths) {
         if (year.maximumMonths.isEmpty() || year.minimumMonths.isEmpty()) {
             Text(
-                "完成至少一个有记录的月份后显示最高和最低月份。",
+                AppCopy.Statistics.monthExtremesHint,
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
             )
         } else {
-            ExtremesRow("最高月份", year.maximumMonths, colors.primary)
+            ExtremesRow(AppCopy.Statistics.maximumMonth, year.maximumMonths, colors.primary)
             Box(Modifier.fillMaxWidth().height(1.dp).background(DailyRecordDivider))
-            ExtremesRow("最低月份", year.minimumMonths, colors.primary)
+            ExtremesRow(AppCopy.Statistics.minimumMonth, year.minimumMonths, colors.primary)
         }
     }
 }
@@ -443,13 +443,13 @@ private fun ExtremesRow(
     ) {
         Text(label, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelMedium)
         Text(
-            months.joinToString("、") { it.month.monthValue.toString() + "月" },
+            months.joinToString("、") { AppCopy.Statistics.monthLabel(it.month.monthValue) },
             color = accent,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
-            "${months.first().count ?: 0L} 次",
+            AppCopy.Statistics.countText(months.first().count ?: 0L),
             color = DailyRecordText,
             style = MaterialTheme.typography.labelLarge,
         )
@@ -487,17 +487,19 @@ private fun StatisticsSurface(
 }
 
 private fun quarterSummaryDescription(year: YearStatistics, total: Long): String =
-    "季度占比，总次数 $total 次；" + year.quarters.joinToString("，") { quarter ->
+    AppCopy.Statistics.totalCountAccessibility(total, year.quarters.joinToString("，") { quarter ->
         val percentage = quarter.totalCount * 100.0 / total
-        "Q${quarter.quarter} ${String.format(Locale.US, "%.0f", percentage)}%"
-    }
+        "${AppCopy.Statistics.quarterLabel(quarter.quarter)} ${AppCopy.Statistics.percentage(percentage)}"
+    })
 
 private fun yearBarChartDescription(year: YearStatistics): String =
-    "年度次数柱状图；" + year.months.joinToString("，") { month ->
-        val value = when {
-            month.future -> "未来"
-            !month.recorded -> "未填写"
-            else -> "${month.count ?: 0L} 次"
-        }
-        "${month.month.monthValue}月 $value"
-    }
+    AppCopy.Statistics.annualChartAccessibility(
+        year.months.joinToString("，") { month ->
+            AppCopy.Statistics.monthChartLabel(
+                month = month.month.monthValue,
+                isFuture = month.future,
+                recorded = month.recorded,
+                count = month.count,
+            )
+        },
+    )

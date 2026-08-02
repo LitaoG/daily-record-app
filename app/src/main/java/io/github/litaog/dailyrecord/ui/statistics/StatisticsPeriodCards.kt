@@ -31,6 +31,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.core.common.AppCopy
 
 @Composable
 internal fun WeekDistributionCard(
@@ -40,8 +41,8 @@ internal fun WeekDistributionCard(
 ) {
     val maxCount = details.mapNotNull { it.count }.maxOrNull()?.coerceAtLeast(1L) ?: 1L
     DistributionSurface(
-        title = "每日分布",
-        subtitle = "次数",
+        title = AppCopy.Statistics.dailyDistribution,
+        subtitle = AppCopy.Statistics.times,
         modifier = modifier.testTag("week_distribution_card"),
     ) {
         Row(
@@ -153,7 +154,14 @@ internal fun distributionFraction(
 }
 
 private fun StatisticsDetail.displayValues(): DetailDisplay = when {
-    future -> DetailDisplay("未来", "—", "未来")
-    !recorded -> DetailDisplay("未填写", "—", "未填")
-    else -> DetailDisplay("${count ?: 0L} 次", "${days ?: 0} 天", (count ?: 0L).toString())
+    future -> DetailDisplay(AppCopy.Statistics.future, AppCopy.Statistics.dash, AppCopy.Statistics.future)
+    !recorded -> DetailDisplay(AppCopy.Statistics.unset, AppCopy.Statistics.dash, AppCopy.Statistics.unsetShort)
+    else -> {
+        val safeCount = count ?: 0L
+        DetailDisplay(
+            AppCopy.Statistics.countText(safeCount),
+            AppCopy.Statistics.daysText(days ?: 0),
+            safeCount.toString(),
+        )
+    }
 }
