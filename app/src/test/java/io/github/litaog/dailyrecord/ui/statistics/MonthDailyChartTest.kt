@@ -8,6 +8,14 @@ import org.junit.Test
 
 class MonthDailyChartTest {
     @Test
+    fun xAxisAnchorsHighlightReadableDatesWithoutDuplicatingShortMonths() {
+        assertEquals(listOf(1, 5, 10, 15, 20, 25, 31), monthDailyChartTickDays(31))
+        assertEquals(listOf(1, 5, 10, 15, 20, 25, 28), monthDailyChartTickDays(28))
+        assertEquals(listOf(1, 5, 10), monthDailyChartTickDays(10))
+        assertEquals(emptyList<Int>(), monthDailyChartTickDays(0))
+    }
+
+    @Test
     fun scaleUsesReadableTicksAboveLargestDailyCount() {
         val month = monthStatistics(
             DailyCountEntry(LocalDate.of(2026, 7, 3), 2),

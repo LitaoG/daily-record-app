@@ -53,6 +53,19 @@ internal data class MonthDailyChartScale(
     val ticks: List<Long>,
 )
 
+/**
+ * Stable date anchors used on the compact month chart's x-axis.
+ *
+ * The same anchors drive both the labels and the highlighted baseline markers so a
+ * user can trace a pulse back to an exact day without adding a label for every date.
+ */
+internal fun monthDailyChartTickDays(dayCount: Int): List<Int> {
+    if (dayCount <= 0) return emptyList()
+    return listOf(1, 5, 10, 15, 20, 25, dayCount)
+        .filter { it in 1..dayCount }
+        .distinct()
+}
+
 internal fun monthDailyChartScale(month: MonthStatistics): MonthDailyChartScale {
     val maximumCount = month.days
         .asSequence()
@@ -274,6 +287,7 @@ private fun MonthDailyChartPlot(
         val horizontalInsetPx = with(density) { horizontalInset.toPx() }
         val plotWidthPx = (constraints.maxWidth.toFloat() - horizontalInsetPx * 2f).coerceAtLeast(0f)
         val slotWidth = maxWidth / month.days.size
+        val tickDays = monthDailyChartTickDays(month.days.size)
         val offsets = month.days.mapIndexed { index, day ->
             val xFraction = if (month.days.size == 1) 0f else index.toFloat() / (month.days.size - 1).toFloat()
             val count = day.count?.takeIf { day.recorded && !day.future }
@@ -344,16 +358,46 @@ private fun MonthDailyChartPlot(
                     }
                 }
             }
+
+            // Key x-axis dates get a small accent ring and dot. This keeps the
+            // baseline readable on a sparse chart and makes the date anchors
+            // visually traceable without coloring every day.
+            tickDays.forEach { dayOfMonth ->
+                val index = dayOfMonth - 1
+                val day = month.days[index]
+                val alpha = when {
+                    day.future -> .34f
+                    !day.recorded -> .64f
+                    else -> .92f
+                }
+                val baseline = Offset(offsets[index].x, plotBottomPx)
+                drawCircle(
+                    color = DailyRecordSurface,
+                    radius = 5.5.dp.toPx(),
+                    center = baseline,
+                )
+                drawCircle(
+                    color = colors.primary.copy(alpha = alpha),
+                    radius = 4.2.dp.toPx(),
+                    center = baseline,
+                    style = Stroke(width = 1.25.dp.toPx()),
+                )
+                drawCircle(
+                    color = colors.primary.copy(alpha = alpha),
+                    radius = 1.7.dp.toPx(),
+                    center = baseline,
+                )
+            }
         }
 
         month.days.forEachIndexed { index, day ->
             val count = day.count?.takeIf { day.recorded && !day.future && it > 0L } ?: return@forEachIndexed
-            val labelY = with(density) { offsets[index].y.toDp() } - 23.dp
+            val labelY = with(density) { offsets[index].y.toDp() } - 16.dp
             Box(
                 modifier = Modifier
                     .offset(x = slotWidth * index, y = labelY.coerceAtLeast(0.dp))
                     .width(slotWidth)
-                    .height(18.dp),
+                    .height(16.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -371,7 +415,7 @@ private fun MonthDailyChartPlot(
 
 @Composable
 private fun MonthDailyXAxis(dayCount: Int) {
-    val tickDays = listOf(1, 5, 10, 15, 20, 25, dayCount).distinct()
+    val tickDays = monthDailyChartTickDays(dayCount)
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
