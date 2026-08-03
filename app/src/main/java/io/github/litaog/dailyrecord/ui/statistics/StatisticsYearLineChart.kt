@@ -133,6 +133,7 @@ internal fun YearLineChartCard(
         modifier = modifier,
         title = AppCopy.Statistics.annualCount,
         subtitle = AppCopy.Statistics.annualAverage(year.monthlyAverage),
+        colors = colors,
     ) {
         Row(
             modifier = Modifier

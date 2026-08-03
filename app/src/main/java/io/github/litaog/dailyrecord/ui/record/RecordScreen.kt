@@ -60,9 +60,11 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.map
@@ -163,8 +165,11 @@ internal fun DailyCountRecordScreen(
     BackHandler(onBack = requestBack)
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().testTag("record_screen"),
-        containerColor = DailyRecordCanvas,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(dailyRecordBackdropBrush(moduleSpec.colors))
+            .testTag("record_screen"),
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         snackbarHost = {
             DailyRecordSnackbarHost(
                 hostState = snackbarHostState,
@@ -173,8 +178,10 @@ internal fun DailyCountRecordScreen(
         },
         bottomBar = {
             Surface(
-                modifier = Modifier.navigationBarsPadding(),
-                color = DailyRecordCanvas,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted),
+                color = androidx.compose.ui.graphics.Color.Transparent,
             ) {
                 Column(
                     modifier = Modifier

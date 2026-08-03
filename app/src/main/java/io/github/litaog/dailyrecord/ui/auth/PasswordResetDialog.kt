@@ -1,7 +1,6 @@
 package io.github.litaog.dailyrecord.ui.auth
 
 import android.util.Patterns
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,8 +42,9 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import kotlinx.coroutines.launch
 
 @Composable
@@ -99,10 +99,14 @@ internal fun PasswordResetDialog(
                         .fillMaxWidth()
                         .padding(top = 18.dp)
                         .semantics { liveRegion = LiveRegionMode.Polite }
+                        .dailyRecordGlass(
+                            shape = RoundedCornerShape(16.dp),
+                            level = DailyRecordGlassLevel.Muted,
+                        )
                         .testTag("password_reset_success"),
                     shape = RoundedCornerShape(16.dp),
-                    color = DailyRecordSurfaceMuted,
-                    border = BorderStroke(1.dp, DailyRecordDivider),
+                    color = androidx.compose.ui.graphics.Color.Transparent,
+                    border = null,
                 ) {
                     Text(
                         text = AppCopy.Auth.resetSuccess,

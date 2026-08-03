@@ -57,8 +57,11 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import kotlinx.coroutines.launch
 
 internal enum class AuthMode {
@@ -125,7 +128,7 @@ internal fun AuthScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DailyRecordCanvas)
+            .background(dailyRecordBackdropBrush(HandBrewColorTokens))
             .verticalScroll(rememberScrollState())
             .imePadding()
             .padding(horizontal = 24.dp, vertical = 28.dp)
@@ -134,10 +137,15 @@ internal fun AuthScreen(
         verticalArrangement = Arrangement.Center,
     ) {
         Surface(
-            color = DailyRecordSurface,
+            modifier = Modifier.dailyRecordGlass(
+                shape = RoundedCornerShape(24.dp),
+                moduleColors = HandBrewColorTokens,
+                level = DailyRecordGlassLevel.Elevated,
+            ),
+            color = androidx.compose.ui.graphics.Color.Transparent,
             shape = RoundedCornerShape(24.dp),
-            shadowElevation = 6.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, DailyRecordDivider),
+            shadowElevation = 0.dp,
+            border = null,
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(22.dp),

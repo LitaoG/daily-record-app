@@ -32,12 +32,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordAccentBrush
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 
 /** Branded confirmation surface used instead of a library-default confirmation dialog. */
 @Composable
@@ -60,10 +62,16 @@ fun DailyRecordConfirmationDialog(
         onDismissRequest = onDismiss,
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 18.dp)
+                .dailyRecordGlass(
+                    shape = RoundedCornerShape(16.dp),
+                    level = DailyRecordGlassLevel.Muted,
+                ),
             shape = RoundedCornerShape(16.dp),
-            color = DailyRecordSurfaceMuted,
-            border = BorderStroke(1.dp, DailyRecordDivider),
+            color = androidx.compose.ui.graphics.Color.Transparent,
+            border = null,
         ) {
             Text(
                 text = message,
@@ -123,7 +131,13 @@ fun DangerActionButton(
         modifier = modifier
             .heightIn(min = 52.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (enabled) DailyRecordDanger else DailyRecordSurfaceMuted)
+            .then(
+                if (enabled) {
+                    Modifier.background(dailyRecordAccentBrush(DailyRecordDanger))
+                } else {
+                    Modifier.background(DailyRecordSurfaceMuted)
+                },
+            )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
@@ -191,7 +205,7 @@ fun DailyRecordSnackbarHost(
             shape = RoundedCornerShape(16.dp),
             color = colors.strong,
             border = BorderStroke(1.dp, colors.primary),
-            shadowElevation = 8.dp,
+            shadowElevation = 1.dp,
         ) {
             Text(
                 text = data.visuals.message,
