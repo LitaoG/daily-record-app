@@ -37,8 +37,10 @@
 ## 发布与恢复
 
 - 版本：`v1.0.0-beta.2`，`versionCode=3`。
+- GitHub Release：[v1.0.0-beta.2](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，公开 Release URL 已核对，`draft=false`、`prerelease=true`。
 - Release 使用与 beta.1 相同的稳定 release keystore；发布工作流同时上传 APK 和 `.sha256`。
 - 本机签名候选 APK：`app/build/outputs/apk/release/app-release.apk`；本机 SHA-256 为 `e015673e3861cdcbfa0f801a037c2ff872d2800d2b3ddf793b09ebd3b7dcc244`。
 - 本机 `apksigner`：APK Signature Scheme v2、单一 RSA 4096 signer；证书 SHA-256 指纹与既有稳定指纹一致：`AF:A5:24:1B:F1:3C:9D:AA:6F:45:AE:7C:8D:69:9D:75:40:D0:11:F0:E2:19:E5:4E:5B:97:BF:2C:99:6B:3E:61`。
+- GitHub Release APK 已重新下载并独立核对：远端 SHA-256 为 `effc4b3450947aa5b1cefa7f79f5c9dc597a3226f0b87f12063657914e862c2a`，与同页 `.sha256` 一致；远端 APK 的 v2 签名和稳定证书指纹一致。
 - 公共 `main` 完整验证后才同步私有恢复仓库；私有签名、Firebase 生产配置和恢复材料只存在私有仓库/本机/Actions Secrets。
 - 后续真人日常反馈不作为发布硬门槛；复现问题单独建 Issue，按影响范围定向测试。
