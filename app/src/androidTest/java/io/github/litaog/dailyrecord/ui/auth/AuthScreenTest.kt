@@ -57,7 +57,7 @@ class AuthScreenTest {
 
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "登录、注册和云同步需要 VPN（梯子）。离线使用不需要。",
+            "登录、注册和同步需 VPN；本机可离线记录，云端仅保存日期和次数。",
         ).assertIsDisplayed()
         composeRule.onNodeWithText("注册").performClick()
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
