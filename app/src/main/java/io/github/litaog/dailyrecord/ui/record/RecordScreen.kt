@@ -260,11 +260,6 @@ internal fun DailyCountRecordScreen(
                 color = DailyRecordTextMuted,
                 style = MaterialTheme.typography.labelSmall,
             )
-            Text(
-                AppCopy.Record.saveHint,
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.labelSmall,
-            )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -108,7 +108,7 @@ class CalendarScreenTest {
             .assertExists()
         composeRule
             .onNodeWithContentDescription(
-                "点击日期记录手冲次数。图例：未填写、未来不可记录、明确记录零次、已记录",
+                "点击日期填写手冲次数。状态：未填写、未来不可填写、0次、已记录",
             )
             .assertExists()
     }

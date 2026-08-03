@@ -79,7 +79,7 @@ class RecordModuleIntegrationTest {
         composeRule.onNodeWithContentDescription("日历，未选择").performClick()
         composeRule.onNodeWithContentDescription("2026年7月17日，做爱 1 次，今天，已选择").performClick()
         composeRule.onNodeWithText("今天做爱了几次？").assertIsDisplayed()
-        composeRule.onNodeWithText("0 次＝明确没有，会保留记录。").assertIsDisplayed()
+        composeRule.onNodeWithText("填 0 表示明确没有，会保留记录。").assertIsDisplayed()
     }
 
     @Test

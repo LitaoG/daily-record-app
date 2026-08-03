@@ -152,7 +152,7 @@ class DailyRecordAppTest {
         composeRule.onAllNodesWithText("点此快速跳转").assertCountEquals(0)
 
         composeRule
-            .onNodeWithContentDescription("选择统计日期，当前2026年 5月")
+            .onNodeWithContentDescription("选择统计范围，当前2026年 5月")
             .performClick()
         composeRule.onNodeWithTag("date_navigation_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("直接选择年份和月份").assertIsDisplayed()
@@ -167,7 +167,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("年统计，未选择").performClick()
         composeRule.onNodeWithText("2025年").assertIsDisplayed()
         composeRule
-            .onNodeWithContentDescription("选择统计日期，当前2025年")
+            .onNodeWithContentDescription("选择统计范围，当前2025年")
             .performClick()
         composeRule.onNodeWithText("直接选择年份").assertIsDisplayed()
         composeRule.onNodeWithText("选择年份").assertIsDisplayed()
@@ -179,7 +179,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithTag("month_composition_card").performScrollTo()
         composeRule.onNodeWithText("次数构成").assertIsDisplayed()
         composeRule.onNodeWithTag("month_extremes_card").performScrollTo().assertExists()
-        composeRule.onNodeWithText("单日极值").assertExists()
+        composeRule.onNodeWithText("单日最高与最低").assertExists()
     }
 
     @Test

@@ -57,7 +57,7 @@ class AuthScreenTest {
 
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "登录和注册需要打开 VPN（梯子）。选择本机使用则无需开启，但不会同步到云端。",
+            "登录、注册和同步需要 VPN（梯子）。本机使用无需 VPN，但不会云同步。",
         ).assertIsDisplayed()
         composeRule.onNodeWithText("注册").performClick()
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
@@ -183,7 +183,7 @@ class AuthScreenTest {
         composeRule.onNodeWithText("发送重置邮件").performClick()
         composeRule.onNodeWithTag("password_reset_success").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "如果该邮箱已注册，重置邮件将在几分钟内送达。请检查收件箱和垃圾邮件。",
+            "请查收重置邮件（包括垃圾邮件），按邮件提示修改密码。",
         ).assertIsDisplayed()
         composeRule.runOnIdle { assertEquals("brew@example.com", submittedEmail) }
     }
