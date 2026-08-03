@@ -53,7 +53,7 @@ internal object AppCopy {
         const val wait = "请稍候…"
         const val signInAndRestore = "登录并恢复记录"
         const val createAccount = "创建账号"
-        const val continueOffline = "暂不登录，先使用本机记录"
+        const val continueOffline = "暂不登录，先使用“本机记录”"
         const val continueOfflineRegister = "暂不注册，先使用“本机记录”"
         const val emailRequired = "请输入邮箱"
         const val emailInvalid = "请输入有效邮箱"
