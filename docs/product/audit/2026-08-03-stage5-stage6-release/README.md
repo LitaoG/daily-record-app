@@ -11,6 +11,8 @@
 - beta.2 发布元数据 PR：[#68](https://github.com/LitaoG/daily-record-app/pull/68)，合并提交为 `12239b97851731d1e16cee817e5f917c4a7534cd`；tag `v1.0.0-beta.2` 指向该提交，两个 PR 分支均已删除。
 - 发布后审计补充 PR：[#69](https://github.com/LitaoG/daily-record-app/pull/69)，合并提交为 `357556a7bb51105537caba178d5cf18035aa1087`。
 - 审计链修正 PR：[#70](https://github.com/LitaoG/daily-record-app/pull/70)，合并提交为 `d211a171d5bdf6e0cce84ccd5f160574f1e79199`；当前公共 `main` 为该提交。
+- 终稿审计 PR：[#71](https://github.com/LitaoG/daily-record-app/pull/71)，合并提交为 `92f3b859745a90c846bad4afb01ed86499b2d3d5`。
+- 审计文档编码修正 PR：[#72](https://github.com/LitaoG/daily-record-app/pull/72)，合并提交为 `d5ed78b130c58437f7fb9b227ed8c2d14c49eba2`；当前公共 `main` 为该提交。
 - 公共仓库未跟踪 `keystore.properties`、`app/google-services.json`、签名文件、真实用户数据或 APK。
 
 ## 定向问题收口
