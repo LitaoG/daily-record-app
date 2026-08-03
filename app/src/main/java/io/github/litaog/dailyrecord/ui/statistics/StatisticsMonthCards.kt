@@ -53,6 +53,10 @@ internal data class MonthDailyChartScale(
     val ticks: List<Long>,
 )
 
+private val monthDailyChartHeight = 164.dp
+private val monthDailyPlotTop = 24.dp
+private val monthDailyPlotBottom = 154.dp
+
 /**
  * Stable date anchors used on the compact month chart's x-axis.
  *
@@ -64,6 +68,22 @@ internal fun monthDailyChartTickDays(dayCount: Int): List<Int> {
     return listOf(1, 5, 10, 15, 20, 25, dayCount)
         .filter { it in 1..dayCount }
         .distinct()
+}
+
+/**
+ * Returns the x-coordinate for a day using the same edge inset as the plot.
+ * Keeping this calculation shared by the plot and labels prevents the first
+ * tick from drifting to the second baseline marker when the label is clamped.
+ */
+internal fun monthDailyChartXPosition(
+    day: Int,
+    dayCount: Int,
+    width: Float,
+    inset: Float,
+): Float {
+    if (dayCount <= 1) return inset
+    val fraction = (day - 1).toFloat() / (dayCount - 1).toFloat()
+    return inset + (width - inset * 2f).coerceAtLeast(0f) * fraction
 }
 
 internal fun monthDailyChartScale(month: MonthStatistics): MonthDailyChartScale {
@@ -223,7 +243,7 @@ internal fun MonthDailyCountCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(174.dp)
+                .height(monthDailyChartHeight)
                 .semantics { contentDescription = description },
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -244,11 +264,11 @@ private fun MonthDailyChartAxis(scale: MonthDailyChartScale) {
     Box(
         modifier = Modifier
             .width(24.dp)
-            .height(174.dp),
+            .height(monthDailyChartHeight),
     ) {
         val density = LocalDensity.current
-        val plotTopPx = with(density) { 24.dp.toPx() }
-        val plotBottomPx = with(density) { 154.dp.toPx() }
+        val plotTopPx = with(density) { monthDailyPlotTop.toPx() }
+        val plotBottomPx = with(density) { monthDailyPlotBottom.toPx() }
         scale.ticks.forEach { tick ->
             val fraction = tick.toFloat() / scale.maximum.toFloat()
             val y = plotBottomPx - (plotBottomPx - plotTopPx) * fraction
@@ -275,24 +295,27 @@ private fun MonthDailyChartPlot(
 ) {
     BoxWithConstraints(
         modifier = modifier
-            .height(174.dp)
+            .height(monthDailyChartHeight)
             .testTag("month_daily_count_chart"),
     ) {
         val density = LocalDensity.current
-        val plotTop = 24.dp
-        val plotBottom = 154.dp
+        val plotTop = monthDailyPlotTop
+        val plotBottom = monthDailyPlotBottom
         val horizontalInset = 5.dp
         val plotTopPx = with(density) { plotTop.toPx() }
         val plotBottomPx = with(density) { plotBottom.toPx() }
         val horizontalInsetPx = with(density) { horizontalInset.toPx() }
-        val plotWidthPx = (constraints.maxWidth.toFloat() - horizontalInsetPx * 2f).coerceAtLeast(0f)
         val slotWidth = maxWidth / month.days.size
         val tickDays = monthDailyChartTickDays(month.days.size)
         val offsets = month.days.mapIndexed { index, day ->
-            val xFraction = if (month.days.size == 1) 0f else index.toFloat() / (month.days.size - 1).toFloat()
             val count = day.count?.takeIf { day.recorded && !day.future }
             Offset(
-                x = horizontalInsetPx + plotWidthPx * xFraction,
+                x = monthDailyChartXPosition(
+                    day = index + 1,
+                    dayCount = month.days.size,
+                    width = constraints.maxWidth.toFloat(),
+                    inset = horizontalInsetPx,
+                ),
                 y = count?.let { value ->
                     val fraction = (value.toFloat() / scale.maximum.toFloat()).coerceIn(0f, 1f)
                     plotBottomPx - (plotBottomPx - plotTopPx) * fraction
@@ -424,11 +447,16 @@ private fun MonthDailyXAxis(dayCount: Int) {
     ) {
         val labelWidth = 24.dp
         val plotInset = 5.dp
-        val availableWidth = (maxWidth - plotInset * 2).coerceAtLeast(0.dp)
         tickDays.forEach { day ->
-            val fraction = if (dayCount == 1) 0f else (day - 1).toFloat() / (dayCount - 1).toFloat()
-            val center = plotInset + availableWidth * fraction
-            val x = (center - labelWidth / 2).coerceIn(0.dp, (maxWidth - labelWidth).coerceAtLeast(0.dp))
+            val center = monthDailyChartXPosition(
+                day = day,
+                dayCount = dayCount,
+                width = maxWidth.value,
+                inset = plotInset.value,
+            ).dp
+            // Do not clamp the first/last label into the box: clamping moves
+            // the label's visual center away from its baseline anchor.
+            val x = center - labelWidth / 2
             Text(
                 text = day.toString(),
                 color = DailyRecordTextSecondary,
