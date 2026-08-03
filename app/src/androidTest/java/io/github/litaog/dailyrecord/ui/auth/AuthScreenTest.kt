@@ -55,12 +55,18 @@ class AuthScreenTest {
     fun loginAndRegistrationExplainVpnAndLocalOnlyBehavior() {
         setContent()
 
+        composeRule.onNodeWithText("登录后可恢复云端记录").assertIsDisplayed()
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "登录、注册和同步需 VPN；本机可离线记录，云端仅保存日期和次数。",
+            "需使用 VPN 进行登录\n若暂无 VPN 可先选择使用“本机记录”来进行记录活动",
         ).assertIsDisplayed()
         composeRule.onNodeWithText("注册").performClick()
+        composeRule.onNodeWithText("注册后可保存数据到云端方便长久记录").assertIsDisplayed()
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "需使用 VPN 进行注册\n若暂无 VPN 可先选择使用“本机记录”来进行记录活动",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("暂不注册，先使用“本机记录”").assertIsDisplayed()
     }
 
     @Test
