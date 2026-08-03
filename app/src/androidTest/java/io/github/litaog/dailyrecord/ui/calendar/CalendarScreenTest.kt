@@ -55,7 +55,7 @@ class CalendarScreenTest {
         }
 
         composeRule
-            .onNodeWithContentDescription("2026年7月16日，明确记录 0 次手冲")
+            .onNodeWithContentDescription("2026年7月16日，手冲，记录为 0 次")
             .assertExists()
         composeRule
             .onNodeWithContentDescription("2026年7月18日，未来日期，不可记录")
@@ -74,7 +74,7 @@ class CalendarScreenTest {
             useUnmergedTree = true,
         ).assertCountEquals(0)
         composeRule.onAllNodesWithText("0次").assertCountEquals(0)
-        composeRule.onNodeWithText("9+次").assertExists()
+        composeRule.onNodeWithText("9 次以上").assertExists()
         composeRule.onNodeWithText("今").assertExists()
     }
 
@@ -101,14 +101,14 @@ class CalendarScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("本月 3 次 · 2 天").assertExists()
+        composeRule.onNodeWithText("本月 3 次 · 2 天有记录").assertExists()
         composeRule.onAllNodesWithText("1.5次/天").assertCountEquals(0)
         composeRule
-            .onNodeWithContentDescription("本月 3 次 · 2 天")
+            .onNodeWithContentDescription("本月 3 次 · 2 天有记录")
             .assertExists()
         composeRule
             .onNodeWithContentDescription(
-                "点击日期填写手冲次数。状态：未填写、未来不可填写、0次、已记录",
+                "点击日期填写手冲次数。状态包括：未填写、未来不可填写、0 次和已记录",
             )
             .assertExists()
     }

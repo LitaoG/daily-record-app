@@ -99,6 +99,7 @@ class RecordScreenTest {
         composeRule.onNodeWithContentDescription("清除记录").performClick()
         composeRule.onNodeWithTag("clear_record_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("清除这天的记录？").assertIsDisplayed()
+        composeRule.onNodeWithText("只影响当前模块").assertIsDisplayed()
         composeRule.onNodeWithText("取消").performClick()
         assertEquals(0, repository.clearCalls)
 

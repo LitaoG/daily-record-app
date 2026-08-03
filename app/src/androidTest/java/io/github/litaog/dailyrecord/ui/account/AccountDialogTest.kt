@@ -55,22 +55,22 @@ class AccountDialogTest {
         composeRule.onNodeWithContentDescription("正在同步").assertIsNotEnabled()
 
         composeRule.runOnIdle { status = SyncStatus.Pending(3) }
-        composeRule.onNodeWithText("有 3 条记录等待同步").assertIsDisplayed()
+        composeRule.onNodeWithText("有 3 条记录待同步").assertIsDisplayed()
 
         composeRule.runOnIdle {
             status = SyncStatus.Failed(
-                "网络暂不可用，记录已保存在本机",
+                "网络连接异常，记录仍在本机。",
                 kind = SyncFailureKind.Network,
             )
         }
         composeRule.onNodeWithText("网络连接异常").assertIsDisplayed()
-        composeRule.onNodeWithText("网络暂不可用，记录已保存在本机").assertIsDisplayed()
+        composeRule.onNodeWithText("网络连接异常，记录仍在本机。").assertIsDisplayed()
         composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
         composeRule.onNodeWithContentDescription("立即同步").assertIsDisplayed()
 
         composeRule.runOnIdle {
             status = SyncStatus.Failed(
-                "登录状态已失效，记录已保存在本机",
+                "登录状态已失效，记录仍在本机。",
                 kind = SyncFailureKind.Authentication,
             )
         }
@@ -90,7 +90,7 @@ class AccountDialogTest {
                     AccountDialog(
                         email = "demo@example.com",
                         status = SyncStatus.Failed(
-                            message = "网络连接不稳定，记录已保存在本机",
+                            message = "网络连接异常，记录仍在本机。",
                             kind = SyncFailureKind.Network,
                         ),
                         onSyncNow = {},

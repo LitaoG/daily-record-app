@@ -227,26 +227,6 @@ internal fun DailyCountStatisticsScreen(
                 }
             }
         }
-        if (period == StatisticsPeriod.All && records.isNotEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(DailyRecordSurfaceMuted.copy(alpha = .46f))
-                        .border(1.dp, DailyRecordDivider, RoundedCornerShape(16.dp))
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                ) {
-                    Text(
-                        AppCopy.Statistics.firstRecord(
-                            records.filter { it.localDate <= today }.minOfOrNull { it.localDate },
-                        ),
-                        color = DailyRecordTextSecondary,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-        }
     }
 }
 

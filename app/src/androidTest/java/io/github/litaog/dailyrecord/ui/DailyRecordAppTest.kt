@@ -61,7 +61,7 @@ class DailyRecordAppTest {
         }
 
         composeRule.onNodeWithContentDescription("全部统计，未选择").performClick()
-        composeRule.onNodeWithText("去日历记录").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("去日历填写").performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithTag("calendar_screen").assertIsDisplayed()
         assertMonth(2026, 7)
     }
@@ -135,7 +135,7 @@ class DailyRecordAppTest {
             .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
             .performClick()
         composeRule.onNodeWithContentDescription("2026年7月18日，星期六").assertIsNotEnabled()
-        composeRule.onNodeWithContentDescription("快速跳转下个月").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("跳转到下个月").assertIsNotEnabled()
     }
 
     @Test
@@ -177,7 +177,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
         composeRule.onNodeWithText("2024年 6月").assertIsDisplayed()
         composeRule.onNodeWithTag("month_composition_card").performScrollTo()
-        composeRule.onNodeWithText("次数构成").assertIsDisplayed()
+        composeRule.onNodeWithText("次数分布").assertIsDisplayed()
         composeRule.onNodeWithTag("month_extremes_card").performScrollTo().assertExists()
         composeRule.onNodeWithText("单日最高与最低").assertExists()
     }
@@ -204,7 +204,7 @@ class DailyRecordAppTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("账号与云同步，云端已同步").performClick()
+        composeRule.onNodeWithContentDescription("账号与云同步状态：云端已同步").performClick()
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("brew@example.com").assertIsDisplayed()
         composeRule.onNodeWithText("退出登录").performClick()
@@ -260,7 +260,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithTag("daily_record_snackbar").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription(
-            "账号与云同步，网络连接异常",
+            "账号与云同步状态：网络连接异常",
         ).performClick()
 
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
@@ -283,7 +283,7 @@ class DailyRecordAppTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("账号与云同步，云端已同步").performClick()
+        composeRule.onNodeWithContentDescription("账号与云同步状态：云端已同步").performClick()
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
 
         composeRule.runOnIdle {
@@ -337,7 +337,7 @@ class DailyRecordAppTest {
         }
 
         assertMonth(2026, 7)
-        composeRule.onNodeWithContentDescription("登录账号并开启云同步").performClick()
+        composeRule.onNodeWithContentDescription("登录账号并同步记录").performClick()
         assertTrue(requestedSignIn)
     }
 

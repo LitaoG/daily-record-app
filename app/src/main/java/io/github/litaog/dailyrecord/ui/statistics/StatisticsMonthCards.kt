@@ -604,11 +604,6 @@ internal fun MonthDayExtremesCard(
                 colors = colors,
             )
         }
-        Text(
-            text = AppCopy.Statistics.monthDayExtremesHint,
-            color = DailyRecordTextMuted,
-            style = MaterialTheme.typography.labelSmall,
-        )
     }
 }
 

@@ -12,11 +12,11 @@ class AccountDeletionErrorMessageTest {
             accountDeletionErrorMessageForCode("ERROR_WRONG_PASSWORD"),
         )
         assertEquals(
-            "网络不可用，请确认 VPN（梯子）已开启后重试",
+            "网络不可用，请打开 VPN（梯子）后重试。",
             accountDeletionErrorMessageForCode("ERROR_NETWORK_REQUEST_FAILED"),
         )
         assertEquals(
-            "登录状态已变化，请退出后重新登录再删除",
+            "登录状态已失效，请重新登录后再删除。",
             accountDeletionErrorMessageForCode("ERROR_REQUIRES_RECENT_LOGIN"),
         )
     }
@@ -24,7 +24,7 @@ class AccountDeletionErrorMessageTest {
     @Test
     fun unknownFailureDoesNotClaimThatDeletionSucceeded() {
         assertEquals(
-            "删除未完成，本机记录仍保留；部分云端记录可能已先删除，请直接重试",
+            "删除未完成，本机记录仍保留。部分云端记录可能已删除，请重试。",
             accountDeletionErrorMessageForCode("UNKNOWN"),
         )
     }
@@ -32,7 +32,7 @@ class AccountDeletionErrorMessageTest {
     @Test
     fun networkFailureExplainsThatLocalRecordsRemainSafe() {
         assertEquals(
-            "网络中断，删除未完成；本机记录仍保留，请开启 VPN（梯子）后重试",
+            "网络中断，删除未完成。本机记录仍保留，请打开 VPN（梯子）后重试。",
             accountDeletionErrorMessage(IOException("offline")),
         )
     }

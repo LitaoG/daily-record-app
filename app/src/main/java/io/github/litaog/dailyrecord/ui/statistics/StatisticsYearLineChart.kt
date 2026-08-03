@@ -167,11 +167,6 @@ internal fun YearLineChartCard(
                 )
             }
         }
-        Text(
-            text = AppCopy.Statistics.annualLineHint,
-            color = DailyRecordTextMuted,
-            style = MaterialTheme.typography.labelSmall,
-        )
     }
 }
 

@@ -57,7 +57,7 @@ class AuthScreenTest {
 
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "登录、注册和同步需要 VPN（梯子）。本机使用无需 VPN，但不会云同步。",
+            "登录、注册和云同步需要 VPN（梯子）。离线使用不需要。",
         ).assertIsDisplayed()
         composeRule.onNodeWithText("注册").performClick()
         composeRule.onNodeWithTag("vpn_auth_notice").assertIsDisplayed()
@@ -66,14 +66,14 @@ class AuthScreenTest {
     @Test
     fun authErrorsDistinguishNetworkCredentialsAndRegistrationServiceFailures() {
         assertEquals(
-            "连接云服务超时或网络不可用，请打开 VPN（梯子）后重试",
+            "网络不可用或连接云服务超时，请检查 VPN（梯子）后重试。",
             authErrorMessage(
                 IllegalStateException("wrapped", FirebaseNetworkException("offline")),
                 AuthMode.SignIn,
             ),
         )
         assertEquals(
-            "邮箱或密码不正确，请检查后重试",
+            "邮箱或密码错误，请检查后重试。",
             authErrorMessage(
                 FirebaseAuthException("ERROR_INVALID_CREDENTIAL", "invalid"),
                 AuthMode.SignIn,
@@ -140,7 +140,7 @@ class AuthScreenTest {
         }
 
         composeRule.onNodeWithText("登录并恢复记录").assertIsNotEnabled()
-        composeRule.onNodeWithText("先在本机使用").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("暂不登录，先使用本机记录").performScrollTo().assertIsDisplayed().performClick()
         composeRule.runOnIdle { assertTrue(continuedOffline) }
     }
 
@@ -183,7 +183,7 @@ class AuthScreenTest {
         composeRule.onNodeWithText("发送重置邮件").performClick()
         composeRule.onNodeWithTag("password_reset_success").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "请查收重置邮件（包括垃圾邮件），按邮件提示修改密码。",
+            "请检查收件箱和垃圾邮件，并按邮件提示修改密码。",
         ).assertIsDisplayed()
         composeRule.runOnIdle { assertEquals("brew@example.com", submittedEmail) }
     }
@@ -228,7 +228,7 @@ class AuthScreenTest {
         composeRule.onNodeWithText("忘记密码？").performClick()
         composeRule.onNodeWithTag("password_reset_email").performTextInput("brew@example.com")
         composeRule.onNodeWithText("发送重置邮件").performClick()
-        composeRule.onNodeWithText("网络不可用，邮件尚未发送。请打开 VPN（梯子）后重试。").assertIsDisplayed()
+        composeRule.onNodeWithText("网络不可用，重置邮件未发送。请打开 VPN（梯子）后重试。").assertIsDisplayed()
         composeRule.onNodeWithText("发送重置邮件").assertIsEnabled()
     }
 

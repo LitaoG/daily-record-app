@@ -9,7 +9,7 @@ class PasswordResetErrorMessageTest {
     @Test
     fun mapsNetworkAndRetryLimitsToActionableMessages() {
         assertEquals(
-            "网络不可用，邮件尚未发送。请打开 VPN（梯子）后重试。",
+            "网络不可用，重置邮件未发送。请打开 VPN（梯子）后重试。",
             passwordResetErrorMessageFor(code = "", networkFailure = true),
         )
         assertEquals(
