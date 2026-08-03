@@ -7,8 +7,9 @@
 ## 公共 Git 状态
 
 - 仓库：[`LitaoG/daily-record-app`](https://github.com/LitaoG/daily-record-app)
-- PR：[#67](https://github.com/LitaoG/daily-record-app/pull/67)，已 squash 合并到 `main`。
-- 合并后的公共 `main` 提交为 `f95cca2f5f1a5f731ca50704021be75d2ef4ffa0`，作为 beta.2 发布来源；PR 分支已删除。
+- PR：[#67](https://github.com/LitaoG/daily-record-app/pull/67)，已 squash 合并到 `main`，合并提交为 `f95cca2f5f1a5f731ca50704021be75d2ef4ffa0`。
+- beta.2 发布元数据 PR：[#68](https://github.com/LitaoG/daily-record-app/pull/68)，合并提交为 `12239b97851731d1e16cee817e5f917c4a7534cd`；tag `v1.0.0-beta.2` 指向该提交，两个 PR 分支均已删除。
+- 发布后审计补充 PR：[#69](https://github.com/LitaoG/daily-record-app/pull/69)，合并提交为 `357556a7bb51105537caba178d5cf18035aa1087`；当前公共 `main` 为该提交。
 - 公共仓库未跟踪 `keystore.properties`、`app/google-services.json`、签名文件、真实用户数据或 APK。
 
 ## 定向问题收口
