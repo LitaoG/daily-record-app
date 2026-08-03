@@ -81,7 +81,12 @@ import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.periodGlassGlow
-import io.github.litaog.dailyrecord.ui.theme.periodGlassTint
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordAccentBrush
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodSliderBrush
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodTrackBrush
 
 enum class StatisticsPeriod(val label: String) {
     Week(AppCopy.Statistics.weekTab),
@@ -97,8 +102,10 @@ internal fun DailyRecordBottomBar(
     onSelected: (TopDestination) -> Unit,
 ) {
     Surface(
-        modifier = Modifier.navigationBarsPadding(),
-        color = DailyRecordSurface,
+        modifier = Modifier
+            .navigationBarsPadding()
+            .dailyRecordGlassBackground(colors, DailyRecordGlassLevel.Muted),
+        color = Color.Transparent,
         shadowElevation = DailyRecordElevations.Flat,
     ) {
         Row(
@@ -334,6 +341,9 @@ internal fun RecordModuleSelector(
                     .fillMaxHeight()
                     .heightIn(min = DailyRecordSizes.ModuleSelectorMinHeight)
                     .testTag("record_module_${spec.module.name}")
+                    // Keep the established full-half hit area and geometry. The
+                    // module selector remains a solid identity surface so the
+                    // current module is unambiguous against the glass shell.
                     .background(if (active) spec.colors.primary else Color.Transparent)
                     .clickable(role = Role.Tab) { onSelected(spec.module) }
                     .padding(
@@ -377,7 +387,6 @@ fun PeriodTabs(
     val trackShape = RoundedCornerShape(percent = 50)
     val sliderShape = RoundedCornerShape(percent = 50)
     val sliderInset = DailyRecordSpacing.Compact
-    val glassTint = colors.periodGlassTint
     val glassGlow = colors.periodGlassGlow
 
     Surface(
@@ -387,8 +396,8 @@ fun PeriodTabs(
             .testTag("statistics_period_tabs"),
         color = Color.Transparent,
         shape = trackShape,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = .58f)),
-        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = .78f)),
+        shadowElevation = 0.dp,
     ) {
         Box(
             modifier = Modifier
@@ -396,13 +405,7 @@ fun PeriodTabs(
                 .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
                 .clip(trackShape)
                 .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = .68f),
-                            glassTint.copy(alpha = .72f),
-                            Color.White.copy(alpha = .46f),
-                        ),
-                    ),
+                    brush = dailyRecordPeriodTrackBrush(colors),
                 )
         ) {
             BoxWithConstraints(
@@ -433,22 +436,17 @@ fun PeriodTabs(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .shadow(2.dp, sliderShape, clip = false)
+                            .shadow(1.dp, sliderShape, clip = false)
                             .clip(sliderShape)
                             .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.White.copy(alpha = .94f),
-                                        glassTint.copy(alpha = .30f),
-                                    ),
-                                ),
+                                brush = dailyRecordPeriodSliderBrush(colors),
                             )
                             .drawWithContent {
                                 drawContent()
                                 drawRoundRect(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(
-                                            Color.White.copy(alpha = .34f),
+                                            Color.White.copy(alpha = .46f),
                                             Color.Transparent,
                                         ),
                                         startY = 0f,
@@ -459,7 +457,7 @@ fun PeriodTabs(
                                 drawRoundRect(
                                     brush = Brush.radialGradient(
                                         colors = listOf(
-                                            glassGlow.copy(alpha = .16f),
+                                            glassGlow.copy(alpha = .10f),
                                             Color.Transparent,
                                         ),
                                         center = Offset(size.width / 2f, size.height),
@@ -468,7 +466,7 @@ fun PeriodTabs(
                                     cornerRadius = CornerRadius(size.height / 2f),
                                 )
                             }
-                            .border(1.dp, Color.White.copy(alpha = .82f), sliderShape)
+                            .border(1.dp, Color.White.copy(alpha = .90f), sliderShape)
                             .testTag("statistics_period_slider"),
                     )
                 }
@@ -532,10 +530,17 @@ fun DailyCountControl(
     colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth().heightIn(min = 132.dp),
-        color = if (enabled) DailyRecordSurface else DailyRecordSurfaceMuted,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 132.dp)
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(18.dp),
+                moduleColors = colors,
+                level = if (enabled) DailyRecordGlassLevel.Elevated else DailyRecordGlassLevel.Muted,
+            ),
+        color = Color.Transparent,
         shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.dp, if (enabled) colors.primary else DailyRecordDivider),
+        border = null,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
@@ -623,7 +628,13 @@ fun PrimaryActionButton(
         modifier = modifier
             .heightIn(min = 52.dp)
             .clip(DailyRecordShapes.Control)
-            .background(if (enabled) accent else DailyRecordSurfaceMuted)
+            .then(
+                if (enabled) {
+                    Modifier.background(dailyRecordAccentBrush(accent))
+                } else {
+                    Modifier.background(DailyRecordSurfaceMuted)
+                },
+            )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { role = Role.Button; contentDescription = label },
         contentAlignment = Alignment.Center,
@@ -643,12 +654,10 @@ fun OutlineActionButton(
     Box(
         modifier = modifier
             .heightIn(min = 52.dp)
-            .clip(DailyRecordShapes.Control)
-            .background(DailyRecordSurface)
-            .border(
-                DailyRecordBorders.Standard,
-                if (enabled) accent else DailyRecordDivider,
-                DailyRecordShapes.Control,
+            .dailyRecordGlass(
+                shape = DailyRecordShapes.Control,
+                level = if (enabled) DailyRecordGlassLevel.Elevated else DailyRecordGlassLevel.Muted,
+                edgeColor = if (enabled) accent else DailyRecordDivider,
             )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { role = Role.Button; contentDescription = label },
@@ -670,9 +679,10 @@ fun StatisticRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (future) DailyRecordSurfaceMuted else DailyRecordSurface)
-            .border(1.dp, DailyRecordDivider, RoundedCornerShape(12.dp))
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(12.dp),
+                level = if (future) DailyRecordGlassLevel.Muted else DailyRecordGlassLevel.Base,
+            )
             .padding(horizontal = 12.dp, vertical = 10.dp)
             .semantics(mergeDescendants = true) {
                 contentDescription = "$label，$countText，$daysText"

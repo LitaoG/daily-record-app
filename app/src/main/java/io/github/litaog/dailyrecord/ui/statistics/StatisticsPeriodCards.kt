@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,11 +25,11 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import io.github.litaog.dailyrecord.core.common.AppCopy
 
 @Composable
@@ -44,6 +43,7 @@ internal fun WeekDistributionCard(
         title = AppCopy.Statistics.dailyDistribution,
         subtitle = AppCopy.Statistics.times,
         modifier = modifier.testTag("week_distribution_card"),
+        colors = colors,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -108,14 +108,21 @@ private fun DistributionSurface(
     title: String,
     subtitle: String,
     modifier: Modifier,
+    colors: RecordModuleColorTokens,
     content: @Composable () -> Unit,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = DailyRecordSurface,
+        modifier = modifier
+            .fillMaxWidth()
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(20.dp),
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Base,
+            ),
+        color = androidx.compose.ui.graphics.Color.Transparent,
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, DailyRecordDivider),
-        shadowElevation = 2.dp,
+        border = null,
+        shadowElevation = 0.dp,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 15.dp),

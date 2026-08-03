@@ -47,8 +47,9 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import kotlinx.coroutines.launch
 
 private enum class AccountDeletionStep {
@@ -204,11 +205,10 @@ private fun DeletionChoiceCard(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .background(if (selected) DailyRecordSurfaceMuted else DailyRecordSurface, RoundedCornerShape(14.dp))
-            .border(
-                1.dp,
-                if (selected) DailyRecordDefaultAccent else DailyRecordDivider,
-                RoundedCornerShape(14.dp),
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(14.dp),
+                level = if (selected) DailyRecordGlassLevel.Elevated else DailyRecordGlassLevel.Base,
+                edgeColor = if (selected) DailyRecordDefaultAccent else DailyRecordDivider,
             )
             .clickable(role = Role.RadioButton, onClick = onClick)
             .padding(14.dp)

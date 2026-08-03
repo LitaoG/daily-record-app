@@ -38,6 +38,7 @@
 - [2026-08-02 统计与日历边界修复](product/audit/2026-08-02-boundary-fixes/README.md)
 - [2026-08-02 统计周期玻璃分段控件](product/audit/2026-08-02-period-glass-tabs/README.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
+- [明亮渐变玻璃主题 Goal 与当前契约](product/BRIGHT_GLASS_THEME.md)
 - [2026-08-01 Stage 4 月度热力图与年度月份分析](product/audit/2026-08-01-ui-v2-stage4/README.md)
 - [2026-08-01 Stage 5 集成 QA 与候选 APK](product/audit/2026-08-01-ui-v2-stage5/README.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)

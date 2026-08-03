@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,12 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberLarge
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import io.github.litaog.dailyrecord.core.common.AppCopy
 
 @Composable
@@ -50,10 +50,16 @@ internal fun StatisticsSummaryCard(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = DailyRecordSurface,
+        modifier = modifier
+            .fillMaxWidth()
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(18.dp),
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Elevated,
+            ),
+        color = androidx.compose.ui.graphics.Color.Transparent,
         shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.dp, DailyRecordDivider),
+        border = null,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
@@ -121,7 +127,12 @@ internal fun QuarterShareCard(
             colors.soft,
         )
     }
-    StatisticsSurface(modifier = modifier, title = AppCopy.Statistics.quarterShare, subtitle = if (total == 0L) AppCopy.Statistics.noPositiveCount else AppCopy.Statistics.byCount) {
+    StatisticsSurface(
+        modifier = modifier,
+        title = AppCopy.Statistics.quarterShare,
+        subtitle = if (total == 0L) AppCopy.Statistics.noPositiveCount else AppCopy.Statistics.byCount,
+        colors = colors,
+    ) {
         if (total == 0L) {
             Text(AppCopy.Statistics.quarterShareHint, color = DailyRecordTextSecondary, style = MaterialTheme.typography.bodyMedium)
         } else {
@@ -192,7 +203,12 @@ internal fun ExtremesCard(
     colors: RecordModuleColorTokens,
     modifier: Modifier = Modifier,
 ) {
-    StatisticsSurface(modifier = modifier, title = AppCopy.Statistics.monthSummary, subtitle = AppCopy.Statistics.fullMonths) {
+    StatisticsSurface(
+        modifier = modifier,
+        title = AppCopy.Statistics.monthSummary,
+        subtitle = AppCopy.Statistics.fullMonths,
+        colors = colors,
+    ) {
         when {
             year.maximumMonths.isEmpty() && year.minimumMonths.isEmpty() -> {
                 Text(
@@ -253,14 +269,21 @@ internal fun StatisticsSurface(
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
+    colors: RecordModuleColorTokens? = null,
     content: @Composable () -> Unit,
 ) {
     val useStackedHeader = LocalConfiguration.current.fontScale >= 1.6f
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = DailyRecordSurface,
+        modifier = modifier
+            .fillMaxWidth()
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(18.dp),
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Base,
+            ),
+        color = androidx.compose.ui.graphics.Color.Transparent,
         shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.dp, DailyRecordDivider),
+        border = null,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 15.dp),

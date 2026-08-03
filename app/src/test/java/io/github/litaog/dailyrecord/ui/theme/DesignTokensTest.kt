@@ -13,15 +13,15 @@ import org.junit.Test
 class DesignTokensTest {
     @Test
     fun approvedFoundationColorsRemainExact() {
-        assertArgb(0xFFFAF8F3, DailyRecordCanvas)
-        assertArgb(0xFFFFFEFB, DailyRecordSurface)
+        assertArgb(0xFFFCFAF7, DailyRecordCanvas)
+        assertArgb(0xFFFFFEFC, DailyRecordSurface)
         assertArgb(0xFF2D2926, DailyRecordText)
-        assertArgb(0xFFD8D0C6, DailyRecordDivider)
-        assertArgb(0xFF85569A, HandBrewColorTokens.primary)
-        assertArgb(0xFF603670, HandBrewColorTokens.strong)
-        assertArgb(0xFFA54658, SexColorTokens.primary)
-        assertArgb(0xFF7A3040, SexColorTokens.strong)
-        assertArgb(0xFF5C677C, DailyRecordPeriodInactiveText)
+        assertArgb(0xFFE0D8D0, DailyRecordDivider)
+        assertArgb(0xFF8A5AA7, HandBrewColorTokens.primary)
+        assertArgb(0xFF693D83, HandBrewColorTokens.strong)
+        assertArgb(0xFFAD485C, SexColorTokens.primary)
+        assertArgb(0xFF823447, SexColorTokens.strong)
+        assertArgb(0xFF536078, DailyRecordPeriodInactiveText)
         assertEquals(HandBrewColorTokens.soft, HandBrewColorTokens.periodGlassTint)
         assertEquals(HandBrewColorTokens.primary, HandBrewColorTokens.periodGlassGlow)
         assertEquals(SexColorTokens.soft, SexColorTokens.periodGlassTint)
