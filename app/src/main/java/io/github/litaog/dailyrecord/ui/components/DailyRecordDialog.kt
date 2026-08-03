@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -23,8 +22,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 
 /** Shared app-native dialog surface for the private-calendar visual language. */
 @Composable
@@ -50,11 +49,15 @@ fun DailyRecordDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .widthIn(max = 420.dp)
+                    .dailyRecordGlass(
+                        shape = RoundedCornerShape(26.dp),
+                        level = DailyRecordGlassLevel.Emphasis,
+                    )
                     .semantics { this.testTag = testTag },
                 shape = RoundedCornerShape(26.dp),
-                color = DailyRecordSurface,
-                border = BorderStroke(1.dp, DailyRecordDivider),
-                shadowElevation = 14.dp,
+                color = androidx.compose.ui.graphics.Color.Transparent,
+                border = null,
+                shadowElevation = 0.dp,
                 tonalElevation = 0.dp,
             ) {
                 Column(

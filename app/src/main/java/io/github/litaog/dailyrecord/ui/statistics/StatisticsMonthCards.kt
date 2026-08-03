@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,6 +46,8 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 
 internal data class MonthDailyChartScale(
     val maximum: Long,
@@ -127,6 +128,11 @@ internal fun MonthSummaryCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(18.dp),
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Elevated,
+            )
             .semantics {
                 contentDescription = AppCopy.Statistics.monthSummaryAccessibility(
                     totalCount = totalCount,
@@ -134,9 +140,9 @@ internal fun MonthSummaryCard(
                     average = average,
                 )
             },
-        color = DailyRecordSurface,
+        color = androidx.compose.ui.graphics.Color.Transparent,
         shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.dp, DailyRecordDivider),
+        border = null,
     ) {
         if (useStackedLayout) {
             Column(
@@ -239,6 +245,7 @@ internal fun MonthDailyCountCard(
         modifier = modifier.testTag("month_daily_count_card"),
         title = AppCopy.Statistics.dailyCount,
         subtitle = AppCopy.Statistics.byDate,
+        colors = colors,
     ) {
         Row(
             modifier = Modifier
@@ -497,6 +504,7 @@ internal fun MonthCountCompositionCard(
             },
         title = AppCopy.Statistics.countComposition,
         subtitle = AppCopy.Statistics.savedDaysSubtitle(month.savedDays),
+        colors = colors,
     ) {
         if (month.savedDays == 0) {
             Box(
@@ -656,6 +664,7 @@ internal fun MonthDayExtremesCard(
         modifier = modifier.testTag("month_extremes_card"),
         title = AppCopy.Statistics.singleDayExtremes,
         subtitle = AppCopy.Statistics.byPositiveCount,
+        colors = colors,
     ) {
         if (month.maximum == null || month.minimumPositive == null) {
             Text(

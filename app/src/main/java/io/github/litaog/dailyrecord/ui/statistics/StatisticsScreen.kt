@@ -53,10 +53,10 @@ import io.github.litaog.dailyrecord.ui.navigation.previousPeriodAnchor
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import java.time.LocalDate
 
 @Composable
@@ -345,8 +345,11 @@ private fun EmptyStatistics(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(DailyRecordSurfaceMuted)
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(16.dp),
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Muted,
+            )
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {

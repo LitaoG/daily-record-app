@@ -59,6 +59,8 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -210,9 +212,12 @@ private fun SelectedDateSummary(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(colors.soft.copy(alpha = .22f))
-            .border(1.dp, colors.soft, RoundedCornerShape(16.dp))
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(16.dp),
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Muted,
+                edgeColor = colors.soft.copy(alpha = .74f),
+            )
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(AppCopy.Navigation.selected, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
@@ -259,9 +264,12 @@ private fun SelectionSummary(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(colors.primary.copy(alpha = .10f))
-            .border(1.dp, colors.primary.copy(alpha = .25f), RoundedCornerShape(16.dp))
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(16.dp),
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Muted,
+                edgeColor = colors.primary.copy(alpha = .28f),
+            )
             .padding(horizontal = 18.dp, vertical = 14.dp),
     ) {
         Text(AppCopy.Navigation.selected, color = colors.primary, style = MaterialTheme.typography.labelSmall)
@@ -324,9 +332,12 @@ private fun YearWheelPicker(
         modifier = Modifier
             .fillMaxWidth()
             .height(270.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(DailyRecordSurfaceMuted.copy(alpha = .52f))
-            .border(1.dp, colors.soft.copy(alpha = .45f), RoundedCornerShape(20.dp)),
+            .dailyRecordGlass(
+                shape = RoundedCornerShape(20.dp),
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Muted,
+                edgeColor = colors.soft.copy(alpha = .50f),
+            ),
     ) {
         LazyColumn(
             state = listState,
