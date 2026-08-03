@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,10 +56,8 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import kotlinx.coroutines.launch
 
 internal enum class AuthMode {
@@ -131,174 +127,153 @@ internal fun AuthScreen(
             .background(dailyRecordBackdropBrush(HandBrewColorTokens))
             .verticalScroll(rememberScrollState())
             .imePadding()
-            .padding(horizontal = 24.dp, vertical = 28.dp)
+            .padding(horizontal = 24.dp, vertical = 24.dp)
             .testTag("auth_screen"),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Surface(
-            modifier = Modifier.dailyRecordGlass(
-                shape = RoundedCornerShape(24.dp),
-                moduleColors = HandBrewColorTokens,
-                level = DailyRecordGlassLevel.Elevated,
-            ),
-            color = androidx.compose.ui.graphics.Color.Transparent,
-            shape = RoundedCornerShape(24.dp),
-            shadowElevation = 0.dp,
-            border = null,
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(22.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                CalendarGlyph(color = DailyRecordDefaultAccent, modifier = Modifier.size(36.dp))
-                Text(AppCopy.Auth.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
-                Text(
-                    AppCopy.Auth.subtitle,
-                    color = DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AuthModeButton(AppCopy.Auth.signIn, mode == AuthMode.SignIn) {
-                        if (!busy) {
-                            modeName = AuthMode.SignIn.name
-                            errorText = null
-                        }
-                    }
-                    AuthModeButton(AppCopy.Auth.register, mode == AuthMode.Register) {
-                        if (!busy) {
-                            modeName = AuthMode.Register.name
-                            errorText = null
-                        }
+            CalendarGlyph(color = DailyRecordDefaultAccent, modifier = Modifier.size(36.dp))
+            Text(AppCopy.Auth.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
+            Text(
+                AppCopy.Auth.subtitle,
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AuthModeButton(AppCopy.Auth.signIn, mode == AuthMode.SignIn) {
+                    if (!busy) {
+                        modeName = AuthMode.SignIn.name
+                        errorText = null
                     }
                 }
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it; errorText = null },
-                    enabled = !busy,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(AppCopy.Auth.email) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next,
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = fieldColors,
+                AuthModeButton(AppCopy.Auth.register, mode == AuthMode.Register) {
+                    if (!busy) {
+                        modeName = AuthMode.Register.name
+                        errorText = null
+                    }
+                }
+            }
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it; errorText = null },
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(AppCopy.Auth.email) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next,
+                ),
+                shape = RoundedCornerShape(16.dp),
+                colors = fieldColors,
+            )
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it; errorText = null },
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(AppCopy.Auth.password) },
+                singleLine = true,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = if (mode == AuthMode.Register) ImeAction.Next else ImeAction.Done,
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { if (mode == AuthMode.SignIn) submit() },
+                ),
+                trailingIcon = {
+                    DailyRecordTextAction(
+                        label = if (passwordVisible) AppCopy.Auth.hide else AppCopy.Auth.show,
+                        onClick = { passwordVisible = !passwordVisible },
+                        enabled = !busy,
+                        accessibilityLabel = if (passwordVisible) AppCopy.Auth.hidePassword else AppCopy.Auth.showPassword,
+                    )
+                },
+                shape = RoundedCornerShape(16.dp),
+                colors = fieldColors,
+            )
+            if (mode == AuthMode.SignIn) {
+                DailyRecordTextAction(
+                    label = AppCopy.Auth.forgotPassword,
+                    onClick = { showPasswordReset = true },
+                    enabled = productionConfigured && !busy,
+                    modifier = Modifier.align(Alignment.End),
+                    accessibilityLabel = AppCopy.Auth.openPasswordReset,
                 )
+            }
+            if (mode == AuthMode.Register) {
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it; errorText = null },
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it; errorText = null },
                     enabled = !busy,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(AppCopy.Auth.password) },
+                    label = { Text(AppCopy.Auth.confirmPassword) },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
-                        imeAction = if (mode == AuthMode.Register) ImeAction.Next else ImeAction.Done,
+                        imeAction = ImeAction.Done,
                     ),
-                    keyboardActions = KeyboardActions(
-                        onDone = { if (mode == AuthMode.SignIn) submit() },
-                    ),
-                    trailingIcon = {
-                        DailyRecordTextAction(
-                            label = if (passwordVisible) AppCopy.Auth.hide else AppCopy.Auth.show,
-                            onClick = { passwordVisible = !passwordVisible },
-                            enabled = !busy,
-                            accessibilityLabel = if (passwordVisible) AppCopy.Auth.hidePassword else AppCopy.Auth.showPassword,
-                        )
-                    },
+                    keyboardActions = KeyboardActions(onDone = { submit() }),
                     shape = RoundedCornerShape(16.dp),
                     colors = fieldColors,
                 )
-                if (mode == AuthMode.SignIn) {
-                    DailyRecordTextAction(
-                        label = AppCopy.Auth.forgotPassword,
-                        onClick = { showPasswordReset = true },
-                        enabled = productionConfigured && !busy,
-                        modifier = Modifier.align(Alignment.End),
-                        accessibilityLabel = AppCopy.Auth.openPasswordReset,
-                    )
-                }
-                if (mode == AuthMode.Register) {
-                    OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { confirmPassword = it; errorText = null },
-                        enabled = !busy,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(AppCopy.Auth.confirmPassword) },
-                        singleLine = true,
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done,
-                        ),
-                        keyboardActions = KeyboardActions(onDone = { submit() }),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = fieldColors,
-                    )
-                }
+            }
+            if (mode == AuthMode.Register) {
                 Text(
                     AppCopy.Auth.passwordPolicy,
                     color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.fillMaxWidth(),
                 )
+            }
+            Text(
+                AppCopy.Auth.vpnNotice,
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("vpn_auth_notice"),
+            )
+            if (!productionConfigured) {
                 Text(
-                    AppCopy.Auth.vpnNotice,
-                    color = DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("vpn_auth_notice"),
-                )
-                if (!productionConfigured) {
-                    Text(
-                        AppCopy.Auth.emulatorNotice,
-                        color = DailyRecordDefaultAccent,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                (errorText ?: validationError?.takeIf { email.isNotEmpty() || password.isNotEmpty() })?.let {
-                    Text(
-                        it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                PrimaryActionButton(
-                    label = when {
-                        busy -> AppCopy.Auth.wait
-                        mode == AuthMode.SignIn -> AppCopy.Auth.signInAndRestore
-                        else -> AppCopy.Auth.createAccount
-                    },
-                    enabled = productionConfigured && !busy && validationError == null,
+                    AppCopy.Auth.emulatorNotice,
+                    color = DailyRecordDefaultAccent,
+                    style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = submit,
-                )
-                DailyRecordTextAction(
-                    label = AppCopy.Auth.continueOffline,
-                    onClick = onContinueOffline,
-                    enabled = !busy,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    AppCopy.Auth.offlineMergeNotice,
-                    color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall,
                 )
             }
+            (errorText ?: validationError?.takeIf { email.isNotEmpty() || password.isNotEmpty() })?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            PrimaryActionButton(
+                label = when {
+                    busy -> AppCopy.Auth.wait
+                    mode == AuthMode.SignIn -> AppCopy.Auth.signInAndRestore
+                    else -> AppCopy.Auth.createAccount
+                },
+                enabled = productionConfigured && !busy && validationError == null,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = submit,
+            )
+            DailyRecordTextAction(
+                label = AppCopy.Auth.continueOffline,
+                onClick = onContinueOffline,
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
-        Spacer(Modifier.height(16.dp))
-        Text(
-            AppCopy.Auth.cloudDataNotice,
-            color = DailyRecordTextMuted,
-            style = MaterialTheme.typography.labelSmall,
-        )
     }
 
     if (showPasswordReset) {
