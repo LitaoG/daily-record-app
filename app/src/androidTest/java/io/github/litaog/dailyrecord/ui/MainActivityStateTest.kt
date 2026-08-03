@@ -23,9 +23,9 @@ class MainActivityStateTest {
             .authRepository
             .signOut()
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithText("暂不登录，先使用本机记录").fetchSemanticsNodes().size == 1
+            composeRule.onAllNodesWithText("暂不登录，先使用“本机记录”").fetchSemanticsNodes().size == 1
         }
-        composeRule.onNodeWithText("暂不登录，先使用本机记录").performClick()
+        composeRule.onNodeWithText("暂不登录，先使用“本机记录”").performClick()
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule
                 .onAllNodesWithContentDescription("上个月")

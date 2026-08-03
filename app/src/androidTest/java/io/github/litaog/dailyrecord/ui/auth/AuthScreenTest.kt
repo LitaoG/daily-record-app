@@ -146,7 +146,7 @@ class AuthScreenTest {
         }
 
         composeRule.onNodeWithText("登录并恢复记录").assertIsNotEnabled()
-        composeRule.onNodeWithText("暂不登录，先使用本机记录").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("暂不登录，先使用“本机记录”").performScrollTo().assertIsDisplayed().performClick()
         composeRule.runOnIdle { assertTrue(continuedOffline) }
     }
 
