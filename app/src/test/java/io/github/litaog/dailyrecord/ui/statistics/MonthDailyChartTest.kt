@@ -16,6 +16,18 @@ class MonthDailyChartTest {
     }
 
     @Test
+    fun xAxisLabelsShareThePlotEdgeAnchors() {
+        val first = monthDailyChartXPosition(day = 1, dayCount = 31, width = 300f, inset = 5f)
+        val middle = monthDailyChartXPosition(day = 10, dayCount = 31, width = 300f, inset = 5f)
+        val last = monthDailyChartXPosition(day = 31, dayCount = 31, width = 300f, inset = 5f)
+
+        assertEquals(5f, first, 0.001f)
+        assertEquals(92f, middle, 0.001f)
+        assertEquals(295f, last, 0.001f)
+        assertEquals(5f, monthDailyChartXPosition(day = 1, dayCount = 1, width = 300f, inset = 5f), 0.001f)
+    }
+
+    @Test
     fun scaleUsesReadableTicksAboveLargestDailyCount() {
         val month = monthStatistics(
             DailyCountEntry(LocalDate.of(2026, 7, 3), 2),
