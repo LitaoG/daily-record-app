@@ -37,7 +37,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -145,17 +144,6 @@ internal fun AuthScreen(
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Text(
-                if (mode == AuthMode.SignIn) {
-                    AppCopy.Auth.signInLocalSyncNotice
-                } else {
-                    AppCopy.Auth.registerLocalSyncNotice
-                },
-                color = DailyRecordTextMuted,
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AuthModeButton(AppCopy.Auth.signIn, mode == AuthMode.SignIn) {
                     if (!busy) {
@@ -245,14 +233,27 @@ internal fun AuthScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            Text(
-                if (mode == AuthMode.SignIn) AppCopy.Auth.signInVpnNotice else AppCopy.Auth.registerVpnNotice,
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.labelSmall,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("vpn_auth_notice"),
-            )
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    if (mode == AuthMode.SignIn) AppCopy.Auth.signInVpnNotice else AppCopy.Auth.registerVpnNotice,
+                    color = DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+                Text(
+                    if (mode == AuthMode.SignIn) {
+                        AppCopy.Auth.signInLocalSyncNotice
+                    } else {
+                        AppCopy.Auth.registerLocalSyncNotice
+                    },
+                    color = DailyRecordTextMuted,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
             if (!productionConfigured) {
                 Text(
                     AppCopy.Auth.emulatorNotice,
