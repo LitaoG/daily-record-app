@@ -140,7 +140,7 @@ internal fun AuthScreen(
             CalendarGlyph(color = DailyRecordDefaultAccent, modifier = Modifier.size(36.dp))
             Text(AppCopy.Auth.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
             Text(
-                AppCopy.Auth.subtitle,
+                if (mode == AuthMode.SignIn) AppCopy.Auth.signInSubtitle else AppCopy.Auth.registerSubtitle,
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -234,7 +234,7 @@ internal fun AuthScreen(
                 )
             }
             Text(
-                AppCopy.Auth.vpnNotice,
+                if (mode == AuthMode.SignIn) AppCopy.Auth.signInVpnNotice else AppCopy.Auth.registerVpnNotice,
                 color = DailyRecordTextSecondary,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
@@ -268,7 +268,11 @@ internal fun AuthScreen(
                 onClick = submit,
             )
             DailyRecordTextAction(
-                label = AppCopy.Auth.continueOffline,
+                label = if (mode == AuthMode.SignIn) {
+                    AppCopy.Auth.continueOffline
+                } else {
+                    AppCopy.Auth.continueOfflineRegister
+                },
                 onClick = onContinueOffline,
                 enabled = !busy,
                 modifier = Modifier.fillMaxWidth(),
