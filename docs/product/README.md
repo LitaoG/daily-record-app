@@ -1,6 +1,6 @@
 # 私密日历产品交付索引
 
-最后复核：2026-08-01
+最后复核：2026-08-03
 
 完整工程文档请先看[文档中心](../README.md)。本页只索引产品、设计和交付资料。
 
@@ -22,11 +22,12 @@
 - [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)
 - [日常使用反馈](DAILY_USE_FEEDBACK.md)
 - [2026-08-03 应用内中文文案审查](audit/2026-08-03-copy-audit/README.md)
+- [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](audit/2026-08-03-stage5-stage6-release/README.md)
 - [开源借鉴边界](RESEARCH_OPEN_SOURCE.md)
 - [隐私说明](../../PRIVACY.md)
 - [签名与 GitHub Release](../RELEASE.md)
 
-后续实现只能从 UI v2 分阶段计划和本目录设计基线进入。Stage 1 至 Stage 4 已验收，Stage 5 正在进行集成 QA 与候选 APK 交付；当前运行行为仍以代码与事实文档为准。
+后续实现只能从 UI v2 分阶段计划和本目录设计基线进入。Stage 1 至 Stage 6 已完成并发布 `v1.0.0-beta.2`；当前运行行为仍以代码与事实文档为准，真人日常反馈只通过后续 Issue 进入定向修复。
 
 ## 历史交付证据
 
