@@ -53,7 +53,7 @@ import io.github.litaog.dailyrecord.ui.navigation.previousPeriodAnchor
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
@@ -233,23 +233,18 @@ internal fun DailyCountStatisticsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(DailyRecordSurface)
-                        .border(1.dp, moduleSpec.colors.primary, RoundedCornerShape(16.dp))
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                        .background(DailyRecordSurfaceMuted.copy(alpha = .46f))
+                        .border(1.dp, DailyRecordDivider, RoundedCornerShape(16.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Text(AppCopy.Statistics.historyFacts, color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
+                    Text(AppCopy.Statistics.recordStart, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelMedium)
                     Text(
                         AppCopy.Statistics.firstRecord(
                             records.filter { it.localDate <= today }.minOfOrNull { it.localDate },
                         ),
-                        color = DailyRecordTextSecondary,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    Text(
-                        AppCopy.Statistics.noFutureTrend,
-                        color = DailyRecordTextMuted,
-                        style = MaterialTheme.typography.labelSmall,
+                        color = DailyRecordText,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
             }
