@@ -1,0 +1,46 @@
+package io.github.litaog.dailyrecord.ui.statistics
+
+import io.github.litaog.dailyrecord.ui.DailyCountEntry
+import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
+import java.time.LocalDate
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class MonthDailyChartTest {
+    @Test
+    fun xAxisAnchorsHighlightReadableDatesWithoutDuplicatingShortMonths() {
+        assertEquals(listOf(1, 5, 10, 15, 20, 25, 31), monthDailyChartTickDays(31))
+        assertEquals(listOf(1, 5, 10, 15, 20, 25, 28), monthDailyChartTickDays(28))
+        assertEquals(listOf(1, 5, 10), monthDailyChartTickDays(10))
+        assertEquals(emptyList<Int>(), monthDailyChartTickDays(0))
+    }
+
+    @Test
+    fun scaleUsesReadableTicksAboveLargestDailyCount() {
+        val month = monthStatistics(
+            DailyCountEntry(LocalDate.of(2026, 7, 3), 2),
+            DailyCountEntry(LocalDate.of(2026, 7, 23), 9),
+        )
+
+        assertEquals(MonthDailyChartScale(maximum = 10L, ticks = listOf(0L, 5L, 10L)), monthDailyChartScale(month))
+    }
+
+    @Test
+    fun emptyAndExplicitZeroMonthsKeepARealZeroBaseline() {
+        val empty = monthStatistics()
+        val explicitZero = monthStatistics(DailyCountEntry(LocalDate.of(2026, 7, 8), 0))
+
+        val expected = MonthDailyChartScale(maximum = 1L, ticks = listOf(0L, 1L))
+        assertEquals(expected, monthDailyChartScale(empty))
+        assertEquals(expected, monthDailyChartScale(explicitZero))
+    }
+
+    private fun monthStatistics(vararg records: DailyCountEntry): MonthStatistics = requireNotNull(
+        buildDailyCountStatistics(
+            period = StatisticsPeriod.Month,
+            anchorDate = LocalDate.of(2026, 7, 15),
+            today = LocalDate.of(2026, 8, 2),
+            records = records.toList(),
+        ).month,
+    )
+}

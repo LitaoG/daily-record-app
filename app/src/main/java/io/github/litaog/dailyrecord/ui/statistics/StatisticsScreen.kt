@@ -53,7 +53,7 @@ import io.github.litaog.dailyrecord.ui.navigation.previousPeriodAnchor
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
@@ -124,9 +124,6 @@ internal fun DailyCountStatisticsScreen(
             )
         }
         item {
-            Text(AppCopy.Statistics.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
-        }
-        item {
             PeriodTabs(
                 selected = period,
                 onSelected = { periodName = it.name },
@@ -146,14 +143,23 @@ internal fun DailyCountStatisticsScreen(
             )
         }
         item {
-            StatisticsSummaryCard(
-                periodLabel = periodSummaryLabel(period),
-                moduleLabel = moduleSpec.label,
-                totalCount = model.summary.totalCount,
-                recordedDays = model.summary.recordedDays,
-                average = model.summary.average,
-                colors = moduleSpec.colors,
-            )
+            if (period == StatisticsPeriod.Month) {
+                MonthSummaryCard(
+                    totalCount = model.summary.totalCount,
+                    recordedDays = model.summary.recordedDays,
+                    average = model.summary.average,
+                    colors = moduleSpec.colors,
+                )
+            } else {
+                StatisticsSummaryCard(
+                    periodLabel = periodSummaryLabel(period),
+                    moduleLabel = moduleSpec.label,
+                    totalCount = model.summary.totalCount,
+                    recordedDays = model.summary.recordedDays,
+                    average = model.summary.average,
+                    colors = moduleSpec.colors,
+                )
+            }
         }
         when (period) {
             StatisticsPeriod.Week -> {
@@ -165,13 +171,19 @@ internal fun DailyCountStatisticsScreen(
             }
             StatisticsPeriod.Month -> {
                 item {
-                    model.month?.let { MonthWeeklyAnalysisCard(it, colors = moduleSpec.colors) }
+                    model.month?.let { MonthDailyCountCard(it, colors = moduleSpec.colors) }
+                }
+                item {
+                    model.month?.let { MonthCountCompositionCard(it, colors = moduleSpec.colors) }
+                }
+                item {
+                    model.month?.let { MonthDayExtremesCard(it, colors = moduleSpec.colors) }
                 }
             }
             StatisticsPeriod.Year -> {
                 item {
                     model.year?.let {
-                        YearBarChartCard(
+                        YearLineChartCard(
                             year = it,
                             colors = moduleSpec.colors,
                         )
@@ -212,33 +224,6 @@ internal fun DailyCountStatisticsScreen(
                             future = detail.future,
                         )
                     }
-                }
-            }
-        }
-        if (period == StatisticsPeriod.All && records.isNotEmpty()) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(DailyRecordSurface)
-                        .border(1.dp, moduleSpec.colors.primary, RoundedCornerShape(16.dp))
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text(AppCopy.Statistics.historyFacts, color = DailyRecordText, style = MaterialTheme.typography.labelLarge)
-                    Text(
-                        AppCopy.Statistics.firstRecord(
-                            records.filter { it.localDate <= today }.minOfOrNull { it.localDate },
-                        ),
-                        color = DailyRecordTextSecondary,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    Text(
-                        AppCopy.Statistics.noFutureTrend,
-                        color = DailyRecordTextMuted,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
                 }
             }
         }

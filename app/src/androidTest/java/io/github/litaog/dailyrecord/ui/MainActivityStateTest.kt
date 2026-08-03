@@ -23,9 +23,9 @@ class MainActivityStateTest {
             .authRepository
             .signOut()
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithText("先在本机使用").fetchSemanticsNodes().size == 1
+            composeRule.onAllNodesWithText("暂不登录，先使用本机记录").fetchSemanticsNodes().size == 1
         }
-        composeRule.onNodeWithText("先在本机使用").performClick()
+        composeRule.onNodeWithText("暂不登录，先使用本机记录").performClick()
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule
                 .onAllNodesWithContentDescription("上个月")
@@ -42,9 +42,9 @@ class MainActivityStateTest {
         composeRule.activityRule.scenario.recreate()
 
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithText("登录同步").fetchSemanticsNodes().size == 1
+            composeRule.onAllNodesWithText("登录并同步").fetchSemanticsNodes().size == 1
         }
         composeRule.onNodeWithContentDescription(historicalMonthDescription).assertIsDisplayed()
-        composeRule.onNodeWithText("登录同步").assertIsDisplayed()
+        composeRule.onNodeWithText("登录并同步").assertIsDisplayed()
     }
 }

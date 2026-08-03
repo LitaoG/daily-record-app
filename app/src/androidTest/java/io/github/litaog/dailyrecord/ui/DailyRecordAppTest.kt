@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.VPN_SYNC_DIALOG_MESSAGE
@@ -53,13 +54,14 @@ class DailyRecordAppTest {
 
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()
         composeRule.onNodeWithTag("statistics_screen").assertIsDisplayed()
+        composeRule.onAllNodesWithText(AppCopy.Statistics.title).assertCountEquals(1)
         listOf("月", "年", "全部", "周").forEach { period ->
             composeRule.onNodeWithContentDescription("${period}统计，未选择").performClick()
             composeRule.waitForIdle()
         }
 
         composeRule.onNodeWithContentDescription("全部统计，未选择").performClick()
-        composeRule.onNodeWithText("去日历记录").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("去日历填写").performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithTag("calendar_screen").assertIsDisplayed()
         assertMonth(2026, 7)
     }
@@ -133,7 +135,7 @@ class DailyRecordAppTest {
             .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
             .performClick()
         composeRule.onNodeWithContentDescription("2026年7月18日，星期六").assertIsNotEnabled()
-        composeRule.onNodeWithContentDescription("快速跳转下个月").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("跳转到下个月").assertIsNotEnabled()
     }
 
     @Test
@@ -145,12 +147,12 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
         composeRule.onNodeWithText("2026年 5月").assertIsDisplayed()
-        composeRule.onNodeWithTag("month_distribution_card").assertIsDisplayed()
-        composeRule.onNodeWithText("月内周分布").assertIsDisplayed()
+        composeRule.onNodeWithTag("month_daily_count_card").assertIsDisplayed()
+        composeRule.onNodeWithText("每日次数").assertIsDisplayed()
         composeRule.onAllNodesWithText("点此快速跳转").assertCountEquals(0)
 
         composeRule
-            .onNodeWithContentDescription("选择统计日期，当前2026年 5月")
+            .onNodeWithContentDescription("选择统计范围，当前2026年 5月")
             .performClick()
         composeRule.onNodeWithTag("date_navigation_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("直接选择年份和月份").assertIsDisplayed()
@@ -159,21 +161,25 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("选择2025年").performClick()
         composeRule.onNodeWithText("2025年").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("选择2025年6月").performClick()
-        composeRule.onNodeWithText("跳转到此日").performClick()
+        composeRule.onNodeWithText("跳转到此月").performClick()
         composeRule.onNodeWithText("2025年 6月").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("年统计，未选择").performClick()
         composeRule.onNodeWithText("2025年").assertIsDisplayed()
         composeRule
-            .onNodeWithContentDescription("选择统计日期，当前2025年")
+            .onNodeWithContentDescription("选择统计范围，当前2025年")
             .performClick()
         composeRule.onNodeWithText("直接选择年份").assertIsDisplayed()
         composeRule.onNodeWithText("选择年份").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("选择2024年").performClick()
-        composeRule.onNodeWithText("跳转到此日").performClick()
+        composeRule.onNodeWithText("跳转到此年").performClick()
         composeRule.onNodeWithText("2024年").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("月统计，未选择").performClick()
         composeRule.onNodeWithText("2024年 6月").assertIsDisplayed()
+        composeRule.onNodeWithTag("month_composition_card").performScrollTo()
+        composeRule.onNodeWithText("次数分布").assertIsDisplayed()
+        composeRule.onNodeWithTag("month_extremes_card").performScrollTo().assertExists()
+        composeRule.onNodeWithText("单日最高与最低").assertExists()
     }
 
     @Test
@@ -198,7 +204,7 @@ class DailyRecordAppTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("账号与云同步，云端已同步").performClick()
+        composeRule.onNodeWithContentDescription("账号与云同步状态：云端已同步").performClick()
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("brew@example.com").assertIsDisplayed()
         composeRule.onNodeWithText("退出登录").performClick()
@@ -254,7 +260,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithTag("daily_record_snackbar").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription(
-            "账号与云同步，网络连接异常",
+            "账号与云同步状态：网络连接异常",
         ).performClick()
 
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
@@ -277,7 +283,7 @@ class DailyRecordAppTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("账号与云同步，云端已同步").performClick()
+        composeRule.onNodeWithContentDescription("账号与云同步状态：云端已同步").performClick()
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
 
         composeRule.runOnIdle {
@@ -331,7 +337,7 @@ class DailyRecordAppTest {
         }
 
         assertMonth(2026, 7)
-        composeRule.onNodeWithContentDescription("登录账号并开启云同步").performClick()
+        composeRule.onNodeWithContentDescription("登录账号并同步记录").performClick()
         assertTrue(requestedSignIn)
     }
 

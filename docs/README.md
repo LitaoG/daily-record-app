@@ -34,7 +34,7 @@
 - [产品交付索引](product/README.md)
 - [UI v2 分阶段执行计划](product/QUIET_PRIVATE_JOURNAL_GOALS.md)
 - [已确认的 UI v2 设计基线与三张高保真图](product/design/quiet-private-journal-v2/README.md)
-- [月统计改版契约：按周聚合与月内洞察](product/MONTH_STATISTICS_REDESIGN.md)
+- [月统计改版契约：每日次数、次数分布与单日极值](product/MONTH_STATISTICS_REDESIGN.md)
 - [2026-08-02 统计与日历边界修复](product/audit/2026-08-02-boundary-fixes/README.md)
 - [2026-08-02 统计周期玻璃分段控件](product/audit/2026-08-02-period-glass-tabs/README.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
@@ -44,6 +44,7 @@
 - [用户故事与验收](product/USER_STORIES_AND_ACCEPTANCE.md)
 - [实现与发布准备度](product/IMPLEMENTATION_READINESS.md)
 - [日常使用反馈](product/DAILY_USE_FEEDBACK.md)
+- [2026-08-03 应用内中文文案审查](product/audit/2026-08-03-copy-audit/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 
 ## 历史证据

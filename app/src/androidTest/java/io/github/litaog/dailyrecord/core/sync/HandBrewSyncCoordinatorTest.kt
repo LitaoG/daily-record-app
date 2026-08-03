@@ -326,7 +326,7 @@ class HandBrewSyncCoordinatorTest {
 
         val failure = manager.status.value as SyncStatus.Failed
         assertEquals(SyncFailureKind.Data, failure.kind)
-        assertTrue(failure.message.contains("其余记录已继续同步"))
+        assertTrue(failure.message.contains("其余记录已同步"))
         assertEquals(SyncFailureKind.Data, manager.diagnostics.value.latestFailureKind)
         assertEquals(false, manager.diagnostics.value.hasPendingRecords)
         assertEquals(2, remote.fetchCalls)

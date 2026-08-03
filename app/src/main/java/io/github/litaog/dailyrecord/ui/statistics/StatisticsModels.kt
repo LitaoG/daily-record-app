@@ -16,42 +16,37 @@ data class StatisticsSummary(
         get() = if (recordedDays == 0) 0.0 else totalCount.toDouble() / recordedDays
 }
 
-data class MonthWeekStatistics(
-    val index: Int,
-    val start: LocalDate,
-    val end: LocalDate,
+data class MonthDayStatistics(
+    val date: LocalDate,
     val count: Long?,
-    val recordedDays: Int?,
     val recorded: Boolean,
     val future: Boolean,
-) {
-    val label: String
-        get() = AppCopy.Statistics.monthWeekLabel(index, start, end)
-}
+)
+
+data class MonthDayExtreme(
+    val count: Long,
+)
 
 data class MonthStatistics(
     val month: YearMonth,
-    val weeks: List<MonthWeekStatistics>,
+    val days: List<MonthDayStatistics>,
+    val explicitZeroDays: Int,
+    val oneCountDays: Int,
+    val twoCountDays: Int,
+    val threePlusCountDays: Int,
+    val unfilledElapsedDays: Int,
+    val futureDays: Int,
+    val maximum: MonthDayExtreme?,
+    val minimumPositive: MonthDayExtreme?,
 ) {
     init {
-        require(weeks.isNotEmpty()) { "Month statistics must contain at least one in-month week." }
+        require(days.size == month.lengthOfMonth()) {
+            "Month statistics must contain every date in the selected month."
+        }
     }
 
-    val activeWeekCount: Int
-        get() = weeks.count { it.recorded && !it.future && (it.recordedDays ?: 0) > 0 }
-
-    val peakCount: Long?
-        get() = weeks
-            .asSequence()
-            .filter { it.recorded && !it.future }
-            .mapNotNull { it.count }
-            .maxOrNull()
-
-    val peakWeeks: List<MonthWeekStatistics>
-        get() {
-            val peak = peakCount ?: return emptyList()
-            return weeks.filter { it.recorded && !it.future && it.count == peak }
-        }
+    val savedDays: Int
+        get() = explicitZeroDays + oneCountDays + twoCountDays + threePlusCountDays
 }
 
 data class YearMonthStatistics(
@@ -174,61 +169,53 @@ private fun buildMonth(
     val start = month.atDay(1)
     val end = month.atEndOfMonth()
     val rangeRecords = records.filter { it.localDate in start..end }
-    val gridStart = start.minusDays((start.dayOfWeek.value - 1).toLong())
-    val weeks = buildList {
-        var weekStart = gridStart
-        var index = 1
-        while (weekStart <= end) {
-            val weekEnd = weekStart.plusDays(6)
-            val bucketStart = maxOf(weekStart, start)
-            val bucketEnd = minOf(weekEnd, end)
-            if (bucketStart > today) {
-                add(
-                    MonthWeekStatistics(
-                        index = index,
-                        start = bucketStart,
-                        end = bucketEnd,
-                        count = null,
-                        recordedDays = null,
-                        future = true,
-                        recorded = false,
-                    ),
-                )
-            } else {
-                val bucketRecords = rangeRecords.filter { it.localDate in bucketStart..minOf(bucketEnd, today) }
-                val summary = summaryOf(bucketRecords)
-                add(
-                    MonthWeekStatistics(
-                        index = index,
-                        start = bucketStart,
-                        end = bucketEnd,
-                        count = summary.totalCount,
-                        recordedDays = summary.recordedDays,
-                        future = false,
-                        recorded = bucketRecords.isNotEmpty(),
-                    ),
-                )
-            }
-            weekStart = weekStart.plusDays(7)
-            index += 1
-        }
+    val recordsByDate = rangeRecords.associateBy(DailyCountEntry::localDate)
+    val days = (1..month.lengthOfMonth()).map { dayOfMonth ->
+        val date = month.atDay(dayOfMonth)
+        val future = date > today
+        val record = recordsByDate[date].takeUnless { future }
+        MonthDayStatistics(
+            date = date,
+            count = record?.count?.toLong(),
+            recorded = record != null,
+            future = future,
+        )
     }
-    val details = weeks.map { week ->
+    val positiveDays = days.filter { it.recorded && (it.count ?: 0L) > 0L }
+    val maximumCount = positiveDays.maxOfOrNull { requireNotNull(it.count) }
+    val minimumCount = positiveDays.minOfOrNull { requireNotNull(it.count) }
+    val monthStatistics = MonthStatistics(
+        month = month,
+        days = days,
+        explicitZeroDays = days.count { it.recorded && it.count == 0L },
+        oneCountDays = days.count { it.recorded && it.count == 1L },
+        twoCountDays = days.count { it.recorded && it.count == 2L },
+        threePlusCountDays = days.count { it.recorded && (it.count ?: 0L) >= 3L },
+        unfilledElapsedDays = days.count { !it.recorded && !it.future },
+        futureDays = days.count(MonthDayStatistics::future),
+        maximum = maximumCount?.let { count ->
+            MonthDayExtreme(count = count)
+        },
+        minimumPositive = minimumCount?.let { count ->
+            MonthDayExtreme(count = count)
+        },
+    )
+    val details = days.map { day ->
         StatisticsDetail(
-            label = week.label,
-            count = week.count,
-            days = week.recordedDays,
-            future = week.future,
-            recorded = week.recorded,
+            label = AppCopy.Statistics.dayLabel(day.date.dayOfMonth),
+            count = day.count,
+            days = day.count?.let { if (it > 0L) 1 else 0 },
+            future = day.future,
+            recorded = day.recorded,
         )
     }
     return StatisticsUiModel(
         title = AppCopy.Statistics.monthTitle(month.year, month.monthValue),
         status = AppCopy.Statistics.periodStatus(end, today),
         summary = summaryOf(rangeRecords),
-        detailsTitle = AppCopy.Statistics.weeklyDetails,
+        detailsTitle = AppCopy.Statistics.dailyCount,
         details = details,
-        month = MonthStatistics(month = month, weeks = weeks),
+        month = monthStatistics,
     )
 }
 

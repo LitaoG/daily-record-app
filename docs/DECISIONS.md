@@ -55,7 +55,7 @@
 ## ADR-009：可选邮箱密码账号
 
 - 状态：Accepted
-- 决策：使用 Firebase Authentication 的邮箱密码方式；用户也可选择“先在本机使用”。普通登录不引入短信验证码。
+- 决策：使用 Firebase Authentication 的邮箱密码方式；用户也可选择“暂不登录，先使用本机记录”。普通登录不引入短信验证码。
 - 后果：Firebase UID 是云端所有权边界；不同账号的 Room 缓存和 Firestore 路径互相隔离。
 
 ## ADR-010：墓碑与确定性冲突合并

@@ -37,10 +37,10 @@ class AccountDeletionDialogTest {
         }
 
         composeRule
-            .onNodeWithContentDescription("保留在本机（推荐），已选择")
+            .onNodeWithContentDescription("保留本机记录（推荐），已选择")
             .assertIsDisplayed()
         composeRule.onNodeWithText("继续验证身份").performClick()
-        composeRule.onNodeWithText("再次确认永久删除").assertIsDisplayed()
+        composeRule.onNodeWithText("确认永久删除？").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("永久删除账号").performClick()
         composeRule.runOnIdle {
             assertTrue(submittedPassword.isEmpty())
@@ -78,7 +78,7 @@ class AccountDeletionDialogTest {
 
         composeRule.onNodeWithTag("account_deletion_error").assertIsDisplayed()
         composeRule
-            .onNodeWithText("删除未完成，本机记录仍保留；部分云端记录可能已先删除，请直接重试")
+            .onNodeWithText("删除未完成，本机记录仍保留。部分云端记录可能已删除，请重试。")
             .assertIsDisplayed()
     }
 }

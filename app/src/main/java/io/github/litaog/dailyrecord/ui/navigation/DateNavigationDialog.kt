@@ -183,13 +183,19 @@ internal fun DateNavigationDialog(
                 accent = colors.primary,
             )
             PrimaryActionButton(
-                label = AppCopy.Navigation.jump,
+                label = navigationJumpLabel(selection),
                 onClick = { onDateSelected(selectedDate) },
                 modifier = Modifier.weight(1.35f),
                 accent = colors.primary,
             )
         }
     }
+}
+
+internal fun navigationJumpLabel(selection: DateNavigationSelection): String = when (selection) {
+    DateNavigationSelection.Date -> AppCopy.Navigation.jumpToDate
+    DateNavigationSelection.Month -> AppCopy.Navigation.jumpToMonth
+    DateNavigationSelection.Year -> AppCopy.Navigation.jumpToYear
 }
 
 @Composable
