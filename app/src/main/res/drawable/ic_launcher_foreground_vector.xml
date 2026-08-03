@@ -4,55 +4,65 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!--
+        Android adaptive-icon foreground. The visible artwork stays inside the
+        centered 66 x 66 dp safe zone (approximately 21..87 on this 108 dp
+        canvas); the launcher owns masking, parallax and the outer shadow.
+    -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFF4FF"
+        android:strokeColor="#FFF8FF"
         android:strokeWidth="3.2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M31,24h46a7,7 0,0 1,7 7v47a7,7 0,0 1,-7 7H31a7,7 0,0 1,-7 -7V31a7,7 0,0 1,7 -7z" />
+        android:pathData="M31,26h46a7,7 0,0 1,7 7v44a7,7 0,0 1,-7 7H31a7,7 0,0 1,-7 -7V33a7,7 0,0 1,7 -7z" />
     <path
-        android:strokeColor="#FFFFD8F4"
+        android:strokeColor="#FFFFE4F7"
         android:strokeWidth="3.2"
         android:strokeLineCap="round"
-        android:pathData="M25,38h58" />
+        android:pathData="M25,41h58" />
     <path
-        android:strokeColor="#FFF7EFFF"
-        android:strokeWidth="3.8"
+        android:strokeColor="#FFFFF1FB"
+        android:strokeWidth="3.6"
         android:strokeLineCap="round"
-        android:pathData="M38,19v12M70,19v12" />
+        android:pathData="M38,23v10M70,23v10" />
+
     <path
-        android:fillColor="#FFFFF5FF"
-        android:pathData="M54,43.2a3.8,3.8 0,1 0,0 7.6a3.8,3.8 0,1 0,0 -7.6z" />
+        android:fillColor="#FFFFF6FF"
+        android:pathData="M54,45a3.7,3.7 0,1 0,0 7.4a3.7,3.7 0,1 0,0 -7.4z" />
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFFFE9F7"
-        android:strokeWidth="3.2"
+        android:strokeColor="#FFFFEAF8"
+        android:strokeWidth="3.1"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M46,62c0,-6.4 3.4,-9.7 8,-9.7s8,3.3 8,9.7c0,4.1 -3.1,7.1 -8,10.2C49.1,69.1 46,66.1 46,62z" />
+        android:pathData="M47,63c0,-5.5 3,-8.8 7,-8.8s7,3.3 7,8.8c0,3.5 -2.8,6.1 -7,8.8C49.8,69.1 47,66.5 47,63z" />
+
+    <!-- Intertwined hearts retain the reference icon's central motif. -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#E2B6FF"
-        android:strokeWidth="3.4"
+        android:strokeColor="#E6B9FF"
+        android:strokeWidth="3.3"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M51,78c-5,-5 -16,-13 -16,-21c0,-6 5,-10 10,-8c4,1 6,5 8,8c2,-3 4,-7 8,-8c5,-2 10,2 10,8c0,7 -11,15 -17,21z" />
+        android:pathData="M51,81C46,77 38,72 38,66c0,-4.4 3.7,-7.4 7.5,-6.1c3.2,0.8 5.1,3.6 6.5,5.7c1.4,-2.1 3.3,-4.9 6.5,-5.7C63.3,58.6 67,61.6 67,66c0,6 -8,11 -13,15z" />
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFFCB3D8"
-        android:strokeWidth="3.4"
+        android:strokeColor="#FFFFC4DE"
+        android:strokeWidth="3.3"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M57,78c-5,-5 -16,-13 -16,-21c0,-6 5,-10 10,-8c4,1 6,5 8,8c2,-3 4,-7 8,-8c5,-2 10,2 10,8c0,7 -11,15 -17,21z" />
+        android:pathData="M57,81C52,77 44,72 44,66c0,-4.4 3.7,-7.4 7.5,-6.1c3.2,0.8 5.1,3.6 6.5,5.7c1.4,-2.1 3.3,-4.9 6.5,-5.7C68.3,58.6 72,61.6 72,66c0,6 -8,11 -13,15z" />
     <path
-        android:fillColor="#FFFFB9D9"
-        android:strokeColor="#FFFFE8F5"
-        android:strokeWidth="2.4"
+        android:fillColor="#FFFFB6D9"
+        android:strokeColor="#FFFFECF8"
+        android:strokeWidth="2.1"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M54,73c-4,-4 -10,-3 -12,2c-2,6 3,11 12,17c9,-6 14,-11 12,-17c-2,-5 -8,-6 -12,-2z" />
+        android:pathData="M54,73.5C50.5,70 45.5,70.3 44,74.2C42.4,78.4 46,82.3 54,85.5C62,82.3 65.6,78.4 64,74.2C62.5,70.3 57.5,70 54,73.5z" />
+    <!-- The keyhole intentionally remains dark for small-size recognition. -->
     <path
-        android:fillColor="#FF08030D"
-        android:pathData="M54,76a3,3 0,1 0,0 6a3,3 0,1 0,0 -6zM52,80h4v7h-4z" />
+        android:fillColor="#FF09030D"
+        android:pathData="M54,74.5a2.5,2.5 0,1 0,0 5a2.5,2.5 0,1 0,0 -5zM52.2,78h3.6l0.7,6h-5z" />
 </vector>
