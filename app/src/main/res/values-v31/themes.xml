@@ -7,7 +7,7 @@
         <item name="android:statusBarColor">@color/paper_50</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_background_art</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="android:windowSplashScreenBackground">@color/paper_50</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@color/paper_50</item>
     </style>
