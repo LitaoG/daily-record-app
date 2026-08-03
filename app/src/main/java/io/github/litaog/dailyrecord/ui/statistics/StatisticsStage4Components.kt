@@ -223,31 +223,27 @@ private fun ExtremesRow(
     months: List<YearMonthStatistics>,
     accent: Color,
 ) {
-    // Keep the month list on its own line.  A single horizontal row lets the
-    // count squeeze or clip the final month (most visible with December) on
-    // narrow screens and at large font scales.
-    Column(
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(label, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelMedium)
             Text(
-                AppCopy.Statistics.countText(months.first().count ?: 0L),
-                color = DailyRecordText,
-                style = MaterialTheme.typography.labelLarge,
+                months.joinToString("、") { AppCopy.Statistics.monthLabel(it.month.monthValue) },
+                color = accent,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
             )
         }
         Text(
-            months.joinToString("、") { AppCopy.Statistics.monthLabel(it.month.monthValue) },
-            modifier = Modifier.fillMaxWidth(),
-            color = accent,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            AppCopy.Statistics.countText(months.first().count ?: 0L),
+            color = DailyRecordText,
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }

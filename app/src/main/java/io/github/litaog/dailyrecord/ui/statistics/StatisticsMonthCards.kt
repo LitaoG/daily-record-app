@@ -618,39 +618,28 @@ private fun MonthExtremeRow(
     extreme: MonthDayExtreme,
     colors: RecordModuleColorTokens,
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {
                 contentDescription = AppCopy.Statistics.monthExtremeAccessibility(
                     label = label,
                     count = extreme.count,
-                    dates = extreme.dates,
                 )
             },
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                text = label,
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.labelMedium,
-            )
-            Text(
-                text = AppCopy.Statistics.countText(extreme.count),
-                color = colors.primary,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
         Text(
-            text = AppCopy.Statistics.dayList(extreme.dates),
-            color = DailyRecordText,
-            style = MaterialTheme.typography.labelLarge,
+            text = label,
+            color = DailyRecordTextSecondary,
+            style = MaterialTheme.typography.labelMedium,
+        )
+        Text(
+            text = AppCopy.Statistics.countText(extreme.count),
+            color = colors.primary,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }

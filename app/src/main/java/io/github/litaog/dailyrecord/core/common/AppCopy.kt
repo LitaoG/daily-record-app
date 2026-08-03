@@ -354,7 +354,7 @@ internal object AppCopy {
         const val singleDayExtremes = "单日极值"
         const val byPositiveCount = "按正次数"
         const val maximumDay = "最高单日"
-        const val minimumPositiveDay = "最低正次数"
+        const val minimumPositiveDay = "最低单日"
         const val noPositiveDay = "本月还没有正次数记录"
         const val monthDayExtremesHint = "最低单日只统计正次数，未填写和0次不参与。"
         const val future = "未来"
@@ -412,7 +412,6 @@ internal object AppCopy {
         fun daysText(days: Int): String = "$days 天"
         fun savedDaysSubtitle(days: Int): String = "按已填写日（共${days}天）"
         fun categoryDays(days: Int): String = "${days}天"
-        fun dayList(dates: List<LocalDate>): String = dates.joinToString("、") { dayLabel(it.dayOfMonth) }
         fun dayChartValue(day: Int, count: Long?, future: Boolean, recorded: Boolean): String = when {
             future -> "${dayLabel(day)}，未来"
             !recorded -> "${dayLabel(day)}，未填写"
@@ -433,8 +432,8 @@ internal object AppCopy {
             "次数构成；已填写${savedDays}天；0次${explicitZeroDays}天；1次${oneCountDays}天；" +
                 "2次${twoCountDays}天；3次以上${threePlusCountDays}天；" +
                 "未填写${unfilledDays}天；未来${futureDays}天"
-        fun monthExtremeAccessibility(label: String, count: Long, dates: List<LocalDate>): String =
-            "$label，${countText(count)}，${dayList(dates)}"
+        fun monthExtremeAccessibility(label: String, count: Long): String =
+            "$label，${countText(count)}"
         fun percentage(value: Double): String = String.format(java.util.Locale.US, "%.0f%%", value)
         fun quarterLabel(quarter: Int): String = "Q$quarter"
         fun monthChartLabel(month: Int, isFuture: Boolean, recorded: Boolean, count: Long?): String =

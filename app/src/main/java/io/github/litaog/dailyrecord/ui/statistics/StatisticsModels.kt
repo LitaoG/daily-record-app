@@ -25,7 +25,6 @@ data class MonthDayStatistics(
 
 data class MonthDayExtreme(
     val count: Long,
-    val dates: List<LocalDate>,
 )
 
 data class MonthStatistics(
@@ -195,16 +194,10 @@ private fun buildMonth(
         unfilledElapsedDays = days.count { !it.recorded && !it.future },
         futureDays = days.count(MonthDayStatistics::future),
         maximum = maximumCount?.let { count ->
-            MonthDayExtreme(
-                count = count,
-                dates = positiveDays.filter { it.count == count }.map(MonthDayStatistics::date),
-            )
+            MonthDayExtreme(count = count)
         },
         minimumPositive = minimumCount?.let { count ->
-            MonthDayExtreme(
-                count = count,
-                dates = positiveDays.filter { it.count == count }.map(MonthDayStatistics::date),
-            )
+            MonthDayExtreme(count = count)
         },
     )
     val details = days.map { day ->

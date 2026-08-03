@@ -127,9 +127,7 @@ class StatisticsModelsTest {
         assertEquals(3, month.savedDays)
         assertEquals(1, month.explicitZeroDays)
         assertEquals(3L, month.maximum?.count)
-        assertEquals(listOf(31), month.maximum?.dates?.map { it.dayOfMonth })
         assertEquals(2L, month.minimumPositive?.count)
-        assertEquals(listOf(1), month.minimumPositive?.dates?.map { it.dayOfMonth })
     }
 
     @Test
@@ -241,9 +239,7 @@ class StatisticsModelsTest {
         assertEquals(12, month.unfilledElapsedDays)
         assertEquals(16, month.futureDays)
         assertEquals(2L, month.maximum?.count)
-        assertEquals(listOf(3), month.maximum?.dates?.map { it.dayOfMonth })
         assertEquals(1L, month.minimumPositive?.count)
-        assertEquals(listOf(10), month.minimumPositive?.dates?.map { it.dayOfMonth })
     }
 
     @Test
@@ -266,7 +262,7 @@ class StatisticsModelsTest {
     }
 
     @Test
-    fun monthCompositionAndExtremesKeepTiesAndExcludeZeroFromMinimum() {
+    fun monthCompositionAndExtremesExcludeZeroFromMinimum() {
         val model = buildStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2026, 7, 15),
@@ -294,9 +290,7 @@ class StatisticsModelsTest {
         assertEquals(23, month.unfilledElapsedDays)
         assertEquals(0, month.futureDays)
         assertEquals(3L, month.maximum?.count)
-        assertEquals(listOf(23, 27), month.maximum?.dates?.map { it.dayOfMonth })
         assertEquals(1L, month.minimumPositive?.count)
-        assertEquals(listOf(7, 18), month.minimumPositive?.dates?.map { it.dayOfMonth })
     }
 
     @Test
