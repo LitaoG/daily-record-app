@@ -1,6 +1,6 @@
 # 路线图
 
-最后复核：2026-08-01
+最后复核：2026-08-03
 
 ## 已完成：手冲专用产品重构
 
@@ -41,6 +41,12 @@
 - [x] 发布 [`v1.0.0-beta.1`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.1)。
 - [x] 确认当前只通过 GitHub Releases 分发，不准备应用商店资料或 AAB。
 
+## 已完成：第二次 GitHub Beta
+
+- [x] Stage 5 完成最终跨页面审查、定向失败收口和一次最终完整设备套件。
+- [x] Stage 6 完成公共 main 合并、签名发布门禁和 GitHub Release 发布。
+- [x] 发布 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，并在公共 main 验证后同步私有恢复镜像。
+
 ## 当前阶段：安静的私密数据日志 UI v2
 
 总 Goal 与唯一阶段顺序见 [`product/QUIET_PRIVATE_JOURNAL_GOALS.md`](product/QUIET_PRIVATE_JOURNAL_GOALS.md)：
@@ -52,8 +58,8 @@
 - [x] Stage 4：年度 12 个月分析、季度占比和极值摘要（历史验收使用柱状图；2026-08-02 按用户反馈改为单张折线面积图；月度日网格为历史实现）。
 - [x] 月统计改版：按周聚合次数柱、发生天数、活跃周数和峰值周（PR #54 已合并）。
 - [x] 月统计最终组合：逐日次数脉冲图、按已填写日计算的次数分布和单日极值（已完成定向模型、设备与 200% 字体验收）。
-- [ ] Stage 5：跨页面集成 QA、一次完整套件和候选 APK（进行中）。
-- [ ] Stage 6：真机日常验收、GitHub Release 与私有恢复镜像同步。
+- [x] Stage 5：跨页面集成 QA、一次完整套件和候选 APK。
+- [x] Stage 6：GitHub Release 与私有恢复镜像同步；真人日常反馈继续作为后续定向 Issue，不阻塞本版发布。
 
 同一时间只进行一个阶段；每个阶段完成 PR、CI 和证据后停下等待用户验收，不提前开始下一阶段。
 

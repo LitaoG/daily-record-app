@@ -31,14 +31,14 @@
 
 ## 下载与安装
 
-当前公开 Release 仍是上一版仅手冲的 [`v1.0.0-beta.1`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.1)。双模块版本先交付 Debug APK 做真实手机日常测试，本轮不创建新 Release。
+当前公开 Release 为双模块候选版 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，包含手冲与做爱两个独立记录模块。
 
 1. 从本仓库 [GitHub Releases](https://github.com/LitaoG/daily-record-app/releases) 下载 APK 和同名 `.sha256`。
 2. 在 Windows PowerShell 中校验：
 
    ```powershell
-   Get-FileHash .\hand-brew-calendar-v1.0.0-beta.1.apk -Algorithm SHA256
-   Get-Content .\hand-brew-calendar-v1.0.0-beta.1.apk.sha256
+   Get-FileHash .\hand-brew-calendar-v1.0.0-beta.2.apk -Algorithm SHA256
+   Get-Content .\hand-brew-calendar-v1.0.0-beta.2.apk.sha256
    ```
 
 3. 确认哈希一致后安装；Android 可能要求允许当前浏览器或文件管理器“安装未知应用”。

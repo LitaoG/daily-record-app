@@ -120,8 +120,8 @@
 | 2. 方形次数热力日历 | [#38](https://github.com/LitaoG/daily-record-app/issues/38) | 已验收 | 日历页面与全部组合状态 |
 | 3. 克制的次数记录页 | [#43](https://github.com/LitaoG/daily-record-app/issues/43) | 已验收 | 点击日期进入、次数主焦点、保存/清除层级 |
 | 4. 月度热力图与年度月份分析 | [#39](https://github.com/LitaoG/daily-record-app/issues/39) | 已验收（历史布局） | 年度柱状图、季度占比与极值月份；月度日网格与中间周聚合方案均已被当前契约替代 |
-| 5. 集成 QA 与候选 APK | [#40](https://github.com/LitaoG/daily-record-app/issues/40) | 进行中 | 跨页面回归、一次完整套件、候选 APK |
-| 6. 真机验收、Release 与恢复镜像 | [#41](https://github.com/LitaoG/daily-record-app/issues/41) | 等待 | 定向修复、签名 Release、私有恢复镜像 |
+| 5. 集成 QA 与候选 APK | [#40](https://github.com/LitaoG/daily-record-app/issues/40) | 已完成 | 跨页面回归、一次完整套件、候选 APK |
+| 6. 真机验收、Release 与恢复镜像 | [#41](https://github.com/LitaoG/daily-record-app/issues/41) | 已完成 | 签名 Release、公共 main 验证、私有恢复镜像 |
 
 ## 6. 各阶段范围
 
@@ -190,13 +190,13 @@
 - 检查本机、离线、登录和同步入口没有因视觉改版退化。
 - 运行最终功能 head 的一次完整测试套件；后续纯文档或截图修订不机械重跑。
 - 生成候选 APK、SHA-256、同视口截图、Crash Buffer 与测试报告。
-- 当前实现分支：`agent/ui-v2-stage5-integration-qa`，基于 Stage 4 公共 head；本轮仅修复测试宿主焦点与像素采集稳定性，不改变运行时业务逻辑。
-- 当前审计证据：[2026-08-01 Stage 5 集成 QA 与候选 APK](audit/2026-08-01-ui-v2-stage5/README.md)。公共 PR、CI 和合并完成后将 Issue #40 标记为 `status:awaiting-acceptance` 并暂停，等待用户用候选 APK 日常验收。
+- 当前实现以公共 `main` 的 PR #67 合并 head 为准；本轮只修正与集中式文案同步的两个 Android 回归断言，不改变运行时业务逻辑或 UI。
+- 当前审计证据：[2026-08-03 Stage 5/6 最终审查与 beta.2 发布](audit/2026-08-03-stage5-stage6-release/README.md)。完整设备套件、CI、发布和私有镜像同步均已完成；用户后续日常反馈按需新建 Issue。
 
-### Stage 6：真机验收、Release 与恢复镜像
+### Stage 6：Release 与恢复镜像（已完成）
 
-- 用户使用候选 APK 日常验收；可复现问题单独建 Issue 并定向修复。
-- 验收后递增版本、构建稳定签名 APK、发布 GitHub Release 并核对 SHA-256。
+- 不把真人测试设为发布硬门槛；可复现问题由本人日常使用后单独建 Issue 并定向修复。
+- 递增版本、构建稳定签名 APK、发布 GitHub Release 并核对 SHA-256。
 - 只有公共 `main` 完整验证并形成连贯小版本后才同步私有恢复镜像。
 - 私有签名、生产配置、恢复材料和真实用户数据不得进入公共仓库历史。
 

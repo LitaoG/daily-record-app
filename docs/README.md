@@ -1,6 +1,6 @@
 # 私密日历文档中心
 
-最后复核：2026-08-02
+最后复核：2026-08-03
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
@@ -45,6 +45,7 @@
 - [实现与发布准备度](product/IMPLEMENTATION_READINESS.md)
 - [日常使用反馈](product/DAILY_USE_FEEDBACK.md)
 - [2026-08-03 应用内中文文案审查](product/audit/2026-08-03-copy-audit/README.md)
+- [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](product/audit/2026-08-03-stage5-stage6-release/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 
 ## 历史证据
@@ -63,5 +64,6 @@
 - [2026-07-22 月历与统计审计](product/audit/2026-07-22-calendar-statistics/README.md)
 - [2026-07-19 深度 UX 审计](product/audit/2026-07-19-deep-ux/README.md)
 - [v1.0.0-beta.1 发布说明](releases/v1.0.0-beta.1.md)
+- [v1.0.0-beta.2 发布说明](releases/v1.0.0-beta.2.md)
 
 历史文档中的测试数量、截图日期、分支名和“下一步”只描述当时状态。当前版本、发布物和 CI 状态以仓库首页、GitHub Releases 与 `main` 为准。
