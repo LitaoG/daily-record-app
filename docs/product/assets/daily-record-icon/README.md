@@ -1,36 +1,49 @@
 # Daily Record 主图标
 
-这组资源以参考图为唯一视觉基准，保留紫红交织渐变、日历、双挂钩、人物、交织双心和锁孔结构。
+这组资源以用户提供的 1254×1254 图稿为唯一视觉基准，保留紫红交织渐变、日历、双挂钩、人物、交织双心和黑色锁孔结构。原图不做圆角；圆角、阴影和启动器形状由 Android/Google Play 在对应平台处理。
 
-## Android 资源
+## Android 自适应图标
 
-- `app/src/main/res/drawable/ic_launcher_foreground.xml`：透明自适应前景，避免启动器对复杂图稿做二次位移。
-- `app/src/main/res/drawable/ic_launcher_foreground_vector.xml`：保留的可编辑矢量源稿，供后续拆分图层或制作单色版本使用。
-- `app/src/main/res/drawable/ic_launcher_background.xml`：高保真紫红渐变图稿入口。
-- `app/src/main/res/drawable/ic_launcher_background_gradient.xml`：不依赖位图时使用的轻量渐变备用资源。
-- `app/src/main/res/drawable-nodpi/ic_launcher_background_art.png`：运行时高保真图稿，内容与最终源图逐字节一致，不做圆角、裁剪、重绘或调色。
-- `app/src/main/res/drawable/ic_launcher_monochrome.xml`：保留日历、人物、双心和锁结构的单色版本，锁孔使用透明挖空。
-- `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml`：Android 8.0+ 自适应图标。
-- `app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml`：圆形启动器的自适应图标。
+运行时采用 Android adaptive icon 的双层声明：背景是从原图生成的柔和环境层，前景是从用户成品中提取的透明高保真图层。这样既保留霓虹玻璃视觉，又不会把商店上传图当成普通 launcher PNG 直接使用。
 
-Android 12+ 启动画面也引用同一份高保真图稿，避免启动时短暂显示旧的线框图标。
+- `app/src/main/res/drawable/ic_launcher_background.xml`：全幅背景入口，引用经过柔化的环境背景位图。
+- `app/src/main/res/drawable-nodpi/ic_launcher_background_blurred.png`：从原图生成的 1024×1024 柔化背景，只保留紫红环境光，不承担前景细节。
+- `app/src/main/res/drawable/ic_launcher_foreground.xml`：生产入口，引用透明前景位图。
+- `app/src/main/res/drawable-nodpi/ic_launcher_foreground_art.png`：从用户 1254×1254 成品提取的 1024×1024 RGBA 透明前景，非透明包围盒为 `(203,203)-(820,819)`，主体缩进中心约 66×66 安全区，保留日历、挂钩、人物、双心、锁和霓虹边缘。
+- `app/src/main/res/drawable/ic_launcher_foreground_vector.xml`：108×108dp、约 66×66 安全区的可编辑矢量备份稿，供后续需要完全矢量化时使用；当前生产前景使用高保真 PNG。
+- `app/src/main/res/drawable/ic_launcher_monochrome.xml`：相同构图和安全区的单色版本，锁孔通过 `evenOdd` 保留透明挖空。
+- `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml`：Android 8.0+ 自适应图标声明。
+- `app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml`：圆形启动器的自适应图标声明。
+- `app/src/main/res/mipmap-anydpi/`：项目现有的兼容声明，继续引用相同资源。
 
-`mipmap-anydpi` 下同时保留兼容声明，两个 adaptive XML 都引用同一套前景、背景和单色资源。
+单色层和备用矢量前景使用 108×108 的 viewport；彩色前景位图按相同安全区比例输出，避免不同启动器遮罩裁掉挂钩或锁孔。背景位图只是柔化的环境层，不是 Play 512 图的直接复用。Android 12+ 启动画面引用 `@mipmap/ic_launcher`，因此启动图标与桌面图标使用同一套 adaptive 资源。
 
-## 营销导出
+这与 Android 官方 adaptive icon 约定一致：背景与前景分层、108×108dp 画布、中心安全区以及可选的 monochrome 层均由资源明确表达。
 
-- `daily-record-icon-1254.png`：用户提供的 1254×1254 原始方形图稿，作为设计资产保存；运行时资源与它逐字节一致。
-- `daily-record-icon-google-play-512.png`：Google Play Console 专用上传文件，512×512、32-bit RGBA PNG，357,664 bytes（低于 1 MB）。这是原图的等比例缩小版本，不添加圆角、文字或徽章。
+## 设计/商店导出
 
-两份正式图稿的 SHA-256 均为 `B52FC5FF1FB7316D6018E09FFC51CBA07CD948619FF3136F51AF1169F9302088`，用于确认 APK 中没有被重新绘制或压缩成另一张图。
-Play 上传文件 SHA-256 为 `C9DC5F90B01F05BFEE4E5298F7BC5DA8A982EFDE5B2A91DF7478377666D625F8`。
+- `daily-record-icon-1254.png`：用户提供的 1254×1254 原始方形图稿，作为不可变设计源稿保存；不直接作为商店图标或普通 launcher PNG 复用。
+- `daily-record-icon-google-play-512.png`：Google Play Console 上传文件，512×512、32-bit RGBA PNG、全不透明 alpha、sRGB、357,664 bytes（低于 1 MB），不添加圆角、文字或徽章。
 
-背景的渐变、光晕和玻璃质感适合用位图表现，因此营销图与运行时背景都使用用户提供的同一份 1254×1254 PNG；图标源文件没有预先做圆角，圆角形状交给 Android 启动器遮罩处理。透明前景只负责占位，避免 Android 启动器对复杂前景做额外缩放后出现“只剩细线、壁纸透出”的失真。矢量源稿仍保留在 `ic_launcher_foreground_vector.xml`，后续需要真正拆分前景/背景时可以从它继续拆分。
+校验值：
+
+- 原始源稿 SHA-256：`B52FC5FF1FB7316D6018E09FFC51CBA07CD948619FF3136F51AF1169F9302088`
+- Play 512 导出 SHA-256：`C9DC5F90B01F05BFEE4E5298F7BC5DA8A982EFDE5B2A91DF7478377666D625F8`
+- Android 透明前景 SHA-256：`B492D8B04A3ACD1547590F19563FD3CA1A48180D03C44863ED7AE15CA67B4F7B`
+- Android 柔化背景 SHA-256：`7CB680D3D9A4474BBC871FA8EA676E68C52A3AEA52AEA5D85EEEC1A74F826DE8`
+
+Play 导出只做等比例缩小，保留原稿的全方形画布，让 Play 自动应用圆角遮罩和阴影。Android 运行时使用独立的环境背景位图和透明前景，前景、单色和 adaptive 声明仍是独立资源；没有预先圆角，也没有额外平台徽章。
+
+## 官方依据
+
+- [Android adaptive icon design](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive)
+- [Google Play icon design specifications](https://developer.android.com/distribute/google-play/resources/icon-design-specifications)
+- [Google Play Console preview asset requirements](https://support.google.com/googleplay/android-developer/answer/9866151?hl=en)
 
 ## 本轮落地优化
 
-1. 以用户提供的完整 1254×1254 图稿作为 adaptive icon 背景，保证桌面实际看到紫红渐变、日历、挂钩、人物、双心和黑色锁孔，而不是稀疏的线框。
-2. 透明前景不再重复绘制主体，避免启动器的自适应缩放把主体推到安全区外或让壁纸从日历内部透出。
-3. 保留干净的矢量源稿和独立单色资源，方便后续制作真正的主题化前景，而不牺牲当前正式图标的一致性。
+1. 从用户提供的高保真图稿提取透明前景，保留霓虹玻璃、光晕、人物、交织双心和黑色锁孔，不再用低保真的线稿替代成品。
+2. 使用独立环境背景位图、透明前景 PNG、monochrome 矢量和 adaptive XML，满足 Android 8.0+ 分层资源结构及主题化入口要求，同时避免把 Play 512 普通图标直接当 launcher 图标。
+3. 保留用户原图与 Play 512 导出作为可复核的发布素材；不对源稿预先做圆角、外部阴影或平台徽章。
 
-后续优先打磨：桌面不同形状遮罩的实机对比、单色图标在浅色/深色壁纸上的对比度、以及 48dp/32dp 小尺寸下双心与锁孔的间距。
+后续如需继续打磨，优先检查：不同 OEM 遮罩下的安全区实机对比、单色图标在浅色/深色壁纸上的对比度，以及 48dp/32dp 小尺寸下双心与锁孔的间距。
