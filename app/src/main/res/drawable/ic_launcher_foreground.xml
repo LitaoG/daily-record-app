@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Transparent high-fidelity foreground; Android applies adaptive scaling and masking. -->
+<!-- Transparent placeholder until the Figma-authored foreground layer is connected. -->
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="fill"
     android:src="@drawable/ic_launcher_foreground_art" />

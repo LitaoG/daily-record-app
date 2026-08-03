@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A softened ambient copy of the source artwork fills the background layer;
-     launcher masks and shadows are still applied by Android. -->
+<!-- The approved full-bleed artwork is kept intact in the adaptive background layer. -->
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="fill"
-    android:src="@drawable/ic_launcher_background_blurred" />
+    android:src="@drawable/ic_launcher_background_art" />
