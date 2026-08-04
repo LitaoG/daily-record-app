@@ -11,12 +11,12 @@ Figma 页面现在按四个可核对的画板排列：完整预览、`background
 
 ## Android 资源
 
-- `drawable/ic_launcher_background.xml` → `drawable-nodpi/ic_launcher_background_art.png`：紫红渐变背景层。
-- `drawable/ic_launcher_foreground.xml` → `drawable-nodpi/ic_launcher_foreground_art.png`：透明霓虹日历、人物、爱心和锁。
-- `drawable/ic_launcher_monochrome.xml` → `drawable-nodpi/ic_launcher_monochrome_art.png`：单色 alpha 形状，锁孔保持负形。
+- `drawable/ic_launcher_background.xml` → `drawable-nodpi/ic_launcher_background_art.webp`：紫红渐变背景层。
+- `drawable/ic_launcher_foreground.xml` → `drawable-nodpi/ic_launcher_foreground_art.webp`：透明霓虹日历、人物、爱心和锁。
+- `drawable/ic_launcher_monochrome.xml` → `drawable-nodpi/ic_launcher_monochrome_art.webp`：单色 alpha 形状，锁孔保持负形。
 - `mipmap-anydpi-v26/ic_launcher.xml` 与 `ic_launcher_round.xml`：自适应图标声明。
 
-运行时使用 PNG 层是有意的：霓虹光晕、细描边和抗锯齿在 Android 启动器尺寸下用手写 VectorDrawable 无法稳定复现。SVG 仍作为可编辑交接源保留，PNG 是保证安装后外观与确认稿一致的 fallback。
+运行时使用优化后的 WebP 层是有意的：霓虹光晕、细描边和抗锯齿在 Android 启动器尺寸下用手写 VectorDrawable 无法稳定复现；WebP 比运行时 PNG 更轻，SVG 和 PNG 源稿仍作为可编辑交接源保留。
 
 ## 商店导出
 

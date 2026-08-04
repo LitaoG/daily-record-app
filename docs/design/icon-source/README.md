@@ -14,6 +14,6 @@ This folder contains the approved neon source and the three-layer handoff from F
 
 The Figma source is composed on a 108×108dp adaptive-icon canvas. The central artwork stays within the approximately 66×66dp safe area so launchers can apply their own mask and motion. Neither source layer contains a pre-rounded corner or external drop shadow.
 
-The Android adaptive icon uses the raster PNG layers in `drawable-nodpi` because the neon glow and fine anti-aliased edges are not preserved reliably by a hand-authored VectorDrawable at launcher size. The SVG exports remain available for future vector cleanup and Figma editing; the PNG fallback is intentional and keeps the installed icon faithful to the approved source.
+The Android adaptive icon uses optimized WebP layers in `drawable-nodpi` because the neon glow and fine anti-aliased edges are not preserved reliably by a hand-authored VectorDrawable at launcher size. The SVG exports and PNG source copies remain available for Figma editing; WebP is the lightweight runtime fallback and keeps the installed icon faithful to the approved source.
 
 Figma source file: https://www.figma.com/design/WP2CrYM0XuAFOeojA46jZY
