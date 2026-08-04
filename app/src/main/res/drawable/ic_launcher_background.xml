@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The approved full-bleed artwork is kept intact in the adaptive background layer. -->
+<!-- Figma Layer 01: the unrounded purple-to-red background. -->
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="fill"
     android:src="@drawable/ic_launcher_background_art" />
