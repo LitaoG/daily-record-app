@@ -112,8 +112,7 @@ private fun WeekRingChart(
         modifier = Modifier
             .fillMaxWidth()
             .height(258.dp)
-            .testTag("week_distribution_chart")
-            .semantics { contentDescription = weekDistributionDescription(details) },
+            .testTag("week_distribution_chart"),
     ) {
         val centerY = 128.dp
         val labelSize = 78.dp
@@ -213,7 +212,10 @@ private fun WeekRingChart(
             Column(
                 modifier = Modifier
                     .offset(x = labelX, y = labelY)
-                    .width(labelSize),
+                    .width(labelSize)
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = weekDistributionDescription(detail)
+                    },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 val countLabel = detail.count
@@ -348,13 +350,12 @@ private fun DistributionSurface(
     }
 }
 
-private fun weekDistributionDescription(details: List<StatisticsDetail>): String =
-    details.joinToString("，") { detail ->
-        val state = when (weekRingState(detail)) {
-            WeekRingState.Future -> AppCopy.Statistics.future
-            WeekRingState.Unrecorded -> AppCopy.Statistics.unset
-            WeekRingState.ExplicitZero -> AppCopy.Statistics.countText(0L)
-            WeekRingState.Positive -> AppCopy.Statistics.countText(detail.count ?: 0L)
-        }
-        "${detail.label}，$state"
+private fun weekDistributionDescription(detail: StatisticsDetail): String = when {
+    detail.future -> "${detail.label}，${AppCopy.Statistics.future}，${AppCopy.Statistics.dash}"
+    !detail.recorded -> "${detail.label}，${AppCopy.Statistics.unset}，${AppCopy.Statistics.dash}"
+    else -> {
+        val count = detail.count ?: 0L
+        "${detail.label}，${AppCopy.Statistics.countText(count)}，" +
+            AppCopy.Statistics.daysText(detail.days ?: 0)
     }
+}
