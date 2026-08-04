@@ -21,7 +21,7 @@ Figma 页面现在按四个可核对的画板排列：完整预览、`background
 ## 商店导出
 
 - `daily-record-icon-1024.png`：1024×1024 sRGB 备份图。
-- `google-play-icon-512.png`：512×512、32-bit/sRGB、无预先圆角、约 281 KB，供 Play Console 使用。
+- `google-play-icon-512.png`：512×512、32-bit/sRGB、无预先圆角、约 320 KB，供 Play Console 使用。
 
 Google Play 与启动器会自行应用圆角和阴影，源图不重复添加外框。
 
