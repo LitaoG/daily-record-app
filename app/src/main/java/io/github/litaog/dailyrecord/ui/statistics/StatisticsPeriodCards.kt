@@ -218,7 +218,7 @@ private fun WeekRingChart(
             ) {
                 val countLabel = detail.count
                     ?.takeIf { it > 0L && detail.recorded && !detail.future }
-                    ?.let { "（${it}次）" }
+                    ?.let(AppCopy.Statistics::weeklyCountSuffix)
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.Bottom,
@@ -255,19 +255,19 @@ private fun WeekRingChart(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "本周",
+                text = AppCopy.Statistics.weeklySummaryTitle,
                 color = DailyRecordText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = "$recordedDays / ${details.size} 天",
+                text = AppCopy.Statistics.weeklyRecordedDays(recordedDays, details.size),
                 color = colors.primary,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "有记录",
+                text = AppCopy.Statistics.weeklyRecordedLabel,
                 color = DailyRecordTextMuted,
                 style = MaterialTheme.typography.labelSmall,
             )
@@ -278,11 +278,11 @@ private fun WeekRingChart(
 @Composable
 private fun WeekRingLegend(colors: RecordModuleColorTokens) {
     val legend = listOf(
-        "≥6次" to colors.primary,
-        "3–5次" to colors.primary.copy(alpha = .68f),
-        "1–2次" to colors.primary.copy(alpha = .40f),
-        "0次" to DailyRecordDivider,
-        "未解锁" to colors.soft.copy(alpha = .78f),
+        AppCopy.Statistics.weeklyLegendHigh to colors.primary,
+        AppCopy.Statistics.weeklyLegendMedium to colors.primary.copy(alpha = .68f),
+        AppCopy.Statistics.weeklyLegendLow to colors.primary.copy(alpha = .40f),
+        AppCopy.Statistics.weeklyLegendZero to DailyRecordDivider,
+        AppCopy.Statistics.weeklyLegendFuture to colors.soft.copy(alpha = .78f),
     )
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -351,10 +351,10 @@ private fun DistributionSurface(
 private fun weekDistributionDescription(details: List<StatisticsDetail>): String =
     details.joinToString("，") { detail ->
         val state = when (weekRingState(detail)) {
-            WeekRingState.Future -> "未来"
-            WeekRingState.Unrecorded -> "未填写"
-            WeekRingState.ExplicitZero -> "0 次"
-            WeekRingState.Positive -> "${detail.count ?: 0L} 次"
+            WeekRingState.Future -> AppCopy.Statistics.future
+            WeekRingState.Unrecorded -> AppCopy.Statistics.unset
+            WeekRingState.ExplicitZero -> AppCopy.Statistics.countText(0L)
+            WeekRingState.Positive -> AppCopy.Statistics.countText(detail.count ?: 0L)
         }
         "${detail.label}，$state"
     }
