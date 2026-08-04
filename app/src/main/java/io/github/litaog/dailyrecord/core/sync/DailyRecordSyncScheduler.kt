@@ -10,11 +10,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal object DailyRecordSyncScheduler {
-    // Kept stable so upgrades do not leave an older WorkManager request orphaned.
-    private const val UNIQUE_WORK_NAME = "hand-brew-cloud-sync"
+    private const val UNIQUE_WORK_NAME = "daily-record-cloud-sync"
+    // The old name is cancelled once so upgrades do not leave a hand-brew-only
+    // request running after the scheduler became module-agnostic.
+    private const val LEGACY_UNIQUE_WORK_NAME = "hand-brew-cloud-sync"
+    internal val workName = UNIQUE_WORK_NAME
     internal val workPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE
 
     fun schedule(context: Context) {
+        val workManager = WorkManager.getInstance(context.applicationContext)
+        workManager.cancelUniqueWork(LEGACY_UNIQUE_WORK_NAME)
         val request = OneTimeWorkRequestBuilder<DailyRecordSyncWorker>()
             .setConstraints(
                 Constraints.Builder()
@@ -22,7 +27,7 @@ internal object DailyRecordSyncScheduler {
                     .build(),
             )
             .build()
-        WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+        workManager.enqueueUniqueWork(
             UNIQUE_WORK_NAME,
             workPolicy,
             request,
@@ -31,10 +36,9 @@ internal object DailyRecordSyncScheduler {
 
     suspend fun cancelAndAwait(context: Context) {
         withContext(Dispatchers.IO) {
-            WorkManager.getInstance(context.applicationContext)
-                .cancelUniqueWork(UNIQUE_WORK_NAME)
-                .result
-                .get()
+            val workManager = WorkManager.getInstance(context.applicationContext)
+            workManager.cancelUniqueWork(UNIQUE_WORK_NAME).result.get()
+            workManager.cancelUniqueWork(LEGACY_UNIQUE_WORK_NAME).result.get()
         }
     }
 }
