@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test:docs": "node --test scripts/docs-integrity.test.mjs",
+    "test:copy": "node --test scripts/copy-integrity.test.mjs",
     "test:release-metadata": "node --test scripts/release-metadata.test.mjs",
     "test:android-connected": "firebase emulators:exec --project demo-daily-record-app --only auth,firestore \"gradlew.bat connectedDebugAndroidTest --no-parallel\"",
     "test:android-connected:windows": "firebase emulators:exec --project demo-daily-record-app --only auth,firestore \"gradlew.bat connectedDebugAndroidTest --no-parallel\"",

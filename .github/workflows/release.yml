@@ -37,8 +37,8 @@ jobs:
           --tag "$GITHUB_REF_NAME"
           --github-output "$GITHUB_OUTPUT"
 
-      - name: Validate documentation
-        run: node --test scripts/docs-integrity.test.mjs
+      - name: Validate copy and documentation
+        run: node --test scripts/copy-integrity.test.mjs scripts/docs-integrity.test.mjs
 
       - name: Restore private inputs, test, and build signed release
         env:

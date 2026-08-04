@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import io.github.litaog.dailyrecord.core.common.AppCopy
 
 @Database(
     entities = [
@@ -53,7 +54,7 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
                     INNER JOIN `activities` a
                         ON a.`owner_id` = r.`owner_id` AND a.`id` = r.`activity_id`
                     WHERE r.`deleted_at` IS NULL
-                      AND (a.`name` = '手冲' OR a.`icon_key` = 'flight')
+                      AND (a.`name` = '${AppCopy.RecordModule.handBrewLabel}' OR a.`icon_key` = 'flight')
                     GROUP BY r.`local_date`
                     """.trimIndent(),
                 )

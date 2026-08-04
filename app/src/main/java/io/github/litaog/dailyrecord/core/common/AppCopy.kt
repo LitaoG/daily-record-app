@@ -12,7 +12,6 @@ import java.time.YearMonth
  * fragments themselves.
  */
 internal object AppCopy {
-    const val appName = "私密日历"
     const val privateRecordSubtitle = "记录每天的次数"
     const val offlineSubtitle = "本机记录可离线使用"
     const val vpnSyncFailure = "请打开 VPN（梯子）后重试；记录仍在本机。"
