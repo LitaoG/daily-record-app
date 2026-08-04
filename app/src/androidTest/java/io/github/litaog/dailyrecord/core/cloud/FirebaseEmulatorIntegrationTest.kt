@@ -201,7 +201,7 @@ class FirebaseEmulatorIntegrationTest {
     private fun confirmPasswordReset(oobCode: String, newPassword: String) {
         val connection = URL(
             "http://10.0.2.2:9099/identitytoolkit.googleapis.com/v1/accounts:resetPassword" +
-                "?key=AIzaSyDUMMY0000000000000000000000000000",
+                "?key=daily-record-emulator-key",
         ).openConnection() as HttpURLConnection
         try {
             connection.requestMethod = "POST"
