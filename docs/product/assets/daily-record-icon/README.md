@@ -1,10 +1,10 @@
 # Daily Record 主图标资源
 
-本目录记录当前确认的图标源稿、Android 自适应图标接入方式和商店导出物。旧版简化线稿不再作为运行时资源。
+本目录是图标交接入口。完整源稿和导出物统一放在 [`docs/design/icon-source`](../../../design/icon-source)，避免同一张图在多个目录重复维护；本目录不再保存运行时副本。
 
 ## 当前来源
 
-用户确认的高保真源图为桌面上的 `主图标.png`（1254×1254、无预先圆角）。Figma 源文件：
+用户确认的高保真源图为 `docs/design/icon-source/daily-record-icon-1254.png`（1254×1254、无预先圆角）。Figma 源文件：
 https://www.figma.com/design/WP2CrYM0XuAFOeojA46jZY
 
 Figma 页面现在按四个可核对的画板排列：完整预览、`background.svg`、`foreground.svg`、`monochrome.svg`。前景和单色画板来自用户提供的透明 PNG，避免缩小后退化成线稿。
@@ -20,8 +20,8 @@ Figma 页面现在按四个可核对的画板排列：完整预览、`background
 
 ## 商店导出
 
-- `daily-record-icon-1024.png`：1024×1024 sRGB 备份图。
-- `google-play-icon-512.png`：512×512、32-bit/sRGB、无预先圆角、约 320 KB，供 Play Console 使用。
+- [`daily-record-icon-1024.png`](../../../design/icon-source/daily-record-icon-1024.png)：1024×1024 sRGB 备份图。
+- [`google-play-icon-512.png`](../../../design/icon-source/google-play-icon-512.png)：512×512、32-bit/sRGB、无预先圆角、约 320 KB，供 Play Console 使用。
 
 Google Play 与启动器会自行应用圆角和阴影，源图不重复添加外框。
 

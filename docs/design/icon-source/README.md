@@ -7,6 +7,7 @@ This folder contains the approved neon source and the three-layer handoff from F
 - `monochrome.svg` / `monochrome.png` — single-color alpha mask with a black keyhole negative shape.
 - `figma-handoff-preview.png` — review screenshot of the high-fidelity Figma handoff board.
 - `adaptive-preview-1024.png` — local composite of the Android background and foreground layers for QA.
+- `daily-record-icon-1254.png` — the user-approved full artwork source, kept at its original 1254×1254 resolution.
 - `daily-record-icon-1024.png` — 1024×1024 sRGB backup/marketing source.
 - `google-play-icon-512.png` — 512×512 sRGB Play listing icon, under 1 MB, with no pre-rounded corners.
 
