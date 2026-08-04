@@ -12,7 +12,6 @@ import java.time.YearMonth
  * fragments themselves.
  */
 internal object AppCopy {
-    const val appName = "私密日历"
     const val privateRecordSubtitle = "记录每天的次数"
     const val offlineSubtitle = "本机记录可离线使用"
     const val vpnSyncFailure = "请打开 VPN（梯子）后重试；记录仍在本机。"
@@ -339,6 +338,13 @@ internal object AppCopy {
         const val calendarAction = "去日历填写"
         const val dailyDistribution = "每日分布"
         const val times = "次数"
+        const val weeklySummaryTitle = "本周"
+        const val weeklyRecordedLabel = "有记录"
+        const val weeklyLegendHigh = "≥6次"
+        const val weeklyLegendMedium = "3–5次"
+        const val weeklyLegendLow = "1–2次"
+        const val weeklyLegendZero = "0次"
+        const val weeklyLegendFuture = "未解锁"
         const val dailyCount = "每日次数"
         const val byDate = "按日期"
         const val countComposition = "次数分布"
@@ -405,6 +411,8 @@ internal object AppCopy {
         fun averageNumber(value: Double): String = String.format(java.util.Locale.US, "%.1f", value)
         fun annualAverage(value: Double): String = String.format(java.util.Locale.US, monthAverageFormat, value)
         fun countText(count: Long): String = "$count 次"
+        fun weeklyRecordedDays(recorded: Int, total: Int): String = "$recorded / $total 天"
+        fun weeklyCountSuffix(count: Long): String = "（${count}次）"
         fun daysText(days: Int): String = "$days 天"
         fun savedDaysSubtitle(days: Int): String = "已填写 ${days} 天"
         fun categoryDays(days: Int): String = "$days 天"

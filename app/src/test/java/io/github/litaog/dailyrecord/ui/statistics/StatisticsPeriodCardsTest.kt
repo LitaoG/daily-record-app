@@ -5,39 +5,44 @@ import org.junit.Test
 
 class StatisticsPeriodCardsTest {
     @Test
-    fun `recorded zero has no visible bar`() {
-        val detail = StatisticsDetail(label = "周三 22日", count = 0L, days = 0, recorded = true)
-
-        assertEquals(0f, distributionFraction(detail, maxCount = 4L, minNonZeroFraction = .16f))
-        assertEquals(0f, distributionFraction(detail, maxCount = 4L, minNonZeroFraction = .08f))
+    fun `ring state keeps zero, unfilled and future distinct`() {
+        assertEquals(
+            WeekRingState.ExplicitZero,
+            weekRingState(StatisticsDetail("周三 22日", count = 0L, days = 0, recorded = true)),
+        )
+        assertEquals(
+            WeekRingState.Unrecorded,
+            weekRingState(StatisticsDetail("周一 20日", count = null, days = null, recorded = false)),
+        )
+        assertEquals(
+            WeekRingState.Future,
+            weekRingState(
+                StatisticsDetail(
+                    "周四 23日",
+                    count = null,
+                    days = null,
+                    future = true,
+                    recorded = false,
+                ),
+            ),
+        )
     }
 
     @Test
-    fun `unrecorded and future values have no visible bar`() {
-        val unrecorded = StatisticsDetail(
-            label = "周一 20日",
-            count = null,
-            days = null,
-            recorded = false,
-        )
-        val future = StatisticsDetail(
-            label = "周四 23日",
-            count = null,
-            days = null,
-            future = true,
-            recorded = false,
-        )
+    fun `positive ring intensity scales to maximum`() {
+        val one = StatisticsDetail("周二 21日", count = 1L, days = 1)
+        val maximum = StatisticsDetail("周三 22日", count = 4L, days = 1)
 
-        assertEquals(0f, distributionFraction(unrecorded, maxCount = 4L, minNonZeroFraction = .16f))
-        assertEquals(0f, distributionFraction(future, maxCount = 4L, minNonZeroFraction = .16f))
+        assertEquals(.25f, weekRingIntensity(one, maxCount = 4L))
+        assertEquals(1f, weekRingIntensity(maximum, maxCount = 4L))
     }
 
     @Test
-    fun `positive values keep a minimum visible fraction and scale to the maximum`() {
-        val one = StatisticsDetail(label = "周二 21日", count = 1L, days = 1)
-        val maximum = StatisticsDetail(label = "周三 22日", count = 4L, days = 1)
+    fun `non-positive states never receive an active ring intensity`() {
+        val zero = StatisticsDetail("周一 20日", count = 0L, days = 0, recorded = true)
+        val future = StatisticsDetail("周四 23日", count = null, days = null, future = true, recorded = false)
 
-        assertEquals(.25f, distributionFraction(one, maxCount = 4L, minNonZeroFraction = .16f))
-        assertEquals(1f, distributionFraction(maximum, maxCount = 4L, minNonZeroFraction = .16f))
+        assertEquals(0f, weekRingIntensity(zero, maxCount = 4L))
+        assertEquals(0f, weekRingIntensity(future, maxCount = 4L))
     }
 }

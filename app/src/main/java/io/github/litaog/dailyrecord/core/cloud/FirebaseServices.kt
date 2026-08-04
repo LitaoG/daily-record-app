@@ -53,7 +53,10 @@ internal data class FirebaseServices(
 
         private fun demoOptions() = FirebaseOptions.Builder()
             .setApplicationId("1:1234567890:android:daily-record-demo")
-            .setApiKey("AIzaSyDUMMY0000000000000000000000000000")
+            // The emulator accepts any non-empty key; keep a visibly synthetic
+            // value so a production-looking credential can never be mistaken
+            // for a checked-in Firebase secret.
+            .setApiKey("daily-record-emulator-key")
             .setProjectId(DEMO_PROJECT_ID)
             .build()
     }
