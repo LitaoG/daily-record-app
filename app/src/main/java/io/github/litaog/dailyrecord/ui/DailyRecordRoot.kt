@@ -261,19 +261,31 @@ private fun SignedInRoot(
             val completion = CompletableDeferred<Result<Unit>>()
             accountDeletionScope.launch {
                 deletionInProgress = true
+                DailyRecordSyncScheduler.beginDeletionBlock()
                 activeSyncJobs.forEach { it.cancelAndJoin() }
-                val result = runCatchingPreservingCancellation {
-                    DailyRecordSyncScheduler.cancelAndAwait(context)
-                    deletionCoordinator.deleteAccount(
-                        ownerId = ownerId,
-                        password = password,
-                        localData = localData,
-                    )
+                val result = try {
+                    runCatchingPreservingCancellation {
+                        DailyRecordSyncScheduler.cancelAndAwait(context)
+                        deletionCoordinator.deleteAccount(
+                            ownerId = ownerId,
+                            password = password,
+                            localData = localData,
+                        )
+                    }
+                } finally {
+                    // The deletion block must always be lifted, including when
+                    // the calling scope is cancelled mid-deletion.
+                    DailyRecordSyncScheduler.endDeletionBlock()
                 }
                 if (result.isSuccess && localData == LocalDataAfterAccountDeletion.Keep) {
                     onAccountDeletedWithLocalRecords()
                 }
-                if (result.isFailure) deletionInProgress = false
+                if (result.isFailure) {
+                    deletionInProgress = false
+                    // A failed deletion must not leave pending local records
+                    // stuck: re-enable the normal background sync path.
+                    DailyRecordSyncScheduler.schedule(context)
+                }
                 completion.complete(result)
             }
             completion.await()

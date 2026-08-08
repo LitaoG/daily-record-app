@@ -17,7 +17,25 @@ internal object DailyRecordSyncScheduler {
     internal val workName = UNIQUE_WORK_NAME
     internal val workPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE
 
+    @Volatile
+    private var deletionBlocked = false
+
+    internal val isDeletionBlocked: Boolean
+        get() = deletionBlocked
+
+    // Account deletion must be the only writer of the user's cloud paths. While
+    // blocked, local change callbacks must not create new work and running
+    // workers must exit before any remote write.
+    internal fun beginDeletionBlock() {
+        deletionBlocked = true
+    }
+
+    internal fun endDeletionBlock() {
+        deletionBlocked = false
+    }
+
     fun schedule(context: Context) {
+        if (deletionBlocked) return
         val workManager = WorkManager.getInstance(context.applicationContext)
         workManager.cancelUniqueWork(LEGACY_UNIQUE_WORK_NAME)
         val request = OneTimeWorkRequestBuilder<DailyRecordSyncWorker>()
