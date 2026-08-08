@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import io.github.litaog.dailyrecord.core.auth.AuthState
 import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
 import io.github.litaog.dailyrecord.core.account.CombinedAccountDeletionLocalStore
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
@@ -56,6 +57,24 @@ internal fun DailyRecordRoot(
     val context = LocalContext.current
     val rootScope = rememberCoroutineScope()
     val localModePreference = remember(context) { LocalModePreference(context) }
+    val pendingCleanupPreference = remember(context) { PendingLocalCleanupPreference(context) }
+
+    // A previous account deletion may have left an owner cache that could not
+    // be cleared. Retry the local cleanup once on startup.
+    LaunchedEffect(database) {
+        val cleanupStore = CombinedAccountDeletionLocalStore(
+            handBrew = RoomHandBrewSyncStore(database),
+            sex = RoomSexSyncStore(database),
+        )
+        pendingCleanupPreference.ownerIds.forEach { pendingOwnerId ->
+            runCatchingPreservingCancellation {
+                cleanupStore.deleteOwnerCache(pendingOwnerId)
+            }.onSuccess {
+                pendingCleanupPreference.remove(pendingOwnerId)
+            }
+        }
+    }
+
     var continueOffline by rememberSaveable {
         mutableStateOf(localModePreference.isEnabled)
     }
@@ -119,6 +138,7 @@ internal fun DailyRecordRoot(
                 services = services,
                 state = state,
                 accountDeletionScope = rootScope,
+                pendingCleanupPreference = pendingCleanupPreference,
                 onAccountDeletedWithLocalRecords = {
                     localModePreference.setEnabled(true)
                     continueOffline = true
@@ -153,6 +173,7 @@ private fun SignedInRoot(
     services: FirebaseServices,
     state: AuthState.SignedIn,
     accountDeletionScope: kotlinx.coroutines.CoroutineScope,
+    pendingCleanupPreference: PendingLocalCleanupPreference,
     onAccountDeletedWithLocalRecords: () -> Unit,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -277,16 +298,27 @@ private fun SignedInRoot(
                     // the calling scope is cancelled mid-deletion.
                     DailyRecordSyncScheduler.endDeletionBlock()
                 }
-                if (result.isSuccess && localData == LocalDataAfterAccountDeletion.Keep) {
+                val cleanupPending = result.exceptionOrNull() is
+                    AccountDeletionLocalCleanupPendingException
+                if (cleanupPending) {
+                    // The account and cloud data are already deleted; keep the
+                    // local cache cleanup recoverable on a later startup.
+                    pendingCleanupPreference.add(ownerId)
+                }
+                if ((result.isSuccess || cleanupPending) &&
+                    localData == LocalDataAfterAccountDeletion.Keep
+                ) {
                     onAccountDeletedWithLocalRecords()
                 }
-                if (result.isFailure) {
+                if (result.isFailure && !cleanupPending) {
                     deletionInProgress = false
                     // A failed deletion must not leave pending local records
                     // stuck: re-enable the normal background sync path.
                     DailyRecordSyncScheduler.schedule(context)
                 }
-                completion.complete(result)
+                completion.complete(
+                    if (cleanupPending) Result.success(Unit) else result,
+                )
             }
             completion.await()
         },
