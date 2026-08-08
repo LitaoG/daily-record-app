@@ -1,6 +1,8 @@
 # 2026-08-01 UI v2 Stage 4：月度热力图与年度月份分析
 
-状态：`implementation verified — awaiting user acceptance`
+状态：`Historical — superseded by the final beta.2 statistics implementation`
+
+当时状态（2026-08-01）：`implementation verified — awaiting user acceptance`。月统计最终契约和年度折线实现见 `MONTH_STATISTICS_REDESIGN.md` 及 2026-08-02 审计。
 
 对应 Goal：[UI v2 分阶段执行计划](../../QUIET_PRIVATE_JOURNAL_GOALS.md)；对应 Issue：[#39](https://github.com/LitaoG/daily-record-app/issues/39)。
 

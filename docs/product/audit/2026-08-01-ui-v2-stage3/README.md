@@ -1,6 +1,8 @@
 # 2026-08-01 UI v2 Stage 3 记录页定向验收
 
-状态：`Implementation verified — awaiting user acceptance`
+状态：`Historical — incorporated into v1.0.0-beta.2`
+
+当时状态（2026-08-01）：`Implementation verified — awaiting user acceptance`。本页保留记录页阶段的截图和测试范围，不表示当前阶段仍未关闭。
 
 范围：只改造点击日期后的次数记录页；不提前加入时间、感受、文本框或新的数据字段，也不改变 Room、同步、登录和统计业务规则。
 

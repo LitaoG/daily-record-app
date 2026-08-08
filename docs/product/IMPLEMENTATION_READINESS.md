@@ -1,12 +1,12 @@
 # 实现与发布准备度
 
-最后复核：2026-08-03
+最后复核：2026-08-08
 
 ## 当前 UI v2 入口
 
 - 已确认的视觉目标是[手冲紫色＋做爱深红的三张高保真图](design/quiet-private-journal-v2/README.md)。
 - 唯一实现顺序、暂停点和验收门槛由[分阶段 Goal](QUIET_PRIVATE_JOURNAL_GOALS.md)定义。
-- Stage 0 只整理设计资产、事实文档、Issues、分支和公共 `main`；在 Stage 0 合并并验收前不得开始 Compose 改版。
+- Stage 0–6 已完成；后续 Compose、数据或发布改动必须从新的 Issue/Goal 和最新公共 `main` 开始，不复用已关闭阶段作为当前执行状态。
 - 生成图不是日期算法、动态字体、触控范围或 TalkBack 的证明；这些事实必须在对应实现阶段通过代码、测试和同视口截图验证。
 
 ## 已冻结
@@ -41,7 +41,8 @@
 - 当前展示名称为“私密日历”；技术包名保持 `io.github.litaog.dailyrecord`，保证覆盖升级。
 - Compose 双模块日历/记录/统计、历史日期跳转、Room v4、邮箱密码登录和双集合云同步基础设施均已实现。
 - `assets/hand-brew-v2/` 只保留为历史视觉基线；当前双模块事实以代码、测试和当前文档为准。
-- 完整实现、产品文档与验证证据已纳入 Git 提交链，并通过 Pull Request 同步到 GitHub；默认分支落地后以 `main` 为唯一当前事实来源。
+- 完整实现、产品文档与验证证据已纳入 Git 提交链，并通过 Pull Request 同步到 GitHub；以公共 `main` 为唯一当前事实来源，当前提交以 GitHub 页面为准。
+- 发布后的 weekly-chart TalkBack 语义修复已由 PR #90 合并；它没有改变数据、布局或发布版本，因此不另发 beta.3。
 - 账号/云数据删除已具备二次确认、密码重验、云端优先删除、本机默认保留/可选删除和失败恢复。
 - `v1.0.0-beta.2` 已沿用稳定签名、R8 Release、SHA-256、tag 工作流和正式隐私说明；同证书 versionCode 2→3 覆盖安装验证门禁已完成。
 - App Check 已完成 GitHub 侧载评估；未建立 Play Console 关联前不接入或强制，避免阻断全部侧载用户。
