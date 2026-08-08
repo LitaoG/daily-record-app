@@ -38,6 +38,7 @@
 - [审计与验证证据索引](product/audit/README.md)
 - [设计资产索引](design/README.md)
 - [UI v2 分阶段执行计划](product/QUIET_PRIVATE_JOURNAL_GOALS.md)
+- [同步、隐私与统计一致性加固 Goal（待审阅）](product/GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
 - [已确认的 UI v2 设计基线与三张高保真图](product/design/quiet-private-journal-v2/README.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](product/MONTH_STATISTICS_REDESIGN.md)
 - [2026-08-02 统计与日历边界修复](product/audit/2026-08-02-boundary-fixes/README.md)
