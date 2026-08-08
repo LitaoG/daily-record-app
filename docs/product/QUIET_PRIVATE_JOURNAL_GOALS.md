@@ -1,10 +1,12 @@
 # “安静的私密数据日志”UI v2 分阶段执行计划
 
-状态：`Stage 5 in progress`
+状态：`completed — Stage 0–6 closed`
 
 总 Goal：[GitHub Issue #42](https://github.com/LitaoG/daily-record-app/issues/42)
 
-最后更新：2026-08-02
+最后更新：2026-08-08
+
+> 归档说明：本 Goal 的阶段已全部完成并纳入 `v1.0.0-beta.2`。下文保留阶段当时的执行规则和证据链接；后续需求必须新建 Issue/Goal，不得把已关闭阶段重新打开作为日常实现入口。
 
 ## 1. 文档职责与权威顺序
 
@@ -111,7 +113,7 @@
 
 ## 5. 分阶段 Goal
 
-同一时间只允许一个阶段带有 `status:in-progress`。每个阶段完成实现、PR、CI 和证据后改为 `status:awaiting-acceptance` 并停止；只有用户验收后才关闭该 Issue 并启动下一阶段。
+执行时同一时间只允许一个阶段带有 `status:in-progress`。本 Goal 当前已无进行中阶段；未来需求必须建立新的阶段、Issue、PR 和验收记录。
 
 | 阶段 | GitHub | 状态 | 核心交付 |
 |---|---|---|---|
@@ -120,8 +122,8 @@
 | 2. 方形次数热力日历 | [#38](https://github.com/LitaoG/daily-record-app/issues/38) | 已验收 | 日历页面与全部组合状态 |
 | 3. 克制的次数记录页 | [#43](https://github.com/LitaoG/daily-record-app/issues/43) | 已验收 | 点击日期进入、次数主焦点、保存/清除层级 |
 | 4. 月度热力图与年度月份分析 | [#39](https://github.com/LitaoG/daily-record-app/issues/39) | 已验收（历史布局） | 年度柱状图、季度占比与极值月份；月度日网格与中间周聚合方案均已被当前契约替代 |
-| 5. 集成 QA 与候选 APK | [#40](https://github.com/LitaoG/daily-record-app/issues/40) | 已完成 | 跨页面回归、一次完整套件、候选 APK |
-| 6. 真机验收、Release 与恢复镜像 | [#41](https://github.com/LitaoG/daily-record-app/issues/41) | 已完成 | 签名 Release、公共 main 验证、私有恢复镜像 |
+| 5. 集成 QA 与候选 APK | [#40](https://github.com/LitaoG/daily-record-app/issues/40) | 已完成（历史阶段） | 跨页面回归、一次完整套件、候选 APK |
+| 6. 真机验收、Release 与恢复镜像 | [#41](https://github.com/LitaoG/daily-record-app/issues/41) | 已完成（历史阶段） | 签名 Release、公共 main 验证、私有恢复镜像 |
 
 ## 6. 各阶段范围
 
@@ -190,8 +192,7 @@
 - 检查本机、离线、登录和同步入口没有因视觉改版退化。
 - 运行最终功能 head 的一次完整测试套件；后续纯文档或截图修订不机械重跑。
 - 生成候选 APK、SHA-256、同视口截图、Crash Buffer 与测试报告。
-- 当前实现以公共 `main` 的 PR #67 合并 head 为准；本轮只修正与集中式文案同步的两个 Android 回归断言，不改变运行时业务逻辑或 UI。
-- 当前审计证据：[2026-08-03 Stage 5/6 最终审查与 beta.2 发布](audit/2026-08-03-stage5-stage6-release/README.md)。完整设备套件、CI、发布和私有镜像同步均已完成；用户后续日常反馈按需新建 Issue。
+- 发布审计以 [2026-08-03 Stage 5/6 记录](audit/2026-08-03-stage5-stage6-release/README.md)为历史证据；发布后无障碍回归修复已通过 PR #90 合并。完整设备套件、CI、发布和私有镜像同步均已完成；用户后续日常反馈按需新建 Issue。
 
 ### Stage 6：Release 与恢复镜像（已完成）
 
@@ -213,7 +214,7 @@
 
 - 日常分支、提交、PR、CI、审查和合并全部在公共 [`LitaoG/daily-record-app`](https://github.com/LitaoG/daily-record-app)完成。
 - 每个阶段从最新公共 `main` 建立一个短生命周期 `agent/<description>` 分支。
-- 不强推、不改写共享历史、不删除 Release/tag/已关闭 Issue/历史审计。
+- 不强推、不改写共享历史、不删除 Release/tag/已关闭 Issue/历史审计；仅删除已合并且无独立提交的残留分支或重复临时文件。
 - 阶段完成并等待用户验收时，不提前开始下一阶段代码。
 - 私有恢复仓库不是日常开发源；仅在完整小版本后同步。
 
@@ -235,5 +236,5 @@
 - 三个核心页面在正常字号和 200% 字体下通过视觉、触控与 TalkBack 验收。
 - 月统计逐日序列、次数分布和单日极值只使用所选月份真实日期，未填写、明确 0、正次数和未来可区分；年度月份汇总、季度占比与极值月份均可由原始记录重算。
 - 公共 `main`、版本元数据、Release tag、签名 APK 和 SHA-256 一致。
-- 用户完成真实手机日常验收。
+- 自动化、模拟器和发布门禁通过；真人日常使用只作为后续反馈来源，不是一次性发布硬门槛。
 - 私有恢复镜像在公共小版本完成后安全同步，且没有私有材料进入公共历史。

@@ -5,15 +5,15 @@
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3F7D6B)](https://github.com/LitaoG/daily-record-app/releases)
 [![License](https://img.shields.io/github/license/LitaoG/daily-record-app)](LICENSE)
 
-一个本地优先的 Android 私密次数日历，分别记录“手冲”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。
+一个本地优先的 Android 私密次数日历，分别记录“手冲”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。当前 beta.2 已完成日历、日期记录、周/月/年/全部统计，以及两套模块主题适配。
 
 <p align="center">
-  <img src="docs/product/audit/2026-07-30-ui-v2-stage2-follow-up/01-calendar-normal.png" alt="UI v2 手冲次数热力日历最终验收候选" width="31%">
-  <img src="docs/product/audit/2026-07-27-quick-runtime/03-record-editor.png" alt="日期记录页" width="31%">
-  <img src="docs/product/audit/2026-07-22-calendar-statistics/after/statistics-week-data.png" alt="早期周统计设计基线" width="31%">
+  <img src="docs/product/audit/2026-07-30-ui-v2-stage2-follow-up/01-calendar-normal.png" alt="当前手冲次数热力日历" width="31%">
+  <img src="docs/product/audit/2026-08-01-ui-v2-stage3/01-record-hand-empty.png" alt="当前日期记录页" width="31%">
+  <img src="docs/product/audit/2026-08-02-year-line-chart/implementation.png" alt="当前年度统计折线图" width="31%">
 </p>
 
-第一张是当前 UI v2 方形次数热力日历验收候选；后两张仍是记录页和统计页的早期运行时证据。当前已经完成“手冲紫色＋做爱深红”的共享视觉外壳与日历页，日期记录页和统计页主体仍未改版。当前目标与逐阶段暂停规则见 [UI v2 设计基线](docs/product/design/quiet-private-journal-v2/README.md)与[分阶段执行计划](docs/product/QUIET_PRIVATE_JOURNAL_GOALS.md)。
+三张图分别展示当前日历、日期记录和年度统计的运行证据；对应双模块目标和状态语义见 [UI v2 设计基线](docs/product/design/quiet-private-journal-v2/README.md)。UI v2 Stage 0–6 已完成，后续只通过新的 Issue/PR 进入定向维护，不把历史生成图当作当前待办。
 
 ## 已实现
 
@@ -100,5 +100,6 @@ pnpm test:android-connected
 - [测试策略与执行矩阵](docs/TESTING.md)
 - [路线图](docs/ROADMAP.md)
 - [决策记录](docs/DECISIONS.md)
+- [仓库维护与文档生命周期](docs/REPOSITORY_HYGIENE.md)
 
 公开仓库不包含 `app/google-services.json`、签名文件、密码、真实用户数据库、APK/AAB 或敏感日志。贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。

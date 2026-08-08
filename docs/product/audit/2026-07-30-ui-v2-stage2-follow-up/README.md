@@ -1,6 +1,8 @@
 # 2026-07-30 UI v2 Stage 2 反馈修正
 
-状态：`Implementation verified — awaiting user acceptance`
+状态：`Historical — incorporated into v1.0.0-beta.2`
+
+当时状态（2026-07-30）：`Implementation verified — awaiting user acceptance`。本页保留当时的反馈收口证据，不表示当前仍在等待验收。
 
 范围：只修正方形次数热力日历的状态区分、月摘要和页面收尾，不进入 Stage 3 记录页或 Stage 4 统计页。
 

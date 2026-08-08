@@ -1,6 +1,8 @@
 # 2026-08-02 年度折线与统计页定向验收
 
-状态：`awaiting-user-acceptance`
+状态：`Historical — incorporated into v1.0.0-beta.2`
+
+当时状态（2026-08-02）：`awaiting-user-acceptance`。本页保留年度折线、一次性动画和季度圆环的定向证据；当前运行时以代码和最新公共 `main` 为准。
 
 ## 本轮范围
 

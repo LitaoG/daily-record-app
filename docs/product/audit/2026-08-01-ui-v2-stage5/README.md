@@ -1,6 +1,8 @@
 # 2026-08-01 Stage 5：集成 QA 与候选 APK
 
-状态：`implementation-verified`，等待公共 PR/CI 合并和用户候选 APK 验收
+状态：`Historical — completed and superseded by the beta.2 release audit`
+
+当时状态（2026-08-01）：`implementation-verified`，等待公共 PR/CI 合并和用户候选 APK 验收。本页保留候选 APK 阶段的测试边界；最终合并、发布和镜像证据见 2026-08-03 Stage 5/6 记录。
 
 对应阶段：[UI v2 分阶段执行计划](../../QUIET_PRIVATE_JOURNAL_GOALS.md) · [GitHub Issue #40](https://github.com/LitaoG/daily-record-app/issues/40)
 
