@@ -54,6 +54,7 @@
 - [日常使用反馈](product/DAILY_USE_FEEDBACK.md)
 - [2026-08-03 应用内中文文案审查](product/audit/2026-08-03-copy-audit/README.md)
 - [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](product/audit/2026-08-03-stage5-stage6-release/README.md)
+- [2026-08-09 Issue #105 Stage 4–5 记录页验收](product/audit/2026-08-09-record-details-stage4-stage5/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 
 ## 历史证据

@@ -308,6 +308,15 @@ internal object AppCopy {
         const val detailDiscardTitle = "移除这次详情？"
         const val detailDiscardMessage = "这次已填写的时间或感受会一起移除。"
         const val detailConfirmRemove = "移除详情"
+
+        fun detailTimeDescription(occurrence: Int, label: String, value: String): String =
+            "${detailOccurrence(occurrence)}，$label，$value"
+
+        fun detailFeelingActionDescription(occurrence: Int, action: String): String =
+            "${detailOccurrence(occurrence)}，$action"
+
+        fun detailFeelingEditorDescription(occurrence: Int): String =
+            "${detailOccurrence(occurrence)}，$detailFeelingLabel"
         const val loadingRecords = "正在读取记录…"
         const val futureUnavailable = "未来日期，不能记录"
         const val notSaved = "尚未填写"

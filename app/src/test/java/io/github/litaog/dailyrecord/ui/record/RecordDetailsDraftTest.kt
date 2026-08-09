@@ -1,5 +1,6 @@
 package io.github.litaog.dailyrecord.ui.record
 
+import androidx.compose.runtime.saveable.SaverScope
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
 import java.time.LocalTime
 import org.junit.Assert.assertEquals
@@ -44,5 +45,24 @@ class RecordDetailsDraftTest {
             .resize(0)
 
         assertEquals(emptyList<RecordDetailDraft>(), draft.entries)
+    }
+
+    @Test
+    fun saverRoundTripsExpandedDraftForProcessRecreation() {
+        val draft = RecordDetailsDraft()
+            .reconcile(emptyList(), 1)
+            .update(0) {
+                it.copy(startMinutes = 8 * 60 + 30, endMinutes = 9 * 60, feeling = "保留这段感受")
+            }
+            .copy(expanded = true)
+        val scope = object : SaverScope {
+            override fun canBeSaved(value: Any): Boolean = true
+        }
+
+        val saved = with(RecordDetailsDraft.Saver) { scope.save(draft) }
+            ?: error("draft saver returned null")
+        val restored = RecordDetailsDraft.Saver.restore(saved)
+
+        assertEquals(draft, restored)
     }
 }
