@@ -135,8 +135,8 @@ internal fun weekRingSegmentIndex(detail: StatisticsDetail, fallbackIndex: Int):
 /**
  * Single source of truth for ring segment colors. The legend and the ring
  * drawing must resolve colors through this function so the legend can never
- * drift from the chart (for example, the explicit-zero state must never be
- * shown with the unrecorded color).
+ * drift from the chart (for example, an explicit zero must never use the
+ * unrecorded color).
  */
 internal fun weekRingSegmentColor(
     state: WeekRingState,

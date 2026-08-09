@@ -9,7 +9,7 @@ val DailyRecordSurfaceMuted = Color(0xFFF5F1F4)
 /**
  * Disabled/future cells need to read as unavailable rather than as another
  * empty record. Keep this neutral (not module tinted), but give it enough
- * separation from [DailyRecordSurfaceMuted] used by past unset cells.
+ * separation from the module-specific past-unset fills.
  */
 val DailyRecordSurfaceDisabled = Color(0xFFEEE8E0)
 val DailyRecordText = Color(0xFF2D2926)
@@ -50,11 +50,12 @@ data class RecordModuleColorTokens(
     val soft: Color,
     val medium: Color,
     val intense: Color,
+    val unset: Color,
     val onPrimary: Color = DailyRecordOnAccent,
 ) {
     fun colorsFor(state: RecordVisualState): RecordVisualColors = when (state) {
         RecordVisualState.Unset -> RecordVisualColors(
-            background = DailyRecordSurfaceMuted,
+            background = unset,
             content = DailyRecordTextSecondary,
             outline = DailyRecordDivider,
         )
@@ -120,6 +121,7 @@ val HandBrewColorTokens = RecordModuleColorTokens(
     soft = Color(0xFFF1E3F7),
     medium = Color(0xFFE0C4EB),
     intense = Color(0xFFB48EC9),
+    unset = DailyRecordSurfaceMuted,
 )
 
 val SexColorTokens = RecordModuleColorTokens(
@@ -130,6 +132,9 @@ val SexColorTokens = RecordModuleColorTokens(
     soft = Color(0xFFF8E4E8),
     medium = Color(0xFFEABBC3),
     intense = Color(0xFFCD828E),
+    // Keep empty sex dates within the wine-red family without colliding with
+    // the stronger one-count fill.
+    unset = Color(0xFFF8EFF1),
 )
 
 /**

@@ -1,6 +1,6 @@
 # 私密日历文档中心
 
-最后复核：2026-08-08
+最后复核：2026-08-09
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
@@ -15,7 +15,7 @@
 | [架构](ARCHITECTURE.md) | 数据流、包边界、同步和未来模块演进方式 |
 | [数据模型](DATA_MODEL.md) | Room v4 双模块字段、状态推导和迁移 |
 | [统计口径](STATISTICS.md) | 周/月/年/全部历史的唯一计算规则 |
-| [同步与隐私](SYNC_AND_PRIVACY.md) | 本地优先、冲突、删除和诊断数据边界 |
+| [同步与隐私](SYNC_AND_PRIVACY.md) | 本地优先、冲突、删除和云端数据边界 |
 | [架构决策](DECISIONS.md) | 已接受的长期技术与产品决策 |
 | [路线图](ROADMAP.md) | 已完成阶段和持续维护方向 |
 
@@ -45,6 +45,7 @@
 - [2026-08-02 统计周期玻璃分段控件](product/audit/2026-08-02-period-glass-tabs/README.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
 - [明亮渐变玻璃主题 Goal 与当前契约](product/BRIGHT_GLASS_THEME.md)
+- [设置中心 Goal](product/SETTINGS_HUB_GOAL.md)
 - [2026-08-01 Stage 4 月度热力图与年度月份分析](product/audit/2026-08-01-ui-v2-stage4/README.md)
 - [2026-08-01 Stage 5 集成 QA 与候选 APK](product/audit/2026-08-01-ui-v2-stage5/README.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)

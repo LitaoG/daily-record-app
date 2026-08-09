@@ -4,9 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,10 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 
 /** Shared app-native dialog surface for the private-calendar visual language. */
 @Composable
@@ -35,6 +39,7 @@ fun DailyRecordDialog(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.6f
+    val dialogShape = RoundedCornerShape(20.dp)
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -49,19 +54,18 @@ fun DailyRecordDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .widthIn(max = 420.dp)
-                    .dailyRecordGlass(
-                        shape = RoundedCornerShape(26.dp),
-                        level = DailyRecordGlassLevel.Emphasis,
-                    )
                     .semantics { this.testTag = testTag },
-                shape = RoundedCornerShape(26.dp),
-                color = androidx.compose.ui.graphics.Color.Transparent,
-                border = null,
-                shadowElevation = 0.dp,
+                shape = dialogShape,
+                color = DailyRecordSurface,
+                border = BorderStroke(1.dp, DailyRecordDivider),
+                shadowElevation = 6.dp,
                 tonalElevation = 0.dp,
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp),
+                    modifier = Modifier
+                        .heightIn(max = 720.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 22.dp),
                 ) {
                     Text(
                         text = title,

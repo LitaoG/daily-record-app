@@ -37,11 +37,8 @@ import io.github.litaog.dailyrecord.core.sync.DailyRecordSyncScheduler
 import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
 import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
 import io.github.litaog.dailyrecord.core.sync.SexSyncCoordinator
-import io.github.litaog.dailyrecord.core.sync.SyncDiagnostics
-import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.ui.auth.AuthScreen
-import io.github.litaog.dailyrecord.ui.diagnostics.createDiagnosticReport
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.CompletableDeferred
@@ -169,10 +166,6 @@ private fun LocalRoot(database: DailyRecordDatabase, onSignIn: () -> Unit) {
         repository = handBrewRepository,
         sexRepository = sexRepository,
         onSignIn = onSignIn,
-        diagnosticReport = createDiagnosticReport(
-            status = SyncStatus.NotConfigured,
-            diagnostics = SyncDiagnostics(),
-        ),
     )
 }
 
@@ -262,7 +255,6 @@ private fun SignedInRoot(
     }
     val scope = rememberCoroutineScope()
     val syncStatus by syncManager.status.collectAsState()
-    val syncDiagnostics by syncManager.diagnostics.collectAsState()
     var deletionInProgress by remember(ownerId) { mutableStateOf(false) }
     var activeSyncJobs by remember(ownerId) { mutableStateOf<List<Job>>(emptyList()) }
 
@@ -288,7 +280,6 @@ private fun SignedInRoot(
         syncStatus = syncStatus,
         onSyncNow = { scope.launch { syncManager.syncNow() } },
         onSignOut = services.authRepository::signOut,
-        diagnosticReport = createDiagnosticReport(syncStatus, syncDiagnostics),
         onDeleteAccount = { password, localData ->
             val completion = CompletableDeferred<Result<Unit>>()
             accountDeletionScope.launch {
