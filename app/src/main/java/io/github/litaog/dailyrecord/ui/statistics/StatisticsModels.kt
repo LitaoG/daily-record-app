@@ -100,11 +100,13 @@ fun buildStatistics(
     anchorDate: LocalDate,
     today: LocalDate,
     records: List<HandBrewRecord>,
+    earliestDate: LocalDate = LocalDate.of(1970, 1, 1),
 ): StatisticsUiModel = buildDailyCountStatistics(
     period = period,
     anchorDate = anchorDate,
     today = today,
     records = records.map(HandBrewRecord::asDailyCountEntry),
+    earliestDate = earliestDate,
 )
 
 internal fun buildDailyCountStatistics(
@@ -112,11 +114,12 @@ internal fun buildDailyCountStatistics(
     anchorDate: LocalDate,
     today: LocalDate,
     records: List<DailyCountEntry>,
+    earliestDate: LocalDate = LocalDate.of(1970, 1, 1),
 ): StatisticsUiModel {
     val completedRecords = records.filter { it.localDate <= today }
-    val safeAnchor = anchorDate.coerceAtMost(today)
+    val safeAnchor = anchorDate.coerceIn(earliestDate, today)
     return when (period) {
-        StatisticsPeriod.Week -> buildWeek(safeAnchor, today, completedRecords)
+        StatisticsPeriod.Week -> buildWeek(safeAnchor, today, earliestDate, completedRecords)
         StatisticsPeriod.Month -> buildMonth(safeAnchor, today, completedRecords)
         StatisticsPeriod.Year -> buildYear(safeAnchor, today, completedRecords)
         StatisticsPeriod.All -> buildAll(today, completedRecords)
@@ -126,13 +129,18 @@ internal fun buildDailyCountStatistics(
 private fun buildWeek(
     anchorDate: LocalDate,
     today: LocalDate,
+    earliestDate: LocalDate,
     records: List<DailyCountEntry>,
 ): StatisticsUiModel {
-    val start = anchorDate.minusDays((anchorDate.dayOfWeek.value - 1).toLong())
-    val end = start.plusDays(6)
+    val weekStart = anchorDate.minusDays((anchorDate.dayOfWeek.value - 1).toLong())
+    val end = weekStart.plusDays(6)
+    // The week still starts on Monday for statistics; only the display range is
+    // clipped so the earliest supported week never shows pre-1970 dates.
+    val start = maxOf(weekStart, earliestDate)
     val rangeRecords = records.filter { it.localDate in start..end }
-    val details = (0L..6L).map { offset ->
-        val date = start.plusDays(offset)
+    val details = (0L..6L).mapNotNull { offset ->
+        val date = weekStart.plusDays(offset)
+        if (date < earliestDate) return@mapNotNull null
         if (date > today) {
             StatisticsDetail(
                 label = AppCopy.Statistics.weekdayDateLabel(weekdayName(date), date),

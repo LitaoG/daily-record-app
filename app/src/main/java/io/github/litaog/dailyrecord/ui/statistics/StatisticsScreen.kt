@@ -105,8 +105,14 @@ internal fun DailyCountStatisticsScreen(
     var periodName by rememberSaveable { mutableStateOf(StatisticsPeriod.Week.name) }
     val period = StatisticsPeriod.entries.firstOrNull { it.name == periodName }
         ?: StatisticsPeriod.Week
-    val model = remember(period, anchorDate, today, records) {
-        buildDailyCountStatistics(period, anchorDate, today, records)
+    val model = remember(period, anchorDate, today, earliestDate, records) {
+        buildDailyCountStatistics(
+            period = period,
+            anchorDate = anchorDate,
+            today = today,
+            records = records,
+            earliestDate = earliestDate,
+        )
     }
     LazyColumn(
         modifier = modifier.fillMaxSize().testTag("statistics_screen"),
