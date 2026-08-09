@@ -50,12 +50,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
-import io.github.litaog.dailyrecord.ui.RecordModule
-import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.account.color
 import io.github.litaog.dailyrecord.ui.account.label
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
@@ -75,11 +72,8 @@ internal fun SettingsScreen(
     versionName: String,
     accountEmail: String?,
     syncStatus: SyncStatus,
-    selectedModule: RecordModule,
-    availableModules: List<RecordModuleUiSpec>,
     moduleColors: RecordModuleColorTokens,
     onBack: () -> Unit,
-    onModuleSelected: (RecordModule) -> Unit,
     onOpenAccount: () -> Unit,
     onSignIn: (() -> Unit)?,
 ) {
@@ -121,33 +115,6 @@ internal fun SettingsScreen(
                         onOpenAccount = onOpenAccount,
                         onSignIn = onSignIn,
                     )
-                }
-                item {
-                    SettingsSectionTitle(
-                        text = AppCopy.Settings.recordSection,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
-                item {
-                    SettingsCard {
-                        Text(
-                            text = AppCopy.Settings.recordModuleTitle,
-                            color = DailyRecordText,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            text = AppCopy.Settings.recordModuleSummary,
-                            color = DailyRecordTextMuted,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        RecordModuleSelector(
-                            selected = selectedModule,
-                            specs = availableModules,
-                            onSelected = onModuleSelected,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
                 }
                 item {
                     SettingsSectionTitle(

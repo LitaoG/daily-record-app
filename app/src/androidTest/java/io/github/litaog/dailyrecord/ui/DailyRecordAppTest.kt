@@ -73,7 +73,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription(AppCopy.Settings.open).performClick()
         composeRule.onNodeWithTag("settings_screen").assertIsDisplayed()
         composeRule.onNodeWithText(AppCopy.Settings.accountSection).assertIsDisplayed()
-        composeRule.onNodeWithText(AppCopy.Settings.recordSection).assertIsDisplayed()
+        composeRule.onAllNodesWithText("记录偏好").assertCountEquals(0)
         composeRule.onNodeWithTag("settings_version").performScrollTo().assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription(AppCopy.Settings.back).performClick()

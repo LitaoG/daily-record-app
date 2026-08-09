@@ -188,11 +188,8 @@ fun DailyRecordApp(
                 versionName = BuildConfig.VERSION_NAME,
                 accountEmail = accountEmail,
                 syncStatus = syncStatus,
-                selectedModule = selectedModule,
-                availableModules = availableModuleSpecs,
                 moduleColors = moduleSpec.colors,
                 onBack = { showSettings = false },
-                onModuleSelected = selectModule,
                 onOpenAccount = { showAccountDialog = true },
                 onSignIn = onSignIn,
             )
