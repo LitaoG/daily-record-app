@@ -30,7 +30,8 @@ enum class RecordVisualState {
     ExplicitZero,
     One,
     Two,
-    ThreePlus,
+    Three,
+    FourPlus,
     Focused,
     Disabled,
 }
@@ -48,6 +49,7 @@ data class RecordModuleColorTokens(
     val strong: Color,
     val soft: Color,
     val medium: Color,
+    val intense: Color,
     val onPrimary: Color = DailyRecordOnAccent,
 ) {
     fun colorsFor(state: RecordVisualState): RecordVisualColors = when (state) {
@@ -71,7 +73,12 @@ data class RecordModuleColorTokens(
             content = DailyRecordText,
             outline = medium,
         )
-        RecordVisualState.ThreePlus -> RecordVisualColors(
+        RecordVisualState.Three -> RecordVisualColors(
+            background = intense,
+            content = DailyRecordText,
+            outline = intense,
+        )
+        RecordVisualState.FourPlus -> RecordVisualColors(
             background = primary,
             content = onPrimary,
             outline = primary,
@@ -112,6 +119,7 @@ val HandBrewColorTokens = RecordModuleColorTokens(
     strong = Color(0xFF693D83),
     soft = Color(0xFFF1E3F7),
     medium = Color(0xFFE0C4EB),
+    intense = Color(0xFFB48EC9),
 )
 
 val SexColorTokens = RecordModuleColorTokens(
@@ -121,6 +129,7 @@ val SexColorTokens = RecordModuleColorTokens(
     strong = Color(0xFF823447),
     soft = Color(0xFFF8E4E8),
     medium = Color(0xFFEABBC3),
+    intense = Color(0xFFCD828E),
 )
 
 /**

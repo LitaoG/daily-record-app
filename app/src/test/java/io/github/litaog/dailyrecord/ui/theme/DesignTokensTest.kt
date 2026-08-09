@@ -19,8 +19,10 @@ class DesignTokensTest {
         assertArgb(0xFFE0D8D0, DailyRecordDivider)
         assertArgb(0xFF8A5AA7, HandBrewColorTokens.primary)
         assertArgb(0xFF693D83, HandBrewColorTokens.strong)
+        assertArgb(0xFFB48EC9, HandBrewColorTokens.intense)
         assertArgb(0xFFAD485C, SexColorTokens.primary)
         assertArgb(0xFF823447, SexColorTokens.strong)
+        assertArgb(0xFFCD828E, SexColorTokens.intense)
         assertArgb(0xFF536078, DailyRecordPeriodInactiveText)
         assertEquals(HandBrewColorTokens.soft, HandBrewColorTokens.periodGlassTint)
         assertEquals(HandBrewColorTokens.primary, HandBrewColorTokens.periodGlassGlow)
@@ -39,9 +41,26 @@ class DesignTokensTest {
         assertContrastAtLeast(4.5, SexColorTokens.onPrimary, SexColorTokens.strong)
         assertContrastAtLeast(4.5, DailyRecordText, HandBrewColorTokens.soft)
         assertContrastAtLeast(4.5, DailyRecordText, HandBrewColorTokens.medium)
+        assertContrastAtLeast(4.5, DailyRecordText, HandBrewColorTokens.intense)
         assertContrastAtLeast(4.5, DailyRecordText, SexColorTokens.soft)
         assertContrastAtLeast(4.5, DailyRecordText, SexColorTokens.medium)
+        assertContrastAtLeast(4.5, DailyRecordText, SexColorTokens.intense)
         assertContrastAtLeast(4.5, DailyRecordPeriodInactiveText, Color.White)
+    }
+
+    @Test
+    fun dailyCountColorsAreDistinctAndProgressFromLightToDark() {
+        listOf(HandBrewColorTokens, SexColorTokens).forEach { module ->
+            val countColors = listOf(module.soft, module.medium, module.intense, module.primary)
+
+            assertEquals(4, countColors.distinct().size)
+            countColors.zipWithNext().forEach { (lighter, darker) ->
+                assertTrue(
+                    "Expected $lighter to be lighter than $darker",
+                    relativeLuminance(lighter) > relativeLuminance(darker),
+                )
+            }
+        }
     }
 
     @Test
