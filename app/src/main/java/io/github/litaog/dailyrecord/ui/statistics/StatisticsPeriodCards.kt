@@ -74,7 +74,7 @@ internal fun weekRingIntensity(detail: StatisticsDetail, maxCount: Long): Float 
 /**
  * Single source of truth for ring segment colors. The legend and the ring
  * drawing must resolve colors through this function so the legend can never
- * drift from the chart (e.g. "0 次" must never be shown with the unset color).
+ * drift from the chart (the explicit-zero legend must not use the unset color).
  */
 internal fun weekRingSegmentColor(
     state: WeekRingState,
