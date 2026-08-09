@@ -49,7 +49,10 @@ import kotlin.math.sin
 
 private const val WEEK_SEGMENT_COUNT = 7
 private const val WEEK_SEGMENT_GAP_DEGREES = 11f
-private const val WEEK_SEGMENT_START_DEGREES = -90f
+// Labels use a polar coordinate system where 0° is at the top of the chart.
+// Canvas.drawArc uses 0° at 3 o'clock, so its equivalent is 90° clockwise.
+private const val WEEK_LABEL_START_DEGREES = -90f
+private const val WEEK_CANVAS_ANGLE_OFFSET_DEGREES = -90f
 
 internal enum class WeekRingState {
     Future,
@@ -69,6 +72,16 @@ internal fun weekRingIntensity(detail: StatisticsDetail, maxCount: Long): Float 
     if (weekRingState(detail) != WeekRingState.Positive || maxCount <= 0L) return 0f
     return ((detail.count ?: 0L).toFloat() / maxCount.toFloat()).coerceIn(0f, 1f)
 }
+
+private fun weekSegmentSizeDegrees(): Float = 360f / WEEK_SEGMENT_COUNT
+
+internal fun weekRingLabelAngleDegrees(index: Int): Float =
+    WEEK_LABEL_START_DEGREES +
+        index * weekSegmentSizeDegrees() +
+        weekSegmentSizeDegrees() / 2f
+
+internal fun weekRingCanvasMidpointDegrees(index: Int): Float =
+    weekRingLabelAngleDegrees(index) + WEEK_CANVAS_ANGLE_OFFSET_DEGREES
 
 @Composable
 internal fun WeekDistributionCard(
@@ -115,8 +128,20 @@ private fun WeekRingChart(
             .testTag("week_distribution_chart"),
     ) {
         val centerY = 128.dp
-        val labelSize = 78.dp
-        val radius = minOf(maxWidth * .34f, 96.dp)
+        val labelSize = 72.dp
+        // Keep the labels on the same visual track while leaving a clear gap
+        // between their boxes and the active strokes. The old 96.dp radius
+        // put both elements on the same radius, so labels could sit on or
+        // inside the ring.
+        val labelRadius = minOf(
+            110.dp,
+            maxWidth / 2 - labelSize / 2 - 4.dp,
+        )
+        val radius = minOf(
+            maxWidth * .24f,
+            62.dp,
+            labelRadius - 24.dp,
+        )
         val centerX = maxWidth / 2
 
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -125,8 +150,8 @@ private fun WeekRingChart(
             val segmentSweep = 360f / WEEK_SEGMENT_COUNT - WEEK_SEGMENT_GAP_DEGREES
 
             details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
-                val startAngle = WEEK_SEGMENT_START_DEGREES +
-                    index * 360f / WEEK_SEGMENT_COUNT + WEEK_SEGMENT_GAP_DEGREES / 2f
+                val startAngle = weekRingCanvasMidpointDegrees(index) -
+                    weekSegmentSizeDegrees() / 2f + WEEK_SEGMENT_GAP_DEGREES / 2f
                 val state = weekRingState(detail)
                 val intensity = weekRingIntensity(detail, maxCount)
                 val baseColor = when (state) {
@@ -194,15 +219,9 @@ private fun WeekRingChart(
         }
 
         details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
-            val angle = Math.toRadians(
-                (
-                    WEEK_SEGMENT_START_DEGREES +
-                        index * 360f / WEEK_SEGMENT_COUNT +
-                        360f / WEEK_SEGMENT_COUNT / 2f
-                    ).toDouble(),
-            )
-            val labelX = centerX - labelSize / 2 + radius * sin(angle).toFloat()
-            val labelY = centerY - labelSize / 2 - radius * cos(angle).toFloat()
+            val angle = Math.toRadians(weekRingLabelAngleDegrees(index).toDouble())
+            val labelX = centerX - labelSize / 2 + labelRadius * sin(angle).toFloat()
+            val labelY = centerY - labelSize / 2 - labelRadius * cos(angle).toFloat()
             val labelColor = when (weekRingState(detail)) {
                 WeekRingState.Future -> colors.primary.copy(alpha = .45f)
                 WeekRingState.Unrecorded -> DailyRecordTextMuted

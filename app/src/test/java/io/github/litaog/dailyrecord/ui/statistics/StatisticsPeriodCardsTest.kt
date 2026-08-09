@@ -45,4 +45,15 @@ class StatisticsPeriodCardsTest {
         assertEquals(0f, weekRingIntensity(zero, maxCount = 4L))
         assertEquals(0f, weekRingIntensity(future, maxCount = 4L))
     }
+
+    @Test
+    fun `ring arc and label angles stay aligned for every weekday`() {
+        repeat(7) { index ->
+            assertEquals(
+                weekRingLabelAngleDegrees(index) - 90f,
+                weekRingCanvasMidpointDegrees(index),
+                0.001f,
+            )
+        }
+    }
 }
