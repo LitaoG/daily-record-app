@@ -61,10 +61,12 @@ class CalendarScreenTest {
             .onNodeWithContentDescription("2026年7月18日，未来日期，不可记录")
             .assertExists()
             .assertIsNotEnabled()
-        composeRule.onNodeWithContentDescription("2026年7月13日，手冲 3 次").assertExists()
-        composeRule.onNodeWithContentDescription("2026年7月14日，手冲 2 次").assertExists()
-        composeRule.onNodeWithContentDescription("2026年7月15日，手冲 1 次").assertExists()
-        composeRule.onNodeWithContentDescription("2026年7月12日，手冲 10 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月13日，手冲，3 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月14日，手冲，2 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月15日，手冲，1 次").assertExists()
+        // The 9+ cell must read with the same bucketing as its visual label;
+        // an exact "10 次" description would break the consistency contract.
+        composeRule.onNodeWithContentDescription("2026年7月12日，手冲，9 次以上").assertExists()
         composeRule.onAllNodes(
             hasText("未填") and hasAnyAncestor(hasTestTag("calendar_day_2026-07-01")),
             useUnmergedTree = true,

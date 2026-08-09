@@ -202,7 +202,6 @@ internal object AppCopy {
         const val futureDescription = "未来日期，不可记录"
         const val unsetDescription = "未填写"
         const val zeroDescription = "记录为 0 次"
-        const val recordedDescription = "%s %d 次"
         const val selectedSuffix = "，已选择"
         const val todaySuffix = "，今天"
 
@@ -233,7 +232,9 @@ internal object AppCopy {
                 future -> futureDescription
                 count == null -> unsetDescription
                 count == 0 -> "$moduleLabel，$zeroDescription"
-                else -> recordedDescription.format(moduleLabel, count)
+                // The same count bucketing as the visual cell keeps TalkBack
+                // and screen text consistent (9+ is never read as exact 9).
+                else -> "$moduleLabel，${countDescription(count)}"
             }
             return if (date == today) "$status$todaySuffix" else status
         }
