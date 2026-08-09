@@ -185,6 +185,77 @@ class HandBrewSyncCoordinatorTest {
     }
 
     @Test
+    fun authFailureIsRetryableForTokenRefreshAndPermissionDeniedIsNot() {
+        val unauthenticated = com.google.firebase.firestore.FirebaseFirestoreException(
+            "token expired",
+            com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAUTHENTICATED,
+        )
+        val denied = com.google.firebase.firestore.FirebaseFirestoreException(
+            "permission denied",
+            com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED,
+        )
+        val auth = com.google.firebase.auth.FirebaseAuthException(
+            "token refresh pending",
+            "ERROR_USER_TOKEN_EXPIRED",
+        )
+
+        assertTrue(unauthenticated.isRetryableRemoteObservation())
+        assertTrue(
+            IllegalStateException("listener", unauthenticated)
+                .isRetryableRemoteObservation(),
+        )
+        assertTrue(auth.isRetryableRemoteObservation())
+        assertFalse(denied.isRetryableRemoteObservation())
+    }
+
+    @Test
+    fun realtimeSubscriptionResubscribesAfterUnauthenticatedRecovers() = runBlocking {
+        val recovered = MutableStateFlow(RemoteSnapshot(fromCache = false))
+        val operations = object : AccountSyncOperations {
+            val subscriptions = MutableStateFlow(0)
+
+            override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
+                val attempt = subscriptions.value + 1
+                subscriptions.value = attempt
+                if (attempt == 1) {
+                    throw com.google.firebase.firestore.FirebaseFirestoreException(
+                        "token expired",
+                        com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAUTHENTICATED,
+                    )
+                }
+                emitAll(recovered)
+            }
+
+            override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
+
+            override suspend fun pendingCount(ownerId: String): Int = 0
+
+            override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int = 0
+
+            override suspend fun syncOnce(ownerId: String): SyncResult =
+                SyncResult(uploaded = 0, downloaded = 0, pending = 0)
+        }
+        val manager = AccountSyncManager(
+            ownerId = ownerId,
+            coordinator = operations,
+            productionConfigured = true,
+            networkAvailable = MutableStateFlow(true),
+            remoteRetryDelayMillis = { 0L },
+        )
+
+        val jobs = manager.start(this)
+        try {
+            kotlinx.coroutines.withTimeout(10_000) {
+                operations.subscriptions.first { it >= 2 }
+            }
+            assertEquals(2, operations.subscriptions.value)
+            assertTrue(manager.status.value !is SyncStatus.Failed)
+        } finally {
+            jobs.forEach { it.cancel() }
+        }
+    }
+
+    @Test
     fun clearCreatesPendingTombstoneAndStaleAckCannotHideNewEdit() = runBlocking {
         val database = database()
         val repository = repository(database, firstInstant)
