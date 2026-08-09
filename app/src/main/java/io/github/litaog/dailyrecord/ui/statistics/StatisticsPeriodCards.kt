@@ -71,6 +71,12 @@ internal enum class WeekRingCountBand {
     FourPlus,
 }
 
+internal enum class WeekRingLegendMarkerStyle {
+    Filled,
+    HollowPrimary,
+    HollowNeutral,
+}
+
 internal fun weekRingState(detail: StatisticsDetail): WeekRingState = when {
     detail.future -> WeekRingState.Future
     !detail.recorded -> WeekRingState.Unrecorded
@@ -87,6 +93,16 @@ internal fun weekRingCountBand(detail: StatisticsDetail): WeekRingCountBand? {
         else -> WeekRingCountBand.FourPlus
     }
 }
+
+internal fun weekRingLegendMarkerStyle(state: WeekRingState): WeekRingLegendMarkerStyle = when (state) {
+    WeekRingState.ExplicitZero -> WeekRingLegendMarkerStyle.HollowPrimary
+    WeekRingState.Unrecorded -> WeekRingLegendMarkerStyle.HollowNeutral
+    WeekRingState.Future,
+    WeekRingState.Positive -> WeekRingLegendMarkerStyle.Filled
+}
+
+internal fun weekRingPositiveDayCount(details: List<StatisticsDetail>): Int =
+    details.count { weekRingState(it) == WeekRingState.Positive }
 
 internal fun weekRingColorForBand(
     band: WeekRingCountBand,
@@ -187,7 +203,7 @@ internal fun weekRingSegmentColor(
 ): Color = when (state) {
     WeekRingState.Future -> colors.soft.copy(alpha = .78f)
     WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
-    WeekRingState.ExplicitZero -> colors.primary.copy(alpha = .82f)
+    WeekRingState.ExplicitZero -> colors.primary
     WeekRingState.Positive ->
         colors.primary.copy(alpha = .58f + .38f * intensity.coerceIn(0f, 1f))
 }
@@ -198,7 +214,7 @@ internal fun WeekDistributionCard(
     modifier: Modifier = Modifier,
     colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
-    val recordedDays = details.count { it.recorded && !it.future }
+    val recordedDays = weekRingPositiveDayCount(details)
 
     DistributionSurface(
         title = AppCopy.Statistics.dailyDistribution,
@@ -432,27 +448,43 @@ private fun WeekRingChart(
 @Composable
 private fun WeekRingLegend(colors: RecordModuleColorTokens) {
     val legend = listOf(
-        AppCopy.Statistics.weeklyLegendFourPlus to
-            weekRingColorForBand(WeekRingCountBand.FourPlus, colors),
-        AppCopy.Statistics.weeklyLegendThree to
-            weekRingColorForBand(WeekRingCountBand.Three, colors),
-        AppCopy.Statistics.weeklyLegendTwo to
-            weekRingColorForBand(WeekRingCountBand.Two, colors),
-        AppCopy.Statistics.weeklyLegendOne to
-            weekRingColorForBand(WeekRingCountBand.One, colors),
-        AppCopy.Statistics.weeklyLegendZero to
-            weekRingSegmentColor(WeekRingState.ExplicitZero, 0f, colors),
-        AppCopy.Statistics.weeklyLegendUnrecorded to
-            weekRingSegmentColor(WeekRingState.Unrecorded, 0f, colors),
-        AppCopy.Statistics.weeklyLegendFuture to
-            weekRingSegmentColor(WeekRingState.Future, 0f, colors),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendFourPlus,
+            color = weekRingColorForBand(WeekRingCountBand.FourPlus, colors),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendThree,
+            color = weekRingColorForBand(WeekRingCountBand.Three, colors),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendTwo,
+            color = weekRingColorForBand(WeekRingCountBand.Two, colors),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendOne,
+            color = weekRingColorForBand(WeekRingCountBand.One, colors),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendZero,
+            color = weekRingSegmentColor(WeekRingState.ExplicitZero, 0f, colors),
+            markerStyle = weekRingLegendMarkerStyle(WeekRingState.ExplicitZero),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendUnrecorded,
+            color = weekRingSegmentColor(WeekRingState.Unrecorded, 0f, colors),
+            markerStyle = weekRingLegendMarkerStyle(WeekRingState.Unrecorded),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendFuture,
+            color = weekRingSegmentColor(WeekRingState.Future, 0f, colors),
+        ),
     )
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        legend.forEach { (label, color) ->
+        legend.forEach { item ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -460,22 +492,10 @@ private fun WeekRingLegend(colors: RecordModuleColorTokens) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
-                        .then(
-                            if (label == AppCopy.Statistics.weeklyLegendUnrecorded) {
-                                Modifier
-                                    .background(DailyRecordSurface, CircleShape)
-                                    .border(
-                                        width = 1.dp,
-                                        color = DailyRecordDivider,
-                                        shape = CircleShape,
-                                    )
-                            } else {
-                                Modifier.background(color, CircleShape)
-                            },
-                        ),
+                        .legendMarker(item),
                 )
                 Text(
-                    text = label,
+                    text = item.label,
                     color = DailyRecordTextMuted,
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
                     maxLines = 1,
@@ -483,6 +503,23 @@ private fun WeekRingLegend(colors: RecordModuleColorTokens) {
             }
         }
     }
+}
+
+private data class WeekRingLegendItem(
+    val label: String,
+    val color: Color,
+    val markerStyle: WeekRingLegendMarkerStyle = WeekRingLegendMarkerStyle.Filled,
+)
+
+private fun Modifier.legendMarker(item: WeekRingLegendItem): Modifier = when (item.markerStyle) {
+    WeekRingLegendMarkerStyle.Filled -> background(item.color, CircleShape)
+    WeekRingLegendMarkerStyle.HollowPrimary,
+    WeekRingLegendMarkerStyle.HollowNeutral -> background(DailyRecordSurface, CircleShape)
+        .border(
+            width = 1.5.dp,
+            color = item.color,
+            shape = CircleShape,
+        )
 }
 
 @Composable

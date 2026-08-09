@@ -89,6 +89,38 @@ class StatisticsPeriodCardsTest {
     }
 
     @Test
+    fun `zero and unrecorded legend markers are hollow while future stays filled`() {
+        assertEquals(
+            WeekRingLegendMarkerStyle.HollowPrimary,
+            weekRingLegendMarkerStyle(WeekRingState.ExplicitZero),
+        )
+        assertEquals(
+            WeekRingLegendMarkerStyle.HollowNeutral,
+            weekRingLegendMarkerStyle(WeekRingState.Unrecorded),
+        )
+        assertEquals(
+            WeekRingLegendMarkerStyle.Filled,
+            weekRingLegendMarkerStyle(WeekRingState.Future),
+        )
+        assertEquals(
+            WeekRingLegendMarkerStyle.Filled,
+            weekRingLegendMarkerStyle(WeekRingState.Positive),
+        )
+    }
+
+    @Test
+    fun `weekly recorded day count ignores explicit zero and unfilled days`() {
+        val details = listOf(
+            StatisticsDetail("周一 3日", count = 0L, days = 0, recorded = true),
+            StatisticsDetail("周二 4日", count = 1L, days = 1, recorded = true),
+            StatisticsDetail("周三 5日", count = null, days = null, recorded = false),
+            StatisticsDetail("周四 6日", count = null, days = null, future = true, recorded = false),
+        )
+
+        assertEquals(1, weekRingPositiveDayCount(details))
+    }
+
+    @Test
     fun `weekday labels and their arcs share the same radial midpoint`() {
         repeat(7) { index ->
             assertEquals(index * 360f / 7f, weekRingLabelAngleDegrees(index), 0.001f)
@@ -220,7 +252,7 @@ class StatisticsPeriodCardsTest {
             // Unrecorded stays a neutral divider tone for both palettes.
             assertEquals(DailyRecordDivider.copy(alpha = .92f), unrecorded)
             // Zero resolves to the module primary, so both modules keep their identity.
-            assertEquals(colors.primary.copy(alpha = .82f), zero)
+            assertEquals(colors.primary, zero)
         }
     }
 }
