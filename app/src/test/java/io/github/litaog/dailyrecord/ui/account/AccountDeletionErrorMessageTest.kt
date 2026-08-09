@@ -1,5 +1,6 @@
 package io.github.litaog.dailyrecord.ui.account
 
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
 import java.io.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -34,6 +35,16 @@ class AccountDeletionErrorMessageTest {
         assertEquals(
             "网络中断，删除未完成。本机记录仍保留，请打开 VPN（梯子）后重试。",
             accountDeletionErrorMessage(IOException("offline")),
+        )
+    }
+
+    @Test
+    fun localCleanupPendingExplainsThatAccountIsAlreadyDeleted() {
+        assertEquals(
+            "账号和云端数据已删除，但本机记录清理未完成，将在下次启动时自动完成。",
+            accountDeletionErrorMessage(
+                AccountDeletionLocalCleanupPendingException("owner", IOException("db")),
+            ),
         )
     }
 }

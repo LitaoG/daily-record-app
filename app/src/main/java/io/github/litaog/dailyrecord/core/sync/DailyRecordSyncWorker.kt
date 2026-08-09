@@ -12,6 +12,10 @@ class DailyRecordSyncWorker(
     workerParams: WorkerParameters,
 ) : CoroutineWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
+        // Account deletion owns the user's cloud paths. Any worker that starts
+        // after deletion began must exit before any remote write; the deletion
+        // flow re-schedules pending work after it finishes.
+        if (DailyRecordSyncScheduler.isDeletionBlocked) return Result.success()
         val services = FirebaseServices.create(applicationContext)
         if (!services.productionConfigured) return Result.failure()
         val ownerId = services.currentUserId() ?: return Result.success()

@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.common.AppCopy
@@ -248,6 +249,9 @@ private fun deletionFieldColors() = OutlinedTextFieldDefaults.colors(
 )
 
 internal fun accountDeletionErrorMessage(error: Throwable): String {
+    if (error is AccountDeletionLocalCleanupPendingException) {
+        return AppCopy.Deletion.localCleanupPending
+    }
     val code = (error as? com.google.firebase.auth.FirebaseAuthException)?.errorCode.orEmpty()
     if (code.isNotEmpty()) return accountDeletionErrorMessageForCode(code)
     return when (error.syncFailureKind()) {

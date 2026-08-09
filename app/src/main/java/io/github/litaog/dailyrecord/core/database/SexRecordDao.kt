@@ -45,10 +45,18 @@ internal interface SexRecordDao {
         SET is_deleted = 1,
             updated_at = :updatedAt,
             sync_state = 'PENDING'
-        WHERE id = :id AND owner_id = :ownerId AND is_deleted = 0
+        WHERE id = :id
+          AND owner_id = :ownerId
+          AND is_deleted = 0
+          AND updated_at = :expectedUpdatedAt
         """,
     )
-    suspend fun markDeleted(ownerId: String, id: String, updatedAt: Instant): Int
+    suspend fun markDeleted(
+        ownerId: String,
+        id: String,
+        expectedUpdatedAt: Instant,
+        updatedAt: Instant,
+    ): Int
 
     @Query(
         "SELECT * FROM sex_records " +

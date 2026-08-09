@@ -175,6 +175,7 @@ internal object AppCopy {
         const val permissionError = "账号暂时无权删除；本机记录仍保留，请重新登录后重试。"
         const val serviceError = "云服务暂时不可用；本机记录仍保留，请稍后重试。"
         const val unknownError = "删除未完成，本机记录仍保留。部分云端记录可能已删除，请重试。"
+        const val localCleanupPending = "账号和云端数据已删除，但本机记录清理未完成，将在下次启动时自动完成。"
         const val wrongPassword = "密码不正确，请重新输入"
         const val tooManyAttempts = "尝试次数过多，请稍后再试"
 
