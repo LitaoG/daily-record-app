@@ -8,9 +8,15 @@ import kotlinx.coroutines.withTimeout
 
 internal const val INTERACTIVE_CLOUD_TIMEOUT_MILLIS = 5_000L
 
+/** Background reconciliation may wait longer; it is not a user-facing action. */
+internal const val BACKGROUND_CLOUD_TIMEOUT_MILLIS = 30_000L
+
 internal class InteractiveCloudTimeoutException(
+    val timeoutMillis: Long = INTERACTIVE_CLOUD_TIMEOUT_MILLIS,
     cause: Throwable? = null,
-) : IOException("Interactive cloud operation timed out", cause)
+) : IOException("Cloud operation timed out after $timeoutMillis ms", cause) {
+    constructor(cause: Throwable?) : this(INTERACTIVE_CLOUD_TIMEOUT_MILLIS, cause)
+}
 
 internal suspend fun <T> runInteractiveCloudOperation(
     timeoutMillis: Long = INTERACTIVE_CLOUD_TIMEOUT_MILLIS,

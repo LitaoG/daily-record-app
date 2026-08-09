@@ -83,6 +83,8 @@ data class StatisticsDetail(
     val days: Int?,
     val future: Boolean = false,
     val recorded: Boolean = true,
+    /** Position in the source calendar range; null keeps legacy callers safe. */
+    val calendarIndex: Int? = null,
 )
 
 data class StatisticsUiModel(
@@ -148,6 +150,7 @@ private fun buildWeek(
                 days = null,
                 future = true,
                 recorded = false,
+                calendarIndex = offset.toInt(),
             )
         } else {
             val record = rangeRecords.firstOrNull { it.localDate == date }
@@ -156,6 +159,7 @@ private fun buildWeek(
                 count = record?.count?.toLong() ?: 0L,
                 days = if ((record?.count ?: 0) > 0) 1 else 0,
                 recorded = record != null,
+                calendarIndex = offset.toInt(),
             )
         }
     }

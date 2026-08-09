@@ -42,6 +42,25 @@ class StatisticsPeriodCardsTest {
     }
 
     @Test
+    fun `clipped week detail keeps its calendar segment index`() {
+        val clippedThursday = StatisticsDetail(
+            label = "周四 1日",
+            count = 1L,
+            days = 1,
+            calendarIndex = 3,
+        )
+
+        assertEquals(3, weekRingSegmentIndex(clippedThursday, fallbackIndex = 0))
+        assertEquals(
+            0,
+            weekRingSegmentIndex(
+                clippedThursday.copy(calendarIndex = null),
+                fallbackIndex = 0,
+            ),
+        )
+    }
+
+    @Test
     fun `non-positive states never receive an active ring intensity`() {
         val zero = StatisticsDetail("周一 20日", count = 0L, days = 0, recorded = true)
         val future = StatisticsDetail("周四 23日", count = null, days = null, future = true, recorded = false)

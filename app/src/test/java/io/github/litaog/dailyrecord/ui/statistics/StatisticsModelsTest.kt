@@ -119,6 +119,9 @@ class StatisticsModelsTest {
         assertEquals(4, model.details.size)
         assertEquals(3L, model.summary.totalCount)
         assertFalse(model.details.any { it.future })
+        // The visible list is clipped, but each item retains its Monday-based
+        // source index so the ring chart keeps Thursday on the fourth segment.
+        assertEquals(listOf(3, 4, 5, 6), model.details.map { it.calendarIndex })
         assertTrue(model.details[0].recorded)
         assertTrue(model.details[1].recorded)
     }

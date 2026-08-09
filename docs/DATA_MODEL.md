@@ -46,7 +46,7 @@ moduleCount > 0 -> OCCURRED（已发生）
 ## v1 → v2 迁移
 
 1. 创建 `hand_brew_records`。
-2. 从旧记录中筛选旧活动名“手冲”或旧 `flight` 图标标识。
+2. 从旧记录中只筛选冻结的旧 `flight` 机器图标标识，不依赖用户可见活动名称或本地化文案。
 3. 同日记录按次数求和，保留最早创建时间与最后更新时间。
 4. 将旧表改名为 `legacy_activities_v1` 和 `legacy_daily_records_v1`。
 5. 自动化测试验证手冲数据、schema 版本和 legacy 表存在。

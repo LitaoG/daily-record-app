@@ -45,6 +45,7 @@ import io.github.litaog.dailyrecord.ui.diagnostics.createDiagnosticReport
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
@@ -66,11 +67,19 @@ internal fun DailyRecordRoot(
             handBrew = RoomHandBrewSyncStore(database),
             sex = RoomSexSyncStore(database),
         )
-        pendingCleanupPreference.ownerIds.forEach { pendingOwnerId ->
+        val durablePendingOwners = DailyRecordSyncScheduler.pendingCleanupOwnerIds(context)
+        (pendingCleanupPreference.ownerIds + durablePendingOwners).forEach { pendingOwnerId ->
             runCatchingPreservingCancellation {
                 cleanupStore.deleteOwnerCache(pendingOwnerId)
             }.onSuccess {
                 pendingCleanupPreference.remove(pendingOwnerId)
+                // Keep startup resilient if the durable journal cannot be
+                // committed; the next launch will retry from the marker.
+                runCatching {
+                    DailyRecordSyncScheduler.completeDeletionCleanup(context, pendingOwnerId)
+                }.onFailure {
+                    pendingCleanupPreference.add(pendingOwnerId)
+                }
             }
         }
     }
@@ -208,26 +217,28 @@ private fun SignedInRoot(
         LoadingRoot()
         return
     }
-    val syncManager = remember(ownerId, coordinator, services.productionConfigured) {
+    val syncManager = remember(ownerId, coordinator, services.productionConfigured, context) {
         AccountSyncManager(
             ownerId,
             coordinator,
             services.productionConfigured,
             networkMonitor.availability,
+            cloudWriteGate = DailyRecordSyncScheduler.cloudWriteGate(context),
+            sessionActive = { services.currentUserId() == ownerId },
         )
     }
     val handBrewRepository = remember(ownerId, database) {
         RoomHandBrewRecordRepository(
             database = database,
             ownerId = ownerId,
-            onLocalChange = { DailyRecordSyncScheduler.schedule(context) },
+            onLocalChange = { DailyRecordSyncScheduler.schedule(context, ownerId) },
         )
     }
     val sexRepository = remember(ownerId, database) {
         RoomSexRecordRepository(
             database = database,
             ownerId = ownerId,
-            onLocalChange = { DailyRecordSyncScheduler.schedule(context) },
+            onLocalChange = { DailyRecordSyncScheduler.schedule(context, ownerId) },
         )
     }
     val deletionCoordinator = remember(
@@ -267,7 +278,7 @@ private fun SignedInRoot(
         }
     }
     LaunchedEffect(ownerId) {
-        DailyRecordSyncScheduler.schedule(context)
+        DailyRecordSyncScheduler.schedule(context, ownerId)
     }
 
     DailyRecordApp(
@@ -281,11 +292,20 @@ private fun SignedInRoot(
         onDeleteAccount = { password, localData ->
             val completion = CompletableDeferred<Result<Unit>>()
             accountDeletionScope.launch {
-                deletionInProgress = true
-                DailyRecordSyncScheduler.beginDeletionBlock()
-                activeSyncJobs.forEach { it.cancelAndJoin() }
-                val result = try {
-                    runCatchingPreservingCancellation {
+                var began = false
+                var outcome = io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.Interrupted
+                var result: Result<Unit>? = null
+                var cancellation: CancellationException? = null
+                var barrierFailure: Exception? = null
+                try {
+                    // Persist the barrier before cancelling any producer. This
+                    // closes the schedule-vs-delete race and survives process death.
+                    DailyRecordSyncScheduler.beginDeletionBlock(context, ownerId)
+                    began = true
+                    deletionInProgress = true
+                    activeSyncJobs.forEach { it.cancelAndJoin() }
+                    DailyRecordSyncScheduler.awaitDeletionWriters()
+                    val deletionResult = runCatchingPreservingCancellation {
                         DailyRecordSyncScheduler.cancelAndAwait(context)
                         deletionCoordinator.deleteAccount(
                             ownerId = ownerId,
@@ -293,32 +313,60 @@ private fun SignedInRoot(
                             localData = localData,
                         )
                     }
+                    val cleanupPending = deletionResult.exceptionOrNull() is
+                        AccountDeletionLocalCleanupPendingException
+                    outcome = when {
+                        cleanupPending -> io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.CleanupPending
+                        deletionResult.isSuccess -> io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.Completed
+                        else -> io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure
+                    }
+                    if (cleanupPending) {
+                        // Keep both the legacy marker and the durable journal;
+                        // either one can recover local cleanup after a restart.
+                        pendingCleanupPreference.add(ownerId)
+                    }
+                    if ((deletionResult.isSuccess || cleanupPending) &&
+                        localData == LocalDataAfterAccountDeletion.Keep
+                    ) {
+                        onAccountDeletedWithLocalRecords()
+                    }
+                    result = if (cleanupPending) Result.success(Unit) else deletionResult
+                } catch (error: CancellationException) {
+                    // Do not clear an interrupted journal: a future sync must
+                    // stay blocked until the user retries or finishes deletion.
+                    cancellation = error
+                } catch (error: Exception) {
+                    outcome = io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure
+                    result = Result.failure(error)
                 } finally {
-                    // The deletion block must always be lifted, including when
-                    // the calling scope is cancelled mid-deletion.
-                    DailyRecordSyncScheduler.endDeletionBlock()
+                    if (began) {
+                        try {
+                            DailyRecordSyncScheduler.endDeletionBlock(context, ownerId, outcome)
+                        } catch (error: Exception) {
+                            // Do not resume scheduling when the durable barrier
+                            // could not be committed. The scheduler keeps a
+                            // conservative in-process block until restart.
+                            barrierFailure = error
+                        }
+                    }
+                    if (barrierFailure != null) {
+                        deletionInProgress = false
+                        result = Result.failure(barrierFailure!!)
+                    } else if (
+                        outcome == io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure ||
+                        outcome == io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.Interrupted
+                    ) {
+                        deletionInProgress = false
+                        if (outcome == io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure) {
+                            // A failed deletion must not leave pending local
+                            // records stuck: re-enable the normal background
+                            // sync path.
+                            DailyRecordSyncScheduler.schedule(context, ownerId)
+                        }
+                    }
+                    cancellation?.let(completion::completeExceptionally)
+                        ?: completion.complete(requireNotNull(result))
                 }
-                val cleanupPending = result.exceptionOrNull() is
-                    AccountDeletionLocalCleanupPendingException
-                if (cleanupPending) {
-                    // The account and cloud data are already deleted; keep the
-                    // local cache cleanup recoverable on a later startup.
-                    pendingCleanupPreference.add(ownerId)
-                }
-                if ((result.isSuccess || cleanupPending) &&
-                    localData == LocalDataAfterAccountDeletion.Keep
-                ) {
-                    onAccountDeletedWithLocalRecords()
-                }
-                if (result.isFailure && !cleanupPending) {
-                    deletionInProgress = false
-                    // A failed deletion must not leave pending local records
-                    // stuck: re-enable the normal background sync path.
-                    DailyRecordSyncScheduler.schedule(context)
-                }
-                completion.complete(
-                    if (cleanupPending) Result.success(Unit) else result,
-                )
             }
             completion.await()
         },

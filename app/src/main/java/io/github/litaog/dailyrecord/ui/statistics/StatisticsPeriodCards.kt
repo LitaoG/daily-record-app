@@ -72,9 +72,18 @@ internal fun weekRingIntensity(detail: StatisticsDetail, maxCount: Long): Float 
 }
 
 /**
+ * Keeps a clipped first week aligned with its real weekday angle. Older
+ * callers that construct details without a source index retain the list
+ * position as a safe fallback.
+ */
+internal fun weekRingSegmentIndex(detail: StatisticsDetail, fallbackIndex: Int): Int =
+    detail.calendarIndex ?: fallbackIndex
+
+/**
  * Single source of truth for ring segment colors. The legend and the ring
  * drawing must resolve colors through this function so the legend can never
- * drift from the chart (e.g. "0 次" must never be shown with the unset color).
+ * drift from the chart (for example, the explicit-zero state must never be
+ * shown with the unrecorded color).
  */
 internal fun weekRingSegmentColor(
     state: WeekRingState,
@@ -143,8 +152,9 @@ private fun WeekRingChart(
             val segmentSweep = 360f / WEEK_SEGMENT_COUNT - WEEK_SEGMENT_GAP_DEGREES
 
             details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
+                val segmentIndex = weekRingSegmentIndex(detail, index)
                 val startAngle = WEEK_SEGMENT_START_DEGREES +
-                    index * 360f / WEEK_SEGMENT_COUNT + WEEK_SEGMENT_GAP_DEGREES / 2f
+                    segmentIndex * 360f / WEEK_SEGMENT_COUNT + WEEK_SEGMENT_GAP_DEGREES / 2f
                 val state = weekRingState(detail)
                 val intensity = weekRingIntensity(detail, maxCount)
                 val baseColor = when (state) {
@@ -215,10 +225,11 @@ private fun WeekRingChart(
         }
 
         details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
+            val segmentIndex = weekRingSegmentIndex(detail, index)
             val angle = Math.toRadians(
                 (
                     WEEK_SEGMENT_START_DEGREES +
-                        index * 360f / WEEK_SEGMENT_COUNT +
+                        segmentIndex * 360f / WEEK_SEGMENT_COUNT +
                         360f / WEEK_SEGMENT_COUNT / 2f
                     ).toDouble(),
             )

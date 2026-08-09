@@ -126,7 +126,8 @@ internal object AppCopy {
         const val unknownFailureGuidance = "记录仍在本机，请稍后再试。"
         const val syncDialogMessage = "请检查网络或 VPN（梯子），然后重试。"
         const val dataFormatFailure = "部分云端记录无法读取，其余记录已同步。"
-        const val timeoutFailure = "等待云服务超过 5 秒，已停止同步；记录仍在本机。"
+        fun timeoutFailure(timeoutMillis: Long): String =
+            "等待云服务超过 ${timeoutMillis / 1_000L} 秒，已停止同步；记录仍在本机。"
         const val networkFailure = "网络连接异常，记录仍在本机。"
         const val authFailure = "登录状态已失效，记录仍在本机。"
         const val permissionFailure = "账号暂时无法访问云端，记录仍在本机。"

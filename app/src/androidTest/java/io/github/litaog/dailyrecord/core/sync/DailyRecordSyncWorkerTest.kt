@@ -19,6 +19,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class DailyRecordSyncWorkerTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
+    private val persistentOwner = "persistent-deletion-owner-test"
 
     @Before
     fun setUp() {
@@ -28,6 +29,7 @@ class DailyRecordSyncWorkerTest {
     @After
     fun tearDown() {
         DailyRecordSyncScheduler.endDeletionBlock()
+        DailyRecordSyncScheduler.completeDeletionCleanup(context, persistentOwner)
     }
 
     @Test
@@ -76,5 +78,52 @@ class DailyRecordSyncWorkerTest {
         ).get()
         assertTrue(workInfos.isNotEmpty())
         assertFalse(DailyRecordSyncScheduler.isDeletionBlocked)
+    }
+
+    @Test
+    fun persistentDeletionMarkerBlocksOnlyTheAccountBeingDeleted() = runBlocking {
+        DailyRecordSyncScheduler.beginDeletionBlock(context, persistentOwner)
+
+        assertTrue(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
+        assertFalse(
+            DailyRecordSyncScheduler.isDeletionBlocked(
+                context,
+                ownerId = "different-account",
+            ),
+        )
+
+        DailyRecordSyncScheduler.endDeletionBlock(
+            context,
+            persistentOwner,
+            AccountDeletionOutcome.CleanupPending,
+        )
+        assertTrue(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
+
+        DailyRecordSyncScheduler.completeDeletionCleanup(context, persistentOwner)
+        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
+    }
+
+    @Test
+    fun interruptedDeletionKeepsDurableMarkerButReleasesProcessLock() = runBlocking {
+        DailyRecordSyncScheduler.beginDeletionBlock(context, persistentOwner)
+
+        DailyRecordSyncScheduler.endDeletionBlock(
+            context,
+            persistentOwner,
+            AccountDeletionOutcome.Interrupted,
+        )
+
+        assertTrue(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
+        assertFalse(DailyRecordSyncScheduler.isLegacyDeletionBlocked)
+
+        // A retry in the same process must be possible; the durable marker is
+        // replaced rather than treated as a second concurrent deletion.
+        DailyRecordSyncScheduler.beginDeletionBlock(context, persistentOwner)
+        DailyRecordSyncScheduler.endDeletionBlock(
+            context,
+            persistentOwner,
+            AccountDeletionOutcome.Completed,
+        )
+        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
     }
 }

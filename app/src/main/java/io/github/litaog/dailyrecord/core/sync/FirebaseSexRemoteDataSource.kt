@@ -55,9 +55,9 @@ internal class FirebaseSexRemoteDataSource(
             if (currentRemote != null && local.remoteRevision != currentRemote.revision) {
                 return@runTransaction currentRemote
             }
-            require(currentRemote != null || local.remoteRevision == 0L) {
-                "Cloud record disappeared after local revision ${local.remoteRevision}"
-            }
+            // Recreate a missing document from a retained local pending edit.
+            // Ordinary record clearing writes a tombstone, so the optimistic
+            // revision check above still protects normal concurrent edits.
             val revision = (current.getLong(FIELD_REVISION) ?: 0L) + 1L
             val stableId = current.getString(FIELD_ID) ?: local.id
             val stableCreatedAt = current.getLong(FIELD_CREATED_AT) ?: local.createdAt.toEpochMilli()
