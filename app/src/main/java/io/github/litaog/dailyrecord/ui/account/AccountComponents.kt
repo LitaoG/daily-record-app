@@ -48,13 +48,13 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordWarning
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 
 internal const val VPN_SYNC_DIALOG_MESSAGE =
@@ -301,9 +301,15 @@ internal fun AccountDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 18.dp)
-                    .dailyRecordGlass(
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                        level = DailyRecordGlassLevel.Muted,
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                    .background(
+                        DailyRecordSurfaceMuted,
+                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    )
+                    .border(
+                        1.dp,
+                        DailyRecordDivider,
+                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                     )
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),

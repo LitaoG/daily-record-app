@@ -245,6 +245,7 @@ internal object AppCopy {
         val weekdays = Calendar.weekdays
         const val title = "快速跳转"
         const val subtitle = "直接选择年份和日期"
+        const val dateWheelSubtitle = "选择日期"
         const val monthSubtitle = "直接选择年份和月份"
         const val yearSubtitle = "直接选择年份"
         const val jumpToDate = "跳转到此日"
@@ -256,6 +257,7 @@ internal object AppCopy {
         const val selectYear = "选择年份"
         const val selectMonth = "选择月份"
         const val yearScrollHint = "上下滑动选择年份"
+        const val dateWheelHint = "上下滑动调整日期"
         private val monthNames = listOf(
             "一月", "二月", "三月", "四月", "五月", "六月",
             "七月", "八月", "九月", "十月", "十一月", "十二月",

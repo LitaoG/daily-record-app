@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -33,13 +33,12 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordAccentBrush
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 
 /** Branded confirmation surface used instead of a library-default confirmation dialog. */
 @Composable
@@ -64,14 +63,10 @@ fun DailyRecordConfirmationDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 18.dp)
-                .dailyRecordGlass(
-                    shape = RoundedCornerShape(16.dp),
-                    level = DailyRecordGlassLevel.Muted,
-                ),
+                .padding(top = 18.dp),
             shape = RoundedCornerShape(16.dp),
-            color = androidx.compose.ui.graphics.Color.Transparent,
-            border = null,
+            color = DailyRecordSurfaceMuted,
+            border = BorderStroke(1.dp, DailyRecordDivider),
         ) {
             Text(
                 text = message,

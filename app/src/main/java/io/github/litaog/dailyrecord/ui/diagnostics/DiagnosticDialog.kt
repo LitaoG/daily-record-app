@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -37,8 +38,8 @@ import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 
 @Composable
 internal fun DiagnosticDialog(
@@ -68,10 +69,8 @@ internal fun DiagnosticDialog(
                     .heightIn(max = 260.dp)
                     .verticalScroll(rememberScrollState())
                     .padding(top = 18.dp)
-                    .dailyRecordGlass(
-                        shape = RoundedCornerShape(14.dp),
-                        level = DailyRecordGlassLevel.Muted,
-                    )
+                    .background(DailyRecordSurfaceMuted, RoundedCornerShape(14.dp))
+                    .border(BorderStroke(1.dp, DailyRecordDivider), RoundedCornerShape(14.dp))
                     .padding(14.dp)
                     .testTag("diagnostic_report"),
             )
