@@ -17,11 +17,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -45,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -96,6 +100,7 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -285,10 +290,12 @@ internal fun DailyCountRecordScreen(
             }
         },
     ) { contentPadding ->
+        val recordScrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .verticalScroll(recordScrollState)
                 .padding(contentPadding)
                 .padding(
                     horizontal = DailyRecordSpacing.ScreenHorizontal,
@@ -859,6 +866,9 @@ private fun FeelingEditor(
     accent: Color,
     onValueChange: (String) -> Unit,
 ) {
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
     Column(modifier = Modifier.fillMaxWidth()) {
         BasicTextField(
             value = value,
@@ -866,6 +876,17 @@ private fun FeelingEditor(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 76.dp)
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) {
+                        coroutineScope.launch {
+                            // Wait for the IME inset to settle before asking the scroll
+                            // container to reveal the field.
+                            delay(300)
+                            bringIntoViewRequester.bringIntoView()
+                        }
+                    }
+                }
                 .clip(DailyRecordShapes.Control)
                 .background(DailyRecordSurface)
                 .border(DailyRecordBorders.Standard, accent.copy(alpha = .65f), DailyRecordShapes.Control)

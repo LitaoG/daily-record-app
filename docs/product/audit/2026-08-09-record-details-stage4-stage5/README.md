@@ -4,13 +4,13 @@
 
 本次审计只收口 Issue #105 的 Stage 4（无障碍、窄屏、字体放大、恢复与跨设备）和 Stage 5（同视口运行验证、候选 APK 与发布前证据）。不改动 `main`，不重新设计页面，也不把时间/感受字段加入统计口径。
 
-当前实现分支：`agent/issue-105-stage4-5`；交付目标：合并到 `integration/review-candidate`，PR #119 保持 Draft，等待用户真机验收后再决定是否进入 `main`。
+当前实现分支：`integration/review-candidate`；PR #119 保持 Draft，等待用户真机验收后再决定是否进入 `main`。
 
 ## 本轮实现
 
 | 区域 | 文件 | 变化 |
 | --- | --- | --- |
-| 记录页布局 | `app/src/main/java/io/github/litaog/dailyrecord/ui/record/RecordScreen.kt` | 记录详情行根据可用宽度（小于 340dp）或字体缩放（≥1.5）改为纵向重排；宽屏仍保持时间字段和“写感受”同一行。所有时间、感受操作补充发生次数上下文、测试标签和触摸语义。 |
+| 记录页布局 | `app/src/main/java/io/github/litaog/dailyrecord/ui/record/RecordScreen.kt` | 记录详情行根据可用宽度（小于 340dp）或字体缩放（≥1.5）改为纵向重排；宽屏仍保持时间字段和“写感受”同一行。所有时间、感受操作补充发生次数上下文、测试标签和触摸语义；感受输入获得焦点后等待 IME inset 稳定并自动滚入可见区域，键盘不再遮住编辑框。 |
 | 文案与 TalkBack | `app/src/main/java/io/github/litaog/dailyrecord/core/common/AppCopy.kt` | 集中生成“第 N 次，开始/结束/编辑感受”等描述，避免在组件内散落中文。 |
 | Compose 验收 | `app/src/androidTest/java/io/github/litaog/dailyrecord/ui/record/RecordScreenTest.kt` | 覆盖 0 次隐藏入口、展开后逐次语义、260dp 窄屏重排和 200% 字体。 |
 | 进程恢复 | `app/src/test/java/io/github/litaog/dailyrecord/ui/record/RecordDetailsDraftTest.kt` | 验证 `Saver` 可恢复展开状态、时间和感受草稿。 |
@@ -93,3 +93,9 @@ HandBrewSyncCoordinatorTest connected            18/18 PASS
 - PR #119 只合并到 `integration/review-candidate`，保持 Draft；`main`、Release 和私有恢复仓库均不在本轮自动推进范围内。
 - Issue #105 的“用户验收/发布收口”复选框仍保持未勾选。用户应重点验证：正常字号与 200% 字体、窄屏、TalkBack、返回/旋转/进程恢复、手冲与做爱切换、0/1/2/9+ 次、未填写详情仍可保存，以及跨设备登录后的详情恢复。
 - 若真机发现问题，按一个可复现问题一个 Issue 记录；不要以截图主观差异为理由继续无目标重构。
+
+## 最后一次输入可见性复核
+
+在 API 34 `emulator-5554`、1080×2280 模拟器上，安装当前候选 APK 后按“日期 → +1 → 记录时间和感受 → 写感受”，键盘弹起后输入框自动滚到键盘上方并保持可见。运行时 UI 树中编辑框为 `[198,1293][1003,1458]`，IME 顶部约为 `1304`；截图证据：`build/tmp/stage5/bridge-keyboard-delay3.png`（SHA-256 `A430970977C0A81C23459BAC49A82A7747FF031403EB2540D7208AF29E7C571C`）。保存按钮仍由 `Scaffold` 固定在底部，未与编辑区重叠。
+
+本轮候选 APK SHA-256 已更新为 `B1BBA0A81D427AC4D28B6F1EFB3429E308007AAC63C34A688DB10900278E98BC`。
