@@ -19,8 +19,10 @@ class DesignTokensTest {
         assertArgb(0xFFE0D8D0, DailyRecordDivider)
         assertArgb(0xFF8A5AA7, HandBrewColorTokens.primary)
         assertArgb(0xFF693D83, HandBrewColorTokens.strong)
+        assertEquals(DailyRecordSurfaceMuted, HandBrewColorTokens.unset)
         assertArgb(0xFFAD485C, SexColorTokens.primary)
         assertArgb(0xFF823447, SexColorTokens.strong)
+        assertArgb(0xFFF8EFF1, SexColorTokens.unset)
         assertArgb(0xFF536078, DailyRecordPeriodInactiveText)
         assertEquals(HandBrewColorTokens.soft, HandBrewColorTokens.periodGlassTint)
         assertEquals(HandBrewColorTokens.primary, HandBrewColorTokens.periodGlassGlow)
@@ -39,9 +41,21 @@ class DesignTokensTest {
         assertContrastAtLeast(4.5, SexColorTokens.onPrimary, SexColorTokens.strong)
         assertContrastAtLeast(4.5, DailyRecordText, HandBrewColorTokens.soft)
         assertContrastAtLeast(4.5, DailyRecordText, HandBrewColorTokens.medium)
+        assertContrastAtLeast(4.5, DailyRecordTextSecondary, HandBrewColorTokens.unset)
         assertContrastAtLeast(4.5, DailyRecordText, SexColorTokens.soft)
         assertContrastAtLeast(4.5, DailyRecordText, SexColorTokens.medium)
+        assertContrastAtLeast(4.5, DailyRecordTextSecondary, SexColorTokens.unset)
         assertContrastAtLeast(4.5, DailyRecordPeriodInactiveText, Color.White)
+    }
+
+    @Test
+    fun unsetColorsStayModuleSpecific() {
+        val handBrewUnset = HandBrewColorTokens.colorsFor(RecordVisualState.Unset)
+        val sexUnset = SexColorTokens.colorsFor(RecordVisualState.Unset)
+
+        assertEquals(HandBrewColorTokens.unset, handBrewUnset.background)
+        assertEquals(SexColorTokens.unset, sexUnset.background)
+        assertNotEquals(handBrewUnset.background, sexUnset.background)
     }
 
     @Test

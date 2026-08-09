@@ -13,6 +13,7 @@
 - [已确认的 UI v2 设计基线与三张高保真图](design/quiet-private-journal-v2/README.md)
 - [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
 - [明亮渐变玻璃主题 Goal 与当前契约](BRIGHT_GLASS_THEME.md)
+- [设置中心 Goal](SETTINGS_HUB_GOAL.md)
 - [2026-08-01 Stage 4 月度热力图与年度月份分析](audit/2026-08-01-ui-v2-stage4/README.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](MONTH_STATISTICS_REDESIGN.md)
 - [2026-08-02 统计与日历边界修复](audit/2026-08-02-boundary-fixes/README.md)

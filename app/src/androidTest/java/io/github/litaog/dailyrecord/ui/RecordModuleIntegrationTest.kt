@@ -23,6 +23,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
@@ -65,6 +66,27 @@ class RecordModuleIntegrationTest {
 
         composeRule.onNodeWithText("本月 0 次 · 0 天有记录").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("选择年份和日期，当前2026年6月").assertIsDisplayed()
+    }
+
+    @Test
+    fun settingsModuleChoiceUpdatesTheCurrentAndStoredModule() {
+        setDualModuleContent()
+
+        composeRule.onNodeWithContentDescription(AppCopy.Settings.open).performClick()
+        composeRule.onNodeWithTag("settings_screen").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
+        composeRule.onNodeWithContentDescription("做爱记录，已选择").assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            assertEquals(
+                RecordModule.Sex,
+                SelectedRecordModulePreference(context).selectedModule,
+            )
+        }
+
+        composeRule.onNodeWithContentDescription(AppCopy.Settings.back).performClick()
+        composeRule.onNodeWithText("本月 1 次 · 1 天有记录").assertIsDisplayed()
     }
 
     @Test

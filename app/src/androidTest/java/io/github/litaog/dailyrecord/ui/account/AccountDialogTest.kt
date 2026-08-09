@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -31,14 +32,12 @@ class AccountDialogTest {
     fun allSyncStatesRemainReadableAndActionable() {
         var status by mutableStateOf<SyncStatus>(SyncStatus.Offline)
         var signOutRequested = false
-        var diagnosticsRequested = false
         composeRule.setContent {
             DailyRecordTheme {
                 AccountDialog(
                     email = "demo@example.com",
                     status = status,
                     onSyncNow = {},
-                    onOpenDiagnostics = { diagnosticsRequested = true },
                     onDeleteAccount = {},
                     onSignOut = { signOutRequested = true },
                     onDismiss = {},
@@ -47,8 +46,7 @@ class AccountDialogTest {
         }
 
         composeRule.onNodeWithText("当前离线，记录已保存在本机").assertIsDisplayed()
-        composeRule.onNodeWithText("查看诊断信息").performClick()
-        composeRule.runOnIdle { assertTrue(diagnosticsRequested) }
+        composeRule.onAllNodesWithText("查看诊断信息").assertCountEquals(0)
         composeRule.onNodeWithText("删除账号与云端数据").assertIsDisplayed()
 
         composeRule.runOnIdle { status = SyncStatus.Syncing }
@@ -94,7 +92,6 @@ class AccountDialogTest {
                             kind = SyncFailureKind.Network,
                         ),
                         onSyncNow = {},
-                        onOpenDiagnostics = {},
                         onDeleteAccount = {},
                         onSignOut = {},
                         onDismiss = {},

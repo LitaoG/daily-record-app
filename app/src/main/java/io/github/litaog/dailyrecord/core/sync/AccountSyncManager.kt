@@ -38,9 +38,7 @@ internal class AccountSyncManager(
     private val mutableStatus = MutableStateFlow<SyncStatus>(
         if (productionConfigured) SyncStatus.Syncing else SyncStatus.NotConfigured,
     )
-    private val mutableDiagnostics = MutableStateFlow(SyncDiagnostics())
     val status: StateFlow<SyncStatus> = mutableStatus
-    val diagnostics: StateFlow<SyncDiagnostics> = mutableDiagnostics
 
     fun start(scope: CoroutineScope): List<Job> {
         if (!productionConfigured) return emptyList()
@@ -81,7 +79,6 @@ internal class AccountSyncManager(
         }
         val pendingJob = scope.launch {
             coordinator.observePendingCount(ownerId).collectLatest { count ->
-                updatePendingDiagnostics(count)
                 if (
                     networkAvailable.value &&
                     mutableStatus.value !is SyncStatus.Syncing &&
@@ -134,7 +131,6 @@ internal class AccountSyncManager(
             withTimeout(syncAttemptTimeoutMillis) {
                 publishStatus(SyncStatus.Syncing)
                 val result = coordinator.syncOnce(ownerId)
-                updatePendingDiagnostics(result.pending)
                 publishStatus(if (result.rejectedRemoteRecords > 0) {
                     malformedRemoteRecordsFailure()
                 } else if (result.pending == 0) {
@@ -163,23 +159,11 @@ internal class AccountSyncManager(
 
     private suspend fun updateIdleStatus() {
         val pending = coordinator.pendingCount(ownerId)
-        updatePendingDiagnostics(pending)
         publishStatus(if (pending == 0) SyncStatus.UpToDate else SyncStatus.Pending(pending))
-    }
-
-    private fun updatePendingDiagnostics(count: Int) {
-        mutableDiagnostics.value = mutableDiagnostics.value.copy(
-            hasPendingRecords = count > 0,
-        )
     }
 
     private fun publishStatus(status: SyncStatus) {
         mutableStatus.value = status
-        if (status is SyncStatus.Failed) {
-            mutableDiagnostics.value = mutableDiagnostics.value.copy(
-                latestFailureKind = status.kind,
-            )
-        }
     }
 }
 

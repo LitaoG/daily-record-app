@@ -15,7 +15,6 @@ internal object AppCopy {
     const val privateRecordSubtitle = "记录每天的次数"
     const val offlineSubtitle = "本机记录可离线使用"
     const val vpnSyncFailure = "请打开 VPN（梯子）后重试；记录仍在本机。"
-    const val diagnosticUnavailable = "诊断信息暂不可用"
     const val readingLocalRecords = "正在读取本机记录"
 
     const val selected = "已选择"
@@ -83,8 +82,6 @@ internal object AppCopy {
     }
 
     object Account {
-        const val diagnostics = "诊断信息"
-        const val diagnosticsAccessibility = "查看本机诊断信息"
         const val signInSync = "登录并同步"
         const val reSignIn = "重新登录"
         const val signInSyncAccessibility = "登录账号并同步记录"
@@ -99,7 +96,6 @@ internal object AppCopy {
         const val syncing = "正在同步"
         const val syncNow = "立即同步"
         const val close = "关闭"
-        const val viewDiagnostics = "查看诊断信息"
         const val signOut = "退出登录"
         const val deleteAccount = "删除账号与云端数据"
         const val notConfigured = "云同步未配置"
@@ -456,17 +452,28 @@ internal object AppCopy {
         }.toString()
     }
 
-    object Diagnostics {
-        const val title = "本机诊断信息"
-        const val subtitle = "诊断信息不包含邮箱、记录日期、次数或密码。"
-        const val copy = "复制诊断信息"
-        const val copied = "诊断信息已复制"
-        const val copyFailed = "复制失败，请手动选中文字"
-        const val share = "分享诊断信息"
-        const val noShareTarget = "没有找到可用的分享应用"
-        const val back = "返回"
-        const val shareHint = "发送前可长按检查或选择文字。"
-        const val clipboardLabel = "私密日历诊断信息"
+    object Settings {
+        const val title = "设置"
+        const val open = "打开设置"
+        const val back = "返回主页"
+        const val accountSection = "账号与同步"
+        const val localAccountTitle = "本机记录"
+        const val localAccountSummary = "记录只保存在这台设备；登录后可同步并在换机时恢复。"
+        const val signedInAccountSummary = "查看同步状态、手动同步或管理账号"
+        const val recordSection = "记录偏好"
+        const val recordModuleTitle = "当前记录模块"
+        const val recordModuleSummary = "选择后立即切换，应用会记住你的选择。"
+        const val dataSection = "数据与隐私"
+        const val localFirstTitle = "本机优先"
+        const val localFirstSummary = "所有记录先保存在本机；未登录时不会上传。"
+        const val privacyTitle = "隐私保护"
+        const val privacySummary = "不含广告、分析或崩溃上报 SDK"
+        const val aboutSection = "关于"
+        const val version = "版本"
+        const val license = "开源许可"
+        const val licenseValue = "Apache 2.0"
+
+        fun accountDescription(title: String, status: String): String = "$title，$status"
     }
 
     object NavigationBar {
