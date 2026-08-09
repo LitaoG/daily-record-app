@@ -8,9 +8,11 @@ import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneOffset
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -124,8 +126,8 @@ class HandBrewSyncCoordinatorTest {
             com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED,
         )
         val auth = com.google.firebase.auth.FirebaseAuthException(
-            "token refresh pending",
             "ERROR_USER_TOKEN_EXPIRED",
+            "token refresh pending",
         )
 
         assertTrue(unauthenticated.isRetryableRemoteObservation())
@@ -370,7 +372,7 @@ class HandBrewSyncCoordinatorTest {
 
         val failure = manager.status.value as SyncStatus.Failed
         assertEquals(SyncFailureKind.Network, failure.kind)
-        assertTrue(failure.message.contains("超过 5 秒"))
+        assertTrue(failure.message.contains("等待云服务超过 0 秒"))
         assertEquals(1, remote.fetchCalls)
     }
 
@@ -497,6 +499,49 @@ class HandBrewSyncCoordinatorTest {
         assertEquals(0, database.handBrewRecordDao().countForOwner(ownerId))
     }
 
+    @Test
+    fun perOccurrenceDetailsRoundTripAcrossDevices() = runBlocking {
+        val remote = FakeRemoteDataSource()
+        val firstDatabase = database()
+        val firstRepository = repository(firstDatabase, firstInstant)
+        val firstCoordinator = coordinator(firstDatabase, remote)
+        val detail = HandBrewRecordDetail(
+            id = "detail-$date-1",
+            localDate = date,
+            occurrenceIndex = 1,
+            startTime = LocalTime.of(8, 30),
+            endTime = LocalTime.of(9, 5),
+            feeling = "清醒",
+        )
+        firstRepository.saveRecord(record(2, firstInstant), listOf(detail))
+        remote.detailsProvider = { localDate ->
+            firstRepository.observeDetails(localDate).first().map { value ->
+                RemoteHandBrewDetail(
+                    id = value.id,
+                    occurrenceIndex = value.occurrenceIndex,
+                    startTime = value.startTime,
+                    endTime = value.endTime,
+                    feeling = value.feeling,
+                )
+            }
+        }
+
+        assertEquals(1, firstCoordinator.syncOnce(ownerId).uploaded)
+
+        val secondDatabase = database()
+        val secondRepository = repository(secondDatabase, firstInstant.plusSeconds(30))
+        val secondResult = coordinator(secondDatabase, remote).syncOnce(ownerId)
+        assertEquals(1, secondResult.downloaded)
+
+        val restored = secondRepository.observeDetails(date).first()
+        assertEquals(1, restored.size)
+        assertEquals(detail.id, restored.single().id)
+        assertEquals(detail.occurrenceIndex, restored.single().occurrenceIndex)
+        assertEquals(detail.startTime, restored.single().startTime)
+        assertEquals(detail.endTime, restored.single().endTime)
+        assertEquals(detail.feeling, restored.single().feeling)
+    }
+
     private fun database(): DailyRecordDatabase {
         val context = ApplicationProvider.getApplicationContext<Context>()
         return Room.inMemoryDatabaseBuilder(context, DailyRecordDatabase::class.java)
@@ -544,6 +589,7 @@ private class FakeRemoteDataSource(
     var fetchCalls: Int = 0
         private set
     var fetchGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+    var detailsProvider: suspend (LocalDate) -> List<RemoteHandBrewDetail> = { emptyList() }
 
     override fun observe(ownerId: String): Flow<RemoteSnapshot> = flow {
         val attempt = observationAttempts.value + 1
@@ -588,6 +634,7 @@ private class FakeRemoteDataSource(
                 clientUpdatedAt = maxOf(local.updatedAt, current?.createdAt ?: local.createdAt),
                 deleted = local.isDeleted,
                 revision = (current?.revision ?: 0) + 1,
+                details = detailsProvider(local.localDate),
             )
             values.value = values.value + (local.localDate to committed)
             committed
