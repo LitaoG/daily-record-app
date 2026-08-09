@@ -1,10 +1,14 @@
 package io.github.litaog.dailyrecord.ui.navigation
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,15 +34,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -63,6 +70,9 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -360,13 +370,107 @@ private fun DateWheelColumn(
     colors: RecordModuleColorTokens,
     modifier: Modifier = Modifier,
 ) {
-    val selectedIndex = values.indexOf(selectedValue).coerceAtLeast(0)
-    val latestSelectedValue = rememberUpdatedState(selectedValue)
+    val initialIndex = values.indexOf(selectedValue).coerceAtLeast(0)
+    var selectedIndex by remember(values) { mutableIntStateOf(initialIndex) }
+    var dragOffsetPx by remember(values) { mutableFloatStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
     val latestOnValueSelected = rememberUpdatedState(onValueSelected)
-    val previous = values.getOrNull(selectedIndex - 1)
-    val current = values.getOrNull(selectedIndex)
-    val next = values.getOrNull(selectedIndex + 1)
+    val latestOptionEnabled = rememberUpdatedState(optionEnabled)
+    val settleAnimation = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    var settleJob by remember { mutableStateOf<Job?>(null) }
+    val rowHeightPx = with(LocalDensity.current) { 44.dp.toPx() }
     val shape = RoundedCornerShape(14.dp)
+
+    /**
+     * Keep the local wheel position in sync with changes made by another wheel
+     * (for example, changing the year can clamp the day). During a drag the
+     * local position is authoritative so recomposition cannot snap the content
+     * back under the user's finger.
+     */
+    LaunchedEffect(selectedValue, values) {
+        if (!isDragging) {
+            selectedIndex = values.indexOf(selectedValue).coerceAtLeast(0)
+            dragOffsetPx = 0f
+        }
+    }
+
+    fun commitIndex(index: Int): Boolean {
+        val candidate = values.getOrNull(index) ?: return false
+        if (!latestOptionEnabled.value(candidate)) return false
+        selectedIndex = index
+        latestOnValueSelected.value(candidate)
+        return true
+    }
+
+    fun cancelSettle() {
+        settleJob?.cancel()
+        settleJob = null
+        coroutineScope.launch { settleAnimation.stop() }
+        isDragging = false
+    }
+
+    fun settleWheel() {
+        val currentIndex = selectedIndex.coerceIn(0, values.lastIndex.coerceAtLeast(0))
+        var targetIndex = currentIndex
+        if (dragOffsetPx <= -rowHeightPx / 2f && currentIndex < values.lastIndex) {
+            targetIndex += 1
+        } else if (dragOffsetPx >= rowHeightPx / 2f && currentIndex > 0) {
+            targetIndex -= 1
+        }
+
+        if (targetIndex != currentIndex && commitIndex(targetIndex)) {
+            // Re-basing the three rendered rows keeps the visual position
+            // continuous when the centered item changes at the end of a drag.
+            dragOffsetPx += if (targetIndex > currentIndex) rowHeightPx else -rowHeightPx
+        }
+
+        val startOffset = dragOffsetPx
+        settleJob?.cancel()
+        settleJob = coroutineScope.launch {
+            try {
+                settleAnimation.snapTo(startOffset)
+                settleAnimation.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(dampingRatio = 0.92f, stiffness = 500f),
+                ) {
+                    dragOffsetPx = value
+                }
+                dragOffsetPx = 0f
+                isDragging = false
+            } catch (_: CancellationException) {
+                // A new drag or a row tap takes ownership of the wheel.
+            }
+        }
+    }
+
+    val draggableState = rememberDraggableState { dragAmount ->
+        var nextOffset = dragOffsetPx + dragAmount
+
+        // Rebase the rendered three-row window whenever a full row passes the
+        // center. The content therefore follows the finger instead of waiting
+        // for a threshold before visibly changing.
+        while (nextOffset <= -rowHeightPx && selectedIndex < values.lastIndex) {
+            if (!commitIndex(selectedIndex + 1)) break
+            nextOffset += rowHeightPx
+        }
+        while (nextOffset >= rowHeightPx && selectedIndex > 0) {
+            if (!commitIndex(selectedIndex - 1)) break
+            nextOffset -= rowHeightPx
+        }
+
+        // Add a small edge resistance instead of exposing an empty row when
+        // the wheel is already at its first or last value.
+        dragOffsetPx = when {
+            selectedIndex == 0 && nextOffset > 0f ->
+                (nextOffset - dragAmount + dragAmount * 0.24f)
+                    .coerceAtMost(rowHeightPx * 0.65f)
+            selectedIndex == values.lastIndex && nextOffset < 0f ->
+                (nextOffset - dragAmount + dragAmount * 0.24f)
+                    .coerceAtLeast(-rowHeightPx * 0.65f)
+            else -> nextOffset
+        }
+    }
 
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
@@ -382,29 +486,15 @@ private fun DateWheelColumn(
                 .clip(shape)
                 .background(DailyRecordSurfaceMuted)
                 .border(1.dp, DailyRecordDivider, shape)
-                .pointerInput(values) {
-                    val rowHeight = 44.dp.toPx()
-                    var currentIndex = values.indexOf(latestSelectedValue.value).coerceAtLeast(0)
-                    var distance = 0f
-                    detectVerticalDragGestures(
-                        onVerticalDrag = { change, dragAmount ->
-                            change.consume()
-                            distance -= dragAmount
-                            while (distance >= rowHeight && currentIndex < values.lastIndex) {
-                                currentIndex += 1
-                                distance -= rowHeight
-                                val candidate = values[currentIndex]
-                                if (optionEnabled(candidate)) latestOnValueSelected.value(candidate)
-                            }
-                            while (distance <= -rowHeight && currentIndex > 0) {
-                                currentIndex -= 1
-                                distance += rowHeight
-                                val candidate = values[currentIndex]
-                                if (optionEnabled(candidate)) latestOnValueSelected.value(candidate)
-                            }
-                        },
-                    )
-                },
+                .draggable(
+                    state = draggableState,
+                    orientation = Orientation.Vertical,
+                    onDragStarted = {
+                        cancelSettle()
+                        isDragging = true
+                    },
+                    onDragStopped = { settleWheel() },
+                ),
         ) {
             Canvas(Modifier.fillMaxWidth().height(148.dp)) {
                 val bandHeight = 44.dp.toPx()
@@ -430,28 +520,50 @@ private fun DateWheelColumn(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 8.dp)
+                    .graphicsLayer { translationY = dragOffsetPx },
             ) {
                 WheelValueRow(
-                    value = previous,
+                    value = values.getOrNull(selectedIndex - 1),
                     selected = false,
                     valueLabel = valueLabel,
-                    enabled = previous != null && optionEnabled(previous),
-                    onClick = { previous?.let { if (optionEnabled(it)) onValueSelected(it) } },
+                    enabled = values.getOrNull(selectedIndex - 1)
+                        ?.let(latestOptionEnabled.value)
+                        ?: false,
+                    onClick = {
+                        cancelSettle()
+                        if (commitIndex(selectedIndex - 1)) {
+                            dragOffsetPx = 0f
+                        }
+                    },
                 )
                 WheelValueRow(
-                    value = current,
+                    value = values.getOrNull(selectedIndex),
                     selected = true,
                     valueLabel = valueLabel,
-                    enabled = current != null && optionEnabled(current),
-                    onClick = { current?.let { if (optionEnabled(it)) onValueSelected(it) } },
+                    enabled = values.getOrNull(selectedIndex)
+                        ?.let(latestOptionEnabled.value)
+                        ?: false,
+                    onClick = {
+                        cancelSettle()
+                        if (commitIndex(selectedIndex)) {
+                            dragOffsetPx = 0f
+                        }
+                    },
                 )
                 WheelValueRow(
-                    value = next,
+                    value = values.getOrNull(selectedIndex + 1),
                     selected = false,
                     valueLabel = valueLabel,
-                    enabled = next != null && optionEnabled(next),
-                    onClick = { next?.let { if (optionEnabled(it)) onValueSelected(it) } },
+                    enabled = values.getOrNull(selectedIndex + 1)
+                        ?.let(latestOptionEnabled.value)
+                        ?: false,
+                    onClick = {
+                        cancelSettle()
+                        if (commitIndex(selectedIndex + 1)) {
+                            dragOffsetPx = 0f
+                        }
+                    },
                 )
             }
         }
