@@ -51,9 +51,11 @@ import kotlin.math.sin
 
 private const val WEEK_SEGMENT_COUNT = 7
 private const val WEEK_SEGMENT_GAP_DEGREES = 11f
-// Labels use a polar coordinate system where 0° is at the top of the chart.
+// The reference layout puts Monday in the upper-left gap and Tuesday at 12
+// o'clock. Labels are gap anchors; each day's arc is the segment immediately
+// before that day's label.
+private const val WEEK_LABEL_START_DEGREES = -51.42857f
 // Canvas.drawArc uses 0° at 3 o'clock, so its equivalent is 90° clockwise.
-private const val WEEK_LABEL_START_DEGREES = 0f
 private const val WEEK_CANVAS_ANGLE_OFFSET_DEGREES = -90f
 
 internal enum class WeekRingState {
@@ -91,10 +93,10 @@ internal fun weekRingColorForBand(
     band: WeekRingCountBand,
     colors: RecordModuleColorTokens,
 ): Color = when (band) {
-    WeekRingCountBand.One -> colors.primary.copy(alpha = .28f)
-    WeekRingCountBand.Two -> colors.primary.copy(alpha = .48f)
-    WeekRingCountBand.Three -> colors.primary.copy(alpha = .72f)
-    WeekRingCountBand.FourPlus -> colors.primary
+    WeekRingCountBand.One -> colors.soft
+    WeekRingCountBand.Two -> colors.medium
+    WeekRingCountBand.Three -> colors.primary.copy(alpha = .78f)
+    WeekRingCountBand.FourPlus -> colors.strong
 }
 
 private fun weekSegmentSizeDegrees(): Float = 360f / WEEK_SEGMENT_COUNT
@@ -104,7 +106,9 @@ internal fun weekRingLabelAngleDegrees(index: Int): Float =
         index * weekSegmentSizeDegrees()
 
 internal fun weekRingCanvasMidpointDegrees(index: Int): Float =
-    weekRingLabelAngleDegrees(index) + WEEK_CANVAS_ANGLE_OFFSET_DEGREES
+    weekRingLabelAngleDegrees(index) -
+        weekSegmentSizeDegrees() / 2f +
+        WEEK_CANVAS_ANGLE_OFFSET_DEGREES
 
 internal fun weekRingLabelRadialDistance(
     angleDegrees: Float,
@@ -171,7 +175,7 @@ private fun WeekRingChart(
 
             details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
                 val startAngle = weekRingCanvasMidpointDegrees(index) -
-                    weekSegmentSizeDegrees() / 2f + WEEK_SEGMENT_GAP_DEGREES / 2f
+                    segmentSweep / 2f
                 val state = weekRingState(detail)
                 when (state) {
                     WeekRingState.Positive -> drawArc(
@@ -247,7 +251,8 @@ private fun WeekRingChart(
                 ringOuterRadius = ringOuterRadius.value,
                 labelHalfWidth = (labelWidth / 2).value,
                 labelHalfHeight = (labelHeight / 2).value,
-                gap = labelGap.value,
+                gap = labelGap.value +
+                    if (index == 3) 8.dp.value else 0.dp.value,
             ).dp
             val horizontalLimit = if (angleSin > .001f) {
                 ((maxWidth / 2 - labelWidth / 2).value / angleSin).dp

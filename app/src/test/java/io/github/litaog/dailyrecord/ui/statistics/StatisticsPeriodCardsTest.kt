@@ -1,6 +1,8 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
+import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -63,15 +65,25 @@ class StatisticsPeriodCardsTest {
     }
 
     @Test
-    fun `monday starts at top and ring arcs stay aligned with every label`() {
+    fun `reference labels occupy gaps and arcs precede their labels`() {
         repeat(7) { index ->
-            assertEquals(index * 360f / 7f, weekRingLabelAngleDegrees(index), 0.001f)
+            assertEquals((index - 1) * 360f / 7f, weekRingLabelAngleDegrees(index), 0.001f)
             assertEquals(
-                weekRingLabelAngleDegrees(index) - 90f,
+                weekRingLabelAngleDegrees(index) - 360f / 14f - 90f,
                 weekRingCanvasMidpointDegrees(index),
                 0.001f,
             )
         }
+    }
+
+    @Test
+    fun `count bands keep four visible colors independent`() {
+        val colors = WeekRingCountBand.entries.map { weekRingColorForBand(it, HandBrewColorTokens) }
+
+        assertEquals(4, colors.distinct().size)
+        assertNotEquals(colors[0], colors[1])
+        assertNotEquals(colors[1], colors[2])
+        assertNotEquals(colors[2], colors[3])
     }
 
     @Test
