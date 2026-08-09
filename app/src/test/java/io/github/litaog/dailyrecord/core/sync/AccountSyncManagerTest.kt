@@ -52,6 +52,16 @@ class AccountSyncManagerTest {
     }
 
     @Test
+    fun onlyTransientFirebaseAuthFailuresAreRetryable() {
+        // FirebaseAuthException invokes Android TextUtils in its constructor,
+        // so the JVM test targets the pure code classifier directly. The
+        // extension still walks the real exception chain in production.
+        assertTrue(isRetryableFirebaseAuthCode("ERROR_USER_TOKEN_EXPIRED"))
+        assertFalse(isRetryableFirebaseAuthCode("ERROR_INVALID_CREDENTIAL"))
+        assertFalse(isRetryableFirebaseAuthCode("ERROR_USER_DISABLED"))
+    }
+
+    @Test
     fun networkFailuresAreMarkedForVpnGuidance() {
         assertTrue(IOException("firebase unreachable").isNetworkRelatedSyncFailure())
         assertTrue(

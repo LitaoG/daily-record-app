@@ -3,6 +3,7 @@ package io.github.litaog.dailyrecord.core.sync
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestoreException
+import io.github.litaog.dailyrecord.core.cloud.BACKGROUND_CLOUD_TIMEOUT_MILLIS
 import io.github.litaog.dailyrecord.core.cloud.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
 import io.github.litaog.dailyrecord.core.cloud.InteractiveCloudTimeoutException
 import io.github.litaog.dailyrecord.core.common.AppCopy
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -31,6 +33,9 @@ internal class AccountSyncManager(
     private val networkAvailable: StateFlow<Boolean> = MutableStateFlow(true),
     private val remoteRetryDelayMillis: (Long) -> Long = ::remoteRetryDelayMillis,
     private val syncAttemptTimeoutMillis: Long = INTERACTIVE_CLOUD_TIMEOUT_MILLIS,
+    private val backgroundSyncTimeoutMillis: Long = BACKGROUND_CLOUD_TIMEOUT_MILLIS,
+    private val cloudWriteGate: CloudWriteGate = NoOpCloudWriteGate,
+    private val sessionActive: () -> Boolean = { true },
 ) {
     private val mutex = Mutex()
     private val followUpSyncRequested = AtomicBoolean(false)
@@ -45,19 +50,7 @@ internal class AccountSyncManager(
         if (!productionConfigured) return emptyList()
         val remoteJob = scope.launch {
             coordinator.observeRemote(ownerId)
-                .retryWhen { error, attempt ->
-                    val retryable = error.isRetryableRemoteObservation()
-                    publishStatus(if (networkAvailable.value) {
-                        error.toSyncFailure()
-                    } else {
-                        SyncStatus.Offline
-                    })
-                    if (!retryable) return@retryWhen false
-                    networkAvailable.first { it }
-                    delay(remoteRetryDelayMillis(attempt))
-                    true
-                }
-                .collect { snapshot ->
+                .onEach { snapshot ->
                     coordinator.applySnapshot(ownerId, snapshot)
                     if (snapshot.rejectedRecordCount > 0) {
                         publishStatus(malformedRemoteRecordsFailure())
@@ -73,6 +66,21 @@ internal class AccountSyncManager(
                         }
                     }
                 }
+                .retryWhen { error, attempt ->
+                    val retryable = error.isRetryableRemoteObservation()
+                    publishStatus(if (networkAvailable.value) {
+                        error.toSyncFailure()
+                    } else {
+                        SyncStatus.Offline
+                    })
+                    if (!retryable || !sessionActive()) return@retryWhen false
+                    // Wait for the network and re-subscribe after a transient
+                    // token failure instead of letting the realtime channel die.
+                    networkAvailable.first { it }
+                    delay(remoteRetryDelayMillis(attempt))
+                    true
+                }
+                .collect()
         }
         val pendingJob = scope.launch {
             coordinator.observePendingCount(ownerId).collectLatest { count ->
@@ -112,7 +120,13 @@ internal class AccountSyncManager(
         try {
             do {
                 followUpSyncRequested.set(false)
-                performSyncAttempt()
+                performSyncAttempt(
+                    timeoutMillis = if (queueIfBusy) {
+                        backgroundSyncTimeoutMillis
+                    } else {
+                        syncAttemptTimeoutMillis
+                    },
+                )
             } while (
                 productionConfigured &&
                 networkAvailable.value &&
@@ -123,12 +137,14 @@ internal class AccountSyncManager(
         }
     }
 
-    private suspend fun performSyncAttempt() {
+    private suspend fun performSyncAttempt(timeoutMillis: Long) {
         val previousStatus = mutableStatus.value
         try {
-            withTimeout(syncAttemptTimeoutMillis) {
+            withTimeout(timeoutMillis) {
                 publishStatus(SyncStatus.Syncing)
-                val result = coordinator.syncOnce(ownerId)
+                val result = cloudWriteGate.withWrite(ownerId) {
+                    coordinator.syncOnce(ownerId)
+                }
                 updatePendingDiagnostics(result.pending)
                 publishStatus(if (result.rejectedRemoteRecords > 0) {
                     malformedRemoteRecordsFailure()
@@ -140,10 +156,14 @@ internal class AccountSyncManager(
             }
         } catch (error: TimeoutCancellationException) {
             publishStatus(if (networkAvailable.value) {
-                InteractiveCloudTimeoutException(error).toSyncFailure()
+                InteractiveCloudTimeoutException(timeoutMillis, error).toSyncFailure()
             } else {
                 SyncStatus.Offline
             })
+        } catch (_: AccountDeletionInProgressException) {
+            // Account deletion owns the cloud path. Do not surface a transient
+            // deletion barrier as a network failure to the user.
+            publishStatus(previousStatus)
         } catch (error: CancellationException) {
             publishStatus(previousStatus)
             throw error
@@ -208,7 +228,11 @@ private fun remoteRetryDelayMillis(attempt: Long): Long {
 
 internal fun Throwable.isRetryableRemoteObservation(): Boolean =
     generateSequence(this) { it.cause }.any { cause ->
-        cause is FirebaseNetworkException ||
+        // Only token/network/temporary quota auth failures are retryable.
+        // Invalid credentials, disabled users and other permanent auth errors
+        // must terminate the listener instead of spinning forever.
+        (cause is FirebaseAuthException && isRetryableFirebaseAuthCode(cause.errorCode)) ||
+            cause is FirebaseNetworkException ||
             cause is IOException ||
             cause is FirebaseFirestoreException && cause.code in setOf(
                 FirebaseFirestoreException.Code.ABORTED,
@@ -218,8 +242,18 @@ internal fun Throwable.isRetryableRemoteObservation(): Boolean =
                 FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED,
                 FirebaseFirestoreException.Code.UNAVAILABLE,
                 FirebaseFirestoreException.Code.UNKNOWN,
+                FirebaseFirestoreException.Code.UNAUTHENTICATED,
             )
     }
+
+internal fun isRetryableFirebaseAuthCode(code: String): Boolean = code in setOf(
+    "ERROR_NETWORK_REQUEST_FAILED",
+    "ERROR_TOO_MANY_REQUESTS",
+    "ERROR_USER_TOKEN_EXPIRED",
+    "ERROR_INVALID_USER_TOKEN",
+    "ERROR_ID_TOKEN_REVOKED",
+    "ERROR_INTERNAL_ERROR",
+)
 
 internal fun Throwable.isNetworkRelatedSyncFailure(): Boolean =
     syncFailureKind() == SyncFailureKind.Network
@@ -268,7 +302,7 @@ private fun Throwable.toSyncFailure(): SyncStatus.Failed {
     val kind = syncFailureKind()
     val message = when (kind) {
         SyncFailureKind.Network -> if (this is InteractiveCloudTimeoutException) {
-            AppCopy.Account.timeoutFailure
+            AppCopy.Account.timeoutFailure(timeoutMillis)
         } else {
             AppCopy.Account.networkFailure
         }

@@ -644,7 +644,7 @@ private fun MonthPicker(
                             modifier = Modifier.weight(1f),
                         )
                     } else {
-                        Spacer(Modifier.weight(1f).height(44.dp))
+                        Spacer(Modifier.weight(1f).height(48.dp))
                     }
                 }
             }
@@ -683,18 +683,20 @@ private fun DateCell(
     val weekday = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.SIMPLIFIED_CHINESE)
     Box(
         modifier = modifier
-            .height(44.dp)
-            .padding(2.dp)
-            .clip(CircleShape)
-            .background(if (selected) colors.primary else Color.Transparent)
-            .border(if (selected) 0.dp else 1.dp, if (selected) Color.Transparent else DailyRecordSurface, CircleShape)
+            .height(48.dp)
+            // Clickable precedes padding so the full 48dp cell is the touch
+            // target; the inner visuals keep a 2dp inset as before.
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
                 this.selected = selected
                 contentDescription = AppCopy.Navigation.dateDescription(date, weekday)
                 if (!enabled) disabled()
-            },
+            }
+            .padding(2.dp)
+            .clip(CircleShape)
+            .background(if (selected) colors.primary else Color.Transparent)
+            .border(if (selected) 0.dp else 1.dp, if (selected) Color.Transparent else DailyRecordSurface, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(

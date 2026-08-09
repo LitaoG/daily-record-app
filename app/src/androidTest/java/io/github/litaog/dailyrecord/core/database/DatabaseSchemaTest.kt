@@ -30,7 +30,7 @@ class DatabaseSchemaTest {
                 INSERT INTO activities (
                     id, owner_id, name, icon_key, color_argb, measurement_type,
                     unit, sort_order, is_archived, created_at, updated_at, revision
-                ) VALUES ('hand-brew', 'local-owner', '手冲', 'flight', 1, 'COUNT',
+                ) VALUES ('hand-brew', 'local-owner', '本地化手冲', 'flight', 1, 'COUNT',
                           '次', 0, 0, 1000, 1000, 0)
                 """.trimIndent(),
             )
@@ -39,7 +39,7 @@ class DatabaseSchemaTest {
                 INSERT INTO activities (
                     id, owner_id, name, icon_key, color_argb, measurement_type,
                     unit, sort_order, is_archived, created_at, updated_at, revision
-                ) VALUES ('legacy-other', 'local-owner', '旧记录', 'legacy', 2, 'BOOLEAN',
+                ) VALUES ('legacy-other', 'local-owner', '手冲', 'legacy', 2, 'BOOLEAN',
                           NULL, 1, 0, 1000, 1000, 0)
                 """.trimIndent(),
             )
@@ -52,13 +52,16 @@ class DatabaseSchemaTest {
                           'DONE', 3, 'Asia/Shanghai', 1000, 1000, 1000, 0)
                 """.trimIndent(),
             )
+            // The non-hand-brew activity must carry a positive quantity on the
+            // same date; otherwise deleting the WHERE filter would still leave
+            // the test green while silently dropping the hand-brew filter.
             execSQL(
                 """
                 INSERT INTO daily_records (
                     id, owner_id, activity_id, local_date, status, quantity,
                     timezone_id, occurred_at, created_at, updated_at, revision
                 ) VALUES ('legacy-record', 'local-owner', 'legacy-other', '2026-07-16',
-                          'DONE', NULL, 'Asia/Shanghai', 1000, 1000, 1000, 0)
+                          'DONE', 2, 'Asia/Shanghai', 1000, 1000, 1000, 0)
                 """.trimIndent(),
             )
             close()

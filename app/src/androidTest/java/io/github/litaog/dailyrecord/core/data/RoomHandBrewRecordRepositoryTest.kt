@@ -162,6 +162,58 @@ class RoomHandBrewRecordRepositoryTest {
         assertEquals(null, localFirstRepository.observeRecord(date).first())
     }
 
+    @Test
+    fun staleClearDoesNotDeleteANewerSavedEdit() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        repository.saveRecord(record("stale-clear", date, 1))
+        val dao = database.handBrewRecordDao()
+        val existing = requireNotNull(
+            dao.getByDate(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID, date),
+        )
+
+        // Simulate a concurrent save committing between the clear's read and write:
+        // the row's updatedAt moves forward while the clear still holds the old value.
+        val newerTimestamp = existing.updatedAt.plusSeconds(1)
+        dao.upsert(existing.copy(brewCount = 3, updatedAt = newerTimestamp))
+
+        val affected = dao.markDeleted(
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            id = existing.id,
+            expectedUpdatedAt = existing.updatedAt,
+            updatedAt = newerTimestamp.plusSeconds(1),
+        )
+
+        assertEquals(0, affected)
+        val after = requireNotNull(
+            dao.getByDate(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID, date),
+        )
+        assertEquals(3, after.brewCount)
+        assertFalse(after.isDeleted)
+    }
+
+    @Test
+    fun matchingTimestampClearStillRemovesTheRecord() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        repository.saveRecord(record("fresh-clear", date, 2))
+        val dao = database.handBrewRecordDao()
+        val existing = requireNotNull(
+            dao.getByDate(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID, date),
+        )
+
+        val affected = dao.markDeleted(
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            id = existing.id,
+            expectedUpdatedAt = existing.updatedAt,
+            updatedAt = existing.updatedAt.plusSeconds(1),
+        )
+
+        assertEquals(1, affected)
+        assertTrue(requireNotNull(dao.getByDate(
+            io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            date,
+        )).isDeleted)
+    }
+
     private fun record(id: String, date: LocalDate, count: Int) = HandBrewRecord(
         id = id,
         localDate = date,

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,6 +71,32 @@ internal fun weekRingIntensity(detail: StatisticsDetail, maxCount: Long): Float 
     return ((detail.count ?: 0L).toFloat() / maxCount.toFloat()).coerceIn(0f, 1f)
 }
 
+/**
+ * Keeps a clipped first week aligned with its real weekday angle. Older
+ * callers that construct details without a source index retain the list
+ * position as a safe fallback.
+ */
+internal fun weekRingSegmentIndex(detail: StatisticsDetail, fallbackIndex: Int): Int =
+    detail.calendarIndex ?: fallbackIndex
+
+/**
+ * Single source of truth for ring segment colors. The legend and the ring
+ * drawing must resolve colors through this function so the legend can never
+ * drift from the chart (for example, the explicit-zero state must never be
+ * shown with the unrecorded color).
+ */
+internal fun weekRingSegmentColor(
+    state: WeekRingState,
+    intensity: Float,
+    colors: RecordModuleColorTokens,
+): Color = when (state) {
+    WeekRingState.Future -> colors.soft.copy(alpha = .78f)
+    WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
+    WeekRingState.ExplicitZero -> colors.primary.copy(alpha = .82f)
+    WeekRingState.Positive ->
+        colors.primary.copy(alpha = .58f + .38f * intensity.coerceIn(0f, 1f))
+}
+
 @Composable
 internal fun WeekDistributionCard(
     details: List<StatisticsDetail>,
@@ -125,14 +152,18 @@ private fun WeekRingChart(
             val segmentSweep = 360f / WEEK_SEGMENT_COUNT - WEEK_SEGMENT_GAP_DEGREES
 
             details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
+                val segmentIndex = weekRingSegmentIndex(detail, index)
                 val startAngle = WEEK_SEGMENT_START_DEGREES +
-                    index * 360f / WEEK_SEGMENT_COUNT + WEEK_SEGMENT_GAP_DEGREES / 2f
+                    segmentIndex * 360f / WEEK_SEGMENT_COUNT + WEEK_SEGMENT_GAP_DEGREES / 2f
                 val state = weekRingState(detail)
                 val intensity = weekRingIntensity(detail, maxCount)
                 val baseColor = when (state) {
-                    WeekRingState.Future -> colors.soft.copy(alpha = .78f)
-                    WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
-                    WeekRingState.ExplicitZero -> colors.primary.copy(alpha = .82f)
+                    WeekRingState.Future,
+                    WeekRingState.Unrecorded,
+                    WeekRingState.ExplicitZero,
+                    -> weekRingSegmentColor(state, intensity, colors)
+                    // The positive base layer keeps a faint shared tint; the
+                    // intensity overlay resolves through the shared function.
                     WeekRingState.Positive -> colors.primary.copy(alpha = .18f)
                 }
                 val baseStroke = when (state) {
@@ -163,7 +194,7 @@ private fun WeekRingChart(
                 when (state) {
                     WeekRingState.Positive -> {
                         drawArc(
-                            color = colors.primary.copy(alpha = .58f + .38f * intensity),
+                            color = weekRingSegmentColor(state, intensity, colors),
                             startAngle = startAngle,
                             sweepAngle = segmentSweep,
                             useCenter = false,
@@ -194,10 +225,11 @@ private fun WeekRingChart(
         }
 
         details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
+            val segmentIndex = weekRingSegmentIndex(detail, index)
             val angle = Math.toRadians(
                 (
                     WEEK_SEGMENT_START_DEGREES +
-                        index * 360f / WEEK_SEGMENT_COUNT +
+                        segmentIndex * 360f / WEEK_SEGMENT_COUNT +
                         360f / WEEK_SEGMENT_COUNT / 2f
                     ).toDouble(),
             )
@@ -280,16 +312,23 @@ private fun WeekRingChart(
 @Composable
 private fun WeekRingLegend(colors: RecordModuleColorTokens) {
     val legend = listOf(
-        AppCopy.Statistics.weeklyLegendHigh to colors.primary,
-        AppCopy.Statistics.weeklyLegendMedium to colors.primary.copy(alpha = .68f),
-        AppCopy.Statistics.weeklyLegendLow to colors.primary.copy(alpha = .40f),
-        AppCopy.Statistics.weeklyLegendZero to DailyRecordDivider,
-        AppCopy.Statistics.weeklyLegendFuture to colors.soft.copy(alpha = .78f),
+        AppCopy.Statistics.weeklyLegendUnrecorded to
+            weekRingSegmentColor(WeekRingState.Unrecorded, 0f, colors),
+        AppCopy.Statistics.weeklyLegendZero to
+            weekRingSegmentColor(WeekRingState.ExplicitZero, 0f, colors),
+        AppCopy.Statistics.weeklyLegendLow to
+            weekRingSegmentColor(WeekRingState.Positive, 0f, colors),
+        AppCopy.Statistics.weeklyLegendMedium to
+            weekRingSegmentColor(WeekRingState.Positive, .5f, colors),
+        AppCopy.Statistics.weeklyLegendHigh to
+            weekRingSegmentColor(WeekRingState.Positive, 1f, colors),
+        AppCopy.Statistics.weeklyLegendFuture to
+            weekRingSegmentColor(WeekRingState.Future, 0f, colors),
     )
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         legend.forEach { (label, color) ->
             Row(

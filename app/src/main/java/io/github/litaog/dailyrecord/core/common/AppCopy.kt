@@ -126,7 +126,8 @@ internal object AppCopy {
         const val unknownFailureGuidance = "记录仍在本机，请稍后再试。"
         const val syncDialogMessage = "请检查网络或 VPN（梯子），然后重试。"
         const val dataFormatFailure = "部分云端记录无法读取，其余记录已同步。"
-        const val timeoutFailure = "等待云服务超过 5 秒，已停止同步；记录仍在本机。"
+        fun timeoutFailure(timeoutMillis: Long): String =
+            "等待云服务超过 ${timeoutMillis / 1_000L} 秒，已停止同步；记录仍在本机。"
         const val networkFailure = "网络连接异常，记录仍在本机。"
         const val authFailure = "登录状态已失效，记录仍在本机。"
         const val permissionFailure = "账号暂时无法访问云端，记录仍在本机。"
@@ -175,6 +176,7 @@ internal object AppCopy {
         const val permissionError = "账号暂时无权删除；本机记录仍保留，请重新登录后重试。"
         const val serviceError = "云服务暂时不可用；本机记录仍保留，请稍后重试。"
         const val unknownError = "删除未完成，本机记录仍保留。部分云端记录可能已删除，请重试。"
+        const val localCleanupPending = "账号和云端数据已删除，但本机记录清理未完成，将在下次启动时自动完成。"
         const val wrongPassword = "密码不正确，请重新输入"
         const val tooManyAttempts = "尝试次数过多，请稍后再试"
 
@@ -202,7 +204,6 @@ internal object AppCopy {
         const val futureDescription = "未来日期，不可记录"
         const val unsetDescription = "未填写"
         const val zeroDescription = "记录为 0 次"
-        const val recordedDescription = "%s %d 次"
         const val selectedSuffix = "，已选择"
         const val todaySuffix = "，今天"
 
@@ -233,7 +234,9 @@ internal object AppCopy {
                 future -> futureDescription
                 count == null -> unsetDescription
                 count == 0 -> "$moduleLabel，$zeroDescription"
-                else -> recordedDescription.format(moduleLabel, count)
+                // The same count bucketing as the visual cell keeps TalkBack
+                // and screen text consistent (9+ is never read as exact 9).
+                else -> "$moduleLabel，${countDescription(count)}"
             }
             return if (date == today) "$status$todaySuffix" else status
         }
@@ -344,6 +347,7 @@ internal object AppCopy {
         const val weeklyLegendMedium = "3–5次"
         const val weeklyLegendLow = "1–2次"
         const val weeklyLegendZero = "0次"
+        const val weeklyLegendUnrecorded = "未填写"
         const val weeklyLegendFuture = "未解锁"
         const val dailyCount = "每日次数"
         const val byDate = "按日期"

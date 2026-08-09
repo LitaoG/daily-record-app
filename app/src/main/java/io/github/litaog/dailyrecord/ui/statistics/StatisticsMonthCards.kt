@@ -71,6 +71,12 @@ internal fun monthDailyChartTickDays(dayCount: Int): List<Int> {
         .distinct()
 }
 
+internal fun monthDailyChartNeedsNonAnchorBaselineDot(
+    day: MonthDayStatistics,
+    dayOfMonth: Int,
+    tickDays: List<Int>,
+): Boolean = day.recorded && !day.future && (day.count ?: 0L) > 0L && dayOfMonth !in tickDays
+
 /**
  * Returns the x-coordinate for a day using the same edge inset as the plot.
  * Keeping this calculation shared by the plot and labels prevents the first
@@ -385,6 +391,13 @@ private fun MonthDailyChartPlot(
                         )
                         drawCircle(color = DailyRecordSurface, radius = 4.4.dp.toPx(), center = offset)
                         drawCircle(color = colors.primary, radius = 3.dp.toPx(), center = offset)
+                        if (monthDailyChartNeedsNonAnchorBaselineDot(day, index + 1, tickDays)) {
+                            drawCircle(
+                                color = colors.primary,
+                                radius = 1.7.dp.toPx(),
+                                center = Offset(offset.x, plotBottomPx),
+                            )
+                        }
                     }
                 }
             }

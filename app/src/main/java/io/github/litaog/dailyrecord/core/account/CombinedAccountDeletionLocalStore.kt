@@ -38,9 +38,15 @@ internal class CombinedAccountDeletionLocalStore(
 
     private suspend fun discardAllSafely(primary: Throwable) {
         stores.forEach { store ->
-            runCatching { store.discardLocalRecoveryCopy() }
-                .exceptionOrNull()
-                ?.let(primary::addSuppressed)
+            try {
+                store.discardLocalRecoveryCopy()
+            } catch (error: CancellationException) {
+                // Cancellation must remain cooperative; otherwise a cancelled
+                // deletion can report completion while cleanup is incomplete.
+                throw error
+            } catch (error: Exception) {
+                primary.addSuppressed(error)
+            }
         }
     }
 

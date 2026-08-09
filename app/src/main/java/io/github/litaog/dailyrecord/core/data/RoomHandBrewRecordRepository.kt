@@ -69,7 +69,7 @@ internal class RoomHandBrewRecordRepository(
                 existing.createdAt,
                 existing.updatedAt.nextRecordTimestamp(),
             )
-            recordDao.markDeleted(ownerId, existing.id, updatedAt) == 1
+            recordDao.markDeleted(ownerId, existing.id, existing.updatedAt, updatedAt) == 1
         }
         if (cleared) notifyLocalChangeSafely(onLocalChange)
         return cleared

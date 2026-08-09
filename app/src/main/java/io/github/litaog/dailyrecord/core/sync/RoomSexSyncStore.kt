@@ -26,18 +26,21 @@ internal class RoomSexSyncStore(
         var changed = 0
         localRecords.forEach { local ->
             val accountRecord = dao.getByDate(ownerId, local.localDate)
-            if (accountRecord == null || local.updatedAt.isAfter(accountRecord.updatedAt)) {
-                dao.deleteByOwnerDate(ownerId, local.localDate)
-                dao.upsert(
-                    local.copy(
-                        id = accountRecord?.id ?: local.id,
-                        ownerId = ownerId,
-                        syncState = SYNC_PENDING,
-                        remoteRevision = accountRecord?.remoteRevision ?: 0,
-                    ),
-                )
-                changed += 1
-            }
+            // Device clocks must never decide cross-device outcomes (ADR-010).
+            // Local edits always enter the account space as new pending edits;
+            // the account's last confirmed remote revision is kept as the
+            // optimistic-concurrency baseline so the shared revision protocol
+            // (not the wall clock) decides the result.
+            dao.deleteByOwnerDate(ownerId, local.localDate)
+            dao.upsert(
+                local.copy(
+                    id = accountRecord?.id ?: local.id,
+                    ownerId = ownerId,
+                    syncState = SYNC_PENDING,
+                    remoteRevision = accountRecord?.remoteRevision ?: 0,
+                ),
+            )
+            changed += 1
         }
         if (localRecords.isNotEmpty()) dao.deleteOwnerCache(LOCAL_OWNER_ID)
         changed

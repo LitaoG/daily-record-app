@@ -58,9 +58,11 @@ internal class FirebaseHandBrewRemoteDataSource(
             if (currentRemote != null && local.remoteRevision != currentRemote.revision) {
                 return@runTransaction currentRemote
             }
-            require(currentRemote != null || local.remoteRevision == 0L) {
-                "Cloud record disappeared after local revision ${local.remoteRevision}"
-            }
+            // A missing document can occur after account data was removed and
+            // the local pending edit was retained for recovery. Treat it as a
+            // new document rather than permanently failing the PENDING row on
+            // its stale revision baseline. Normal clears use a tombstone and
+            // still participate in the revision check above.
             val revision = (current.getLong(FIELD_REVISION) ?: 0L) + 1L
             val stableId = current.getString(FIELD_ID) ?: local.id
             val stableCreatedAt = current.getLong(FIELD_CREATED_AT) ?: local.createdAt.toEpochMilli()

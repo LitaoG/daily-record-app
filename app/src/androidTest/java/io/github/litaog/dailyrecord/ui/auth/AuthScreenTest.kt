@@ -241,6 +241,41 @@ class AuthScreenTest {
     }
 
     @Test
+    fun passwordResetLocksInputWhileRequestIsInFlightAndDoesNotResubmit() {
+        val gate = CompletableDeferred<Result<Unit>>()
+        var calls = 0
+        composeRule.setContent {
+            DailyRecordTheme {
+                AuthScreen(
+                    productionConfigured = true,
+                    onSignIn = { _, _ -> Result.success(Unit) },
+                    onRegister = { _, _ -> Result.success(Unit) },
+                    onPasswordReset = { calls += 1; gate.await() },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("忘记密码？").performClick()
+        composeRule.onNodeWithTag("password_reset_email").performTextInput("brew@example.com")
+        composeRule.onNodeWithText("发送重置邮件").performClick()
+
+        // While the request is suspended: the send button (now labeled
+        // "正在发送…") is disabled, the email field and cancel action are
+        // locked, and no second request can be triggered.
+        composeRule.onNodeWithText("正在发送…").assertIsDisplayed()
+        composeRule.onNodeWithText("正在发送…").assertIsNotEnabled()
+        composeRule.onNodeWithText("取消").assertIsNotEnabled()
+        composeRule.onNodeWithTag("password_reset_email").assertIsNotEnabled()
+        composeRule.runOnIdle { assertEquals(1, calls) }
+
+        // Releasing the request restores the success state exactly once.
+        gate.complete(Result.success(Unit))
+        composeRule.onNodeWithText("请检查收件箱和垃圾邮件，并按邮件提示修改密码。")
+            .assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(1, calls) }
+    }
+
+    @Test
     fun passwordResetActionsRemainVisibleAt200PercentText() {
         composeRule.setContent {
             val density = LocalDensity.current.density

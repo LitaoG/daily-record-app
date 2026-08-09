@@ -82,6 +82,34 @@ class RoomSexRecordRepositoryTest {
         assertNull(ownerB.observeRecord(date).first())
     }
 
+    @Test
+    fun staleClearDoesNotDeleteANewerSavedSexEdit() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        sexRepository.saveRecord(sexRecord("stale-clear", date, 1))
+        val dao = database.sexRecordDao()
+        val existing = requireNotNull(
+            dao.getByDate(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID, date),
+        )
+
+        // Simulate a concurrent save committing between the clear's read and write.
+        val newerTimestamp = existing.updatedAt.plusSeconds(1)
+        dao.upsert(existing.copy(sexCount = 3, updatedAt = newerTimestamp))
+
+        val affected = dao.markDeleted(
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            id = existing.id,
+            expectedUpdatedAt = existing.updatedAt,
+            updatedAt = newerTimestamp.plusSeconds(1),
+        )
+
+        assertEquals(0, affected)
+        val after = requireNotNull(
+            dao.getByDate(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID, date),
+        )
+        assertEquals(3, after.sexCount)
+        assertFalse(after.isDeleted)
+    }
+
     private fun sexRecord(id: String, date: LocalDate, count: Int) = SexRecord(
         id = id,
         localDate = date,

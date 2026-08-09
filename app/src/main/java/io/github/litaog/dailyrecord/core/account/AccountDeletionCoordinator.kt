@@ -11,6 +11,18 @@ enum class LocalDataAfterAccountDeletion {
     Delete,
 }
 
+/**
+ * Thrown when the Firebase account and cloud data were already deleted but the
+ * local owner cache could not be cleared. This is not a retryable account
+ * deletion failure: re-authentication is impossible because the account no
+ * longer exists. The owner id is kept so a later startup can retry the local
+ * cleanup.
+ */
+internal class AccountDeletionLocalCleanupPendingException(
+    val ownerId: String,
+    cause: Throwable,
+) : IllegalStateException("Account deleted but local owner cache cleanup is pending", cause)
+
 internal interface AccountDeletionLocalStore {
     suspend fun stageLocalRecoveryCopy(ownerId: String)
 
@@ -48,7 +60,16 @@ internal class AccountDeletionCoordinator(
             if (stagedLocalCopy) localStore.discardLocalRecoveryCopySafely(error)
             throw error
         }
-        localStore.deleteOwnerCache(ownerId)
+        try {
+            localStore.deleteOwnerCache(ownerId)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            // The account and cloud data are already gone. Report a dedicated
+            // recoverable cleanup state instead of a retryable deletion failure,
+            // because re-authentication is impossible once the account is deleted.
+            throw AccountDeletionLocalCleanupPendingException(ownerId, error)
+        }
     }
 }
 

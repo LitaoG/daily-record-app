@@ -7,7 +7,14 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import io.github.litaog.dailyrecord.core.common.AppCopy
+
+/**
+ * Frozen historical value: the v1 hand-brew activity was identified by this
+ * machine key in released data. Migration SQL must use the key rather than a
+ * user-facing name, otherwise a future wording or localization change could
+ * silently stop matching rows and lose v1 hand-brew records.
+ */
+private const val HAND_BREW_LEGACY_ICON_KEY = "flight"
 
 @Database(
     entities = [
@@ -54,7 +61,7 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
                     INNER JOIN `activities` a
                         ON a.`owner_id` = r.`owner_id` AND a.`id` = r.`activity_id`
                     WHERE r.`deleted_at` IS NULL
-                      AND (a.`name` = '${AppCopy.RecordModule.handBrewLabel}' OR a.`icon_key` = 'flight')
+                      AND a.`icon_key` = '$HAND_BREW_LEGACY_ICON_KEY'
                     GROUP BY r.`local_date`
                     """.trimIndent(),
                 )
