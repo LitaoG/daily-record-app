@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -45,19 +46,7 @@ internal class AccountSyncManager(
         if (!productionConfigured) return emptyList()
         val remoteJob = scope.launch {
             coordinator.observeRemote(ownerId)
-                .retryWhen { error, attempt ->
-                    val retryable = error.isRetryableRemoteObservation()
-                    publishStatus(if (networkAvailable.value) {
-                        error.toSyncFailure()
-                    } else {
-                        SyncStatus.Offline
-                    })
-                    if (!retryable) return@retryWhen false
-                    networkAvailable.first { it }
-                    delay(remoteRetryDelayMillis(attempt))
-                    true
-                }
-                .collect { snapshot ->
+                .onEach { snapshot ->
                     coordinator.applySnapshot(ownerId, snapshot)
                     if (snapshot.rejectedRecordCount > 0) {
                         publishStatus(malformedRemoteRecordsFailure())
@@ -73,6 +62,22 @@ internal class AccountSyncManager(
                         }
                     }
                 }
+                .retryWhen { error, attempt ->
+                    val retryable = error.isRetryableRemoteObservation()
+                    publishStatus(if (networkAvailable.value) {
+                        error.toSyncFailure()
+                    } else {
+                        SyncStatus.Offline
+                    })
+                    if (!retryable) return@retryWhen false
+                    // Auth failures are transient (token refresh); wait for the
+                    // network and re-subscribe instead of letting the realtime
+                    // channel die permanently.
+                    networkAvailable.first { it }
+                    delay(remoteRetryDelayMillis(attempt))
+                    true
+                }
+                .collect()
         }
         val pendingJob = scope.launch {
             coordinator.observePendingCount(ownerId).collectLatest { count ->
@@ -208,7 +213,11 @@ private fun remoteRetryDelayMillis(attempt: Long): Long {
 
 internal fun Throwable.isRetryableRemoteObservation(): Boolean =
     generateSequence(this) { it.cause }.any { cause ->
-        cause is FirebaseNetworkException ||
+        // FirebaseAuthException and UNAUTHENTICATED cover transient token
+        // refresh failures: the observer must re-subscribe after auth recovers
+        // instead of terminating the realtime channel permanently.
+        cause is FirebaseAuthException ||
+            cause is FirebaseNetworkException ||
             cause is IOException ||
             cause is FirebaseFirestoreException && cause.code in setOf(
                 FirebaseFirestoreException.Code.ABORTED,
@@ -218,6 +227,7 @@ internal fun Throwable.isRetryableRemoteObservation(): Boolean =
                 FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED,
                 FirebaseFirestoreException.Code.UNAVAILABLE,
                 FirebaseFirestoreException.Code.UNKNOWN,
+                FirebaseFirestoreException.Code.UNAUTHENTICATED,
             )
     }
 
