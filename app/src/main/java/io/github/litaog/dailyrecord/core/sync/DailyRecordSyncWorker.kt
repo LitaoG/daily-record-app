@@ -19,38 +19,42 @@ class DailyRecordSyncWorker(
         // yet have an authenticated owner. Production account barriers are
         // checked again below, after resolving the Firebase owner id.
         if (DailyRecordSyncScheduler.isLegacyDeletionBlocked) return Result.success()
-        val services = FirebaseServices.create(applicationContext)
-        if (!services.productionConfigured) return Result.failure()
-        val ownerId = services.currentUserId() ?: return Result.success()
-        // Account deletion owns the user's cloud paths. Check the durable
-        // account marker after resolving the owner so a stale marker for a
-        // different account cannot silently affect this session.
-        if (DailyRecordSyncScheduler.isLegacyDeletionBlocked ||
-            DailyRecordSyncScheduler.isDeletionBlocked(applicationContext, ownerId)
-        ) {
-            return Result.success()
-        }
         val database = DailyRecordDatabase.create(applicationContext)
         return try {
-            val coordinator = CombinedSyncCoordinator(
-                handBrew = HandBrewSyncCoordinator(
-                    store = RoomHandBrewSyncStore(database),
-                    remote = services.remoteDataSource,
-                ),
-                sex = SexSyncCoordinator(
-                    store = RoomSexSyncStore(database),
-                    remote = services.sexRemoteDataSource,
-                ),
-            )
-            val result = withTimeout(BACKGROUND_CLOUD_TIMEOUT_MILLIS) {
-                DailyRecordSyncScheduler.withCloudWrite(
-                    context = applicationContext,
-                    ownerId = ownerId,
-                ) {
-                    coordinator.syncOnce(ownerId)
+            val services = FirebaseServices.create(applicationContext, database = database)
+            val ownerId = services.currentUserId()
+            when {
+                !services.productionConfigured -> Result.failure()
+                ownerId == null -> Result.success()
+                // Account deletion owns the user's cloud paths. Check the durable
+                // account marker after resolving the owner so a stale marker for a
+                // different account cannot silently affect this session.
+                DailyRecordSyncScheduler.isLegacyDeletionBlocked ||
+                    DailyRecordSyncScheduler.isDeletionBlocked(applicationContext, ownerId) -> {
+                    Result.success()
+                }
+                else -> {
+                    val coordinator = CombinedSyncCoordinator(
+                        handBrew = HandBrewSyncCoordinator(
+                            store = RoomHandBrewSyncStore(database),
+                            remote = services.remoteDataSource,
+                        ),
+                        sex = SexSyncCoordinator(
+                            store = RoomSexSyncStore(database),
+                            remote = services.sexRemoteDataSource,
+                        ),
+                    )
+                    val result = withTimeout(BACKGROUND_CLOUD_TIMEOUT_MILLIS) {
+                        DailyRecordSyncScheduler.withCloudWrite(
+                            context = applicationContext,
+                            ownerId = ownerId,
+                        ) {
+                            coordinator.syncOnce(ownerId)
+                        }
+                    }
+                    if (result.pending == 0) Result.success() else Result.retry()
                 }
             }
-            if (result.pending == 0) Result.success() else Result.retry()
         } catch (_: AccountDeletionInProgressException) {
             Result.success()
         } catch (_: TimeoutCancellationException) {

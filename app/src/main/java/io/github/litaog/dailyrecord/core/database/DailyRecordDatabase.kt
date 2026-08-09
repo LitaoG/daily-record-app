@@ -19,19 +19,23 @@ private const val HAND_BREW_LEGACY_ICON_KEY = "flight"
 @Database(
     entities = [
         HandBrewRecordEntity::class,
+        HandBrewRecordDetailEntity::class,
         SexRecordEntity::class,
+        SexRecordDetailEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
 internal abstract class DailyRecordDatabase : RoomDatabase() {
     abstract fun handBrewRecordDao(): HandBrewRecordDao
+    abstract fun handBrewRecordDetailDao(): HandBrewRecordDetailDao
     abstract fun sexRecordDao(): SexRecordDao
+    abstract fun sexRecordDetailDao(): SexRecordDetailDao
 
     companion object {
         const val DATABASE_NAME = "daily-record.db"
-        const val SCHEMA_VERSION = 4
+        const val SCHEMA_VERSION = 5
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -149,10 +153,72 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `hand_brew_record_details` (
+                        `id` TEXT NOT NULL,
+                        `local_date` TEXT NOT NULL,
+                        `owner_id` TEXT NOT NULL DEFAULT '__local__',
+                        `occurrence_index` INTEGER NOT NULL,
+                        `start_time` TEXT,
+                        `end_time` TEXT,
+                        `feeling` TEXT NOT NULL DEFAULT '',
+                        `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_hand_brew_record_details_owner_id_local_date_occurrence_index`
+                    ON `hand_brew_record_details` (`owner_id`, `local_date`, `occurrence_index`)
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_hand_brew_record_details_owner_id_local_date`
+                    ON `hand_brew_record_details` (`owner_id`, `local_date`)
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `sex_record_details` (
+                        `id` TEXT NOT NULL,
+                        `local_date` TEXT NOT NULL,
+                        `owner_id` TEXT NOT NULL DEFAULT '__local__',
+                        `occurrence_index` INTEGER NOT NULL,
+                        `start_time` TEXT,
+                        `end_time` TEXT,
+                        `feeling` TEXT NOT NULL DEFAULT '',
+                        `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_sex_record_details_owner_id_local_date_occurrence_index`
+                    ON `sex_record_details` (`owner_id`, `local_date`, `occurrence_index`)
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_sex_record_details_owner_id_local_date`
+                    ON `sex_record_details` (`owner_id`, `local_date`)
+                    """.trimIndent(),
+                )
+            }
+        }
+
         val MIGRATIONS: Array<Migration> = arrayOf(
             MIGRATION_1_2,
             MIGRATION_2_3,
             MIGRATION_3_4,
+            MIGRATION_4_5,
         )
 
         fun create(context: Context): DailyRecordDatabase = Room.databaseBuilder(

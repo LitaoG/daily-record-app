@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.github.litaog.dailyrecord.core.auth.AuthRepository
 import io.github.litaog.dailyrecord.core.auth.FirebaseAuthRepository
+import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.FirebaseHandBrewRemoteDataSource
 import io.github.litaog.dailyrecord.core.sync.FirebaseSexRemoteDataSource
 import io.github.litaog.dailyrecord.core.sync.HandBrewRemoteDataSource
@@ -27,6 +28,7 @@ internal data class FirebaseServices(
         fun create(
             context: Context,
             emulatorHost: String? = null,
+            database: DailyRecordDatabase? = null,
         ): FirebaseServices {
             var emulatorAppCreated = false
             val app = if (emulatorHost == null) {
@@ -44,8 +46,12 @@ internal data class FirebaseServices(
             }
             return FirebaseServices(
                 authRepository = FirebaseAuthRepository(auth),
-                remoteDataSource = FirebaseHandBrewRemoteDataSource(firestore),
-                sexRemoteDataSource = FirebaseSexRemoteDataSource(firestore),
+                remoteDataSource = FirebaseHandBrewRemoteDataSource(firestore) { ownerId, localDate ->
+                    database?.handBrewRecordDetailDao()?.getByDate(ownerId, localDate).orEmpty()
+                },
+                sexRemoteDataSource = FirebaseSexRemoteDataSource(firestore) { ownerId, localDate ->
+                    database?.sexRecordDetailDao()?.getByDate(ownerId, localDate).orEmpty()
+                },
                 productionConfigured = app.options.projectId != DEMO_PROJECT_ID,
                 currentUserId = { auth.currentUser?.uid },
             )

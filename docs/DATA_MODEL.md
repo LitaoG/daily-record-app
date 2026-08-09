@@ -67,6 +67,13 @@ moduleCount > 0 -> OCCURRED（已发生）
 4. 不推断或复制任何历史手冲行为为做爱记录。
 5. 自动化测试覆盖 v1→v4、v2→v4、v3→v4，禁止 destructive migration。
 
+## v4 → v5 迁移：逐次详情
+
+1. 非破坏地创建独立的 `hand_brew_record_details` 与 `sex_record_details` 表；v4 聚合次数和历史记录保持不变。
+2. 详情以 `owner_id + local_date + occurrence_index` 唯一定位，时间使用当天的 `LocalTime`（分钟精度），感受限制为 100 个可见 Unicode 字符。
+3. 现有记录不自动生成详情行；用户第一次展开详情后按当前次数生成空白草稿，空详情可以保存。
+4. v1→v5、v2→v5、v3→v5、v4→v5 都必须验证聚合记录、legacy 恢复表和两套详情表存在，禁止 destructive migration。
+
 ## Firestore 文档
 
-两个集合的文档 ID 都与 `localDate` 相同。手冲文档使用 `brewCount`，做爱文档使用 `sexCount`；其余字段为 `id`、`localDate`、`createdAtMillis`、`clientUpdatedAtMillis`、`deleted`、`revision`、`schemaVersion` 和服务器时间。规则分别强制所有权、字段白名单、非负次数、时间范围、不可变身份和修订号逐次加一。普通记录清除必须写墓碑；永久删除账号时，已登录本人可以物理删除自己路径下的全部文档。
+两个集合的文档 ID 都与 `localDate` 相同。手冲文档使用 `brewCount`，做爱文档使用 `sexCount`；其余字段为 `id`、`localDate`、`createdAtMillis`、`clientUpdatedAtMillis`、`deleted`、`revision`、`schemaVersion`、`details` 和服务器时间。`details` 是当前模块专用的逐次数组，包含 `id`、`occurrenceIndex`、可空的 `startTime`/`endTime` 与 `feeling`，不会混入另一个模块。规则分别强制所有权、字段白名单、非负次数、时间范围、不可变身份、100 个可见字符上限和修订号逐次加一。普通记录清除必须写墓碑并清除本地详情；永久删除账号时，已登录本人可以物理删除自己路径下的全部文档。

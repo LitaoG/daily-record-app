@@ -6,8 +6,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.Clock
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
@@ -213,6 +215,44 @@ class RoomHandBrewRecordRepositoryTest {
             date,
         )).isDeleted)
     }
+
+    @Test
+    fun detailsSaveAtomicallyAndCountOnlyEditsPruneRemovedOccurrences() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        repository.saveRecord(
+            record("with-details", date, 2),
+            listOf(
+                detail(date, 1, LocalTime.of(9, 20), LocalTime.of(9, 35), "平静"),
+                detail(date, 2, LocalTime.of(21, 40), LocalTime.of(21, 52), "更专注"),
+            ),
+        )
+
+        assertEquals(2, repository.observeDetails(date).first().size)
+        assertEquals("更专注", repository.observeDetails(date).first()[1].feeling)
+
+        repository.saveRecord(record("replacement", date, 1).copy(updatedAt = now.plusSeconds(1)))
+        assertEquals(listOf(1), repository.observeDetails(date).first().map { it.occurrenceIndex })
+
+        assertTrue(repository.clearRecord(date))
+        assertEquals(emptyList<HandBrewRecordDetail>(), repository.observeDetails(date).first())
+    }
+
+    private fun detail(
+        date: LocalDate,
+        occurrenceIndex: Int,
+        startTime: LocalTime,
+        endTime: LocalTime,
+        feeling: String,
+    ) = HandBrewRecordDetail(
+        id = "$date-$occurrenceIndex",
+        localDate = date,
+        occurrenceIndex = occurrenceIndex,
+        startTime = startTime,
+        endTime = endTime,
+        feeling = feeling,
+        createdAt = now,
+        updatedAt = now,
+    )
 
     private fun record(id: String, date: LocalDate, count: Int) = HandBrewRecord(
         id = id,
