@@ -86,14 +86,23 @@ class StatisticsPeriodCardsTest {
     }
 
     @Test
-    fun `reference labels occupy gaps and arcs precede their labels`() {
+    fun `weekday labels and their arcs share the same radial midpoint`() {
         repeat(7) { index ->
-            assertEquals((index - 1) * 360f / 7f, weekRingLabelAngleDegrees(index), 0.001f)
+            assertEquals(index * 360f / 7f, weekRingLabelAngleDegrees(index), 0.001f)
             assertEquals(
-                weekRingLabelAngleDegrees(index) - 360f / 14f - 90f,
+                weekRingLabelAngleDegrees(index) - 90f,
                 weekRingCanvasMidpointDegrees(index),
                 0.001f,
             )
+        }
+    }
+
+    @Test
+    fun `thursday keeps more clearance from its arc`() {
+        repeat(7) { index ->
+            val expectedGap = if (index == 3) 16f else 12f
+
+            assertEquals(expectedGap, weekRingLabelGapDp(index), 0.001f)
         }
     }
 
@@ -114,18 +123,18 @@ class StatisticsPeriodCardsTest {
             ringOuterRadius = 100f,
             labelHalfWidth = 34f,
             labelHalfHeight = 22f,
-            gap = 8f,
+            gap = weekRingLabelGapDp(0),
         )
         val side = weekRingLabelRadialDistance(
             angleDegrees = 90f,
             ringOuterRadius = 100f,
             labelHalfWidth = 34f,
             labelHalfHeight = 22f,
-            gap = 8f,
+            gap = weekRingLabelGapDp(1),
         )
 
-        assertEquals(130f, top, 0.001f)
-        assertEquals(142f, side, 0.001f)
+        assertEquals(134f, top, 0.001f)
+        assertEquals(146f, side, 0.001f)
         assertTrue(side > top)
     }
 

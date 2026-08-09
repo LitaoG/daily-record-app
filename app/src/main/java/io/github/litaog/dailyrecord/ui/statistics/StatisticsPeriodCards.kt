@@ -52,10 +52,9 @@ import kotlin.math.sin
 
 private const val WEEK_SEGMENT_COUNT = 7
 private const val WEEK_SEGMENT_GAP_DEGREES = 11f
-// The reference layout puts Monday in the upper-left gap and Tuesday at 12
-// o'clock. Labels are gap anchors; each day's arc is the segment immediately
-// before that day's label.
-private const val WEEK_LABEL_START_DEGREES = -51.42857f
+private const val WEEK_LABEL_START_DEGREES = 0f
+private const val WEEK_LABEL_GAP_DP = 12f
+private const val WEEK_THURSDAY_EXTRA_LABEL_GAP_DP = 4f
 // Canvas.drawArc uses 0° at 3 o'clock, so its equivalent is 90° clockwise.
 private const val WEEK_CANVAS_ANGLE_OFFSET_DEGREES = -90f
 
@@ -107,9 +106,11 @@ internal fun weekRingLabelAngleDegrees(index: Int): Float =
         index * weekSegmentSizeDegrees()
 
 internal fun weekRingCanvasMidpointDegrees(index: Int): Float =
-    weekRingLabelAngleDegrees(index) -
-        weekSegmentSizeDegrees() / 2f +
-        WEEK_CANVAS_ANGLE_OFFSET_DEGREES
+    weekRingLabelAngleDegrees(index) + WEEK_CANVAS_ANGLE_OFFSET_DEGREES
+
+internal fun weekRingLabelGapDp(index: Int): Float =
+    WEEK_LABEL_GAP_DP +
+        if (index == 3) WEEK_THURSDAY_EXTRA_LABEL_GAP_DP else 0f
 
 internal fun weekRingLabelRadialDistance(
     angleDegrees: Float,
@@ -179,7 +180,7 @@ private fun WeekRingChart(
     recordedDays: Int,
     colors: RecordModuleColorTokens,
 ) {
-    val chartHeight = 292.dp
+    val chartHeight = 304.dp
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
@@ -189,7 +190,6 @@ private fun WeekRingChart(
         val centerY = chartHeight / 2
         val labelWidth = 68.dp
         val labelHeight = 44.dp
-        val labelGap = 8.dp
         val radius = minOf(maxWidth * .28f, 84.dp)
         val centerX = maxWidth / 2
         val positiveStroke = 16.dp
@@ -280,8 +280,7 @@ private fun WeekRingChart(
                 ringOuterRadius = ringOuterRadius.value,
                 labelHalfWidth = (labelWidth / 2).value,
                 labelHalfHeight = (labelHeight / 2).value,
-                gap = labelGap.value +
-                    if (segmentIndex == 3) 8.dp.value else 0.dp.value,
+                gap = weekRingLabelGapDp(segmentIndex),
             ).dp
             val horizontalLimit = if (angleSin > .001f) {
                 ((maxWidth / 2 - labelWidth / 2).value / angleSin).dp
