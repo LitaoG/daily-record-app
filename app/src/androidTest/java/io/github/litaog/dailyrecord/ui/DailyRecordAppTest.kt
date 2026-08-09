@@ -183,7 +183,9 @@ class DailyRecordAppTest {
         composeRule
             .onNodeWithContentDescription("选择统计范围，当前2025年")
             .performClick()
-        composeRule.onNodeWithText("直接选择年份").assertIsDisplayed()
+        composeRule.onAllNodesWithText("直接选择年份").assertCountEquals(0)
+        composeRule.onAllNodesWithText("上下滑动选择年份").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("返回日期选择").assertCountEquals(0)
         composeRule.onNodeWithText("选择年份").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("选择2024年").performClick()
         composeRule.onNodeWithText("跳转到此年").performClick()

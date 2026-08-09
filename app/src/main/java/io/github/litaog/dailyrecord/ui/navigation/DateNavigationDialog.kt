@@ -103,7 +103,7 @@ internal fun DateNavigationDialog(
         subtitle = when (selection) {
             DateNavigationSelection.Date -> AppCopy.Navigation.dateWheelSubtitle
             DateNavigationSelection.Month -> AppCopy.Navigation.monthSubtitle
-            DateNavigationSelection.Year -> AppCopy.Navigation.yearSubtitle
+            DateNavigationSelection.Year -> null
         },
         testTag = "date_navigation_dialog",
         onDismissRequest = onDismiss,
@@ -150,7 +150,6 @@ internal fun DateNavigationDialog(
                         minOf(selectedDate.dayOfMonth, YearMonth.of(year, month).lengthOfMonth()),
                     ).coerceIn(earliestDate, latestDate)
                 },
-                onBack = onDismiss,
             )
         }
 
@@ -622,7 +621,6 @@ private fun YearWheelPicker(
     years: List<Int>,
     colors: RecordModuleColorTokens,
     onYearSelected: (Int) -> Unit,
-    onBack: () -> Unit,
 ) {
     val firstYear = years.firstOrNull() ?: selectedYear
     val lastYear = years.lastOrNull() ?: selectedYear
@@ -634,32 +632,6 @@ private fun YearWheelPicker(
         // An animated first scroll can briefly expose only the selected row, making the
         // adjacent years impossible to discover through TalkBack or UI tests.
         listState.scrollToItem((visibleYears.indexOf(selectedYear) - 2).coerceAtLeast(0))
-    }
-
-    Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(role = Role.Button, onClick = onBack)
-                .semantics {
-                    role = Role.Button
-                    contentDescription = AppCopy.Navigation.returnToDatePicker
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            ChevronIcon(forward = false)
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                AppCopy.Navigation.yearScrollHint,
-                color = DailyRecordTextMuted,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
     }
 
     Box(
@@ -745,7 +717,6 @@ private fun MonthSelectionPicker(
                 onMonthSelected(candidate)
                 showYears = false
             },
-            onBack = { showYears = false },
         )
         return
     }
