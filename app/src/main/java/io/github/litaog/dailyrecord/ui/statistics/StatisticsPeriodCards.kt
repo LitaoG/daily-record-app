@@ -54,7 +54,6 @@ private const val WEEK_SEGMENT_COUNT = 7
 private const val WEEK_SEGMENT_GAP_DEGREES = 11f
 private const val WEEK_LABEL_START_DEGREES = 0f
 private const val WEEK_LABEL_GAP_DP = 12f
-private const val WEEK_THURSDAY_EXTRA_LABEL_GAP_DP = 4f
 // Canvas.drawArc uses 0° at 3 o'clock, so its equivalent is 90° clockwise.
 private const val WEEK_CANVAS_ANGLE_OFFSET_DEGREES = -90f
 
@@ -108,9 +107,15 @@ internal fun weekRingLabelAngleDegrees(index: Int): Float =
 internal fun weekRingCanvasMidpointDegrees(index: Int): Float =
     weekRingLabelAngleDegrees(index) + WEEK_CANVAS_ANGLE_OFFSET_DEGREES
 
-internal fun weekRingLabelGapDp(index: Int): Float =
-    WEEK_LABEL_GAP_DP +
-        if (index == 3) WEEK_THURSDAY_EXTRA_LABEL_GAP_DP else 0f
+private fun weekRingLabelRadialSupport(
+    angleDegrees: Float,
+    labelHalfWidth: Float,
+    labelHalfHeight: Float,
+): Float {
+    val angle = Math.toRadians(angleDegrees.toDouble())
+    return labelHalfWidth * abs(sin(angle).toFloat()) +
+        labelHalfHeight * abs(cos(angle).toFloat())
+}
 
 internal fun weekRingLabelRadialDistance(
     angleDegrees: Float,
@@ -119,10 +124,46 @@ internal fun weekRingLabelRadialDistance(
     labelHalfHeight: Float,
     gap: Float,
 ): Float {
-    val angle = Math.toRadians(angleDegrees.toDouble())
-    val horizontalSupport = labelHalfWidth * abs(sin(angle).toFloat())
-    val verticalSupport = labelHalfHeight * abs(cos(angle).toFloat())
-    return ringOuterRadius + horizontalSupport + verticalSupport + gap
+    return ringOuterRadius +
+        weekRingLabelRadialSupport(angleDegrees, labelHalfWidth, labelHalfHeight) +
+        gap
+}
+
+internal fun weekRingSharedLabelGapDp(
+    ringOuterRadius: Float,
+    labelHalfWidth: Float,
+    labelHalfHeight: Float,
+    availableHalfWidth: Float,
+    availableHalfHeight: Float,
+    preferredGap: Float,
+): Float {
+    var sharedGap = preferredGap
+    repeat(WEEK_SEGMENT_COUNT) { index ->
+        val angleDegrees = weekRingLabelAngleDegrees(index)
+        val angle = Math.toRadians(angleDegrees.toDouble())
+        val angleSin = abs(sin(angle).toFloat())
+        val angleCos = abs(cos(angle).toFloat())
+        val horizontalLimit = if (angleSin > .001f) {
+            availableHalfWidth / angleSin
+        } else {
+            Float.POSITIVE_INFINITY
+        }
+        val verticalLimit = if (angleCos > .001f) {
+            availableHalfHeight / angleCos
+        } else {
+            Float.POSITIVE_INFINITY
+        }
+        val maximumRadius = minOf(horizontalLimit, verticalLimit)
+        val zeroGapRadius = weekRingLabelRadialDistance(
+            angleDegrees = angleDegrees,
+            ringOuterRadius = ringOuterRadius,
+            labelHalfWidth = labelHalfWidth,
+            labelHalfHeight = labelHalfHeight,
+            gap = 0f,
+        )
+        sharedGap = minOf(sharedGap, maximumRadius - zeroGapRadius)
+    }
+    return sharedGap.coerceAtLeast(0f)
 }
 
 /**
@@ -194,6 +235,18 @@ private fun WeekRingChart(
         val centerX = maxWidth / 2
         val positiveStroke = 16.dp
         val ringOuterRadius = radius + positiveStroke / 2
+        // Wednesday and Saturday are the tightest labels on narrow screens.
+        // Reuse their resolved clearance for every weekday so the labels sit
+        // on one visually consistent outer ring instead of being clamped one
+        // by one at different distances.
+        val sharedLabelGap = weekRingSharedLabelGapDp(
+            ringOuterRadius = ringOuterRadius.value,
+            labelHalfWidth = (labelWidth / 2).value,
+            labelHalfHeight = (labelHeight / 2).value,
+            availableHalfWidth = (maxWidth / 2 - labelWidth / 2).value,
+            availableHalfHeight = (chartHeight / 2 - labelHeight / 2).value,
+            preferredGap = WEEK_LABEL_GAP_DP,
+        )
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             val center = Offset(x = size.width / 2f, y = centerY.toPx())
@@ -280,7 +333,7 @@ private fun WeekRingChart(
                 ringOuterRadius = ringOuterRadius.value,
                 labelHalfWidth = (labelWidth / 2).value,
                 labelHalfHeight = (labelHeight / 2).value,
-                gap = weekRingLabelGapDp(segmentIndex),
+                gap = sharedLabelGap,
             ).dp
             val horizontalLimit = if (angleSin > .001f) {
                 ((maxWidth / 2 - labelWidth / 2).value / angleSin).dp
