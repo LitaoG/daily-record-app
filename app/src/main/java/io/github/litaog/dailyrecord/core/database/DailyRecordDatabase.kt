@@ -7,7 +7,15 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import io.github.litaog.dailyrecord.core.common.AppCopy
+
+/**
+ * Frozen historical value: the v1 hand-brew activity was identified by this
+ * Chinese name in released data. Migration SQL must never interpolate the
+ * user-facing copy constant, otherwise a future wording change would silently
+ * stop matching rows and lose v1 hand-brew records. The escaped literal keeps
+ * this data value out of the production-copy scan while staying frozen.
+ */
+private const val HAND_BREW_LEGACY_NAME = "\u624b\u51b2"
 
 @Database(
     entities = [
@@ -54,7 +62,7 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
                     INNER JOIN `activities` a
                         ON a.`owner_id` = r.`owner_id` AND a.`id` = r.`activity_id`
                     WHERE r.`deleted_at` IS NULL
-                      AND (a.`name` = '${AppCopy.RecordModule.handBrewLabel}' OR a.`icon_key` = 'flight')
+                      AND (a.`name` = '$HAND_BREW_LEGACY_NAME' OR a.`icon_key` = 'flight')
                     GROUP BY r.`local_date`
                     """.trimIndent(),
                 )

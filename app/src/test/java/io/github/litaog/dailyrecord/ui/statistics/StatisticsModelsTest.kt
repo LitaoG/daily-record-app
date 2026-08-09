@@ -323,6 +323,39 @@ class StatisticsModelsTest {
     }
 
     @Test
+    fun quarterSlicesAssignMonthsToTheCorrectCalendarQuarter() {
+        val today = LocalDate.of(2026, 12, 31)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2026, 12, 31),
+            today = today,
+            records = listOf(
+                // Q1: 1-3月; Q2: 4-6月; Q3: 7-9月; Q4: 10-12月.
+                record(LocalDate.of(2026, 1, 3), 1),
+                record(LocalDate.of(2026, 2, 3), 2),
+                record(LocalDate.of(2026, 3, 3), 3),
+                record(LocalDate.of(2026, 4, 3), 4),
+                record(LocalDate.of(2026, 5, 3), 5),
+                record(LocalDate.of(2026, 6, 3), 6),
+                record(LocalDate.of(2026, 7, 3), 7),
+                record(LocalDate.of(2026, 8, 3), 8),
+                record(LocalDate.of(2026, 9, 3), 9),
+                record(LocalDate.of(2026, 10, 3), 10),
+                record(LocalDate.of(2026, 11, 3), 11),
+                record(LocalDate.of(2026, 12, 3), 12),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        // Distinct per-quarter totals make any Q1/Q2 mis-slicing detectable
+        // instead of being hidden by the sum-only identity.
+        assertEquals(listOf(1, 2, 3, 4), year.quarters.map { it.quarter })
+        assertEquals(listOf(6L, 15L, 24L, 33L), year.quarters.map { it.totalCount })
+        assertEquals(78L, year.quarters.sumOf { it.totalCount })
+        assertEquals(78L, year.months.sumOf { it.count ?: 0L })
+    }
+
+    @Test
     fun completedDecemberParticipatesInExtremaAtTheYearBoundary() {
         val today = LocalDate.of(2027, 1, 1)
         val model = buildStatistics(
