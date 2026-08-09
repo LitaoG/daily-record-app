@@ -10,6 +10,7 @@
 - [界面与交互](../UI_UX.md)
 - [统计口径](../STATISTICS.md)
 - [UI v2 分阶段执行计划](QUIET_PRIVATE_JOURNAL_GOALS.md)
+- [同步、隐私与统计一致性加固 Goal（待审阅）](GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
 - [已确认的 UI v2 设计基线与三张高保真图](design/quiet-private-journal-v2/README.md)
 - [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
 - [明亮渐变玻璃主题 Goal 与当前契约](BRIGHT_GLASS_THEME.md)
