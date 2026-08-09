@@ -62,7 +62,7 @@
 
 - Kotlin、Jetpack Compose、Material 3
 - Coroutines、Flow、单向数据流
-- Room v4、WorkManager
+- Room v5、WorkManager
 - Firebase Authentication、Cloud Firestore
 - `minSdk 26`、`targetSdk 36`
 - Apache License 2.0

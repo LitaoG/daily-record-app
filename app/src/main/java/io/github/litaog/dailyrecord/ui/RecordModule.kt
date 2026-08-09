@@ -9,7 +9,9 @@ import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.model.DailyCountRecord
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
 import io.github.litaog.dailyrecord.core.model.SexRecord
+import io.github.litaog.dailyrecord.core.model.SexRecordDetail
 import io.github.litaog.dailyrecord.ui.components.IntimacyIcon
 import io.github.litaog.dailyrecord.ui.components.PlaneIcon
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -17,6 +19,7 @@ import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -74,6 +77,17 @@ internal data class DailyCountEntry(
     }
 }
 
+internal data class RecordDetailEntry(
+    val occurrenceIndex: Int,
+    val startTime: LocalTime? = null,
+    val endTime: LocalTime? = null,
+    val feeling: String = "",
+) {
+    init {
+        require(occurrenceIndex >= 1) { "Detail occurrence index must be positive." }
+    }
+}
+
 internal interface RecordModuleController {
     val module: RecordModule
 
@@ -85,6 +99,14 @@ internal interface RecordModuleController {
     ): Flow<List<DailyCountEntry>>
 
     suspend fun saveRecord(localDate: LocalDate, count: Int)
+
+    fun observeDetails(localDate: LocalDate): Flow<List<RecordDetailEntry>>
+
+    suspend fun saveRecord(
+        localDate: LocalDate,
+        count: Int,
+        details: List<RecordDetailEntry>,
+    )
 
     suspend fun clearRecord(localDate: LocalDate): Boolean
 }
@@ -105,20 +127,52 @@ internal abstract class RepositoryRecordModuleController<T : DailyCountRecord>(
         }
 
     final override suspend fun saveRecord(localDate: LocalDate, count: Int) {
+        saveRecordInternal(localDate, count, details = null)
+    }
+
+    final override fun observeDetails(localDate: LocalDate): Flow<List<RecordDetailEntry>> =
+        observeModuleDetails(localDate)
+
+    final override suspend fun saveRecord(
+        localDate: LocalDate,
+        count: Int,
+        details: List<RecordDetailEntry>,
+    ) {
+        saveRecordInternal(localDate, count, details)
+    }
+
+    private suspend fun saveRecordInternal(
+        localDate: LocalDate,
+        count: Int,
+        details: List<RecordDetailEntry>?,
+    ) {
         val existing = repository.observeRecord(localDate).firstValue()
         val now = Instant.now()
         val safeUpdatedAt = existing?.updatedAt
             ?.plusMillis(1)
             ?.takeIf { it.isAfter(now) }
             ?: now
-        repository.saveRecord(createRecord(
+        val record = createRecord(
             existing = existing,
             localDate = localDate,
             count = count,
             createdAt = existing?.createdAt ?: now,
             updatedAt = safeUpdatedAt,
-        ))
+        )
+        if (details == null) {
+            repository.saveRecord(record)
+        } else {
+            saveRecordWithDetails(record, localDate, details)
+        }
     }
+
+    protected abstract fun observeModuleDetails(localDate: LocalDate): Flow<List<RecordDetailEntry>>
+
+    protected abstract suspend fun saveRecordWithDetails(
+        record: T,
+        localDate: LocalDate,
+        details: List<RecordDetailEntry>,
+    )
 
     protected abstract fun createRecord(
         existing: T?,
@@ -133,11 +187,41 @@ internal abstract class RepositoryRecordModuleController<T : DailyCountRecord>(
 }
 
 internal class HandBrewModuleController(
-    repository: HandBrewRecordRepository,
+    private val handBrewRepository: HandBrewRecordRepository,
 ) : RepositoryRecordModuleController<HandBrewRecord>(
     module = RecordModule.HandBrew,
-    repository = repository,
+    repository = handBrewRepository,
 ) {
+    override fun observeModuleDetails(localDate: LocalDate): Flow<List<RecordDetailEntry>> =
+        handBrewRepository.observeDetails(localDate).map { details ->
+            details.map {
+                RecordDetailEntry(it.occurrenceIndex, it.startTime, it.endTime, it.feeling)
+            }
+        }
+
+    override suspend fun saveRecordWithDetails(
+        record: HandBrewRecord,
+        localDate: LocalDate,
+        details: List<RecordDetailEntry>,
+    ) {
+        val now = Instant.now()
+        handBrewRepository.saveRecord(
+            record,
+            details.map {
+                HandBrewRecordDetail(
+                    id = UUID.randomUUID().toString(),
+                    localDate = localDate,
+                    occurrenceIndex = it.occurrenceIndex,
+                    startTime = it.startTime,
+                    endTime = it.endTime,
+                    feeling = it.feeling,
+                    createdAt = now,
+                    updatedAt = now,
+                )
+            },
+        )
+    }
+
     override fun createRecord(
         existing: HandBrewRecord?,
         localDate: LocalDate,
@@ -154,11 +238,41 @@ internal class HandBrewModuleController(
 }
 
 internal class SexModuleController(
-    repository: SexRecordRepository,
+    private val sexRepository: SexRecordRepository,
 ) : RepositoryRecordModuleController<SexRecord>(
     module = RecordModule.Sex,
-    repository = repository,
+    repository = sexRepository,
 ) {
+    override fun observeModuleDetails(localDate: LocalDate): Flow<List<RecordDetailEntry>> =
+        sexRepository.observeDetails(localDate).map { details ->
+            details.map {
+                RecordDetailEntry(it.occurrenceIndex, it.startTime, it.endTime, it.feeling)
+            }
+        }
+
+    override suspend fun saveRecordWithDetails(
+        record: SexRecord,
+        localDate: LocalDate,
+        details: List<RecordDetailEntry>,
+    ) {
+        val now = Instant.now()
+        sexRepository.saveRecord(
+            record,
+            details.map {
+                SexRecordDetail(
+                    id = UUID.randomUUID().toString(),
+                    localDate = localDate,
+                    occurrenceIndex = it.occurrenceIndex,
+                    startTime = it.startTime,
+                    endTime = it.endTime,
+                    feeling = it.feeling,
+                    createdAt = now,
+                    updatedAt = now,
+                )
+            },
+        )
+    }
+
     override fun createRecord(
         existing: SexRecord?,
         localDate: LocalDate,

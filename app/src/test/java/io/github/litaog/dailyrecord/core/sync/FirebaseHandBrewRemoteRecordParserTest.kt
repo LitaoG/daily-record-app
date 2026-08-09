@@ -80,6 +80,47 @@ class FirebaseHandBrewRemoteRecordParserTest {
         assertEquals(2, parsed.rejectedRecordCount)
     }
 
+    @Test
+    fun parsesOptionalDetailsAndAcceptsNumericOccurrenceIndexes() {
+        val record = parseRemoteHandBrewRecord(
+            documentId = DATE,
+            values = validValues() + (
+                "details" to listOf(
+                    mapOf(
+                        "id" to "detail-id",
+                        "occurrenceIndex" to 1,
+                        "startTime" to "22:30",
+                        "endTime" to "22:45",
+                        "feeling" to "平静",
+                    ),
+                )
+            ),
+        )
+
+        assertEquals(1, record.details.single().occurrenceIndex)
+        assertEquals("平静", record.details.single().feeling)
+    }
+
+    @Test
+    fun rejectsDetailsWithMoreThanOneHundredVisibleCharacters() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteHandBrewRecord(
+                documentId = DATE,
+                values = validValues() + (
+                    "details" to listOf(
+                        mapOf(
+                            "id" to "detail-id",
+                            "occurrenceIndex" to 1L,
+                            "startTime" to null,
+                            "endTime" to null,
+                            "feeling" to "字".repeat(101),
+                        ),
+                    )
+                ),
+            )
+        }
+    }
+
     private fun validValues(
         createdAtMillis: Long = 1,
         updatedAtMillis: Long = createdAtMillis,

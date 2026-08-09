@@ -288,6 +288,28 @@ internal object AppCopy {
         const val clear = "清除记录"
         const val clearFailure = "清除失败，请重试"
         const val countOnly = "只记录次数"
+        const val countFirst = "先记录次数"
+        const val countAndDetails = "记录次数与每次详情"
+        const val detailEntry = "记录时间和感受"
+        const val detailEntryHintFormat = "为这 %d 次补充详情"
+        const val detailSectionTitle = "本次详情"
+        const val detailSectionHint = "每增加 1 次，自动新增一条"
+        const val detailCollapse = "收起详情"
+        const val detailExpand = "展开详情"
+        const val detailOccurrenceFormat = "第 %d 次"
+        const val detailStartTime = "开始"
+        const val detailEndTime = "结束"
+        const val detailTimeUnset = "选择时间"
+        const val detailWriteFeeling = "写感受"
+        const val detailEditFeeling = "编辑感受"
+        const val detailCollapseFeeling = "收起"
+        const val detailFeelingLabel = "感受（可选）"
+        const val detailFeelingHint = "写下这一刻的感受"
+        const val detailFeelingCounter = "%d / 100"
+        const val detailEndBeforeStart = "结束时间不能早于开始时间"
+        const val detailDiscardTitle = "移除这次详情？"
+        const val detailDiscardMessage = "这次已填写的时间或感受会一起移除。"
+        const val detailConfirmRemove = "移除详情"
         const val loadingRecords = "正在读取记录…"
         const val futureUnavailable = "未来日期，不能记录"
         const val notSaved = "尚未填写"
@@ -297,8 +319,8 @@ internal object AppCopy {
         const val clearMessage = "清除后会恢复为“未填写”，不会计入统计。"
         const val confirmClear = "确认清除"
         const val discardTitle = "放弃未保存的修改？"
-        const val unsavedSubtitle = "当前次数尚未保存"
-        const val discardMessage = "返回日历后，这次修改会丢失。"
+        const val unsavedSubtitle = "当前次数或详情尚未保存"
+        const val discardMessage = "返回日历后，这次次数或详情修改会丢失。"
         const val continueEditing = "继续编辑"
         const val discard = "放弃修改"
         const val backToCalendar = "返回日历"
@@ -310,6 +332,9 @@ internal object AppCopy {
         fun moduleRecordLabel(moduleLabel: String): String = "${moduleLabel}记录"
         fun dateLabel(date: LocalDate, weekday: String): String =
             "${date.monthValue}月${date.dayOfMonth}日 · $weekday"
+        fun detailEntryHint(count: Int): String = detailEntryHintFormat.format(count)
+        fun detailOccurrence(index: Int): String = detailOccurrenceFormat.format(index)
+        fun detailFeelingCounter(count: Int): String = detailFeelingCounter.format(count)
     }
 
     object Statistics {

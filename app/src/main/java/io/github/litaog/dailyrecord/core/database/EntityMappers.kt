@@ -1,7 +1,10 @@
 package io.github.litaog.dailyrecord.core.database
 
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
 import io.github.litaog.dailyrecord.core.model.SexRecord
+import io.github.litaog.dailyrecord.core.model.SexRecordDetail
+import java.time.Instant
 
 internal fun HandBrewRecordEntity.asExternalModel(): HandBrewRecord = HandBrewRecord(
     id = id,
@@ -49,4 +52,58 @@ internal fun SexRecord.asEntity(
     isDeleted = false,
     syncState = syncState,
     remoteRevision = remoteRevision,
+)
+
+internal fun HandBrewRecordDetailEntity.asExternalModel(): HandBrewRecordDetail = HandBrewRecordDetail(
+    id = id,
+    localDate = localDate,
+    occurrenceIndex = occurrenceIndex,
+    startTime = startTime,
+    endTime = endTime,
+    feeling = feeling,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+)
+
+internal fun HandBrewRecordDetail.asEntity(
+    ownerId: String = LOCAL_OWNER_ID,
+    createdAt: Instant = this.createdAt,
+    updatedAt: Instant = this.updatedAt,
+): HandBrewRecordDetailEntity = HandBrewRecordDetailEntity(
+    id = id,
+    localDate = localDate,
+    ownerId = ownerId,
+    occurrenceIndex = occurrenceIndex,
+    startTime = startTime,
+    endTime = endTime,
+    feeling = feeling,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+)
+
+internal fun SexRecordDetailEntity.asExternalModel(): SexRecordDetail = SexRecordDetail(
+    id = id,
+    localDate = localDate,
+    occurrenceIndex = occurrenceIndex,
+    startTime = startTime,
+    endTime = endTime,
+    feeling = feeling,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+)
+
+internal fun SexRecordDetail.asEntity(
+    ownerId: String = LOCAL_OWNER_ID,
+    createdAt: Instant = this.createdAt,
+    updatedAt: Instant = this.updatedAt,
+): SexRecordDetailEntity = SexRecordDetailEntity(
+    id = id,
+    localDate = localDate,
+    ownerId = ownerId,
+    occurrenceIndex = occurrenceIndex,
+    startTime = startTime,
+    endTime = endTime,
+    feeling = feeling,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
 )

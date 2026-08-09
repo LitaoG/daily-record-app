@@ -528,11 +528,12 @@ fun DailyCountControl(
     onIncrease: () -> Unit,
     modifier: Modifier = Modifier,
     colors: RecordModuleColorTokens = HandBrewColorTokens,
+    compact: Boolean = false,
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 132.dp)
+            .heightIn(min = if (compact) 108.dp else 132.dp)
             .dailyRecordGlass(
                 shape = RoundedCornerShape(18.dp),
                 moduleColors = colors,
