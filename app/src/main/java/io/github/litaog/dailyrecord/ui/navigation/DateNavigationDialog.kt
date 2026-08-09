@@ -274,7 +274,7 @@ private fun DateWheelPicker(
             DateWheelColumn(
                 values = years,
                 selectedValue = selectedDate.year,
-                label = "年",
+                label = AppCopy.Navigation.yearUnit,
                 valueLabel = AppCopy.Navigation::yearTitle,
                 optionEnabled = { true },
                 onValueSelected = { year ->
@@ -294,7 +294,7 @@ private fun DateWheelPicker(
             DateWheelColumn(
                 values = months,
                 selectedValue = selectedDate.monthValue,
-                label = "月",
+                label = AppCopy.Navigation.monthUnit,
                 valueLabel = AppCopy.Navigation::monthLabel,
                 optionEnabled = { month ->
                     YearMonth.of(selectedDate.year, month) in
@@ -317,8 +317,8 @@ private fun DateWheelPicker(
             DateWheelColumn(
                 values = days,
                 selectedValue = selectedDate.dayOfMonth,
-                label = "日",
-                valueLabel = { day -> "${day}日" },
+                label = AppCopy.Navigation.dayUnit,
+                valueLabel = AppCopy.Navigation::dayLabel,
                 optionEnabled = { day ->
                     LocalDate.of(selectedDate.year, selectedDate.monthValue, day) in earliestDate..latestDate
                 },

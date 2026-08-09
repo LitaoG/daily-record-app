@@ -254,6 +254,9 @@ internal object AppCopy {
         const val selectMonth = "选择月份"
         const val yearScrollHint = "上下滑动选择年份"
         const val dateWheelHint = "上下滑动调整日期"
+        const val yearUnit = "年"
+        const val monthUnit = "月"
+        const val dayUnit = "日"
         private val monthNames = listOf(
             "一月", "二月", "三月", "四月", "五月", "六月",
             "七月", "八月", "九月", "十月", "十一月", "十二月",
@@ -271,6 +274,7 @@ internal object AppCopy {
         fun yearTitle(year: Int): String = "${year}年"
         fun monthTitle(month: YearMonth): String = "${month.year}年 ${month.monthValue}月"
         fun monthLabel(month: Int): String = monthNames.getOrElse(month - 1) { "${month}月" }
+        fun dayLabel(day: Int): String = "${day}日"
         fun monthDescription(month: YearMonth): String = "选择${month.year}年${month.monthValue}月"
     }
 
