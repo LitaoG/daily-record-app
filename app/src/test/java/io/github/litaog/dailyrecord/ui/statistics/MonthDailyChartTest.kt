@@ -28,6 +28,21 @@ class MonthDailyChartTest {
     }
 
     @Test
+    fun positiveNonAnchorDaysGetABaselineDotWithoutChangingOtherStates() {
+        val month = monthStatistics(
+            DailyCountEntry(LocalDate.of(2026, 7, 3), 1),
+            DailyCountEntry(LocalDate.of(2026, 7, 5), 2),
+            DailyCountEntry(LocalDate.of(2026, 7, 8), 0),
+        )
+        val tickDays = monthDailyChartTickDays(month.days.size)
+
+        assertEquals(true, monthDailyChartNeedsNonAnchorBaselineDot(month.days[2], 3, tickDays))
+        assertEquals(false, monthDailyChartNeedsNonAnchorBaselineDot(month.days[4], 5, tickDays))
+        assertEquals(false, monthDailyChartNeedsNonAnchorBaselineDot(month.days[7], 8, tickDays))
+        assertEquals(false, monthDailyChartNeedsNonAnchorBaselineDot(month.days[3], 4, tickDays))
+    }
+
+    @Test
     fun scaleUsesReadableTicksAboveLargestDailyCount() {
         val month = monthStatistics(
             DailyCountEntry(LocalDate.of(2026, 7, 3), 2),
