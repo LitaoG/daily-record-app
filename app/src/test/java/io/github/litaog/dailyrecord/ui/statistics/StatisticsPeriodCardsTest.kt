@@ -7,6 +7,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 class StatisticsPeriodCardsTest {
     @Test
@@ -86,6 +89,38 @@ class StatisticsPeriodCardsTest {
     }
 
     @Test
+    fun `zero and unrecorded legend markers are hollow while future stays filled`() {
+        assertEquals(
+            WeekRingLegendMarkerStyle.HollowPrimary,
+            weekRingLegendMarkerStyle(WeekRingState.ExplicitZero),
+        )
+        assertEquals(
+            WeekRingLegendMarkerStyle.HollowNeutral,
+            weekRingLegendMarkerStyle(WeekRingState.Unrecorded),
+        )
+        assertEquals(
+            WeekRingLegendMarkerStyle.Filled,
+            weekRingLegendMarkerStyle(WeekRingState.Future),
+        )
+        assertEquals(
+            WeekRingLegendMarkerStyle.Filled,
+            weekRingLegendMarkerStyle(WeekRingState.Positive),
+        )
+    }
+
+    @Test
+    fun `weekly recorded day count ignores explicit zero and unfilled days`() {
+        val details = listOf(
+            StatisticsDetail("周一 3日", count = 0L, days = 0, recorded = true),
+            StatisticsDetail("周二 4日", count = 1L, days = 1, recorded = true),
+            StatisticsDetail("周三 5日", count = null, days = null, recorded = false),
+            StatisticsDetail("周四 6日", count = null, days = null, future = true, recorded = false),
+        )
+
+        assertEquals(1, weekRingPositiveDayCount(details))
+    }
+
+    @Test
     fun `weekday labels and their arcs share the same radial midpoint`() {
         repeat(7) { index ->
             assertEquals(index * 360f / 7f, weekRingLabelAngleDegrees(index), 0.001f)
@@ -98,12 +133,74 @@ class StatisticsPeriodCardsTest {
     }
 
     @Test
-    fun `thursday keeps more clearance from its arc`() {
-        repeat(7) { index ->
-            val expectedGap = if (index == 3) 16f else 12f
+    fun `all weekday labels reuse the side constrained clearance`() {
+        val sharedGap = weekRingSharedLabelGapDp(
+            ringOuterRadius = 92f,
+            labelHalfWidth = 34f,
+            labelHalfHeight = 22f,
+            availableHalfWidth = 128f,
+            availableHalfHeight = 130f,
+            preferredGap = 12f,
+        )
+        val wednesdayAngle = weekRingLabelAngleDegrees(2)
+        val angle = Math.toRadians(wednesdayAngle.toDouble())
+        val wednesdayHorizontalLimit = 128f / abs(sin(angle).toFloat())
+        val wednesdayZeroGapRadius = weekRingLabelRadialDistance(
+            angleDegrees = wednesdayAngle,
+            ringOuterRadius = 92f,
+            labelHalfWidth = 34f,
+            labelHalfHeight = 22f,
+            gap = 0f,
+        )
 
-            assertEquals(expectedGap, weekRingLabelGapDp(index), 0.001f)
+        assertEquals(
+            (wednesdayHorizontalLimit - wednesdayZeroGapRadius).coerceAtLeast(0f),
+            sharedGap,
+            0.001f,
+        )
+        assertTrue(sharedGap < 12f)
+
+        repeat(7) { index ->
+            val angleDegrees = weekRingLabelAngleDegrees(index)
+            val labelAngle = Math.toRadians(angleDegrees.toDouble())
+            val angleSin = abs(sin(labelAngle).toFloat())
+            val angleCos = abs(cos(labelAngle).toFloat())
+            val horizontalLimit = if (angleSin > .001f) 128f / angleSin else Float.POSITIVE_INFINITY
+            val verticalLimit = if (angleCos > .001f) 130f / angleCos else Float.POSITIVE_INFINITY
+            val zeroGapRadius = weekRingLabelRadialDistance(
+                angleDegrees = angleDegrees,
+                ringOuterRadius = 92f,
+                labelHalfWidth = 34f,
+                labelHalfHeight = 22f,
+                gap = 0f,
+            )
+            val resolvedRadius = minOf(
+                weekRingLabelRadialDistance(
+                    angleDegrees = angleDegrees,
+                    ringOuterRadius = 92f,
+                    labelHalfWidth = 34f,
+                    labelHalfHeight = 22f,
+                    gap = sharedGap,
+                ),
+                horizontalLimit,
+                verticalLimit,
+            )
+
+            assertEquals("weekday index $index", sharedGap, resolvedRadius - zeroGapRadius, 0.001f)
         }
+
+        assertEquals(
+            12f,
+            weekRingSharedLabelGapDp(
+                ringOuterRadius = 92f,
+                labelHalfWidth = 34f,
+                labelHalfHeight = 22f,
+                availableHalfWidth = 200f,
+                availableHalfHeight = 200f,
+                preferredGap = 12f,
+            ),
+            0.001f,
+        )
     }
 
     @Test
@@ -123,18 +220,18 @@ class StatisticsPeriodCardsTest {
             ringOuterRadius = 100f,
             labelHalfWidth = 34f,
             labelHalfHeight = 22f,
-            gap = weekRingLabelGapDp(0),
+            gap = 0f,
         )
         val side = weekRingLabelRadialDistance(
             angleDegrees = 90f,
             ringOuterRadius = 100f,
             labelHalfWidth = 34f,
             labelHalfHeight = 22f,
-            gap = weekRingLabelGapDp(1),
+            gap = 0f,
         )
 
-        assertEquals(134f, top, 0.001f)
-        assertEquals(146f, side, 0.001f)
+        assertEquals(122f, top, 0.001f)
+        assertEquals(134f, side, 0.001f)
         assertTrue(side > top)
     }
 
@@ -155,7 +252,7 @@ class StatisticsPeriodCardsTest {
             // Unrecorded stays a neutral divider tone for both palettes.
             assertEquals(DailyRecordDivider.copy(alpha = .92f), unrecorded)
             // Zero resolves to the module primary, so both modules keep their identity.
-            assertEquals(colors.primary.copy(alpha = .82f), zero)
+            assertEquals(colors.primary, zero)
         }
     }
 }
