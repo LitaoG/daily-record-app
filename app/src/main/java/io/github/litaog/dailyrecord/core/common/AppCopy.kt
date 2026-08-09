@@ -344,6 +344,7 @@ internal object AppCopy {
         const val weeklyLegendMedium = "3–5次"
         const val weeklyLegendLow = "1–2次"
         const val weeklyLegendZero = "0次"
+        const val weeklyLegendUnrecorded = "未填写"
         const val weeklyLegendFuture = "未解锁"
         const val dailyCount = "每日次数"
         const val byDate = "按日期"
