@@ -96,7 +96,11 @@ internal fun DailyRecordRoot(
         return
     }
 
-    val services = remember(servicesProvider) { servicesProvider() }
+    // Only reached when the user is not in persistent local mode. The provider
+    // is remembered with the stable app instance by the caller, so calling it
+    // here never recreates FirebaseServices; this read is what initializes
+    // Firebase for the first time (local-only startup never reaches it).
+    val services = servicesProvider()
     val authState by services.authRepository.state.collectAsState(initial = AuthState.Loading)
     when (val state = authState) {
         AuthState.Loading -> LoadingRoot()
