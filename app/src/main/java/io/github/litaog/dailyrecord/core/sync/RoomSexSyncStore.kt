@@ -166,6 +166,10 @@ internal class RoomSexSyncStore(
         dao.deleteOwnerCache(ownerId)
         detailDao.deleteOwnerCache(ownerId)
     }
+
+    override suspend fun markOwnerPendingForResync(ownerId: String) {
+        dao.markOwnerPendingForResync(ownerId)
+    }
 }
 
 private fun RemoteSexRecord.asEntity(ownerId: String): SexRecordEntity = SexRecordEntity(
