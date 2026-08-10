@@ -19,6 +19,7 @@ GitHub `main` 是当前事实来源；从最新 `main` 建立短生命周期分�
 
 ```powershell
 pnpm test:docs
+pnpm test:copy
 pnpm test:release-metadata
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-parallel
 pnpm test:android-connected
