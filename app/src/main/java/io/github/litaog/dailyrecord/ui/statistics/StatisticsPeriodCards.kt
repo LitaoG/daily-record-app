@@ -386,9 +386,16 @@ private fun WeekRingChart(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                val countLabel = detail.count
-                    ?.takeIf { it > 0L && detail.recorded && !detail.future }
-                    ?.let(AppCopy.Statistics::weeklyCountSuffix)
+                // The day label must carry a visible status word so the state
+                // is not encoded by the ring style alone: unrecorded days show
+                // "未填", explicit zero "0 次", future days "未来", and positive
+                // counts keep their "（N次）" suffix (docs/STATISTICS.md).
+                val statusLabel = when {
+                    detail.future -> AppCopy.Statistics.future
+                    !detail.recorded -> AppCopy.Statistics.unsetShort
+                    detail.count == 0L -> AppCopy.Statistics.countText(0L)
+                    else -> detail.count?.let(AppCopy.Statistics::weeklyCountSuffix)
+                }
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.Bottom,
@@ -400,10 +407,14 @@ private fun WeekRingChart(
                         textAlign = TextAlign.Center,
                         maxLines = 1,
                     )
-                    if (countLabel != null) {
+                    if (statusLabel != null) {
                         Text(
-                            text = countLabel,
-                            color = colors.primary,
+                            text = statusLabel,
+                            color = if (detail.recorded && (detail.count ?: 0) > 0) {
+                                colors.primary
+                            } else {
+                                labelColor.copy(alpha = .72f)
+                            },
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
