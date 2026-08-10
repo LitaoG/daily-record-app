@@ -137,7 +137,10 @@ internal class AccountSyncManager(
             return
         }
         if (!mutex.tryLock()) {
-            if (queueIfBusy) followUpSyncRequested.set(true)
+            // A manual request must never vanish silently when a background
+            // sync holds the mutex: queue it so the in-flight attempt's loop
+            // runs one more sync after the current one finishes.
+            followUpSyncRequested.set(true)
             return
         }
         try {
