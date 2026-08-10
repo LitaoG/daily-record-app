@@ -23,18 +23,37 @@ class RecordDetailsDraftTest {
     }
 
     @Test
-    fun dirtyDetailsSurviveAConcurrentRoomRefreshButResizeWithCount() {
+    fun dirtyDetailsSurviveAConcurrentRemoteShrinkWithoutTruncation() {
         val draft = RecordDetailsDraft()
             .reconcile(emptyList(), 2)
             .update(0) { it.withFeeling("今天更平静") }
             .reconcile(
                 latest = listOf(RecordDetailEntry(1, feeling = "云端版本")),
-                count = 3,
+                count = 1,
             )
 
         assertTrue(draft.hasChanges)
         assertEquals("今天更平静", draft.entries[0].feeling)
-        assertEquals(3, draft.entries.size)
+        assertEquals(2, draft.entries.size)
+        assertEquals("云端版本", draft.baseline[0].feeling)
+    }
+
+    @Test
+    fun dirtyDetailsAlsoIgnoreARemoteGrowUntilTheDraftCountCatchesUp() {
+        val draft = RecordDetailsDraft()
+            .reconcile(emptyList(), 2)
+            .update(0) { it.withFeeling("保留") }
+            .reconcile(
+                latest = listOf(
+                    RecordDetailEntry(1, feeling = "云端一"),
+                    RecordDetailEntry(2, feeling = "云端二"),
+                ),
+                count = 3,
+            )
+
+        assertTrue(draft.hasChanges)
+        assertEquals(2, draft.entries.size)
+        assertEquals(3, draft.baseline.size)
     }
 
     @Test

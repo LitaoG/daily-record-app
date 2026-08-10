@@ -153,6 +153,22 @@ class DailyRecordAppTest {
     }
 
     @Test
+    fun discardedDraftDoesNotReturnWhenReopeningTheSameDay() {
+        setAppContent()
+
+        composeRule.onNodeWithContentDescription("2026年7月17日，未填写，今天，已选择").performClick()
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithText("待保存 · 1 次").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("返回日历").performClick()
+        composeRule.onNodeWithText("放弃修改").performClick()
+
+        composeRule.onNodeWithTag("calendar_screen").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("2026年7月17日，未填写，今天，已选择").performClick()
+        composeRule.onAllNodesWithText("待保存 · 1 次").assertCountEquals(0)
+        composeRule.onNodeWithText("尚未填写").assertIsDisplayed()
+    }
+
+    @Test
     fun statisticsFollowHistoricalCalendarMonthAndKeepAnchorAcrossTabs() {
         setAppContent()
 
