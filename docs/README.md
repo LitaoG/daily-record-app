@@ -31,7 +31,7 @@
 | [安全策略](../SECURITY.md) | 漏洞报告、敏感材料和安全基线 |
 | [参与贡献](../CONTRIBUTING.md) | 分支、代码、测试和隐私要求 |
 | [仓库维护与文档生命周期](REPOSITORY_HYGIENE.md) | 公共/私有边界、分支清理、文档分类和生成物策略 |
-| [DeepSeek 协作规范](../DEEPSEEK_COLLABORATION.md) | AI 协助开发时的流程、纪律与禁止事项 |
+| [AI 协作记录](../AI_COLLABORATION.md) | AI 协助开发时被指正过的问题与通用做法 |
 
 ## 产品协作资料
 
