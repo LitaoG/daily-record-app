@@ -222,8 +222,12 @@ private class FailingApplyOperations : AccountSyncOperations {
         return 0
     }
 
+    // Mirrors production: the same Room failure that makes the observer's
+    // applySnapshot fail also fails the startup network-job sync attempt, so
+    // both paths publish the failed status and cannot race each other into
+    // overwriting it with a transient UpToDate.
     override suspend fun syncOnce(ownerId: String): SyncResult =
-        SyncResult(uploaded = 0, downloaded = 0, pending = 0)
+        throw IllegalStateException("Room unavailable")
 }
 
 private class BlockingSyncOperations : AccountSyncOperations {
