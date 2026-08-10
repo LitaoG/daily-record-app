@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun DailyRecordRoot(
     database: DailyRecordDatabase,
-    services: FirebaseServices,
+    servicesProvider: () -> FirebaseServices,
 ) {
     val context = LocalContext.current
     val rootScope = rememberCoroutineScope()
@@ -96,9 +96,11 @@ internal fun DailyRecordRoot(
         return
     }
 
-    // services is the application-level Firebase singleton; remember without a
-    // key keeps the same instance across recompositions (avoiding auth
-    // listener re-registration on every parent recomposition).
+    // Only reached when the user is not in persistent local mode. The provider
+    // is remembered with the stable app instance by the caller, so calling it
+    // here never recreates FirebaseServices; this read is what initializes
+    // Firebase for the first time (local-only startup never reaches it).
+    val services = servicesProvider()
     val authState by services.authRepository.state.collectAsState(initial = AuthState.Loading)
     when (val state = authState) {
         AuthState.Loading -> LoadingRoot()
