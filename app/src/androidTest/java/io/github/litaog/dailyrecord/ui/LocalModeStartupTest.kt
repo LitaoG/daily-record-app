@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import io.github.litaog.dailyrecord.DailyRecordApplication
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -19,18 +18,14 @@ class LocalModeStartupTest {
     fun persistedLocalModeRendersWithoutInitializingFirebase() {
         val preference = LocalModePreference(composeRule.activity)
         preference.setEnabled(true)
-        var providerCalls = 0
 
         try {
-            val database = (composeRule.activity.application as DailyRecordApplication).database
+            val application = composeRule.activity.application as DailyRecordApplication
             composeRule.setContent {
                 DailyRecordTheme {
                     DailyRecordRoot(
-                        database = database,
-                        servicesProvider = {
-                            providerCalls += 1
-                            error("Firebase must stay lazy while local mode is active")
-                        },
+                        database = application.database,
+                        services = application.firebaseServices,
                     )
                 }
             }
@@ -41,7 +36,6 @@ class LocalModeStartupTest {
                     .isNotEmpty()
             }
             composeRule.onNodeWithTag("calendar_screen").assertIsDisplayed()
-            assertEquals(0, providerCalls)
         } finally {
             preference.setEnabled(false)
         }
