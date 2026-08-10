@@ -187,6 +187,75 @@ class HandBrewSyncCoordinatorTest {
     }
 
     @Test
+    fun pendingEditRecreatesCloudRecordAfterRemoteDocumentDisappears() = runBlocking {
+        val remote = FakeRemoteDataSource()
+        val database = database()
+        val repository = repository(database, firstInstant)
+        val coordinator = coordinator(database, remote)
+
+        // Device A syncs a record so the local row carries a remote revision.
+        repository.saveRecord(record(1, firstInstant))
+        assertEquals(1, coordinator.syncOnce(ownerId).uploaded)
+        assertEquals(1, repository.observeRecord(date).first()?.brewCount)
+
+        // The cloud document disappears (account data cleanup on another
+        // device), while this device keeps editing the same date offline.
+        remote.removeRemote(date)
+        repository.saveRecord(record(2, firstInstant.plusSeconds(30)))
+        val pending = RoomHandBrewSyncStore(database).pending(ownerId).single()
+        assertEquals(1L, pending.remoteRevision)
+        assertEquals(2, pending.brewCount)
+
+        // The next sync must recreate the document from the pending edit
+        // instead of failing permanently on the stale revision baseline.
+        val result = coordinator.syncOnce(ownerId)
+
+        assertEquals(1, result.uploaded)
+        assertEquals(0, result.pending)
+        val cloud = remote.fetch(ownerId).records.single()
+        assertEquals(2, cloud.brewCount)
+        // The recreated document restarts its revision count at 1 (ADR-017).
+        assertEquals(1L, cloud.revision)
+        // The local row is confirmed against the recreated document.
+        assertEquals(2, repository.observeRecord(date).first()?.brewCount)
+        assertEquals(0, RoomHandBrewSyncStore(database).pendingCount(ownerId))
+    }
+
+    @Test
+    fun staleBaselineStillLosesToConcurrentRemoteEditDuringRecreate() = runBlocking {
+        val remote = FakeRemoteDataSource()
+        val firstDatabase = database()
+        val secondDatabase = database()
+        val firstRepository = repository(firstDatabase, firstInstant)
+        val secondRepository = repository(secondDatabase, firstInstant.plusSeconds(30))
+        val firstCoordinator = coordinator(firstDatabase, remote)
+        val secondCoordinator = coordinator(secondDatabase, remote)
+
+        firstRepository.saveRecord(record(1, firstInstant))
+        firstCoordinator.syncOnce(ownerId)
+        secondCoordinator.syncOnce(ownerId)
+
+        // Cloud document disappears; the second device recreates it (rev 1),
+        // then edits again so the server revision moves past the first
+        // device's stale baseline (rev 1).
+        remote.removeRemote(date)
+        secondRepository.saveRecord(record(9, firstInstant.plusSeconds(60)))
+        secondCoordinator.syncOnce(ownerId)
+        secondRepository.saveRecord(record(10, firstInstant.plusSeconds(61)))
+        secondCoordinator.syncOnce(ownerId)
+        assertEquals(2L, remote.fetch(ownerId).records.single().revision)
+
+        firstRepository.saveRecord(record(2, firstInstant.plusSeconds(90)))
+        firstCoordinator.syncOnce(ownerId)
+
+        // The recreated server document has moved past the stale baseline, so
+        // the server value wins; no device clock is involved.
+        val cloud = remote.fetch(ownerId).records.single()
+        assertEquals(10, cloud.brewCount)
+        assertEquals(10, firstRepository.observeRecord(date).first()?.brewCount)
+    }
+
+    @Test
     fun clearCreatesPendingTombstoneAndStaleAckCannotHideNewEdit() = runBlocking {
         val database = database()
         val repository = repository(database, firstInstant)
@@ -625,7 +694,11 @@ private class FakeRemoteDataSource(
             if (current != null && local.remoteRevision != current.revision) {
                 return@withLock current
             }
-            require(current != null || local.remoteRevision == 0L)
+            // Mirrors the production data source (issue #104): a missing cloud
+            // document is recreated from the local pending edit instead of
+            // permanently failing the PENDING row on its stale revision
+            // baseline. Normal clears still write a tombstone and participate
+            // in the revision check above.
             val committed = RemoteHandBrewRecord(
                 id = current?.id ?: local.id,
                 localDate = local.localDate,
@@ -642,5 +715,10 @@ private class FakeRemoteDataSource(
 
     override suspend fun deleteAll(ownerId: String) {
         values.value = emptyMap()
+    }
+
+    /** Simulates the cloud document disappearing (e.g. account data cleanup). */
+    fun removeRemote(localDate: LocalDate) {
+        values.value = values.value - localDate
     }
 }
