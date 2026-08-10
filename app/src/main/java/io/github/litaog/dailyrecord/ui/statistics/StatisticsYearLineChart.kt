@@ -115,10 +115,15 @@ internal fun YearLineChartCard(
     colors: RecordModuleColorTokens,
     modifier: Modifier = Modifier,
 ) {
+    // The reveal animation must play once per year, not once per data change:
+    // records (and therefore the YearStatistics instance) refresh on every
+    // save or sync, but the year only changes when the user navigates. Scale
+    // and points still follow the latest data.
+    val yearNumber = remember(year) { year.months.firstOrNull()?.month?.year ?: 0 }
     val scale = remember(year) { yearLineChartScale(year) }
     val points = remember(year, scale) { yearLineChartPoints(year, scale) }
-    val revealProgress = remember(year) { Animatable(0f) }
-    LaunchedEffect(year) {
+    val revealProgress = remember(yearNumber) { Animatable(0f) }
+    LaunchedEffect(yearNumber) {
         revealProgress.snapTo(0f)
         revealProgress.animateTo(
             targetValue = 1f,
