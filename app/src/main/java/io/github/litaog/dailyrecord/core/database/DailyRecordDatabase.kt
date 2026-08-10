@@ -66,6 +66,11 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
                         ON a.`owner_id` = r.`owner_id` AND a.`id` = r.`activity_id`
                     WHERE r.`deleted_at` IS NULL
                       AND a.`icon_key` = '$HAND_BREW_LEGACY_ICON_KEY'
+                      -- v1 kept a row per interacted date and defaulted status
+                      -- to 'UNSET'; never migrate an unset date into an
+                      -- explicit zero-count record (it would change the
+                      -- "recorded day" statistics for the whole history).
+                      AND r.`status` != 'UNSET'
                     GROUP BY r.`local_date`
                     """.trimIndent(),
                 )
