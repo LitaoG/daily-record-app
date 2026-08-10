@@ -21,7 +21,7 @@ internal class RoomHandBrewSyncStore(
 
     override suspend fun pending(ownerId: String): List<HandBrewRecordEntity> = dao.getPending(ownerId)
 
-    override suspend fun pendingCount(ownerId: String): Int = dao.getPending(ownerId).size
+    override suspend fun pendingCount(ownerId: String): Int = dao.countPending(ownerId)
 
     override suspend fun adoptLocalRecords(ownerId: String): Int =
         database.withTransaction {

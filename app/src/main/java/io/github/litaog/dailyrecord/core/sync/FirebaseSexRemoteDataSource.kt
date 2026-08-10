@@ -181,6 +181,9 @@ internal fun parseRemoteSexRecord(
     require(updatedAtMillis in createdAtMillis..MAX_SUPPORTED_EPOCH_MILLIS)
     val details = (values[FIELD_DETAILS] as? List<*>).orEmpty().map(::parseRemoteSexDetail)
     require(details.size <= count) { "sex details exceed sexCount" }
+    require(details.all { it.occurrenceIndex <= count.toInt() }) {
+        "sex detail occurrenceIndex exceeds sexCount"
+    }
     RemoteSexRecord(
         id = requireNotNull(values[FIELD_ID] as? String),
         localDate = LocalDate.parse(dateText),
