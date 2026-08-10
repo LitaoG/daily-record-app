@@ -130,6 +130,15 @@ internal interface SexRecordDao {
     )
     suspend fun moveOwner(oldOwnerId: String, newOwnerId: String): Int
 
+    @Query(
+        """
+        UPDATE sex_records
+        SET sync_state = 'PENDING'
+        WHERE owner_id = :ownerId
+        """,
+    )
+    suspend fun markOwnerPendingForResync(ownerId: String): Int
+
     @Query("DELETE FROM sex_records WHERE owner_id = :ownerId")
     suspend fun deleteOwnerCache(ownerId: String): Int
 

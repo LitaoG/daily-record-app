@@ -19,6 +19,7 @@ class CombinedAccountDeletionLocalStoreUnitTest {
         store.stageLocalRecoveryCopy("owner")
         store.deleteOwnerCache("owner")
         store.discardLocalRecoveryCopy()
+        store.markOwnerPendingForResync("owner")
 
         assertEquals(
             listOf(
@@ -31,6 +32,9 @@ class CombinedAccountDeletionLocalStoreUnitTest {
                 "discard:hand-brew",
                 "discard:sex",
                 "discard:future-module",
+                "mark-pending:hand-brew",
+                "mark-pending:sex",
+                "mark-pending:future-module",
             ),
             calls,
         )
@@ -83,5 +87,9 @@ private class RecordingLocalStore(
 
     override suspend fun deleteOwnerCache(ownerId: String) {
         calls += "delete:$name"
+    }
+
+    override suspend fun markOwnerPendingForResync(ownerId: String) {
+        calls += "mark-pending:$name"
     }
 }

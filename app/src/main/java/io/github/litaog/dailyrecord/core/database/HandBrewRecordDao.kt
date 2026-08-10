@@ -130,6 +130,15 @@ internal interface HandBrewRecordDao {
     )
     suspend fun moveOwner(oldOwnerId: String, newOwnerId: String): Int
 
+    @Query(
+        """
+        UPDATE hand_brew_records
+        SET sync_state = 'PENDING'
+        WHERE owner_id = :ownerId
+        """,
+    )
+    suspend fun markOwnerPendingForResync(ownerId: String): Int
+
     @Query("DELETE FROM hand_brew_records WHERE owner_id = :ownerId")
     suspend fun deleteOwnerCache(ownerId: String): Int
 

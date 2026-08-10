@@ -36,6 +36,10 @@ internal class CombinedAccountDeletionLocalStore(
         runForAll { it.deleteOwnerCache(ownerId) }
     }
 
+    override suspend fun markOwnerPendingForResync(ownerId: String) {
+        runForAll { it.markOwnerPendingForResync(ownerId) }
+    }
+
     private suspend fun discardAllSafely(primary: Throwable) {
         stores.forEach { store ->
             try {

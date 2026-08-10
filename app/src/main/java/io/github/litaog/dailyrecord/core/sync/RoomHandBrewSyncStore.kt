@@ -148,6 +148,10 @@ internal class RoomHandBrewSyncStore(
         detailDao.deleteOwnerCache(ownerId)
     }
 
+    override suspend fun markOwnerPendingForResync(ownerId: String) {
+        dao.markOwnerPendingForResync(ownerId)
+    }
+
     private suspend fun applyRemoteRecords(
         ownerId: String,
         records: List<RemoteHandBrewRecord>,
