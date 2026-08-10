@@ -261,10 +261,7 @@ internal object AppCopy {
             "七月", "八月", "九月", "十月", "十一月", "十二月",
         )
         fun switchYearDescription(year: Int): String = "$switchYear，当前${year}年"
-        fun nextMonthDescription(forward: Boolean): String = if (forward) "跳转到下个月" else "跳转到上个月"
         fun nextYearDescription(forward: Boolean): String = if (forward) "跳转到下一年" else "跳转到上一年"
-        fun dateDescription(date: LocalDate, weekday: String): String =
-            "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$weekday"
         fun dateText(date: LocalDate): String =
             date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy年M月d日"))
         fun dateLabel(date: LocalDate, weekday: String): String =
