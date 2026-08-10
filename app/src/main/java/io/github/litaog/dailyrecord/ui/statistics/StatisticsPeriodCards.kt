@@ -388,8 +388,9 @@ private fun WeekRingChart(
             ) {
                 // The day label must carry a visible status word so the state
                 // is not encoded by the ring style alone: unrecorded days show
-                // "未填", explicit zero "0 次", future days "未来", and positive
-                // counts keep their "（N次）" suffix (docs/STATISTICS.md).
+                // the unset word, explicit zero its count text, future days the
+                // future word, and positive counts keep the count suffix
+                // (docs/STATISTICS.md).
                 val statusLabel = when {
                     detail.future -> AppCopy.Statistics.future
                     !detail.recorded -> AppCopy.Statistics.unsetShort
