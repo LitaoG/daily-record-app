@@ -40,7 +40,7 @@
 build/tmp/stage5/daily-record-stage5-debug.apk
 ```
 
-SHA-256：`5ECDCDBF6237BFD937859C82BE498B7BB0C3A0C25E71D85E3AA2EB7A05AFCD42`
+SHA-256（当前候选 APK）：`B1BBA0A81D427AC4D28B6F1EFB3429E308007AAC63C34A688DB10900278E98BC`
 
 运行截图：
 
@@ -54,7 +54,7 @@ build/tmp/stage5/record-expanded.png
 build/tmp/stage5/record-feeling.png
 ```
 
-`home.png` 为已安装候选 APK 的真实模拟器截图，确认启动页、登录/注册入口、VPN 提示和“本机记录”入口在 1080×2280 设备上正常显示且无崩溃。`local.png` 为进入本机模式后的月历，`record-one.png` 为 0→1 次后的记录页，`record-expanded.png` 为点击入口后的逐次详情，`record-feeling.png` 为展开感受编辑器后的状态；所有截图均来自同一候选 APK 和同一模拟器。详情入口、窄屏和字号证据仍由 `RecordScreenTest` 的真实 Compose 运行断言提供。
+`home.png` 为真实模拟器截图，确认启动页、登录/注册入口、VPN 提示和“本机记录”入口在 1080×2280 设备上正常显示且无崩溃。`local.png` 为进入本机模式后的月历，`record-one.png` 为 0→1 次后的记录页，`record-expanded.png` 为点击入口后的逐次详情，`record-feeling.png` 为最终 IME 修复前的展开感受编辑器状态；这些非键盘场景的布局在最后一次修复中未改变。当前候选 APK 的键盘可见性由 `bridge-keyboard-delay3.png` 单独复核，避免把修复前截图误报为当前构建证据。详情入口、窄屏和字号证据仍由 `RecordScreenTest` 的真实 Compose 运行断言提供。
 
 ## 已执行检查
 
@@ -98,4 +98,4 @@ HandBrewSyncCoordinatorTest connected            18/18 PASS
 
 在 API 34 `emulator-5554`、1080×2280 模拟器上，安装当前候选 APK 后按“日期 → +1 → 记录时间和感受 → 写感受”，键盘弹起后输入框自动滚到键盘上方并保持可见。运行时 UI 树中编辑框为 `[198,1293][1003,1458]`，IME 顶部约为 `1304`；截图证据：`build/tmp/stage5/bridge-keyboard-delay3.png`（SHA-256 `A430970977C0A81C23459BAC49A82A7747FF031403EB2540D7208AF29E7C571C`）。保存按钮仍由 `Scaffold` 固定在底部，未与编辑区重叠。
 
-本轮候选 APK SHA-256 已更新为 `B1BBA0A81D427AC4D28B6F1EFB3429E308007AAC63C34A688DB10900278E98BC`。
+本轮候选 APK SHA-256 为 `B1BBA0A81D427AC4D28B6F1EFB3429E308007AAC63C34A688DB10900278E98BC`；旧的 `5ECDCDBF…` 校验值不再代表当前候选构建。
