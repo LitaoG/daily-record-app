@@ -100,6 +100,21 @@ internal interface SexRecordDao {
         remoteRevision: Long,
     ): Int
 
+    @Query(
+        """
+        UPDATE sex_records
+        SET remote_revision = :remoteRevision
+        WHERE owner_id = :ownerId
+          AND local_date = :localDate
+          AND sync_state = 'PENDING'
+        """,
+    )
+    suspend fun setRemoteRevisionForPending(
+        ownerId: String,
+        localDate: LocalDate,
+        remoteRevision: Long,
+    ): Int
+
     @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
     fun observePendingCount(ownerId: String): Flow<Int>
 
