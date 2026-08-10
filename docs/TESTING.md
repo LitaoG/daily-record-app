@@ -62,6 +62,7 @@ pnpm exec firebase emulators:exec --project demo-daily-record-app --only auth,fi
 
 ```powershell
 pnpm test:docs
+pnpm test:copy
 pnpm test:release-metadata
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-parallel
 pnpm test:firestore-rules
