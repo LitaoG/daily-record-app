@@ -67,6 +67,20 @@ class DailyRecordAppTest {
     }
 
     @Test
+    fun settingsHubOpensFromHomeAndReturnsToCalendar() {
+        setAppContent()
+
+        composeRule.onNodeWithContentDescription(AppCopy.Settings.open).performClick()
+        composeRule.onNodeWithTag("settings_screen").assertIsDisplayed()
+        composeRule.onNodeWithText(AppCopy.Settings.accountSection).assertIsDisplayed()
+        composeRule.onAllNodesWithText("记录偏好").assertCountEquals(0)
+        composeRule.onNodeWithTag("settings_version").performScrollTo().assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription(AppCopy.Settings.back).performClick()
+        composeRule.onNodeWithTag("calendar_screen").assertIsDisplayed()
+    }
+
+    @Test
     fun adjacentMonthDatesAreHiddenFromTheCalendarGrid() {
         setAppContent()
 
@@ -169,7 +183,9 @@ class DailyRecordAppTest {
         composeRule
             .onNodeWithContentDescription("选择统计范围，当前2025年")
             .performClick()
-        composeRule.onNodeWithText("直接选择年份").assertIsDisplayed()
+        composeRule.onAllNodesWithText("直接选择年份").assertCountEquals(0)
+        composeRule.onAllNodesWithText("上下滑动选择年份").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("返回日期选择").assertCountEquals(0)
         composeRule.onNodeWithText("选择年份").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("选择2024年").performClick()
         composeRule.onNodeWithText("跳转到此年").performClick()
@@ -207,6 +223,7 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("账号与云同步状态：云端已同步").performClick()
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
         composeRule.onNodeWithText("brew@example.com").assertIsDisplayed()
+        composeRule.onAllNodesWithText("查看诊断信息").assertCountEquals(0)
         composeRule.onNodeWithText("退出登录").performClick()
         composeRule.onNodeWithText("确认退出登录？").assertIsDisplayed()
         composeRule.onNodeWithText("返回").performClick()
@@ -337,6 +354,8 @@ class DailyRecordAppTest {
         }
 
         assertMonth(2026, 7)
+        composeRule.onAllNodesWithText("诊断信息").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("查看本机诊断信息").assertCountEquals(0)
         composeRule.onNodeWithContentDescription("登录账号并同步记录").performClick()
         assertTrue(requestedSignIn)
     }

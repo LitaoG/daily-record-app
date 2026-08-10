@@ -50,4 +50,46 @@ class AppCopyTest {
         )
         assertFalse(AppCopy.RecordModule.handBrewZero.contains("明确没"))
     }
+
+    @Test
+    fun calendarStatusUsesSameCountBucketsAsVisualLabels() {
+        val moduleLabel = AppCopy.RecordModule.handBrewLabel
+        val today = LocalDate.of(2026, 8, 2)
+        val pastDate = LocalDate.of(2026, 8, 1)
+
+        // TalkBack and the visible cell must share the exact same bucketing:
+        // 1..8 stay exact, 9+ collapses to "9 次以上".
+        assertEquals(
+            "手冲，1 次",
+            AppCopy.Calendar.statusDescription(
+                pastDate, today, unsupported = false, future = false,
+                count = 1, moduleLabel = moduleLabel,
+            ),
+        )
+        assertEquals(
+            "手冲，8 次",
+            AppCopy.Calendar.statusDescription(
+                pastDate, today, unsupported = false, future = false,
+                count = 8, moduleLabel = moduleLabel,
+            ),
+        )
+        assertEquals(
+            "手冲，9 次以上",
+            AppCopy.Calendar.statusDescription(
+                pastDate, today, unsupported = false, future = false,
+                count = 9, moduleLabel = moduleLabel,
+            ),
+        )
+        assertEquals(
+            "手冲，9 次以上",
+            AppCopy.Calendar.statusDescription(
+                pastDate, today, unsupported = false, future = false,
+                count = 10, moduleLabel = moduleLabel,
+            ),
+        )
+        // The visual label itself uses the same helper.
+        assertEquals("9 次以上", AppCopy.Calendar.countDescription(9))
+        assertEquals("9 次以上", AppCopy.Calendar.countDescription(10))
+        assertEquals("8 次", AppCopy.Calendar.countDescription(8))
+    }
 }

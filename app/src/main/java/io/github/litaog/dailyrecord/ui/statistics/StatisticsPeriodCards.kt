@@ -2,10 +2,12 @@ package io.github.litaog.dailyrecord.ui.statistics
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,18 +46,35 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
 private const val WEEK_SEGMENT_COUNT = 7
 private const val WEEK_SEGMENT_GAP_DEGREES = 11f
-private const val WEEK_SEGMENT_START_DEGREES = -90f
+private const val WEEK_LABEL_START_DEGREES = 0f
+private const val WEEK_LABEL_GAP_DP = 12f
+// Canvas.drawArc uses 0° at 3 o'clock, so its equivalent is 90° clockwise.
+private const val WEEK_CANVAS_ANGLE_OFFSET_DEGREES = -90f
 
 internal enum class WeekRingState {
     Future,
     Unrecorded,
     ExplicitZero,
     Positive,
+}
+
+internal enum class WeekRingCountBand {
+    One,
+    Two,
+    Three,
+    FourPlus,
+}
+
+internal enum class WeekRingLegendMarkerStyle {
+    Filled,
+    HollowPrimary,
+    HollowNeutral,
 }
 
 internal fun weekRingState(detail: StatisticsDetail): WeekRingState = when {
@@ -65,9 +84,128 @@ internal fun weekRingState(detail: StatisticsDetail): WeekRingState = when {
     else -> WeekRingState.Positive
 }
 
-internal fun weekRingIntensity(detail: StatisticsDetail, maxCount: Long): Float {
-    if (weekRingState(detail) != WeekRingState.Positive || maxCount <= 0L) return 0f
-    return ((detail.count ?: 0L).toFloat() / maxCount.toFloat()).coerceIn(0f, 1f)
+internal fun weekRingCountBand(detail: StatisticsDetail): WeekRingCountBand? {
+    if (weekRingState(detail) != WeekRingState.Positive) return null
+    return when (detail.count ?: 0L) {
+        1L -> WeekRingCountBand.One
+        2L -> WeekRingCountBand.Two
+        3L -> WeekRingCountBand.Three
+        else -> WeekRingCountBand.FourPlus
+    }
+}
+
+internal fun weekRingLegendMarkerStyle(state: WeekRingState): WeekRingLegendMarkerStyle = when (state) {
+    WeekRingState.ExplicitZero -> WeekRingLegendMarkerStyle.HollowPrimary
+    WeekRingState.Unrecorded -> WeekRingLegendMarkerStyle.HollowNeutral
+    WeekRingState.Future,
+    WeekRingState.Positive -> WeekRingLegendMarkerStyle.Filled
+}
+
+internal fun weekRingPositiveDayCount(details: List<StatisticsDetail>): Int =
+    details.count { weekRingState(it) == WeekRingState.Positive }
+
+internal fun weekRingColorForBand(
+    band: WeekRingCountBand,
+    colors: RecordModuleColorTokens,
+): Color = when (band) {
+    WeekRingCountBand.One -> colors.soft
+    WeekRingCountBand.Two -> colors.medium
+    WeekRingCountBand.Three -> colors.primary.copy(alpha = .78f)
+    WeekRingCountBand.FourPlus -> colors.strong
+}
+
+private fun weekSegmentSizeDegrees(): Float = 360f / WEEK_SEGMENT_COUNT
+
+internal fun weekRingLabelAngleDegrees(index: Int): Float =
+    WEEK_LABEL_START_DEGREES +
+        index * weekSegmentSizeDegrees()
+
+internal fun weekRingCanvasMidpointDegrees(index: Int): Float =
+    weekRingLabelAngleDegrees(index) + WEEK_CANVAS_ANGLE_OFFSET_DEGREES
+
+private fun weekRingLabelRadialSupport(
+    angleDegrees: Float,
+    labelHalfWidth: Float,
+    labelHalfHeight: Float,
+): Float {
+    val angle = Math.toRadians(angleDegrees.toDouble())
+    return labelHalfWidth * abs(sin(angle).toFloat()) +
+        labelHalfHeight * abs(cos(angle).toFloat())
+}
+
+internal fun weekRingLabelRadialDistance(
+    angleDegrees: Float,
+    ringOuterRadius: Float,
+    labelHalfWidth: Float,
+    labelHalfHeight: Float,
+    gap: Float,
+): Float {
+    return ringOuterRadius +
+        weekRingLabelRadialSupport(angleDegrees, labelHalfWidth, labelHalfHeight) +
+        gap
+}
+
+internal fun weekRingSharedLabelGapDp(
+    ringOuterRadius: Float,
+    labelHalfWidth: Float,
+    labelHalfHeight: Float,
+    availableHalfWidth: Float,
+    availableHalfHeight: Float,
+    preferredGap: Float,
+): Float {
+    var sharedGap = preferredGap
+    repeat(WEEK_SEGMENT_COUNT) { index ->
+        val angleDegrees = weekRingLabelAngleDegrees(index)
+        val angle = Math.toRadians(angleDegrees.toDouble())
+        val angleSin = abs(sin(angle).toFloat())
+        val angleCos = abs(cos(angle).toFloat())
+        val horizontalLimit = if (angleSin > .001f) {
+            availableHalfWidth / angleSin
+        } else {
+            Float.POSITIVE_INFINITY
+        }
+        val verticalLimit = if (angleCos > .001f) {
+            availableHalfHeight / angleCos
+        } else {
+            Float.POSITIVE_INFINITY
+        }
+        val maximumRadius = minOf(horizontalLimit, verticalLimit)
+        val zeroGapRadius = weekRingLabelRadialDistance(
+            angleDegrees = angleDegrees,
+            ringOuterRadius = ringOuterRadius,
+            labelHalfWidth = labelHalfWidth,
+            labelHalfHeight = labelHalfHeight,
+            gap = 0f,
+        )
+        sharedGap = minOf(sharedGap, maximumRadius - zeroGapRadius)
+    }
+    return sharedGap.coerceAtLeast(0f)
+}
+
+/**
+ * Keeps a clipped first week aligned with its real weekday angle. Older
+ * callers that construct details without a source index retain the list
+ * position as a safe fallback.
+ */
+internal fun weekRingSegmentIndex(detail: StatisticsDetail, fallbackIndex: Int): Int =
+    detail.calendarIndex ?: fallbackIndex
+
+/**
+ * Single source of truth for ring segment colors. The legend and the ring
+ * drawing must resolve colors through this function so the legend can never
+ * drift from the chart (for example, an explicit zero must never use the
+ * unrecorded color).
+ */
+internal fun weekRingSegmentColor(
+    state: WeekRingState,
+    intensity: Float,
+    colors: RecordModuleColorTokens,
+): Color = when (state) {
+    WeekRingState.Future -> colors.soft.copy(alpha = .78f)
+    WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
+    WeekRingState.ExplicitZero -> colors.primary
+    WeekRingState.Positive ->
+        colors.primary.copy(alpha = .58f + .38f * intensity.coerceIn(0f, 1f))
 }
 
 @Composable
@@ -76,14 +214,7 @@ internal fun WeekDistributionCard(
     modifier: Modifier = Modifier,
     colors: RecordModuleColorTokens = HandBrewColorTokens,
 ) {
-    val maxCount = details
-        .asSequence()
-        .filter { weekRingState(it) == WeekRingState.Positive }
-        .mapNotNull(StatisticsDetail::count)
-        .maxOrNull()
-        ?.coerceAtLeast(1L)
-        ?: 1L
-    val recordedDays = details.count { it.recorded && !it.future }
+    val recordedDays = weekRingPositiveDayCount(details)
 
     DistributionSurface(
         title = AppCopy.Statistics.dailyDistribution,
@@ -93,7 +224,6 @@ internal fun WeekDistributionCard(
     ) {
         WeekRingChart(
             details = details,
-            maxCount = maxCount,
             recordedDays = recordedDays,
             colors = colors,
         )
@@ -104,20 +234,35 @@ internal fun WeekDistributionCard(
 @Composable
 private fun WeekRingChart(
     details: List<StatisticsDetail>,
-    maxCount: Long,
     recordedDays: Int,
     colors: RecordModuleColorTokens,
 ) {
+    val chartHeight = 304.dp
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .height(258.dp)
+            .height(chartHeight)
             .testTag("week_distribution_chart"),
     ) {
-        val centerY = 128.dp
-        val labelSize = 78.dp
-        val radius = minOf(maxWidth * .34f, 96.dp)
+        val centerY = chartHeight / 2
+        val labelWidth = 68.dp
+        val labelHeight = 44.dp
+        val radius = minOf(maxWidth * .28f, 84.dp)
         val centerX = maxWidth / 2
+        val positiveStroke = 16.dp
+        val ringOuterRadius = radius + positiveStroke / 2
+        // Wednesday and Saturday are the tightest labels on narrow screens.
+        // Reuse their resolved clearance for every weekday so the labels sit
+        // on one visually consistent outer ring instead of being clamped one
+        // by one at different distances.
+        val sharedLabelGap = weekRingSharedLabelGapDp(
+            ringOuterRadius = ringOuterRadius.value,
+            labelHalfWidth = (labelWidth / 2).value,
+            labelHalfHeight = (labelHeight / 2).value,
+            availableHalfWidth = (maxWidth / 2 - labelWidth / 2).value,
+            availableHalfHeight = (chartHeight / 2 - labelHeight / 2).value,
+            preferredGap = WEEK_LABEL_GAP_DP,
+        )
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             val center = Offset(x = size.width / 2f, y = centerY.toPx())
@@ -125,57 +270,36 @@ private fun WeekRingChart(
             val segmentSweep = 360f / WEEK_SEGMENT_COUNT - WEEK_SEGMENT_GAP_DEGREES
 
             details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
-                val startAngle = WEEK_SEGMENT_START_DEGREES +
-                    index * 360f / WEEK_SEGMENT_COUNT + WEEK_SEGMENT_GAP_DEGREES / 2f
+                val segmentIndex = weekRingSegmentIndex(detail, index)
+                val startAngle = weekRingCanvasMidpointDegrees(segmentIndex) -
+                    segmentSweep / 2f
                 val state = weekRingState(detail)
-                val intensity = weekRingIntensity(detail, maxCount)
-                val baseColor = when (state) {
-                    WeekRingState.Future -> colors.soft.copy(alpha = .78f)
-                    WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
-                    WeekRingState.ExplicitZero -> colors.primary.copy(alpha = .82f)
-                    WeekRingState.Positive -> colors.primary.copy(alpha = .18f)
-                }
-                val baseStroke = when (state) {
-                    WeekRingState.Future -> 10.dp.toPx()
-                    WeekRingState.Unrecorded -> 4.dp.toPx()
-                    WeekRingState.ExplicitZero -> 5.dp.toPx()
-                    WeekRingState.Positive -> 13.dp.toPx()
-                }
-                drawArc(
-                    color = baseColor,
-                    startAngle = startAngle,
-                    sweepAngle = segmentSweep,
-                    useCenter = false,
-                    topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
-                    size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
-                    style = Stroke(
-                        width = baseStroke,
-                        cap = StrokeCap.Round,
-                        pathEffect = if (state == WeekRingState.Future) {
-                            PathEffect.dashPathEffect(
-                                intervals = floatArrayOf(7.dp.toPx(), 6.dp.toPx()),
-                            )
-                        } else {
-                            null
-                        },
-                    ),
-                )
                 when (state) {
-                    WeekRingState.Positive -> {
+                    WeekRingState.Positive -> drawArc(
+                        color = weekRingColorForBand(
+                            band = requireNotNull(weekRingCountBand(detail)),
+                            colors = colors,
+                        ),
+                        startAngle = startAngle,
+                        sweepAngle = segmentSweep,
+                        useCenter = false,
+                        topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
+                        size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
+                        style = Stroke(
+                            width = positiveStroke.toPx(),
+                            cap = StrokeCap.Round,
+                        ),
+                    )
+                    WeekRingState.ExplicitZero -> {
                         drawArc(
-                            color = colors.primary.copy(alpha = .58f + .38f * intensity),
+                            color = weekRingSegmentColor(WeekRingState.ExplicitZero, 0f, colors),
                             startAngle = startAngle,
                             sweepAngle = segmentSweep,
                             useCenter = false,
                             topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
                             size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
-                            style = Stroke(
-                                width = baseStroke + 5.dp.toPx() * intensity,
-                                cap = StrokeCap.Round,
-                            ),
+                            style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round),
                         )
-                    }
-                    WeekRingState.ExplicitZero -> {
                         drawArc(
                             color = DailyRecordSurface,
                             startAngle = startAngle,
@@ -183,40 +307,84 @@ private fun WeekRingChart(
                             useCenter = false,
                             topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
                             size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
-                            style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
+                            style = Stroke(width = 7.dp.toPx(), cap = StrokeCap.Round),
                         )
                     }
-                    WeekRingState.Future,
-                    WeekRingState.Unrecorded,
-                    -> Unit
+                    WeekRingState.Future -> drawArc(
+                        color = colors.soft.copy(alpha = .78f),
+                        startAngle = startAngle,
+                        sweepAngle = segmentSweep,
+                        useCenter = false,
+                        topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
+                        size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
+                        style = Stroke(
+                            width = 10.dp.toPx(),
+                            cap = StrokeCap.Round,
+                            pathEffect = PathEffect.dashPathEffect(
+                                intervals = floatArrayOf(7.dp.toPx(), 6.dp.toPx()),
+                            ),
+                        ),
+                    )
+                    WeekRingState.Unrecorded -> drawArc(
+                        color = DailyRecordDivider.copy(alpha = .92f),
+                        startAngle = startAngle,
+                        sweepAngle = segmentSweep,
+                        useCenter = false,
+                        topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
+                        size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
+                        style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
+                    )
                 }
             }
         }
 
         details.take(WEEK_SEGMENT_COUNT).forEachIndexed { index, detail ->
-            val angle = Math.toRadians(
-                (
-                    WEEK_SEGMENT_START_DEGREES +
-                        index * 360f / WEEK_SEGMENT_COUNT +
-                        360f / WEEK_SEGMENT_COUNT / 2f
-                    ).toDouble(),
-            )
-            val labelX = centerX - labelSize / 2 + radius * sin(angle).toFloat()
-            val labelY = centerY - labelSize / 2 - radius * cos(angle).toFloat()
+            val segmentIndex = weekRingSegmentIndex(detail, index)
+            val angleDegrees = weekRingLabelAngleDegrees(segmentIndex)
+            val angle = Math.toRadians(angleDegrees.toDouble())
+            val angleSin = abs(sin(angle).toFloat())
+            val angleCos = abs(cos(angle).toFloat())
+            val desiredRadius = weekRingLabelRadialDistance(
+                angleDegrees = angleDegrees,
+                ringOuterRadius = ringOuterRadius.value,
+                labelHalfWidth = (labelWidth / 2).value,
+                labelHalfHeight = (labelHeight / 2).value,
+                gap = sharedLabelGap,
+            ).dp
+            val horizontalLimit = if (angleSin > .001f) {
+                ((maxWidth / 2 - labelWidth / 2).value / angleSin).dp
+            } else {
+                maxWidth
+            }
+            val verticalSpace = if (cos(angle) >= 0) {
+                centerY - labelHeight / 2
+            } else {
+                chartHeight - centerY - labelHeight / 2
+            }
+            val verticalLimit = if (angleCos > .001f) {
+                (verticalSpace.value / angleCos).dp
+            } else {
+                chartHeight
+            }
+            val labelRadius = minOf(desiredRadius, horizontalLimit, verticalLimit)
+            val labelX = centerX - labelWidth / 2 + labelRadius * sin(angle).toFloat()
+            val labelY = centerY - labelHeight / 2 - labelRadius * cos(angle).toFloat()
             val labelColor = when (weekRingState(detail)) {
                 WeekRingState.Future -> colors.primary.copy(alpha = .45f)
                 WeekRingState.Unrecorded -> DailyRecordTextMuted
-                WeekRingState.ExplicitZero -> colors.primary.copy(alpha = .72f)
+                WeekRingState.ExplicitZero -> DailyRecordTextMuted
                 WeekRingState.Positive -> DailyRecordText
             }
             Column(
                 modifier = Modifier
                     .offset(x = labelX, y = labelY)
-                    .width(labelSize)
+                    .width(labelWidth)
+                    .height(labelHeight)
                     .semantics(mergeDescendants = true) {
                         contentDescription = weekDistributionDescription(detail)
                     },
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
                 val countLabel = detail.count
                     ?.takeIf { it > 0L && detail.recorded && !detail.future }
@@ -280,36 +448,78 @@ private fun WeekRingChart(
 @Composable
 private fun WeekRingLegend(colors: RecordModuleColorTokens) {
     val legend = listOf(
-        AppCopy.Statistics.weeklyLegendHigh to colors.primary,
-        AppCopy.Statistics.weeklyLegendMedium to colors.primary.copy(alpha = .68f),
-        AppCopy.Statistics.weeklyLegendLow to colors.primary.copy(alpha = .40f),
-        AppCopy.Statistics.weeklyLegendZero to DailyRecordDivider,
-        AppCopy.Statistics.weeklyLegendFuture to colors.soft.copy(alpha = .78f),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendFourPlus,
+            color = weekRingColorForBand(WeekRingCountBand.FourPlus, colors),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendThree,
+            color = weekRingColorForBand(WeekRingCountBand.Three, colors),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendTwo,
+            color = weekRingColorForBand(WeekRingCountBand.Two, colors),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendOne,
+            color = weekRingColorForBand(WeekRingCountBand.One, colors),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendZero,
+            color = weekRingSegmentColor(WeekRingState.ExplicitZero, 0f, colors),
+            markerStyle = weekRingLegendMarkerStyle(WeekRingState.ExplicitZero),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendUnrecorded,
+            color = weekRingSegmentColor(WeekRingState.Unrecorded, 0f, colors),
+            markerStyle = weekRingLegendMarkerStyle(WeekRingState.Unrecorded),
+        ),
+        WeekRingLegendItem(
+            label = AppCopy.Statistics.weeklyLegendFuture,
+            color = weekRingSegmentColor(WeekRingState.Future, 0f, colors),
+        ),
     )
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        legend.forEach { (label, color) ->
+        legend.forEach { item ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
-                        .background(color, CircleShape),
+                        .legendMarker(item),
                 )
                 Text(
-                    text = label,
+                    text = item.label,
                     color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
                     maxLines = 1,
                 )
             }
         }
     }
+}
+
+private data class WeekRingLegendItem(
+    val label: String,
+    val color: Color,
+    val markerStyle: WeekRingLegendMarkerStyle = WeekRingLegendMarkerStyle.Filled,
+)
+
+private fun Modifier.legendMarker(item: WeekRingLegendItem): Modifier = when (item.markerStyle) {
+    WeekRingLegendMarkerStyle.Filled -> background(item.color, CircleShape)
+    WeekRingLegendMarkerStyle.HollowPrimary,
+    WeekRingLegendMarkerStyle.HollowNeutral -> background(DailyRecordSurface, CircleShape)
+        .border(
+            width = 1.5.dp,
+            color = item.color,
+            shape = CircleShape,
+        )
 }
 
 @Composable

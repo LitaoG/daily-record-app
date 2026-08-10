@@ -2,6 +2,23 @@ package io.github.litaog.dailyrecord.core.sync
 
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
+
+internal data class RemoteHandBrewDetail(
+    val id: String,
+    val occurrenceIndex: Int,
+    val startTime: LocalTime?,
+    val endTime: LocalTime?,
+    val feeling: String,
+)
+
+internal data class RemoteSexDetail(
+    val id: String,
+    val occurrenceIndex: Int,
+    val startTime: LocalTime?,
+    val endTime: LocalTime?,
+    val feeling: String,
+)
 
 internal data class RemoteHandBrewRecord(
     val id: String,
@@ -11,6 +28,7 @@ internal data class RemoteHandBrewRecord(
     val clientUpdatedAt: Instant,
     val deleted: Boolean,
     val revision: Long,
+    val details: List<RemoteHandBrewDetail> = emptyList(),
 )
 
 internal data class RemoteSexRecord(
@@ -21,6 +39,7 @@ internal data class RemoteSexRecord(
     val clientUpdatedAt: Instant,
     val deleted: Boolean,
     val revision: Long,
+    val details: List<RemoteSexDetail> = emptyList(),
 )
 
 internal data class RemoteSnapshot(
@@ -46,11 +65,6 @@ enum class SyncFailureKind {
     Data,
     Unknown,
 }
-
-internal data class SyncDiagnostics(
-    val hasPendingRecords: Boolean? = null,
-    val latestFailureKind: SyncFailureKind? = null,
-)
 
 sealed interface SyncStatus {
     data object NotConfigured : SyncStatus

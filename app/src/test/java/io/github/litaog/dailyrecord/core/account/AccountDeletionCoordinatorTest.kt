@@ -129,6 +129,59 @@ class AccountDeletionCoordinatorTest {
         assertFalse(local.ownerCacheDeleted)
     }
 
+    @Test
+    fun localCleanupFailureReportsPendingStateInsteadOfRetryableFailure() = runBlocking {
+        val calls = mutableListOf<String>()
+        val cleanupFailure = IllegalStateException("local db unavailable")
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls, deleteOwnerCacheFailure = cleanupFailure)
+
+        val result = runCatching {
+            coordinator(auth, remote, local).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is AccountDeletionLocalCleanupPendingException)
+        assertEquals(OWNER, (exception as AccountDeletionLocalCleanupPendingException).ownerId)
+        assertSame(cleanupFailure, exception.cause)
+        assertEquals(
+            listOf("reauth", "delete-cloud", "stage-local", "delete-auth", "delete-owner-cache"),
+            calls,
+        )
+        assertTrue(auth.accountDeleted)
+        assertTrue(local.localCopyStaged)
+        assertFalse(local.ownerCacheDeleted)
+    }
+
+    @Test
+    fun cancellationDuringLocalCleanupPropagatesWithoutPendingState() = runBlocking {
+        val calls = mutableListOf<String>()
+        val cancellation = kotlinx.coroutines.CancellationException("cancelled")
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls, deleteOwnerCacheCancellation = cancellation)
+
+        val result = runCatching {
+            coordinator(auth, remote, local).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        assertSame(cancellation, result.exceptionOrNull())
+        assertEquals(
+            listOf("reauth", "delete-cloud", "stage-local", "delete-auth", "delete-owner-cache"),
+            calls,
+        )
+        assertTrue(auth.accountDeleted)
+    }
+
     private fun coordinator(
         auth: AuthRepository,
         remote: HandBrewRemoteDataSource,
@@ -190,6 +243,8 @@ private class FakeRemote(
 
 private class FakeLocalStore(
     private val calls: MutableList<String>,
+    private val deleteOwnerCacheFailure: Exception? = null,
+    private val deleteOwnerCacheCancellation: kotlinx.coroutines.CancellationException? = null,
 ) : AccountDeletionLocalStore {
     var localCopyStaged = false
     var ownerCacheDeleted = false
@@ -206,6 +261,8 @@ private class FakeLocalStore(
 
     override suspend fun deleteOwnerCache(ownerId: String) {
         calls += "delete-owner-cache"
+        deleteOwnerCacheCancellation?.let { throw it }
+        deleteOwnerCacheFailure?.let { throw it }
         ownerCacheDeleted = true
     }
 }

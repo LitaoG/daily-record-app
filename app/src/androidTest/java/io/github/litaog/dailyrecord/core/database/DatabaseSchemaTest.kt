@@ -30,7 +30,7 @@ class DatabaseSchemaTest {
                 INSERT INTO activities (
                     id, owner_id, name, icon_key, color_argb, measurement_type,
                     unit, sort_order, is_archived, created_at, updated_at, revision
-                ) VALUES ('hand-brew', 'local-owner', '手冲', 'flight', 1, 'COUNT',
+                ) VALUES ('hand-brew', 'local-owner', '本地化手冲', 'flight', 1, 'COUNT',
                           '次', 0, 0, 1000, 1000, 0)
                 """.trimIndent(),
             )
@@ -39,7 +39,7 @@ class DatabaseSchemaTest {
                 INSERT INTO activities (
                     id, owner_id, name, icon_key, color_argb, measurement_type,
                     unit, sort_order, is_archived, created_at, updated_at, revision
-                ) VALUES ('legacy-other', 'local-owner', '旧记录', 'legacy', 2, 'BOOLEAN',
+                ) VALUES ('legacy-other', 'local-owner', '手冲', 'legacy', 2, 'BOOLEAN',
                           NULL, 1, 0, 1000, 1000, 0)
                 """.trimIndent(),
             )
@@ -52,13 +52,16 @@ class DatabaseSchemaTest {
                           'DONE', 3, 'Asia/Shanghai', 1000, 1000, 1000, 0)
                 """.trimIndent(),
             )
+            // The non-hand-brew activity must carry a positive quantity on the
+            // same date; otherwise deleting the WHERE filter would still leave
+            // the test green while silently dropping the hand-brew filter.
             execSQL(
                 """
                 INSERT INTO daily_records (
                     id, owner_id, activity_id, local_date, status, quantity,
                     timezone_id, occurred_at, created_at, updated_at, revision
                 ) VALUES ('legacy-record', 'local-owner', 'legacy-other', '2026-07-16',
-                          'DONE', NULL, 'Asia/Shanghai', 1000, 1000, 1000, 0)
+                          'DONE', 2, 'Asia/Shanghai', 1000, 1000, 1000, 0)
                 """.trimIndent(),
             )
             close()
@@ -77,8 +80,10 @@ class DatabaseSchemaTest {
             assertEquals(3, migrated?.brewCount)
             assertEquals(LOCAL_OWNER_ID, migrated?.ownerId)
             assertEquals(SYNC_PENDING, migrated?.syncState)
-            assertEquals(4, database.openHelper.readableDatabase.version)
+            assertEquals(5, database.openHelper.readableDatabase.version)
             assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
+            assertEquals(0, database.handBrewRecordDetailDao().countForOwner(LOCAL_OWNER_ID))
+            assertEquals(0, database.sexRecordDetailDao().countForOwner(LOCAL_OWNER_ID))
 
             database.openHelper.readableDatabase.query(
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_activities_v1'",
@@ -121,7 +126,7 @@ class DatabaseSchemaTest {
             assertEquals(false, migrated?.isDeleted)
             assertEquals(SYNC_PENDING, migrated?.syncState)
             assertEquals(0L, migrated?.remoteRevision)
-            assertEquals(4, database.openHelper.readableDatabase.version)
+            assertEquals(5, database.openHelper.readableDatabase.version)
             assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
         } finally {
             database.close()
@@ -157,7 +162,7 @@ class DatabaseSchemaTest {
             )
             assertEquals(5, existing?.brewCount)
             assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
-            assertEquals(4, database.openHelper.readableDatabase.version)
+            assertEquals(5, database.openHelper.readableDatabase.version)
             database.openHelper.readableDatabase.query(
                 "SELECT name FROM sqlite_master WHERE type = 'index' " +
                     "AND name = 'index_sex_records_owner_id_local_date'",
@@ -167,9 +172,45 @@ class DatabaseSchemaTest {
         }
     }
 
+    @Test
+    @Throws(IOException::class)
+    fun versionFourCreatesIndependentDetailTablesWithoutChangingCounts() = runBlocking {
+        migrationHelper.createDatabase(V4_TEST_DATABASE, 4).apply {
+            execSQL(
+                """
+                INSERT INTO hand_brew_records (
+                    id, local_date, owner_id, brew_count, created_at, updated_at,
+                    is_deleted, sync_state, remote_revision
+                ) VALUES ('v4-brew', '2026-07-16', '__local__', 2, 1000, 2000,
+                          0, 'PENDING', 0)
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        val database = Room.databaseBuilder(
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            DailyRecordDatabase::class.java,
+            V4_TEST_DATABASE,
+        ).addMigrations(*DailyRecordDatabase.MIGRATIONS).build()
+
+        try {
+            assertEquals(2, database.handBrewRecordDao().getByDate(
+                LOCAL_OWNER_ID,
+                java.time.LocalDate.of(2026, 7, 16),
+            )?.brewCount)
+            assertEquals(5, database.openHelper.readableDatabase.version)
+            assertEquals(0, database.handBrewRecordDetailDao().countForOwner(LOCAL_OWNER_ID))
+            assertEquals(0, database.sexRecordDetailDao().countForOwner(LOCAL_OWNER_ID))
+        } finally {
+            database.close()
+        }
+    }
+
     private companion object {
         const val TEST_DATABASE = "migration-test.db"
         const val V2_TEST_DATABASE = "migration-v2-test.db"
         const val V3_TEST_DATABASE = "migration-v3-test.db"
+        const val V4_TEST_DATABASE = "migration-v4-test.db"
     }
 }

@@ -32,22 +32,32 @@ service cloud.firestore {
       return hasValidCommonRecordShape(date, [
           'id', 'localDate', 'brewCount', 'createdAtMillis',
           'clientUpdatedAtMillis', 'deleted', 'revision',
-          'schemaVersion', 'serverUpdatedAt'
+          'schemaVersion', 'serverUpdatedAt', 'details'
         ])
         && request.resource.data.brewCount is int
         && request.resource.data.brewCount >= 0
-        && request.resource.data.brewCount <= 2147483647;
+        && request.resource.data.brewCount <= 2147483647
+        && hasValidDetailList(request.resource.data.brewCount);
+    }
+
+    // Details are validated end-to-end by the client and the remote parser
+    // (including minute precision and the 100 visible-character feeling cap).
+    // Rules keep the field typed and prevent more rows than the aggregate count.
+    function hasValidDetailList(count) {
+      return request.resource.data.get('details', []) is list
+        && request.resource.data.get('details', []).size() <= count;
     }
 
     function hasValidSexRecordShape(date) {
       return hasValidCommonRecordShape(date, [
           'id', 'localDate', 'sexCount', 'createdAtMillis',
           'clientUpdatedAtMillis', 'deleted', 'revision',
-          'schemaVersion', 'serverUpdatedAt'
+          'schemaVersion', 'serverUpdatedAt', 'details'
         ])
         && request.resource.data.sexCount is int
         && request.resource.data.sexCount >= 0
-        && request.resource.data.sexCount <= 2147483647;
+        && request.resource.data.sexCount <= 2147483647
+        && hasValidDetailList(request.resource.data.sexCount);
     }
 
     function preservesStableIdentity() {

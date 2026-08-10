@@ -101,6 +101,83 @@ class StatisticsModelsTest {
     }
 
     @Test
+    fun earliestWeekNeverShowsPre1970Dates() {
+        val earliest = LocalDate.of(1970, 1, 1)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Week,
+            anchorDate = earliest,
+            today = LocalDate.of(1970, 1, 4),
+            records = listOf(
+                record(earliest, 2),
+                record(LocalDate.of(1970, 1, 2), 1),
+            ),
+        )
+
+        // 1970-01-01 is a Thursday; the Monday of that week (1969-12-29) must
+        // not appear. The visible week starts at the supported boundary.
+        assertEquals("1970年 1月1日–1月4日", model.title)
+        assertEquals(4, model.details.size)
+        assertEquals(3L, model.summary.totalCount)
+        assertFalse(model.details.any { it.future })
+        // The visible list is clipped, but each item retains its Monday-based
+        // source index so the ring chart keeps Thursday on the fourth segment.
+        assertEquals(listOf(3, 4, 5, 6), model.details.map { it.calendarIndex })
+        assertTrue(model.details[0].recorded)
+        assertTrue(model.details[1].recorded)
+    }
+
+    @Test
+    fun earliestWeekStillMarksFutureDaysInsideSupportedRange() {
+        val earliest = LocalDate.of(1970, 1, 1)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Week,
+            anchorDate = earliest,
+            today = earliest,
+            records = listOf(record(earliest, 2)),
+        )
+
+        assertEquals(4, model.details.size)
+        assertEquals(1, model.details.count { !it.future })
+        assertEquals(3, model.details.count { it.future })
+    }
+
+    @Test
+    fun crossYearWeekEndingInJanuaryKeepsMondayStartAndSummary() {
+        val model = buildStatistics(
+            period = StatisticsPeriod.Week,
+            anchorDate = LocalDate.of(2026, 1, 2),
+            today = LocalDate.of(2026, 1, 4),
+            records = listOf(
+                record(LocalDate.of(2025, 12, 31), 1),
+                record(LocalDate.of(2026, 1, 1), 2),
+                record(LocalDate.of(2026, 1, 2), 3),
+            ),
+        )
+
+        assertEquals("2025年12月29日–2026年1月4日", model.title)
+        assertEquals(7, model.details.size)
+        assertEquals(6L, model.summary.totalCount)
+        assertEquals(0, model.details.count { it.future })
+        assertEquals(1L, model.details[2].count)
+        assertEquals(2L, model.details[3].count)
+        assertEquals(3L, model.details[4].count)
+    }
+
+    @Test
+    fun earliestWeekTitleUsesClippedStartNotMondayOfPre1970Week() {
+        val earliest = LocalDate.of(1970, 1, 1)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Week,
+            anchorDate = earliest,
+            today = earliest,
+            records = emptyList(),
+        )
+
+        assertEquals("1970年 1月1日–1月4日", model.title)
+        assertEquals(0L, model.summary.totalCount)
+    }
+
+    @Test
     fun historicalMonthUsesAnchorAndDailyDetailsReconcile() {
         val model = buildStatistics(
             period = StatisticsPeriod.Month,
@@ -320,6 +397,39 @@ class StatisticsModelsTest {
         assertFalse(year.months[6].complete)
         assertEquals(5, year.months.count { it.future })
         assertEquals(129.0 / 7.0, year.monthlyAverage, 0.001)
+    }
+
+    @Test
+    fun quarterSlicesAssignMonthsToTheCorrectCalendarQuarter() {
+        val today = LocalDate.of(2026, 12, 31)
+        val model = buildStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2026, 12, 31),
+            today = today,
+            records = listOf(
+                // Q1: 1-3月; Q2: 4-6月; Q3: 7-9月; Q4: 10-12月.
+                record(LocalDate.of(2026, 1, 3), 1),
+                record(LocalDate.of(2026, 2, 3), 2),
+                record(LocalDate.of(2026, 3, 3), 3),
+                record(LocalDate.of(2026, 4, 3), 4),
+                record(LocalDate.of(2026, 5, 3), 5),
+                record(LocalDate.of(2026, 6, 3), 6),
+                record(LocalDate.of(2026, 7, 3), 7),
+                record(LocalDate.of(2026, 8, 3), 8),
+                record(LocalDate.of(2026, 9, 3), 9),
+                record(LocalDate.of(2026, 10, 3), 10),
+                record(LocalDate.of(2026, 11, 3), 11),
+                record(LocalDate.of(2026, 12, 3), 12),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        // Distinct per-quarter totals make any Q1/Q2 mis-slicing detectable
+        // instead of being hidden by the sum-only identity.
+        assertEquals(listOf(1, 2, 3, 4), year.quarters.map { it.quarter })
+        assertEquals(listOf(6L, 15L, 24L, 33L), year.quarters.map { it.totalCount })
+        assertEquals(78L, year.quarters.sumOf { it.totalCount })
+        assertEquals(78L, year.months.sumOf { it.count ?: 0L })
     }
 
     @Test

@@ -7,6 +7,7 @@ import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.core.database.SYNCED
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
 import io.github.litaog.dailyrecord.core.database.SexRecordEntity
+import io.github.litaog.dailyrecord.core.database.SexRecordDetailEntity
 import kotlinx.coroutines.flow.Flow
 
 internal class RoomSexSyncStore(
@@ -14,6 +15,7 @@ internal class RoomSexSyncStore(
 ) : AccountDeletionLocalStore,
     DailyCountSyncStore<SexRecordEntity, RemoteSexRecord> {
     private val dao = database.sexRecordDao()
+    private val detailDao = database.sexRecordDetailDao()
 
     override fun observePendingCount(ownerId: String): Flow<Int> = dao.observePendingCount(ownerId)
 
@@ -26,20 +28,32 @@ internal class RoomSexSyncStore(
         var changed = 0
         localRecords.forEach { local ->
             val accountRecord = dao.getByDate(ownerId, local.localDate)
-            if (accountRecord == null || local.updatedAt.isAfter(accountRecord.updatedAt)) {
-                dao.deleteByOwnerDate(ownerId, local.localDate)
-                dao.upsert(
-                    local.copy(
-                        id = accountRecord?.id ?: local.id,
-                        ownerId = ownerId,
-                        syncState = SYNC_PENDING,
-                        remoteRevision = accountRecord?.remoteRevision ?: 0,
-                    ),
-                )
-                changed += 1
-            }
+            // Device clocks must never decide cross-device outcomes (ADR-010).
+            // Local edits always enter the account space as new pending edits;
+            // the account's last confirmed remote revision is kept as the
+            // optimistic-concurrency baseline so the shared revision protocol
+            // (not the wall clock) decides the result.
+            dao.deleteByOwnerDate(ownerId, local.localDate)
+            detailDao.deleteByOwnerDate(ownerId, local.localDate)
+            dao.upsert(
+                local.copy(
+                    id = accountRecord?.id ?: local.id,
+                    ownerId = ownerId,
+                    syncState = SYNC_PENDING,
+                    remoteRevision = accountRecord?.remoteRevision ?: 0,
+                ),
+            )
+            detailDao.upsertAll(
+                detailDao.getByDate(LOCAL_OWNER_ID, local.localDate).map {
+                    it.copy(ownerId = ownerId)
+                },
+            )
+            changed += 1
         }
-        if (localRecords.isNotEmpty()) dao.deleteOwnerCache(LOCAL_OWNER_ID)
+        if (localRecords.isNotEmpty()) {
+            dao.deleteOwnerCache(LOCAL_OWNER_ID)
+            detailDao.deleteOwnerCache(LOCAL_OWNER_ID)
+        }
         changed
     }
 
@@ -58,6 +72,10 @@ internal class RoomSexSyncStore(
                     dao.deleteByOwnerDate(ownerId, remote.localDate)
                 }
                 dao.upsert(remote.asEntity(ownerId))
+                detailDao.deleteByOwnerDate(ownerId, remote.localDate)
+                if (!remote.deleted) {
+                    detailDao.upsertAll(remote.details.map { it.asEntity(ownerId, remote.localDate) })
+                }
                 changed += 1
             }
             changed
@@ -87,6 +105,8 @@ internal class RoomSexSyncStore(
         }
         dao.deleteByOwnerDate(ownerId, local.localDate)
         dao.upsert(committed.asEntity(ownerId))
+        detailDao.deleteByOwnerDate(ownerId, local.localDate)
+        detailDao.upsertAll(committed.details.map { it.asEntity(ownerId, committed.localDate) })
         true
     }
 
@@ -105,16 +125,23 @@ internal class RoomSexSyncStore(
                             remoteRevision = 0,
                         ),
                     )
+                    detailDao.upsertAll(
+                        detailDao.getByDate(ownerId, accountRecord.localDate).map {
+                            it.copy(ownerId = LOCAL_OWNER_ID)
+                        },
+                    )
                 }
         }
     }
 
     override suspend fun discardLocalRecoveryCopy() {
         dao.deleteOwnerCache(LOCAL_OWNER_ID)
+        detailDao.deleteOwnerCache(LOCAL_OWNER_ID)
     }
 
     override suspend fun deleteOwnerCache(ownerId: String) {
         dao.deleteOwnerCache(ownerId)
+        detailDao.deleteOwnerCache(ownerId)
     }
 }
 
@@ -128,6 +155,21 @@ private fun RemoteSexRecord.asEntity(ownerId: String): SexRecordEntity = SexReco
     isDeleted = deleted,
     syncState = SYNCED,
     remoteRevision = revision,
+)
+
+private fun RemoteSexDetail.asEntity(
+    ownerId: String,
+    localDate: java.time.LocalDate,
+): SexRecordDetailEntity = SexRecordDetailEntity(
+    id = id,
+    localDate = localDate,
+    ownerId = ownerId,
+    occurrenceIndex = occurrenceIndex,
+    startTime = startTime,
+    endTime = endTime,
+    feeling = feeling,
+    createdAt = java.time.Instant.EPOCH,
+    updatedAt = java.time.Instant.EPOCH,
 )
 
 private fun SexRecordEntity.isSamePendingVersion(other: SexRecordEntity): Boolean =

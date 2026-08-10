@@ -1,11 +1,19 @@
 package io.github.litaog.dailyrecord.ui.record
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -14,13 +22,19 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
 import io.github.litaog.dailyrecord.ui.FakeHandBrewRecordRepository
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.CompletableDeferred
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -158,6 +172,84 @@ class RecordScreenTest {
     }
 
     @Test
+    fun detailsStayHiddenUntilOpenedAndExposeOccurrenceContextToTalkBack() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 1)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(9, 15),
+                    endTime = LocalTime.of(9, 45),
+                    feeling = "清醒",
+                ),
+            ),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        assertTrue(
+            composeRule.onAllNodesWithTag("record_detail_1").fetchSemanticsNodes().isEmpty(),
+        )
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+
+        composeRule.onNodeWithTag("record_detail_1").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，开始，09:15").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，结束，09:45").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，编辑感受").assertIsDisplayed()
+    }
+
+    @Test
+    fun detailsReflowInsideANarrowViewport() {
+        val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 1)))
+        setRecordContent(repository, width = 260.dp)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        val details = composeRule.onNodeWithTag("record_detail_1").fetchSemanticsNode().boundsInRoot
+        val screen = composeRule.onNodeWithTag("record_screen").fetchSemanticsNode().boundsInRoot
+        assertTrue(details.left >= screen.left)
+        assertTrue(details.right <= screen.right)
+        composeRule.onNodeWithContentDescription("第 1 次，写感受").assertIsDisplayed()
+    }
+
+    @Test
+    fun detailsRemainReadableAt200PercentFontScale() {
+        val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 1)))
+        setRecordContent(repository, fontScale = 2f)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithTag("record_detail_1").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，写感受").assertIsDisplayed()
+    }
+
+    @Test
+    fun expandedDetailsFollowCountAndDisappearWhenCountReturnsToZero() {
+        val repository = FakeHandBrewRecordRepository()
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithTag("record_detail_1").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithTag("record_detail_2").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("减少一次").performClick()
+        assertTrue(composeRule.onAllNodesWithTag("record_detail_2").fetchSemanticsNodes().isEmpty())
+
+        composeRule.onNodeWithContentDescription("减少一次").performClick()
+        assertTrue(
+            composeRule.onAllNodesWithContentDescription("记录时间和感受")
+                .fetchSemanticsNodes()
+                .isEmpty(),
+        )
+        assertTrue(composeRule.onAllNodesWithTag("record_detail_1").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
     fun failedSaveRestoresControlsAndShowsMessage() {
         val repository = FakeHandBrewRecordRepository().apply { failSave = true }
         setRecordContent(repository)
@@ -186,17 +278,28 @@ class RecordScreenTest {
     private fun setRecordContent(
         repository: FakeHandBrewRecordRepository,
         onBack: () -> Unit = {},
+        width: Dp? = null,
+        fontScale: Float = 1f,
     ) {
         composeRule.setContent {
             DailyRecordTheme {
-                RecordScreen(
-                    date = today,
-                    today = today,
-                    repository = repository,
-                    monthRecords = emptyList(),
-                    onBack = onBack,
-                    onSaved = {},
-                )
+                CompositionLocalProvider(
+                    LocalDensity provides Density(density = 1f, fontScale = fontScale),
+                ) {
+                    Box(
+                        modifier = (width?.let(Modifier::width) ?: Modifier.fillMaxWidth())
+                            .fillMaxHeight(),
+                    ) {
+                        RecordScreen(
+                            date = today,
+                            today = today,
+                            repository = repository,
+                            monthRecords = emptyList(),
+                            onBack = onBack,
+                            onSaved = {},
+                        )
+                    }
+                }
             }
         }
     }

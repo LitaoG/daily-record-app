@@ -8,9 +8,11 @@ import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneOffset
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +44,146 @@ class HandBrewSyncCoordinatorTest {
     @After
     fun tearDown() {
         databases.forEach(DailyRecordDatabase::close)
+    }
+
+    @Test
+    fun localAdoptionKeepsNewerLocalEditWhenDeviceClockIsBehind() = runBlocking {
+        val remote = FakeRemoteDataSource()
+        val database = database()
+        val accountRepository = repository(database, firstInstant.plusSeconds(60))
+        val accountCoordinator = coordinator(database, remote)
+        accountRepository.saveRecord(record(1, firstInstant.plusSeconds(60)))
+        accountCoordinator.syncOnce(ownerId)
+
+        // The device clock is now far behind the account cache, so comparing
+        // updatedAt would wrongly discard the local edit.
+        val localRepository = RoomHandBrewRecordRepository(
+            database = database,
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            clock = Clock.fixed(firstInstant, ZoneOffset.UTC),
+        )
+        localRepository.saveRecord(record(5, firstInstant).copy(id = "local-$date"))
+
+        val store = RoomHandBrewSyncStore(database)
+        assertEquals(1, store.adoptLocalRecords(ownerId))
+
+        val adopted = store.pending(ownerId).single()
+        assertEquals(5, adopted.brewCount)
+        assertEquals(io.github.litaog.dailyrecord.core.database.SYNC_PENDING, adopted.syncState)
+        assertEquals(1L, adopted.remoteRevision)
+
+        // The server revision still matches the adopted baseline, so the local
+        // edit uploads instead of being silently dropped.
+        val result = accountCoordinator.syncOnce(ownerId)
+        assertEquals(1, result.uploaded)
+        assertEquals(5, remote.fetch(ownerId).records.single().brewCount)
+    }
+
+    @Test
+    fun localAdoptionRespectsNewerServerRevisionInsteadOfDeviceClock() = runBlocking {
+        val remote = FakeRemoteDataSource()
+        val firstDatabase = database()
+        val secondDatabase = database()
+        val firstRepository = repository(firstDatabase, firstInstant)
+        val firstCoordinator = coordinator(firstDatabase, remote)
+        firstRepository.saveRecord(record(1, firstInstant))
+        firstCoordinator.syncOnce(ownerId)
+
+        // A second device pushes a newer server revision after this device's
+        // account cache was written.
+        val secondRepository = repository(secondDatabase, firstInstant.plusSeconds(30))
+        val secondCoordinator = coordinator(secondDatabase, remote)
+        secondRepository.saveRecord(record(9, firstInstant.plusSeconds(30)))
+        secondCoordinator.syncOnce(ownerId)
+
+        // This device then edits in local mode with a clock behind the account cache.
+        val localRepository = RoomHandBrewRecordRepository(
+            database = firstDatabase,
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            clock = Clock.fixed(firstInstant, ZoneOffset.UTC),
+        )
+        localRepository.saveRecord(record(5, firstInstant).copy(id = "local-$date"))
+        val store = RoomHandBrewSyncStore(firstDatabase)
+        assertEquals(1, store.adoptLocalRecords(ownerId))
+        assertEquals(1L, store.pending(ownerId).single().remoteRevision)
+
+        firstCoordinator.syncOnce(ownerId)
+
+        // The server revision moved past the adopted baseline, so the server
+        // value wins; the device clock plays no part in the outcome.
+        assertEquals(9, firstRepository.observeRecord(date).first()?.brewCount)
+        assertEquals(9, remote.fetch(ownerId).records.single().brewCount)
+    }
+
+    @Test
+    fun authFailureIsRetryableForTokenRefreshAndPermissionDeniedIsNot() {
+        val unauthenticated = com.google.firebase.firestore.FirebaseFirestoreException(
+            "token expired",
+            com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAUTHENTICATED,
+        )
+        val denied = com.google.firebase.firestore.FirebaseFirestoreException(
+            "permission denied",
+            com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED,
+        )
+        val auth = com.google.firebase.auth.FirebaseAuthException(
+            "ERROR_USER_TOKEN_EXPIRED",
+            "token refresh pending",
+        )
+
+        assertTrue(unauthenticated.isRetryableRemoteObservation())
+        assertTrue(
+            IllegalStateException("listener", unauthenticated)
+                .isRetryableRemoteObservation(),
+        )
+        assertTrue(auth.isRetryableRemoteObservation())
+        assertFalse(denied.isRetryableRemoteObservation())
+    }
+
+    @Test
+    fun realtimeSubscriptionResubscribesAfterUnauthenticatedRecovers() = runBlocking {
+        val recovered = MutableStateFlow(RemoteSnapshot(fromCache = false))
+        val operations = object : AccountSyncOperations {
+            val subscriptions = MutableStateFlow(0)
+
+            override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
+                val attempt = subscriptions.value + 1
+                subscriptions.value = attempt
+                if (attempt == 1) {
+                    throw com.google.firebase.firestore.FirebaseFirestoreException(
+                        "token expired",
+                        com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAUTHENTICATED,
+                    )
+                }
+                emitAll(recovered)
+            }
+
+            override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
+
+            override suspend fun pendingCount(ownerId: String): Int = 0
+
+            override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int = 0
+
+            override suspend fun syncOnce(ownerId: String): SyncResult =
+                SyncResult(uploaded = 0, downloaded = 0, pending = 0)
+        }
+        val manager = AccountSyncManager(
+            ownerId = ownerId,
+            coordinator = operations,
+            productionConfigured = true,
+            networkAvailable = MutableStateFlow(true),
+            remoteRetryDelayMillis = { 0L },
+        )
+
+        val jobs = manager.start(this)
+        try {
+            kotlinx.coroutines.withTimeout(10_000) {
+                operations.subscriptions.first { it >= 2 }
+            }
+            assertEquals(2, operations.subscriptions.value)
+            assertTrue(manager.status.value !is SyncStatus.Failed)
+        } finally {
+            jobs.forEach { it.cancel() }
+        }
     }
 
     @Test
@@ -230,7 +372,7 @@ class HandBrewSyncCoordinatorTest {
 
         val failure = manager.status.value as SyncStatus.Failed
         assertEquals(SyncFailureKind.Network, failure.kind)
-        assertTrue(failure.message.contains("超过 5 秒"))
+        assertTrue(failure.message.contains("等待云服务超过 0 秒"))
         assertEquals(1, remote.fetchCalls)
     }
 
@@ -327,8 +469,6 @@ class HandBrewSyncCoordinatorTest {
         val failure = manager.status.value as SyncStatus.Failed
         assertEquals(SyncFailureKind.Data, failure.kind)
         assertTrue(failure.message.contains("其余记录已同步"))
-        assertEquals(SyncFailureKind.Data, manager.diagnostics.value.latestFailureKind)
-        assertEquals(false, manager.diagnostics.value.hasPendingRecords)
         assertEquals(2, remote.fetchCalls)
     }
 
@@ -357,6 +497,49 @@ class HandBrewSyncCoordinatorTest {
         assertEquals(3, localRepository.observeRecord(date).first()?.brewCount)
         assertNull(localRepository.observeRecord(secondDate).first())
         assertEquals(0, database.handBrewRecordDao().countForOwner(ownerId))
+    }
+
+    @Test
+    fun perOccurrenceDetailsRoundTripAcrossDevices() = runBlocking {
+        val remote = FakeRemoteDataSource()
+        val firstDatabase = database()
+        val firstRepository = repository(firstDatabase, firstInstant)
+        val firstCoordinator = coordinator(firstDatabase, remote)
+        val detail = HandBrewRecordDetail(
+            id = "detail-$date-1",
+            localDate = date,
+            occurrenceIndex = 1,
+            startTime = LocalTime.of(8, 30),
+            endTime = LocalTime.of(9, 5),
+            feeling = "清醒",
+        )
+        firstRepository.saveRecord(record(2, firstInstant), listOf(detail))
+        remote.detailsProvider = { localDate ->
+            firstRepository.observeDetails(localDate).first().map { value ->
+                RemoteHandBrewDetail(
+                    id = value.id,
+                    occurrenceIndex = value.occurrenceIndex,
+                    startTime = value.startTime,
+                    endTime = value.endTime,
+                    feeling = value.feeling,
+                )
+            }
+        }
+
+        assertEquals(1, firstCoordinator.syncOnce(ownerId).uploaded)
+
+        val secondDatabase = database()
+        val secondRepository = repository(secondDatabase, firstInstant.plusSeconds(30))
+        val secondResult = coordinator(secondDatabase, remote).syncOnce(ownerId)
+        assertEquals(1, secondResult.downloaded)
+
+        val restored = secondRepository.observeDetails(date).first()
+        assertEquals(1, restored.size)
+        assertEquals(detail.id, restored.single().id)
+        assertEquals(detail.occurrenceIndex, restored.single().occurrenceIndex)
+        assertEquals(detail.startTime, restored.single().startTime)
+        assertEquals(detail.endTime, restored.single().endTime)
+        assertEquals(detail.feeling, restored.single().feeling)
     }
 
     private fun database(): DailyRecordDatabase {
@@ -406,6 +589,7 @@ private class FakeRemoteDataSource(
     var fetchCalls: Int = 0
         private set
     var fetchGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+    var detailsProvider: suspend (LocalDate) -> List<RemoteHandBrewDetail> = { emptyList() }
 
     override fun observe(ownerId: String): Flow<RemoteSnapshot> = flow {
         val attempt = observationAttempts.value + 1
@@ -450,6 +634,7 @@ private class FakeRemoteDataSource(
                 clientUpdatedAt = maxOf(local.updatedAt, current?.createdAt ?: local.createdAt),
                 deleted = local.isDeleted,
                 revision = (current?.revision ?: 0) + 1,
+                details = detailsProvider(local.localDate),
             )
             values.value = values.value + (local.localDate to committed)
             committed

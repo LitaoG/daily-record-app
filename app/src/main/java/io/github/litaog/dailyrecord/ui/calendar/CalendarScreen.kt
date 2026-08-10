@@ -387,7 +387,7 @@ private fun CalendarLegendMarker(
         CalendarLegendItem.Recorded -> Row(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            listOf(colors.soft, colors.medium, colors.primary).forEach { color ->
+            listOf(colors.soft, colors.medium, colors.intense, colors.primary).forEach { color ->
                 Box(
                     Modifier
                         .size(width = 5.dp, height = 14.dp)
@@ -495,14 +495,11 @@ private fun CalendarDayCell(
     val unsupported = date < earliestDate
     val future = date > today
     val count = record?.count
-    val visualState = when {
-        unsupported || future -> RecordVisualState.Disabled
-        record == null -> RecordVisualState.Unset
-        count == 0 -> RecordVisualState.ExplicitZero
-        count == 1 -> RecordVisualState.One
-        count == 2 -> RecordVisualState.Two
-        else -> RecordVisualState.ThreePlus
-    }
+    val visualState = calendarRecordVisualState(
+        unsupported = unsupported,
+        future = future,
+        count = count,
+    )
     val visualColors = moduleSpec.colors.colorsFor(visualState)
     val background = visualColors.background
     val contentColor = visualColors.content
@@ -588,4 +585,18 @@ private fun CalendarDayCell(
             }
         }
     }
+}
+
+internal fun calendarRecordVisualState(
+    unsupported: Boolean,
+    future: Boolean,
+    count: Int?,
+): RecordVisualState = when {
+    unsupported || future -> RecordVisualState.Disabled
+    count == null -> RecordVisualState.Unset
+    count == 0 -> RecordVisualState.ExplicitZero
+    count == 1 -> RecordVisualState.One
+    count == 2 -> RecordVisualState.Two
+    count == 3 -> RecordVisualState.Three
+    else -> RecordVisualState.FourPlus
 }

@@ -1,6 +1,6 @@
 # 路线图
 
-最后复核：2026-08-08
+最后复核：2026-08-09
 
 ## 已完成：手冲专用产品重构
 
@@ -22,7 +22,7 @@
 - [x] Room v3 账号隔离、待同步状态、墓碑、远端修订和显式迁移。
 - [x] 可选邮箱密码注册/登录、找回密码和本机记录登录合并。
 - [x] Firestore 生产规则、跨设备恢复、离线重试和冲突保护。
-- [x] 同步错误分级、脱敏本机诊断和 Firebase 可达性恢复。
+- [x] 同步错误分级和 Firebase 可达性恢复。
 - [x] 二次确认、密码重验的账号与本人云端数据永久删除。
 
 ## 已完成：独立做爱记录模块
@@ -46,6 +46,15 @@
 - [x] Stage 5 完成最终跨页面审查、定向失败收口和一次最终完整设备套件。
 - [x] Stage 6 完成公共 main 合并、签名发布门禁和 GitHub Release 发布。
 - [x] 发布 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，并在公共 main 验证后同步私有恢复镜像。
+
+## 已完成：日期记录页逐次详情
+
+- [x] Room v5 非破坏迁移，新增手冲与做爱独立详情表（`hand_brew_record_details` / `sex_record_details`）。
+- [x] 记录页支持按次数展开可选的开始/结束时间与不超过 100 个可见字符的感受；次数为 0 时不显示详情入口。
+- [x] 详情只属于当前模块和当前日期；不进入统计、日志或诊断摘要；清除记录同时清除详情。
+- [x] Firestore 规则与同步上传/下载覆盖逐次详情；跨设备可恢复，账号删除覆盖两套详情表。
+- [x] 窄屏、200% 字体、TalkBack、Saver 恢复和跨设备详情恢复验收完成；真机用户验收通过。
+- [x] 完成 GitHub Issue [#105](https://github.com/LitaoG/daily-record-app/issues/105)，PR [#119](https://github.com/LitaoG/daily-record-app/pull/119) 合并。
 
 ## 当前状态：安静的私密数据日志 UI v2 已完成，进入维护
 

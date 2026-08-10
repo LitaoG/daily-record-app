@@ -10,6 +10,6 @@ class DailyRecordApplication : Application() {
     }
 
     internal val firebaseServices: FirebaseServices by lazy {
-        FirebaseServices.create(applicationContext)
+        FirebaseServices.create(applicationContext, database = database)
     }
 }

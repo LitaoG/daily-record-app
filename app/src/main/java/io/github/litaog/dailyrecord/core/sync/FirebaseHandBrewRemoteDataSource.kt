@@ -7,8 +7,13 @@ import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
 import io.github.litaog.dailyrecord.core.cloud.awaitResult
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
+import io.github.litaog.dailyrecord.core.database.HandBrewRecordDetailEntity
+import io.github.litaog.dailyrecord.core.model.MAX_RECORD_DETAIL_FEELING_CHARACTERS
+import io.github.litaog.dailyrecord.core.model.visibleCharacterCount
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeParseException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -22,10 +27,18 @@ private const val FIELD_DELETED = "deleted"
 private const val FIELD_REVISION = "revision"
 private const val FIELD_SCHEMA_VERSION = "schemaVersion"
 private const val FIELD_SERVER_UPDATED_AT = "serverUpdatedAt"
+private const val FIELD_DETAILS = "details"
+private const val DETAIL_ID = "id"
+private const val DETAIL_OCCURRENCE_INDEX = "occurrenceIndex"
+private const val DETAIL_START_TIME = "startTime"
+private const val DETAIL_END_TIME = "endTime"
+private const val DETAIL_FEELING = "feeling"
 internal const val MAX_SUPPORTED_EPOCH_MILLIS = 253_402_300_799_999L
 
 internal class FirebaseHandBrewRemoteDataSource(
     private val firestore: FirebaseFirestore,
+    private val detailsProvider: suspend (ownerId: String, localDate: LocalDate) ->
+        List<HandBrewRecordDetailEntity> = { _, _ -> emptyList() },
 ) : HandBrewRemoteDataSource {
     override fun observe(ownerId: String): Flow<RemoteSnapshot> = callbackFlow {
         val registration = records(ownerId).addSnapshotListener { snapshot, error ->
@@ -47,6 +60,7 @@ internal class FirebaseHandBrewRemoteDataSource(
         local: HandBrewRecordEntity,
     ): RemoteHandBrewRecord {
         require(local.ownerId == ownerId) { "Cannot upload a record owned by another account" }
+        val details = detailsProvider(ownerId, local.localDate)
         val reference = records(ownerId).document(local.localDate.toString())
         return firestore.runTransaction { transaction ->
             val current = transaction.get(reference)
@@ -58,9 +72,11 @@ internal class FirebaseHandBrewRemoteDataSource(
             if (currentRemote != null && local.remoteRevision != currentRemote.revision) {
                 return@runTransaction currentRemote
             }
-            require(currentRemote != null || local.remoteRevision == 0L) {
-                "Cloud record disappeared after local revision ${local.remoteRevision}"
-            }
+            // A missing document can occur after account data was removed and
+            // the local pending edit was retained for recovery. Treat it as a
+            // new document rather than permanently failing the PENDING row on
+            // its stale revision baseline. Normal clears use a tombstone and
+            // still participate in the revision check above.
             val revision = (current.getLong(FIELD_REVISION) ?: 0L) + 1L
             val stableId = current.getString(FIELD_ID) ?: local.id
             val stableCreatedAt = current.getLong(FIELD_CREATED_AT) ?: local.createdAt.toEpochMilli()
@@ -79,6 +95,7 @@ internal class FirebaseHandBrewRemoteDataSource(
                     FIELD_DELETED to local.isDeleted,
                     FIELD_REVISION to revision,
                     FIELD_SCHEMA_VERSION to 1L,
+                    FIELD_DETAILS to details.map(::detailToMap),
                     FIELD_SERVER_UPDATED_AT to FieldValue.serverTimestamp(),
                 ),
             )
@@ -90,6 +107,7 @@ internal class FirebaseHandBrewRemoteDataSource(
                 clientUpdatedAt = committedUpdatedAt,
                 deleted = local.isDeleted,
                 revision = revision,
+                details = details.map(::detailToRemote),
             )
         }.awaitResult()
     }
@@ -181,6 +199,8 @@ internal fun parseRemoteHandBrewRecord(
     require(updatedAtMillis in createdAtMillis..MAX_SUPPORTED_EPOCH_MILLIS) {
         "clientUpdatedAtMillis is out of range"
     }
+    val details = (values[FIELD_DETAILS] as? List<*>).orEmpty().map(::parseRemoteHandBrewDetail)
+    require(details.size <= count) { "hand-brew details exceed brewCount" }
     RemoteHandBrewRecord(
         id = requireNotNull(values[FIELD_ID] as? String),
         localDate = LocalDate.parse(dateText),
@@ -189,9 +209,61 @@ internal fun parseRemoteHandBrewRecord(
         clientUpdatedAt = Instant.ofEpochMilli(updatedAtMillis),
         deleted = requireNotNull(values[FIELD_DELETED] as? Boolean),
         revision = revision,
+        details = details,
     )
 } catch (error: MalformedRemoteRecordException) {
     throw error
 } catch (error: RuntimeException) {
     throw MalformedRemoteRecordException(error)
+}
+
+private fun detailToMap(detail: HandBrewRecordDetailEntity): Map<String, Any?> = mapOf(
+    DETAIL_ID to detail.id,
+    DETAIL_OCCURRENCE_INDEX to detail.occurrenceIndex.toLong(),
+    DETAIL_START_TIME to detail.startTime?.toString(),
+    DETAIL_END_TIME to detail.endTime?.toString(),
+    DETAIL_FEELING to detail.feeling,
+)
+
+private fun detailToRemote(detail: HandBrewRecordDetailEntity): RemoteHandBrewDetail =
+    RemoteHandBrewDetail(
+        id = detail.id,
+        occurrenceIndex = detail.occurrenceIndex,
+        startTime = detail.startTime,
+        endTime = detail.endTime,
+        feeling = detail.feeling,
+    )
+
+private fun parseRemoteHandBrewDetail(value: Any?): RemoteHandBrewDetail {
+    val map = value as? Map<*, *> ?: throw MalformedRemoteRecordException(
+        IllegalArgumentException("hand-brew detail must be a map"),
+    )
+    val id = map[DETAIL_ID] as? String
+    val occurrenceIndex = (map[DETAIL_OCCURRENCE_INDEX] as? Number)?.toInt()
+    val startTime = parseDetailTime(map[DETAIL_START_TIME])
+    val endTime = parseDetailTime(map[DETAIL_END_TIME])
+    val feeling = map[DETAIL_FEELING] as? String
+    require(!id.isNullOrBlank()) { "hand-brew detail id is missing" }
+    require(occurrenceIndex != null && occurrenceIndex >= 1) {
+        "hand-brew detail occurrenceIndex is invalid"
+    }
+    require(startTime == null || endTime == null || !endTime.isBefore(startTime)) {
+        "hand-brew detail endTime is before startTime"
+    }
+    require(feeling != null && feeling.visibleCharacterCount() <= MAX_RECORD_DETAIL_FEELING_CHARACTERS) {
+        "hand-brew detail feeling is invalid"
+    }
+    return RemoteHandBrewDetail(id, occurrenceIndex, startTime, endTime, feeling)
+}
+
+private fun parseDetailTime(value: Any?): LocalTime? {
+    if (value == null) return null
+    val text = value as? String ?: throw IllegalArgumentException("detail time must be a string")
+    return try {
+        LocalTime.parse(text).also {
+            require(it.second == 0 && it.nano == 0) { "detail time must have minute precision" }
+        }
+    } catch (error: DateTimeParseException) {
+        throw IllegalArgumentException("detail time is invalid", error)
+    }
 }

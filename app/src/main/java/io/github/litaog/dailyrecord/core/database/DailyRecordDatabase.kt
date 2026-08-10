@@ -7,24 +7,35 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import io.github.litaog.dailyrecord.core.common.AppCopy
+
+/**
+ * Frozen historical value: the v1 hand-brew activity was identified by this
+ * machine key in released data. Migration SQL must use the key rather than a
+ * user-facing name, otherwise a future wording or localization change could
+ * silently stop matching rows and lose v1 hand-brew records.
+ */
+private const val HAND_BREW_LEGACY_ICON_KEY = "flight"
 
 @Database(
     entities = [
         HandBrewRecordEntity::class,
+        HandBrewRecordDetailEntity::class,
         SexRecordEntity::class,
+        SexRecordDetailEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
 internal abstract class DailyRecordDatabase : RoomDatabase() {
     abstract fun handBrewRecordDao(): HandBrewRecordDao
+    abstract fun handBrewRecordDetailDao(): HandBrewRecordDetailDao
     abstract fun sexRecordDao(): SexRecordDao
+    abstract fun sexRecordDetailDao(): SexRecordDetailDao
 
     companion object {
         const val DATABASE_NAME = "daily-record.db"
-        const val SCHEMA_VERSION = 4
+        const val SCHEMA_VERSION = 5
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -54,7 +65,7 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
                     INNER JOIN `activities` a
                         ON a.`owner_id` = r.`owner_id` AND a.`id` = r.`activity_id`
                     WHERE r.`deleted_at` IS NULL
-                      AND (a.`name` = '${AppCopy.RecordModule.handBrewLabel}' OR a.`icon_key` = 'flight')
+                      AND a.`icon_key` = '$HAND_BREW_LEGACY_ICON_KEY'
                     GROUP BY r.`local_date`
                     """.trimIndent(),
                 )
@@ -142,10 +153,72 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `hand_brew_record_details` (
+                        `id` TEXT NOT NULL,
+                        `local_date` TEXT NOT NULL,
+                        `owner_id` TEXT NOT NULL DEFAULT '__local__',
+                        `occurrence_index` INTEGER NOT NULL,
+                        `start_time` TEXT,
+                        `end_time` TEXT,
+                        `feeling` TEXT NOT NULL DEFAULT '',
+                        `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_hand_brew_record_details_owner_id_local_date_occurrence_index`
+                    ON `hand_brew_record_details` (`owner_id`, `local_date`, `occurrence_index`)
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_hand_brew_record_details_owner_id_local_date`
+                    ON `hand_brew_record_details` (`owner_id`, `local_date`)
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `sex_record_details` (
+                        `id` TEXT NOT NULL,
+                        `local_date` TEXT NOT NULL,
+                        `owner_id` TEXT NOT NULL DEFAULT '__local__',
+                        `occurrence_index` INTEGER NOT NULL,
+                        `start_time` TEXT,
+                        `end_time` TEXT,
+                        `feeling` TEXT NOT NULL DEFAULT '',
+                        `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_sex_record_details_owner_id_local_date_occurrence_index`
+                    ON `sex_record_details` (`owner_id`, `local_date`, `occurrence_index`)
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_sex_record_details_owner_id_local_date`
+                    ON `sex_record_details` (`owner_id`, `local_date`)
+                    """.trimIndent(),
+                )
+            }
+        }
+
         val MIGRATIONS: Array<Migration> = arrayOf(
             MIGRATION_1_2,
             MIGRATION_2_3,
             MIGRATION_3_4,
+            MIGRATION_4_5,
         )
 
         fun create(context: Context): DailyRecordDatabase = Room.databaseBuilder(

@@ -81,6 +81,35 @@ class SexSyncCoordinatorTest {
     }
 
     @Test
+    fun localAdoptionKeepsNewerSexEditWhenDeviceClockIsBehind() = runBlocking {
+        val remote = FakeSexRemoteDataSource()
+        val database = database()
+        val accountRepository = repository(database, firstInstant.plusSeconds(60))
+        val accountCoordinator = coordinator(database, remote)
+        accountRepository.saveRecord(record(1, firstInstant.plusSeconds(60)))
+        accountCoordinator.syncOnce(ownerId)
+
+        val localRepository = RoomSexRecordRepository(
+            database = database,
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            clock = Clock.fixed(firstInstant, ZoneOffset.UTC),
+        )
+        localRepository.saveRecord(record(5, firstInstant).copy(id = "local-sex-$date"))
+
+        val store = RoomSexSyncStore(database)
+        assertEquals(1, store.adoptLocalRecords(ownerId))
+
+        val adopted = store.pending(ownerId).single()
+        assertEquals(5, adopted.sexCount)
+        assertEquals(io.github.litaog.dailyrecord.core.database.SYNC_PENDING, adopted.syncState)
+        assertEquals(1L, adopted.remoteRevision)
+
+        val result = accountCoordinator.syncOnce(ownerId)
+        assertEquals(1, result.uploaded)
+        assertEquals(5, remote.fetch(ownerId).sexRecords.single().sexCount)
+    }
+
+    @Test
     fun combinedCoordinatorUploadsAndCountsBothModulesWithoutMixingThem() = runBlocking {
         val database = database()
         val handRemote = FakeHandBrewRemoteForCombined()

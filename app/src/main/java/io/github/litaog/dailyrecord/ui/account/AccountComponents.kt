@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,13 +52,13 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordWarning
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 
 internal const val VPN_SYNC_DIALOG_MESSAGE =
@@ -121,6 +125,7 @@ internal fun SyncFailureKind.presentation(): SyncFailurePresentation = when (thi
 internal fun AccountTopBar(
     status: SyncStatus,
     onClick: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
     Surface(
@@ -137,11 +142,18 @@ internal fun AccountTopBar(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 AccountTitle(AppCopy.privateRecordSubtitle)
-                SyncStatusChip(
-                    status = status,
-                    onClick = onClick,
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SyncStatusChip(
+                        status = status,
+                        onClick = onClick,
+                        modifier = Modifier.weight(1f),
+                    )
+                    SettingsButton(onClick = onSettings)
+                }
             }
         } else {
             Row(
@@ -153,8 +165,17 @@ internal fun AccountTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AccountTitle(AppCopy.privateRecordSubtitle)
-                SyncStatusChip(status = status, onClick = onClick)
+                AccountTitle(
+                    subtitle = AppCopy.privateRecordSubtitle,
+                    modifier = Modifier.weight(1f),
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    SyncStatusChip(status = status, onClick = onClick)
+                    SettingsButton(onClick = onSettings)
+                }
             }
         }
     }
@@ -162,8 +183,8 @@ internal fun AccountTopBar(
 
 @Composable
 internal fun LocalAccountTopBar(
-    onClick: () -> Unit,
-    onDiagnostics: () -> Unit,
+    onSignIn: (() -> Unit)?,
+    onSettings: () -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
     Surface(
@@ -182,18 +203,17 @@ internal fun LocalAccountTopBar(
                 AccountTitle(AppCopy.offlineSubtitle)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    DailyRecordTextAction(
-                        label = AppCopy.Account.diagnostics,
-                        onClick = onDiagnostics,
-                        accessibilityLabel = AppCopy.Account.diagnosticsAccessibility,
-                    )
-                    DailyRecordTextAction(
-                        label = AppCopy.Account.signInSync,
-                        onClick = onClick,
-                        accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
-                    )
+                    if (onSignIn != null) {
+                        DailyRecordTextAction(
+                            label = AppCopy.Account.signInSync,
+                            onClick = onSignIn,
+                            accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
+                        )
+                    }
+                    SettingsButton(onClick = onSettings)
                 }
             }
         } else {
@@ -206,18 +226,22 @@ internal fun LocalAccountTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AccountTitle(AppCopy.offlineSubtitle)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DailyRecordTextAction(
-                        label = AppCopy.Account.diagnostics,
-                        onClick = onDiagnostics,
-                        accessibilityLabel = AppCopy.Account.diagnosticsAccessibility,
-                    )
-                    DailyRecordTextAction(
-                        label = AppCopy.Account.signInSync,
-                        onClick = onClick,
-                        accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
-                    )
+                AccountTitle(
+                    subtitle = AppCopy.offlineSubtitle,
+                    modifier = Modifier.weight(1f),
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    if (onSignIn != null) {
+                        DailyRecordTextAction(
+                            label = AppCopy.Account.signInSync,
+                            onClick = onSignIn,
+                            accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
+                        )
+                    }
+                    SettingsButton(onClick = onSettings)
                 }
             }
         }
@@ -225,8 +249,27 @@ internal fun LocalAccountTopBar(
 }
 
 @Composable
-private fun AccountTitle(subtitle: String) {
-    Column {
+private fun SettingsButton(onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(48.dp)
+            .testTag("home_settings_button"),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Settings,
+            contentDescription = AppCopy.Settings.open,
+            tint = DailyRecordTextSecondary,
+        )
+    }
+}
+
+@Composable
+private fun AccountTitle(
+    subtitle: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
         Text(
             stringResource(R.string.app_name),
             color = DailyRecordText,
@@ -269,7 +312,6 @@ internal fun AccountDialog(
     email: String,
     status: SyncStatus,
     onSyncNow: () -> Unit,
-    onOpenDiagnostics: () -> Unit,
     onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     onDismiss: () -> Unit,
@@ -301,9 +343,15 @@ internal fun AccountDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 18.dp)
-                    .dailyRecordGlass(
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                        level = DailyRecordGlassLevel.Muted,
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                    .background(
+                        DailyRecordSurfaceMuted,
+                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    )
+                    .border(
+                        1.dp,
+                        DailyRecordDivider,
+                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                     )
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -364,11 +412,6 @@ internal fun AccountDialog(
             )
             OutlineActionButton(AppCopy.Account.close, onDismiss, Modifier.fillMaxWidth().padding(top = 10.dp))
             DailyRecordTextAction(
-                label = AppCopy.Account.viewDiagnostics,
-                onClick = onOpenDiagnostics,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            )
-            DailyRecordTextAction(
                 label = AppCopy.Account.signOut,
                 onClick = { confirmSignOut = true },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
@@ -402,7 +445,7 @@ private fun SyncStatus.shortLabel(): String = when (this) {
     is SyncStatus.Failed -> AppCopy.Account.shortRetry
 }
 
-private fun SyncStatus.color() = when (this) {
+internal fun SyncStatus.color() = when (this) {
     SyncStatus.UpToDate -> DailyRecordSuccess
     SyncStatus.Syncing -> DailyRecordDefaultAccent
     SyncStatus.Offline, is SyncStatus.Pending -> DailyRecordWarning

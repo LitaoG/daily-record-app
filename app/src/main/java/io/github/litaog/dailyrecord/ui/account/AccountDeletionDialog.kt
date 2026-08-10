@@ -24,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.common.AppCopy
@@ -48,8 +50,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
 import kotlinx.coroutines.launch
 
 private enum class AccountDeletionStep {
@@ -205,10 +206,12 @@ private fun DeletionChoiceCard(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .dailyRecordGlass(
-                shape = RoundedCornerShape(14.dp),
-                level = if (selected) DailyRecordGlassLevel.Elevated else DailyRecordGlassLevel.Base,
-                edgeColor = if (selected) DailyRecordDefaultAccent else DailyRecordDivider,
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) DailyRecordDefaultAccentSoft else DailyRecordSurface)
+            .border(
+                1.dp,
+                if (selected) DailyRecordDefaultAccent else DailyRecordDivider,
+                RoundedCornerShape(14.dp),
             )
             .clickable(role = Role.RadioButton, onClick = onClick)
             .padding(14.dp)
@@ -248,6 +251,9 @@ private fun deletionFieldColors() = OutlinedTextFieldDefaults.colors(
 )
 
 internal fun accountDeletionErrorMessage(error: Throwable): String {
+    if (error is AccountDeletionLocalCleanupPendingException) {
+        return AppCopy.Deletion.localCleanupPending
+    }
     val code = (error as? com.google.firebase.auth.FirebaseAuthException)?.errorCode.orEmpty()
     if (code.isNotEmpty()) return accountDeletionErrorMessageForCode(code)
     return when (error.syncFailureKind()) {

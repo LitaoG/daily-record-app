@@ -1,9 +1,14 @@
 package io.github.litaog.dailyrecord.ui.navigation
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,14 +34,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
@@ -59,8 +70,9 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -68,8 +80,6 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 internal enum class DateNavigationSelection { Date, Month, Year }
-
-private enum class NavigationMode { Date, Year }
 
 @Composable
 internal fun DateNavigationDialog(
@@ -83,10 +93,6 @@ internal fun DateNavigationDialog(
 ) {
     val boundedInitial = initialDate.coerceIn(earliestDate, latestDate)
     var selectedDate by remember(initialDate, earliestDate, latestDate) { mutableStateOf(boundedInitial) }
-    var displayedMonth by remember(initialDate, earliestDate, latestDate) {
-        mutableStateOf(YearMonth.from(boundedInitial))
-    }
-    var mode by remember { mutableStateOf(NavigationMode.Date) }
 
     DailyRecordDialog(
         title = if (selection == DateNavigationSelection.Year) {
@@ -95,9 +101,9 @@ internal fun DateNavigationDialog(
             AppCopy.Navigation.title
         },
         subtitle = when (selection) {
-            DateNavigationSelection.Date -> AppCopy.Navigation.subtitle
+            DateNavigationSelection.Date -> AppCopy.Navigation.dateWheelSubtitle
             DateNavigationSelection.Month -> AppCopy.Navigation.monthSubtitle
-            DateNavigationSelection.Year -> AppCopy.Navigation.yearSubtitle
+            DateNavigationSelection.Year -> null
         },
         testTag = "date_navigation_dialog",
         onDismissRequest = onDismiss,
@@ -111,41 +117,13 @@ internal fun DateNavigationDialog(
 
         when (selection) {
             DateNavigationSelection.Date -> {
-                if (mode == NavigationMode.Year) {
-                    YearPicker(
-                        selectedYear = displayedMonth.year,
-                        years = (earliestDate.year..latestDate.year).toList(),
-                        colors = colors,
-                        onYearSelected = { year ->
-                            val newMonth = displayedMonth.withYear(year).coerceIn(
-                                YearMonth.from(earliestDate),
-                                YearMonth.from(latestDate),
-                            )
-                            displayedMonth = newMonth
-                            selectedDate = newMonth
-                                .atDay(selectedDate.dayOfMonth.coerceAtMost(newMonth.lengthOfMonth()))
-                                .coerceIn(earliestDate, latestDate)
-                            mode = NavigationMode.Date
-                        },
-                        onBack = { mode = NavigationMode.Date },
-                    )
-                } else {
-                    MonthPicker(
-                        displayedMonth = displayedMonth,
-                        selectedDate = selectedDate,
-                        earliestDate = earliestDate,
-                        latestDate = latestDate,
-                        colors = colors,
-                        onSwitchToYear = { mode = NavigationMode.Year },
-                        onMonthChanged = { newMonth ->
-                            displayedMonth = newMonth
-                            selectedDate = newMonth
-                                .atDay(selectedDate.dayOfMonth.coerceAtMost(newMonth.lengthOfMonth()))
-                                .coerceIn(earliestDate, latestDate)
-                        },
-                        onDateSelected = { selectedDate = it },
-                    )
-                }
+                DateWheelPicker(
+                    selectedDate = selectedDate,
+                    earliestDate = earliestDate,
+                    latestDate = latestDate,
+                    colors = colors,
+                    onDateSelected = { selectedDate = it },
+                )
             }
 
             DateNavigationSelection.Month -> MonthSelectionPicker(
@@ -172,7 +150,6 @@ internal fun DateNavigationDialog(
                         minOf(selectedDate.dayOfMonth, YearMonth.of(year, month).lengthOfMonth()),
                     ).coerceIn(earliestDate, latestDate)
                 },
-                onBack = onDismiss,
             )
         }
 
@@ -212,12 +189,9 @@ private fun SelectedDateSummary(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp)
-            .dailyRecordGlass(
-                shape = RoundedCornerShape(16.dp),
-                moduleColors = colors,
-                level = DailyRecordGlassLevel.Muted,
-                edgeColor = colors.soft.copy(alpha = .74f),
-            )
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.soft.copy(alpha = .54f))
+            .border(1.dp, colors.primary.copy(alpha = .20f), RoundedCornerShape(14.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(AppCopy.Navigation.selected, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
@@ -264,12 +238,9 @@ private fun SelectionSummary(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp)
-            .dailyRecordGlass(
-                shape = RoundedCornerShape(16.dp),
-                moduleColors = colors,
-                level = DailyRecordGlassLevel.Muted,
-                edgeColor = colors.primary.copy(alpha = .28f),
-            )
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.soft.copy(alpha = .54f))
+            .border(1.dp, colors.primary.copy(alpha = .20f), RoundedCornerShape(14.dp))
             .padding(horizontal = 18.dp, vertical = 14.dp),
     ) {
         Text(AppCopy.Navigation.selected, color = colors.primary, style = MaterialTheme.typography.labelSmall)
@@ -282,13 +253,374 @@ private fun SelectionSummary(
     }
 }
 
+/**
+ * Date navigation deliberately uses a different mental model from the home
+ * calendar: three compact wheels answer "which date?" without putting a
+ * second month grid on top of the first one.
+ */
+@Composable
+private fun DateWheelPicker(
+    selectedDate: LocalDate,
+    earliestDate: LocalDate,
+    latestDate: LocalDate,
+    colors: RecordModuleColorTokens,
+    onDateSelected: (LocalDate) -> Unit,
+) {
+    val years = (earliestDate.year..latestDate.year).toList()
+    val firstMonth = if (selectedDate.year == earliestDate.year) earliestDate.monthValue else 1
+    val lastMonth = if (selectedDate.year == latestDate.year) latestDate.monthValue else 12
+    val months = (firstMonth..lastMonth).toList()
+    val days = (1..YearMonth.of(selectedDate.year, selectedDate.monthValue).lengthOfMonth())
+        .filter { day ->
+            LocalDate.of(selectedDate.year, selectedDate.monthValue, day) in earliestDate..latestDate
+        }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            DateWheelColumn(
+                values = years,
+                selectedValue = selectedDate.year,
+                label = AppCopy.Navigation.yearUnit,
+                valueLabel = AppCopy.Navigation::yearTitle,
+                optionEnabled = { true },
+                onValueSelected = { year ->
+                    onDateSelected(
+                        clampWheelDate(
+                            year = year,
+                            month = selectedDate.monthValue,
+                            day = selectedDate.dayOfMonth,
+                            earliestDate = earliestDate,
+                            latestDate = latestDate,
+                        ),
+                    )
+                },
+                colors = colors,
+                modifier = Modifier.weight(1.16f).testTag("date_wheel_year"),
+            )
+            DateWheelColumn(
+                values = months,
+                selectedValue = selectedDate.monthValue,
+                label = AppCopy.Navigation.monthUnit,
+                valueLabel = AppCopy.Navigation::monthLabel,
+                optionEnabled = { month ->
+                    YearMonth.of(selectedDate.year, month) in
+                        YearMonth.from(earliestDate)..YearMonth.from(latestDate)
+                },
+                onValueSelected = { month ->
+                    onDateSelected(
+                        clampWheelDate(
+                            year = selectedDate.year,
+                            month = month,
+                            day = selectedDate.dayOfMonth,
+                            earliestDate = earliestDate,
+                            latestDate = latestDate,
+                        ),
+                    )
+                },
+                colors = colors,
+                modifier = Modifier.weight(1f).testTag("date_wheel_month"),
+            )
+            DateWheelColumn(
+                values = days,
+                selectedValue = selectedDate.dayOfMonth,
+                label = AppCopy.Navigation.dayUnit,
+                valueLabel = AppCopy.Navigation::dayLabel,
+                optionEnabled = { day ->
+                    LocalDate.of(selectedDate.year, selectedDate.monthValue, day) in earliestDate..latestDate
+                },
+                onValueSelected = { day ->
+                    onDateSelected(
+                        clampWheelDate(
+                            year = selectedDate.year,
+                            month = selectedDate.monthValue,
+                            day = day,
+                            earliestDate = earliestDate,
+                            latestDate = latestDate,
+                        ),
+                    )
+                },
+                colors = colors,
+                modifier = Modifier.weight(.84f).testTag("date_wheel_day"),
+            )
+        }
+        Text(
+            text = AppCopy.Navigation.dateWheelHint,
+            color = DailyRecordTextMuted,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun DateWheelColumn(
+    values: List<Int>,
+    selectedValue: Int,
+    label: String,
+    valueLabel: (Int) -> String,
+    optionEnabled: (Int) -> Boolean,
+    onValueSelected: (Int) -> Unit,
+    colors: RecordModuleColorTokens,
+    modifier: Modifier = Modifier,
+) {
+    val initialIndex = values.indexOf(selectedValue).coerceAtLeast(0)
+    var selectedIndex by remember(values) { mutableIntStateOf(initialIndex) }
+    var dragOffsetPx by remember(values) { mutableFloatStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
+    val latestOnValueSelected = rememberUpdatedState(onValueSelected)
+    val latestOptionEnabled = rememberUpdatedState(optionEnabled)
+    val settleAnimation = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    var settleJob by remember { mutableStateOf<Job?>(null) }
+    val rowHeightPx = with(LocalDensity.current) { 44.dp.toPx() }
+    val shape = RoundedCornerShape(14.dp)
+
+    /**
+     * Keep the local wheel position in sync with changes made by another wheel
+     * (for example, changing the year can clamp the day). During a drag the
+     * local position is authoritative so recomposition cannot snap the content
+     * back under the user's finger.
+     */
+    LaunchedEffect(selectedValue, values) {
+        if (!isDragging) {
+            selectedIndex = values.indexOf(selectedValue).coerceAtLeast(0)
+            dragOffsetPx = 0f
+        }
+    }
+
+    fun commitIndex(index: Int): Boolean {
+        val candidate = values.getOrNull(index) ?: return false
+        if (!latestOptionEnabled.value(candidate)) return false
+        selectedIndex = index
+        latestOnValueSelected.value(candidate)
+        return true
+    }
+
+    fun cancelSettle() {
+        settleJob?.cancel()
+        settleJob = null
+        coroutineScope.launch { settleAnimation.stop() }
+        isDragging = false
+    }
+
+    fun settleWheel() {
+        val currentIndex = selectedIndex.coerceIn(0, values.lastIndex.coerceAtLeast(0))
+        var targetIndex = currentIndex
+        if (dragOffsetPx <= -rowHeightPx / 2f && currentIndex < values.lastIndex) {
+            targetIndex += 1
+        } else if (dragOffsetPx >= rowHeightPx / 2f && currentIndex > 0) {
+            targetIndex -= 1
+        }
+
+        if (targetIndex != currentIndex && commitIndex(targetIndex)) {
+            // Re-basing the three rendered rows keeps the visual position
+            // continuous when the centered item changes at the end of a drag.
+            dragOffsetPx += if (targetIndex > currentIndex) rowHeightPx else -rowHeightPx
+        }
+
+        val startOffset = dragOffsetPx
+        settleJob?.cancel()
+        settleJob = coroutineScope.launch {
+            try {
+                settleAnimation.snapTo(startOffset)
+                settleAnimation.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(dampingRatio = 0.92f, stiffness = 500f),
+                ) {
+                    dragOffsetPx = value
+                }
+                dragOffsetPx = 0f
+                isDragging = false
+            } catch (_: CancellationException) {
+                // A new drag or a row tap takes ownership of the wheel.
+            }
+        }
+    }
+
+    val draggableState = rememberDraggableState { dragAmount ->
+        var nextOffset = dragOffsetPx + dragAmount
+
+        // Rebase the rendered three-row window whenever a full row passes the
+        // center. The content therefore follows the finger instead of waiting
+        // for a threshold before visibly changing.
+        while (nextOffset <= -rowHeightPx && selectedIndex < values.lastIndex) {
+            if (!commitIndex(selectedIndex + 1)) break
+            nextOffset += rowHeightPx
+        }
+        while (nextOffset >= rowHeightPx && selectedIndex > 0) {
+            if (!commitIndex(selectedIndex - 1)) break
+            nextOffset -= rowHeightPx
+        }
+
+        // Add a small edge resistance instead of exposing an empty row when
+        // the wheel is already at its first or last value.
+        dragOffsetPx = when {
+            selectedIndex == 0 && nextOffset > 0f ->
+                (nextOffset - dragAmount + dragAmount * 0.24f)
+                    .coerceAtMost(rowHeightPx * 0.65f)
+            selectedIndex == values.lastIndex && nextOffset < 0f ->
+                (nextOffset - dragAmount + dragAmount * 0.24f)
+                    .coerceAtLeast(-rowHeightPx * 0.65f)
+            else -> nextOffset
+        }
+    }
+
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            color = DailyRecordTextMuted,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(148.dp)
+                .clip(shape)
+                .background(DailyRecordSurfaceMuted)
+                .border(1.dp, DailyRecordDivider, shape)
+                .draggable(
+                    state = draggableState,
+                    orientation = Orientation.Vertical,
+                    onDragStarted = {
+                        cancelSettle()
+                        isDragging = true
+                    },
+                    onDragStopped = { settleWheel() },
+                ),
+        ) {
+            Canvas(Modifier.fillMaxWidth().height(148.dp)) {
+                val bandHeight = 44.dp.toPx()
+                val top = (size.height - bandHeight) / 2f
+                drawRect(
+                    color = colors.soft.copy(alpha = .78f),
+                    topLeft = androidx.compose.ui.geometry.Offset(0f, top),
+                    size = androidx.compose.ui.geometry.Size(size.width, bandHeight),
+                )
+                drawLine(
+                    color = colors.primary.copy(alpha = .48f),
+                    start = androidx.compose.ui.geometry.Offset(0f, top),
+                    end = androidx.compose.ui.geometry.Offset(size.width, top),
+                    strokeWidth = 1.dp.toPx(),
+                )
+                drawLine(
+                    color = colors.primary.copy(alpha = .48f),
+                    start = androidx.compose.ui.geometry.Offset(0f, top + bandHeight),
+                    end = androidx.compose.ui.geometry.Offset(size.width, top + bandHeight),
+                    strokeWidth = 1.dp.toPx(),
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .graphicsLayer { translationY = dragOffsetPx },
+            ) {
+                WheelValueRow(
+                    value = values.getOrNull(selectedIndex - 1),
+                    selected = false,
+                    valueLabel = valueLabel,
+                    enabled = values.getOrNull(selectedIndex - 1)
+                        ?.let(latestOptionEnabled.value)
+                        ?: false,
+                    onClick = {
+                        cancelSettle()
+                        if (commitIndex(selectedIndex - 1)) {
+                            dragOffsetPx = 0f
+                        }
+                    },
+                )
+                WheelValueRow(
+                    value = values.getOrNull(selectedIndex),
+                    selected = true,
+                    valueLabel = valueLabel,
+                    enabled = values.getOrNull(selectedIndex)
+                        ?.let(latestOptionEnabled.value)
+                        ?: false,
+                    onClick = {
+                        cancelSettle()
+                        if (commitIndex(selectedIndex)) {
+                            dragOffsetPx = 0f
+                        }
+                    },
+                )
+                WheelValueRow(
+                    value = values.getOrNull(selectedIndex + 1),
+                    selected = false,
+                    valueLabel = valueLabel,
+                    enabled = values.getOrNull(selectedIndex + 1)
+                        ?.let(latestOptionEnabled.value)
+                        ?: false,
+                    onClick = {
+                        cancelSettle()
+                        if (commitIndex(selectedIndex + 1)) {
+                            dragOffsetPx = 0f
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WheelValueRow(
+    value: Int?,
+    selected: Boolean,
+    valueLabel: (Int) -> String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .clickable(enabled = value != null && enabled, role = Role.Button, onClick = onClick)
+            .semantics {
+                role = Role.Button
+                this.selected = selected
+                if (value != null) contentDescription = valueLabel(value)
+                if (!enabled) disabled()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = value?.let(valueLabel).orEmpty(),
+            color = when {
+                selected -> DailyRecordText
+                !enabled -> DailyRecordDivider
+                else -> DailyRecordTextSecondary.copy(alpha = .72f)
+            },
+            style = if (selected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+        )
+    }
+}
+
+internal fun clampWheelDate(
+    year: Int,
+    month: Int,
+    day: Int,
+    earliestDate: LocalDate,
+    latestDate: LocalDate,
+): LocalDate {
+    val safeMonth = month.coerceIn(1, 12)
+    val safeDay = day.coerceIn(1, YearMonth.of(year, safeMonth).lengthOfMonth())
+    return LocalDate.of(year, safeMonth, safeDay).coerceIn(earliestDate, latestDate)
+}
+
 @Composable
 private fun YearWheelPicker(
     selectedYear: Int,
     years: List<Int>,
     colors: RecordModuleColorTokens,
     onYearSelected: (Int) -> Unit,
-    onBack: () -> Unit,
 ) {
     val firstYear = years.firstOrNull() ?: selectedYear
     val lastYear = years.lastOrNull() ?: selectedYear
@@ -302,42 +634,13 @@ private fun YearWheelPicker(
         listState.scrollToItem((visibleYears.indexOf(selectedYear) - 2).coerceAtLeast(0))
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(role = Role.Button, onClick = onBack)
-                .semantics {
-                    role = Role.Button
-                    contentDescription = AppCopy.Navigation.returnToDatePicker
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            ChevronIcon(forward = false)
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                AppCopy.Navigation.yearScrollHint,
-                color = DailyRecordTextMuted,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(270.dp)
-            .dailyRecordGlass(
-                shape = RoundedCornerShape(20.dp),
-                moduleColors = colors,
-                level = DailyRecordGlassLevel.Muted,
-                edgeColor = colors.soft.copy(alpha = .50f),
-            ),
+            .clip(RoundedCornerShape(14.dp))
+            .background(DailyRecordSurfaceMuted)
+            .border(1.dp, DailyRecordDivider, RoundedCornerShape(14.dp)),
     ) {
         LazyColumn(
             state = listState,
@@ -414,7 +717,6 @@ private fun MonthSelectionPicker(
                 onMonthSelected(candidate)
                 showYears = false
             },
-            onBack = { showYears = false },
         )
         return
     }
@@ -644,7 +946,7 @@ private fun MonthPicker(
                             modifier = Modifier.weight(1f),
                         )
                     } else {
-                        Spacer(Modifier.weight(1f).height(44.dp))
+                        Spacer(Modifier.weight(1f).height(48.dp))
                     }
                 }
             }
@@ -683,18 +985,20 @@ private fun DateCell(
     val weekday = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.SIMPLIFIED_CHINESE)
     Box(
         modifier = modifier
-            .height(44.dp)
-            .padding(2.dp)
-            .clip(CircleShape)
-            .background(if (selected) colors.primary else Color.Transparent)
-            .border(if (selected) 0.dp else 1.dp, if (selected) Color.Transparent else DailyRecordSurface, CircleShape)
+            .height(48.dp)
+            // Clickable precedes padding so the full 48dp cell is the touch
+            // target; the inner visuals keep a 2dp inset as before.
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
                 this.selected = selected
                 contentDescription = AppCopy.Navigation.dateDescription(date, weekday)
                 if (!enabled) disabled()
-            },
+            }
+            .padding(2.dp)
+            .clip(CircleShape)
+            .background(if (selected) colors.primary else Color.Transparent)
+            .border(if (selected) 0.dp else 1.dp, if (selected) Color.Transparent else DailyRecordSurface, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(

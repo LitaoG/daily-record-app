@@ -1,5 +1,6 @@
 package io.github.litaog.dailyrecord.ui.calendar
 
+import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import java.time.LocalDate
 import java.time.YearMonth
 import org.junit.Assert.assertEquals
@@ -7,6 +8,18 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class CalendarGridTest {
+    @Test
+    fun dailyCountColorsUseSeparateThreeAndFourPlusLevels() {
+        assertEquals(RecordVisualState.Unset, calendarRecordVisualState(false, false, null))
+        assertEquals(RecordVisualState.ExplicitZero, calendarRecordVisualState(false, false, 0))
+        assertEquals(RecordVisualState.One, calendarRecordVisualState(false, false, 1))
+        assertEquals(RecordVisualState.Two, calendarRecordVisualState(false, false, 2))
+        assertEquals(RecordVisualState.Three, calendarRecordVisualState(false, false, 3))
+        assertEquals(RecordVisualState.FourPlus, calendarRecordVisualState(false, false, 4))
+        assertEquals(RecordVisualState.FourPlus, calendarRecordVisualState(false, false, 12))
+        assertEquals(RecordVisualState.Disabled, calendarRecordVisualState(false, true, 3))
+    }
+
     @Test
     fun fiveWeekMonthUsesRealDatesWithoutAdjacentMonthFillers() {
         val cells = calendarGridDates(YearMonth.of(2026, 7))

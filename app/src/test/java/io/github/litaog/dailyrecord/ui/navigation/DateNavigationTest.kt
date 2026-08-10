@@ -64,4 +64,38 @@ class DateNavigationTest {
         assertEquals("跳转到此月", navigationJumpLabel(DateNavigationSelection.Month))
         assertEquals("跳转到此年", navigationJumpLabel(DateNavigationSelection.Year))
     }
+
+    @Test
+    fun wheelDateClampsMonthDayAndSupportedRange() {
+        assertEquals(
+            LocalDate.of(2025, 2, 28),
+            clampWheelDate(
+                year = 2025,
+                month = 2,
+                day = 31,
+                earliestDate = earliest,
+                latestDate = today,
+            ),
+        )
+        assertEquals(
+            earliest,
+            clampWheelDate(
+                year = 1969,
+                month = 12,
+                day = 31,
+                earliestDate = earliest,
+                latestDate = today,
+            ),
+        )
+        assertEquals(
+            today,
+            clampWheelDate(
+                year = 2026,
+                month = 12,
+                day = 31,
+                earliestDate = earliest,
+                latestDate = today,
+            ),
+        )
+    }
 }

@@ -15,7 +15,6 @@ internal object AppCopy {
     const val privateRecordSubtitle = "记录每天的次数"
     const val offlineSubtitle = "本机记录可离线使用"
     const val vpnSyncFailure = "请打开 VPN（梯子）后重试；记录仍在本机。"
-    const val diagnosticUnavailable = "诊断信息暂不可用"
     const val readingLocalRecords = "正在读取本机记录"
 
     const val selected = "已选择"
@@ -83,8 +82,6 @@ internal object AppCopy {
     }
 
     object Account {
-        const val diagnostics = "诊断信息"
-        const val diagnosticsAccessibility = "查看本机诊断信息"
         const val signInSync = "登录并同步"
         const val reSignIn = "重新登录"
         const val signInSyncAccessibility = "登录账号并同步记录"
@@ -99,7 +96,6 @@ internal object AppCopy {
         const val syncing = "正在同步"
         const val syncNow = "立即同步"
         const val close = "关闭"
-        const val viewDiagnostics = "查看诊断信息"
         const val signOut = "退出登录"
         const val deleteAccount = "删除账号与云端数据"
         const val notConfigured = "云同步未配置"
@@ -126,7 +122,8 @@ internal object AppCopy {
         const val unknownFailureGuidance = "记录仍在本机，请稍后再试。"
         const val syncDialogMessage = "请检查网络或 VPN（梯子），然后重试。"
         const val dataFormatFailure = "部分云端记录无法读取，其余记录已同步。"
-        const val timeoutFailure = "等待云服务超过 5 秒，已停止同步；记录仍在本机。"
+        fun timeoutFailure(timeoutMillis: Long): String =
+            "等待云服务超过 ${timeoutMillis / 1_000L} 秒，已停止同步；记录仍在本机。"
         const val networkFailure = "网络连接异常，记录仍在本机。"
         const val authFailure = "登录状态已失效，记录仍在本机。"
         const val permissionFailure = "账号暂时无法访问云端，记录仍在本机。"
@@ -175,6 +172,7 @@ internal object AppCopy {
         const val permissionError = "账号暂时无权删除；本机记录仍保留，请重新登录后重试。"
         const val serviceError = "云服务暂时不可用；本机记录仍保留，请稍后重试。"
         const val unknownError = "删除未完成，本机记录仍保留。部分云端记录可能已删除，请重试。"
+        const val localCleanupPending = "账号和云端数据已删除，但本机记录清理未完成，将在下次启动时自动完成。"
         const val wrongPassword = "密码不正确，请重新输入"
         const val tooManyAttempts = "尝试次数过多，请稍后再试"
 
@@ -202,7 +200,6 @@ internal object AppCopy {
         const val futureDescription = "未来日期，不可记录"
         const val unsetDescription = "未填写"
         const val zeroDescription = "记录为 0 次"
-        const val recordedDescription = "%s %d 次"
         const val selectedSuffix = "，已选择"
         const val todaySuffix = "，今天"
 
@@ -233,7 +230,9 @@ internal object AppCopy {
                 future -> futureDescription
                 count == null -> unsetDescription
                 count == 0 -> "$moduleLabel，$zeroDescription"
-                else -> recordedDescription.format(moduleLabel, count)
+                // The same count bucketing as the visual cell keeps TalkBack
+                // and screen text consistent (9+ is never read as exact 9).
+                else -> "$moduleLabel，${countDescription(count)}"
             }
             return if (date == today) "$status$todaySuffix" else status
         }
@@ -243,8 +242,8 @@ internal object AppCopy {
         val weekdays = Calendar.weekdays
         const val title = "快速跳转"
         const val subtitle = "直接选择年份和日期"
+        const val dateWheelSubtitle = "选择日期"
         const val monthSubtitle = "直接选择年份和月份"
-        const val yearSubtitle = "直接选择年份"
         const val jumpToDate = "跳转到此日"
         const val jumpToMonth = "跳转到此月"
         const val jumpToYear = "跳转到此年"
@@ -253,7 +252,10 @@ internal object AppCopy {
         const val returnToDatePicker = "返回日期选择"
         const val selectYear = "选择年份"
         const val selectMonth = "选择月份"
-        const val yearScrollHint = "上下滑动选择年份"
+        const val dateWheelHint = "上下滑动调整日期"
+        const val yearUnit = "年"
+        const val monthUnit = "月"
+        const val dayUnit = "日"
         private val monthNames = listOf(
             "一月", "二月", "三月", "四月", "五月", "六月",
             "七月", "八月", "九月", "十月", "十一月", "十二月",
@@ -271,6 +273,7 @@ internal object AppCopy {
         fun yearTitle(year: Int): String = "${year}年"
         fun monthTitle(month: YearMonth): String = "${month.year}年 ${month.monthValue}月"
         fun monthLabel(month: Int): String = monthNames.getOrElse(month - 1) { "${month}月" }
+        fun dayLabel(day: Int): String = "${day}日"
         fun monthDescription(month: YearMonth): String = "选择${month.year}年${month.monthValue}月"
     }
 
@@ -283,6 +286,37 @@ internal object AppCopy {
         const val clear = "清除记录"
         const val clearFailure = "清除失败，请重试"
         const val countOnly = "只记录次数"
+        const val countFirst = "先记录次数"
+        const val countAndDetails = "记录次数与每次详情"
+        const val detailEntry = "记录时间和感受"
+        const val detailEntryHintFormat = "为这 %d 次补充详情"
+        const val detailSectionTitle = "本次详情"
+        const val detailSectionHint = "每增加 1 次，自动新增一条"
+        const val detailCollapse = "收起详情"
+        const val detailExpand = "展开详情"
+        const val detailOccurrenceFormat = "第 %d 次"
+        const val detailStartTime = "开始"
+        const val detailEndTime = "结束"
+        const val detailTimeUnset = "选择时间"
+        const val detailWriteFeeling = "写感受"
+        const val detailEditFeeling = "编辑感受"
+        const val detailCollapseFeeling = "收起"
+        const val detailFeelingLabel = "感受（可选）"
+        const val detailFeelingHint = "写下这一刻的感受"
+        const val detailFeelingCounter = "%d / 100"
+        const val detailEndBeforeStart = "结束时间不能早于开始时间"
+        const val detailDiscardTitle = "移除这次详情？"
+        const val detailDiscardMessage = "这次已填写的时间或感受会一起移除。"
+        const val detailConfirmRemove = "移除详情"
+
+        fun detailTimeDescription(occurrence: Int, label: String, value: String): String =
+            "${detailOccurrence(occurrence)}，$label，$value"
+
+        fun detailFeelingActionDescription(occurrence: Int, action: String): String =
+            "${detailOccurrence(occurrence)}，$action"
+
+        fun detailFeelingEditorDescription(occurrence: Int): String =
+            "${detailOccurrence(occurrence)}，$detailFeelingLabel"
         const val loadingRecords = "正在读取记录…"
         const val futureUnavailable = "未来日期，不能记录"
         const val notSaved = "尚未填写"
@@ -292,8 +326,8 @@ internal object AppCopy {
         const val clearMessage = "清除后会恢复为“未填写”，不会计入统计。"
         const val confirmClear = "确认清除"
         const val discardTitle = "放弃未保存的修改？"
-        const val unsavedSubtitle = "当前次数尚未保存"
-        const val discardMessage = "返回日历后，这次修改会丢失。"
+        const val unsavedSubtitle = "当前次数或详情尚未保存"
+        const val discardMessage = "返回日历后，这次次数或详情修改会丢失。"
         const val continueEditing = "继续编辑"
         const val discard = "放弃修改"
         const val backToCalendar = "返回日历"
@@ -305,6 +339,9 @@ internal object AppCopy {
         fun moduleRecordLabel(moduleLabel: String): String = "${moduleLabel}记录"
         fun dateLabel(date: LocalDate, weekday: String): String =
             "${date.monthValue}月${date.dayOfMonth}日 · $weekday"
+        fun detailEntryHint(count: Int): String = detailEntryHintFormat.format(count)
+        fun detailOccurrence(index: Int): String = detailOccurrenceFormat.format(index)
+        fun detailFeelingCounter(count: Int): String = detailFeelingCounter.format(count)
     }
 
     object Statistics {
@@ -340,11 +377,13 @@ internal object AppCopy {
         const val times = "次数"
         const val weeklySummaryTitle = "本周"
         const val weeklyRecordedLabel = "有记录"
-        const val weeklyLegendHigh = "≥6次"
-        const val weeklyLegendMedium = "3–5次"
-        const val weeklyLegendLow = "1–2次"
+        const val weeklyLegendFourPlus = "4次及以上"
+        const val weeklyLegendThree = "3次"
+        const val weeklyLegendTwo = "2次"
+        const val weeklyLegendOne = "1次"
         const val weeklyLegendZero = "0次"
-        const val weeklyLegendFuture = "未解锁"
+        const val weeklyLegendUnrecorded = "未填写"
+        const val weeklyLegendFuture = "未到"
         const val dailyCount = "每日次数"
         const val byDate = "按日期"
         const val countComposition = "次数分布"
@@ -451,17 +490,25 @@ internal object AppCopy {
         }.toString()
     }
 
-    object Diagnostics {
-        const val title = "本机诊断信息"
-        const val subtitle = "诊断信息不包含邮箱、记录日期、次数或密码。"
-        const val copy = "复制诊断信息"
-        const val copied = "诊断信息已复制"
-        const val copyFailed = "复制失败，请手动选中文字"
-        const val share = "分享诊断信息"
-        const val noShareTarget = "没有找到可用的分享应用"
-        const val back = "返回"
-        const val shareHint = "发送前可长按检查或选择文字。"
-        const val clipboardLabel = "私密日历诊断信息"
+    object Settings {
+        const val title = "设置"
+        const val open = "打开设置"
+        const val back = "返回主页"
+        const val accountSection = "账号与同步"
+        const val localAccountTitle = "本机记录"
+        const val localAccountSummary = "记录只保存在这台设备；登录后可同步并在换机时恢复。"
+        const val signedInAccountSummary = "查看同步状态、手动同步或管理账号"
+        const val dataSection = "数据与隐私"
+        const val localFirstTitle = "本机优先"
+        const val localFirstSummary = "所有记录先保存在本机；未登录时不会上传。"
+        const val privacyTitle = "隐私保护"
+        const val privacySummary = "不含广告、分析或崩溃上报 SDK"
+        const val aboutSection = "关于"
+        const val version = "版本"
+        const val license = "开源许可"
+        const val licenseValue = "Apache 2.0"
+
+        fun accountDescription(title: String, status: String): String = "$title，$status"
     }
 
     object NavigationBar {

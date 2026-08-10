@@ -528,11 +528,12 @@ fun DailyCountControl(
     onIncrease: () -> Unit,
     modifier: Modifier = Modifier,
     colors: RecordModuleColorTokens = HandBrewColorTokens,
+    compact: Boolean = false,
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 132.dp)
+            .heightIn(min = if (compact) 108.dp else 132.dp)
             .dailyRecordGlass(
                 shape = RoundedCornerShape(18.dp),
                 moduleColors = colors,
@@ -654,10 +655,12 @@ fun OutlineActionButton(
     Box(
         modifier = modifier
             .heightIn(min = 52.dp)
-            .dailyRecordGlass(
+            .clip(DailyRecordShapes.Control)
+            .background(if (enabled) DailyRecordSurface else DailyRecordSurfaceMuted)
+            .border(
+                width = 1.dp,
+                color = if (enabled) accent.copy(alpha = .66f) else DailyRecordDivider,
                 shape = DailyRecordShapes.Control,
-                level = if (enabled) DailyRecordGlassLevel.Elevated else DailyRecordGlassLevel.Muted,
-                edgeColor = if (enabled) accent else DailyRecordDivider,
             )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { role = Role.Button; contentDescription = label },
