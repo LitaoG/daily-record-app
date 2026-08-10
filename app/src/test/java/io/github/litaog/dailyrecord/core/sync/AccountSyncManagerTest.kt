@@ -24,7 +24,7 @@ import org.junit.Test
 
 class AccountSyncManagerTest {
     @Test
-    fun concurrentSyncTriggersShareTheInFlightAttempt() = runBlocking {
+    fun manualSyncWhileBusyIsQueuedInsteadOfDropped() = runBlocking {
         val operations = BlockingSyncOperations()
         val manager = AccountSyncManager(
             ownerId = "owner",
@@ -35,13 +35,17 @@ class AccountSyncManagerTest {
 
         val first = launch { manager.syncNow() }
         operations.started.await()
-        manager.syncNow()
-
+        // A manual request arriving while the mutex is held must be queued,
+        // not silently dropped: it returns immediately and the in-flight
+        // attempt's loop runs one more sync once the current one finishes.
+        val queued = launch { manager.syncNow() }
+        queued.join()
         assertEquals(1, operations.syncCalls.get())
         assertEquals(SyncStatus.Syncing, manager.status.value)
 
         operations.release.complete(Unit)
         first.join()
+        assertEquals(2, operations.syncCalls.get())
         assertEquals(SyncStatus.UpToDate, manager.status.value)
     }
 
