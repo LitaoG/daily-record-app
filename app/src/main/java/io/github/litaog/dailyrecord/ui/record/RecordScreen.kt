@@ -120,6 +120,10 @@ private enum class DetailTimeTarget {
 private data class TimePickerRequest(
     val index: Int,
     val target: DetailTimeTarget,
+    // Snapshotted when the request is created (the picker must not move while
+    // open, and reopening the same target must always start from the current
+    // entry value, not from a stale first-open value).
+    val initialMinutes: Int,
 )
 
 @Composable
@@ -184,7 +188,10 @@ internal fun DailyCountRecordScreen(
         if (dataReady) {
             val latestCount = record?.count ?: 0
             countDraft = countDraft.reconcile(latestCount)
-            detailsDraft = detailsDraft.reconcile(storedDetails, latestCount)
+            // Normalize the detail rows to the reconciled draft count: a dirty
+            // count keeps its size (no remote truncation of in-progress edits)
+            // and a clean count stays in sync with the server.
+            detailsDraft = detailsDraft.reconcile(storedDetails, countDraft.count)
         }
     }
 
@@ -371,7 +378,12 @@ internal fun DailyCountRecordScreen(
                         accent = moduleSpec.colors.primary,
                         onCollapse = { detailsDraft = detailsDraft.copy(expanded = false) },
                         onTimeClick = { index, target ->
-                            timePickerRequest = TimePickerRequest(index, target)
+                            val current = detailsDraft.entries.getOrNull(index)
+                            val minutes = when (target) {
+                                DetailTimeTarget.Start -> current?.startMinutes
+                                DetailTimeTarget.End -> current?.endMinutes
+                            } ?: LocalTime.now().let { it.hour * 60 + it.minute }
+                            timePickerRequest = TimePickerRequest(index, target, minutes)
                         },
                         onFeelingToggle = { index ->
                             detailsDraft = detailsDraft.update(index) {
@@ -423,7 +435,6 @@ internal fun DailyCountRecordScreen(
 
     TimePickerHost(
         request = timePickerRequest,
-        entry = timePickerRequest?.let { detailsDraft.entries.getOrNull(it.index) },
         onSelected = { request, minutes ->
             val current = detailsDraft.entries.getOrNull(request.index) ?: return@TimePickerHost
             if (
@@ -992,30 +1003,22 @@ private fun DetailEntryButton(
 @Composable
 private fun TimePickerHost(
     request: TimePickerRequest?,
-    entry: RecordDetailDraft?,
     onSelected: (TimePickerRequest, Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    // Snapshot the initial minutes when the request is opened; later Room
-    // emissions must not move the dialog's wheel while the user is picking.
-    val initialMinutes = remember(request) {
-        request?.let { r ->
-            when (r.target) {
-                DetailTimeTarget.Start -> entry?.startMinutes
-                DetailTimeTarget.End -> entry?.endMinutes
-            } ?: LocalTime.now().let { it.hour * 60 + it.minute }
-        }
-    }
+    // The effect keys on the request only: later Room emissions must not
+    // dismiss and re-show the dialog while the user is picking. The wheel
+    // values are snapshotted into the request when it is created.
     DisposableEffect(request, context) {
-        if (request == null || initialMinutes == null) {
+        if (request == null) {
             onDispose { }
         } else {
             val dialog = TimePickerDialog(
                 context,
                 { _, hour, minute -> onSelected(request, hour * 60 + minute) },
-                initialMinutes / 60,
-                initialMinutes % 60,
+                request.initialMinutes / 60,
+                request.initialMinutes % 60,
                 true,
             )
             dialog.setOnDismissListener { onDismiss() }

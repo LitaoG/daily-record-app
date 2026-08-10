@@ -5,6 +5,7 @@ import io.github.litaog.dailyrecord.ui.RecordDetailEntry
 import java.time.LocalTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -24,12 +25,15 @@ class RecordDetailsDraftTest {
 
     @Test
     fun dirtyDetailsSurviveAConcurrentRemoteShrinkWithoutTruncation() {
+        // The screen passes the reconciled draft count (2): the user's dirty
+        // count keeps its size, so a remote shrink to 1 must not truncate the
+        // entry the user is still editing.
         val draft = RecordDetailsDraft()
             .reconcile(emptyList(), 2)
             .update(0) { it.withFeeling("今天更平静") }
             .reconcile(
                 latest = listOf(RecordDetailEntry(1, feeling = "云端版本")),
-                count = 1,
+                count = 2,
             )
 
         assertTrue(draft.hasChanges)
@@ -39,7 +43,10 @@ class RecordDetailsDraftTest {
     }
 
     @Test
-    fun dirtyDetailsAlsoIgnoreARemoteGrowUntilTheDraftCountCatchesUp() {
+    fun dirtyDetailsNormalizeToTheDraftCountWhenTheRemoteGrows() {
+        // Remote count 2 -> 3 with a clean count: countDraft follows the
+        // server, so the row list must normalize to 3 (blank tail) instead of
+        // staying at 2 and leaving the displayed count inconsistent.
         val draft = RecordDetailsDraft()
             .reconcile(emptyList(), 2)
             .update(0) { it.withFeeling("保留") }
@@ -52,8 +59,9 @@ class RecordDetailsDraftTest {
             )
 
         assertTrue(draft.hasChanges)
-        assertEquals(2, draft.entries.size)
-        assertEquals(3, draft.baseline.size)
+        assertEquals(3, draft.entries.size)
+        assertEquals("保留", draft.entries[0].feeling)
+        assertNull(draft.entries[2].startMinutes)
     }
 
     @Test
