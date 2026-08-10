@@ -40,7 +40,7 @@ jobs:
           cache: pnpm
 
       - name: Install test dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --config.dangerouslyAllowAllBuilds=true
 
       - name: Validate copy, documentation, and release metadata
         run: node --test scripts/copy-integrity.test.mjs scripts/docs-integrity.test.mjs scripts/release-metadata.test.mjs
