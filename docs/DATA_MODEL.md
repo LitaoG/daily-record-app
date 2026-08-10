@@ -1,6 +1,6 @@
 # 数据模型
 
-当前 schema：Room v4。最后复核：2026-08-08。
+当前 schema：Room v5。最后复核：2026-08-10。
 
 ## 两个独立领域实体
 
@@ -20,15 +20,15 @@
 
 不存在 `Activity`、`activityId`、`MeasurementType`、通用业务状态枚举、活动颜色或归档字段。未来记录类型应使用自己的实体和表，不向现有表追加用于区分活动种类的字段。
 
-## Room schema v4
+## Room schema v5
 
-业务表：`hand_brew_records`、`sex_records`
+业务表：`hand_brew_records`、`sex_records`；详情表：`hand_brew_record_details`、`sex_record_details`
 
-- 主键：`id`
-- 唯一索引：`owner_id + local_date`
+- 聚合记录主键：`id`；唯一索引：`owner_id + local_date`
 - 待同步索引：`owner_id + sync_state`
+- 详情表唯一索引：`owner_id + local_date + occurrence_index`，时间用当天 `LocalTime`（分钟精度），感受最多 100 个可见 Unicode 字符
 - 日历查询：按日期半开区间升序读取。
-- 清除记录：把对应日期行标为墓碑并待同步；普通读取过滤墓碑，结果为未填写。
+- 清除记录：把对应日期聚合行标为墓碑并待同步，同时清除本地详情；普通读取过滤墓碑，结果为未填写。
 
 ## 状态推导
 

@@ -91,7 +91,7 @@
 - 决策：新增 `SexRecord`、`sex_records`、`SexRecordDao`、`SexRecordRepository` 和 `/users/{uid}/sexRecords/{date}`，不向 `HandBrewRecord` 增加类型字段。
 - 原因：两类记录在产品语义、隐私边界、存储和云端删除上必须可独立验证；通用活动表会重新引入已废止的复杂度。
 - 共享边界：日期导航、次数编辑、统计纯函数和冲突算法已经由两个真实模块证明相同，因此以 `DailyCountEntry` UI 投影和强类型 `DailyCountSyncEngine` 复用；领域实体、DAO、Repository、远端映射和集合仍独立。
-- 数据迁移：Room v3→v4 只创建空的 `sex_records`，原手冲数据不变；v1→v4、v2→v4、v3→v4 都必须通过迁移测试。
+- 数据迁移：Room v3→v4 只创建空的 `sex_records`，原手冲数据不变；v1→v5、v2→v5、v3→v5、v4→v5 都必须通过迁移测试。
 - 隐私后果：云同步新增用户主动填写的做爱日期与次数；不增加伴侣、具体时间、地点、时长、备注、图片或医疗数据。永久删除账号必须覆盖两个集合。
 
 ## ADR-015：设置中心保持为次级页面

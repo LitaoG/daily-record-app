@@ -1,6 +1,6 @@
 # 私密日历 UI 视觉重构：竞品研究与决策基线
 
-状态：`Accepted research baseline`
+状态：`Accepted research baseline`（调研与后续实施均已完成：Stage 1–6 与 `v1.0.0-beta.2` 已发布；逐次详情与设置中心已合入 `main`，其中"时间、感受不得加入"的早期表述已被 Issue #105 超越）
 
 研究日期：2026-07-29；Stage 4 刷新：2026-08-01
 
