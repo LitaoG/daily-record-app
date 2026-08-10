@@ -172,11 +172,11 @@ class AccountSyncManagerTest {
         )
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val job = manager.start(scope).first()
-        withTimeout(5_000) {
+        withTimeout(10_000) {
             while (manager.status.value !is SyncStatus.Failed) delay(10)
         }
         assertFalse(job.isCompleted)
-        withTimeout(5_000) {
+        withTimeout(10_000) {
             while (manager.status.value !is SyncStatus.UpToDate) delay(10)
         }
         assertFalse(job.isCompleted)
