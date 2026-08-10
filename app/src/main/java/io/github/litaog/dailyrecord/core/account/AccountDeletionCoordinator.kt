@@ -69,8 +69,13 @@ internal class AccountDeletionCoordinator(
             // The account still exists but its cloud data is already cleared.
             // Re-mark the owner rows pending so the next successful sync
             // rebuilds the cloud instead of leaving the account permanently
-            // desynced from this device.
-            localStore.markOwnerPendingForResync(ownerId)
+            // desynced from this device. A failed re-mark must not mask the
+            // original deletion failure.
+            try {
+                localStore.markOwnerPendingForResync(ownerId)
+            } catch (markError: Exception) {
+                error.addSuppressed(markError)
+            }
             throw error
         }
         try {
