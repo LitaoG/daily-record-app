@@ -34,7 +34,7 @@ internal fun requireValidRecordRange(startDate: LocalDate, endExclusive: LocalDa
 
 /** Keeps edits strictly monotonic when multiple writes share the same clock tick. */
 internal fun Instant.nextRecordTimestamp(): Instant =
-    runCatching { plusMillis(1) }.getOrDefault(this)
+    if (this == Instant.MAX) this else plusMillis(1)
 
 /** Local persistence stays successful even when best-effort cloud scheduling fails. */
 internal fun notifyLocalChangeSafely(onLocalChange: () -> Unit) {
