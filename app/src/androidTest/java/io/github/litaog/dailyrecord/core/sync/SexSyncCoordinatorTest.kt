@@ -110,6 +110,40 @@ class SexSyncCoordinatorTest {
     }
 
     @Test
+    fun pendingSexEditRecreatesCloudRecordAfterRemoteDocumentDisappears() = runBlocking {
+        val remote = FakeSexRemoteDataSource()
+        val database = database()
+        val sexRepository = repository(database, firstInstant)
+        val sexCoordinator = coordinator(database, remote)
+
+        // Device A syncs a sex record so the local row carries a remote revision.
+        sexRepository.saveRecord(record(1, firstInstant))
+        assertEquals(1, sexCoordinator.syncOnce(ownerId).uploaded)
+        assertEquals(1, sexRepository.observeRecord(date).first()?.sexCount)
+
+        // The cloud document disappears, while this device keeps editing
+        // the same date offline.
+        remote.removeRemote(date)
+        sexRepository.saveRecord(record(2, firstInstant.plusSeconds(30)))
+        val pending = RoomSexSyncStore(database).pending(ownerId).single()
+        assertEquals(1L, pending.remoteRevision)
+        assertEquals(2, pending.sexCount)
+
+        // The next sync must recreate the document instead of failing
+        // permanently on the stale revision baseline.
+        val result = sexCoordinator.syncOnce(ownerId)
+
+        assertEquals(1, result.uploaded)
+        assertEquals(0, result.pending)
+        val cloud = remote.fetch(ownerId).sexRecords.single()
+        assertEquals(2, cloud.sexCount)
+        // The recreated document restarts its revision count at 1 (ADR-017).
+        assertEquals(1L, cloud.revision)
+        assertEquals(2, sexRepository.observeRecord(date).first()?.sexCount)
+        assertEquals(0, RoomSexSyncStore(database).pendingCount(ownerId))
+    }
+
+    @Test
     fun combinedCoordinatorUploadsAndCountsBothModulesWithoutMixingThem() = runBlocking {
         val database = database()
         val handRemote = FakeHandBrewRemoteForCombined()
@@ -184,7 +218,9 @@ private class FakeSexRemoteDataSource : SexRemoteDataSource {
             if (current != null && local.remoteRevision != current.revision) {
                 return@withLock current
             }
-            require(current != null || local.remoteRevision == 0L)
+            // Mirrors the production data source (issue #104): recreate a
+            // missing cloud document from the local pending edit instead of
+            // permanently failing the PENDING row on its stale baseline.
             val committed = RemoteSexRecord(
                 id = current?.id ?: local.id,
                 localDate = local.localDate,
@@ -200,6 +236,11 @@ private class FakeSexRemoteDataSource : SexRemoteDataSource {
 
     override suspend fun deleteAll(ownerId: String) {
         values.value = emptyMap()
+    }
+
+    /** Simulates the cloud document disappearing (e.g. account data cleanup). */
+    fun removeRemote(localDate: LocalDate) {
+        values.value = values.value - localDate
     }
 }
 
@@ -224,7 +265,8 @@ private class FakeHandBrewRemoteForCombined : HandBrewRemoteDataSource {
         if (current != null && local.remoteRevision != current.revision) {
             return@withLock current
         }
-        require(current != null || local.remoteRevision == 0L)
+        // Mirrors the production data source (issue #104): recreate a
+        // missing cloud document from the local pending edit.
         val committed = RemoteHandBrewRecord(
             id = current?.id ?: local.id,
             localDate = local.localDate,
