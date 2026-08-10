@@ -68,11 +68,12 @@ internal data class RecordDetailsDraft(
             .sortedBy(RecordDetailEntry::occurrenceIndex)
             .map(RecordDetailDraft::fromEntry)
             .resize(count)
-        // An in-progress edit keeps its own entry list: the draft count governs
-        // the UI, so a concurrent remote shrink must never truncate entries the
-        // user is still editing. The baseline still tracks the latest remote
-        // state so a clean draft always follows the server.
-        val nextEntries = if (!initialized || !hasChanges) latestDraft else entries
+        // count is the caller's draft count (the reconciled countDraft), not
+        // the raw remote count: a dirty draft keeps its own size so a remote
+        // shrink never truncates entries the user is still editing, while a
+        // remote grow (with a clean count) still normalizes the row list to
+        // match the displayed count.
+        val nextEntries = if (!initialized || !hasChanges) latestDraft else entries.resize(count)
         return copy(
             entries = nextEntries,
             baseline = latestDraft,
