@@ -1,6 +1,6 @@
 # 私密日历产品交付索引
 
-最后复核：2026-08-08
+最后复核：2026-08-10
 
 完整工程文档请先看[文档中心](../README.md)。本页只索引产品、设计和交付资料。
 
@@ -10,7 +10,7 @@
 - [界面与交互](../UI_UX.md)
 - [统计口径](../STATISTICS.md)
 - [UI v2 分阶段执行计划](QUIET_PRIVATE_JOURNAL_GOALS.md)
-- [同步、隐私与统计一致性加固 Goal（待审阅）](GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
+- [同步、隐私与统计一致性加固 Goal（已完成）](GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
 - [已确认的 UI v2 设计基线与三张高保真图](design/quiet-private-journal-v2/README.md)
 - [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
 - [明亮渐变玻璃主题 Goal 与当前契约](BRIGHT_GLASS_THEME.md)
@@ -20,6 +20,7 @@
 - [2026-08-02 统计与日历边界修复](audit/2026-08-02-boundary-fixes/README.md)
 - [2026-08-02 统计周期玻璃分段控件](audit/2026-08-02-period-glass-tabs/README.md)
 - [2026-08-01 Stage 5 集成 QA 与候选 APK](audit/2026-08-01-ui-v2-stage5/README.md)
+- [2026-08-09 Issue #105 记录页 Stage 4–5 验收](audit/2026-08-09-record-details-stage4-stage5/README.md)
 - [实现与发布准备度](IMPLEMENTATION_READINESS.md)
 - [产品 Backlog](PRODUCT_BACKLOG.md)
 - [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)
@@ -32,7 +33,7 @@
 - [隐私说明](../../PRIVACY.md)
 - [签名与 GitHub Release](../RELEASE.md)
 
-后续实现只能从新的 Issue/Goal 和当前事实文档进入。Stage 1 至 Stage 6 已完成并发布 `v1.0.0-beta.2`；当前运行行为仍以代码与事实文档为准，真人日常反馈只通过后续 Issue 进入定向修复。
+后续实现只能从新的 Issue/Goal 和当前事实文档进入。Stage 1 至 Stage 6 已完成并发布 `v1.0.0-beta.2`；逐次详情与设置中心（Issue #105 / PR #119）已合入 `main`，尚未随新版本发布。当前运行行为仍以代码与事实文档为准，真人日常反馈只通过后续 Issue 进入定向修复。
 
 ## 历史交付证据
 

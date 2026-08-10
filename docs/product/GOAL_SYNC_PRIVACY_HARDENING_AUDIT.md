@@ -1,8 +1,6 @@
 # Goal：同步、隐私与统计一致性加固
 
-> 状态：待用户审阅，尚未进入代码修复阶段<br>
-> 审查基线：公共仓库 `main`，commit `9dbc583b6414333a57d506b358241ffe233a5a34`<br>
-> 本 Goal 只记录事实、风险、修复要求和验收门槛；在用户确认前不得修改业务代码、数据库结构或 UI。
+> 状态：**已完成（归档）**。审查基线 commit `9dbc583` 之后，#93–#102 的修复已随 PR #119（合并 review-candidate）与 PR #120（#104 自愈测试与 ADR-017）进入或待进入公共 `main`。本文保留当时的审查事实与验收标准作为历史证据，不再作为当前执行计划；后续同类问题按新的 Issue/Goal 处理。
 
 ## 1. 总目标
 
@@ -44,7 +42,7 @@
 |---|---|---|
 | M1 | 迁移实现脆弱，但当前有 `icon_key='flight'` 兜底 | 将迁移筛选冻结为稳定机器键，禁止依赖用户可见文案，并补充改文案后的迁移回归测试。 |
 | M8 | 测试债务 | 补充迁移过滤回归、季度切分边界、密码重置发送中锁定、跨年首周、设备时区变化、进程重启后的待同步任务、监听恢复等测试。没有测试证据不等于运行时一定错误。 |
-| M9 | 文档过时 | `DEVELOPMENT.md` 仍写 v1→v2→v3，更新为当前 v1/v2/v3→v4 的真实迁移路径。 |
+| M9 | 文档过时 | `DEVELOPMENT.md` 曾写 v1→v2→v3，已更新为 v1→v5、v2→v5、v3→v5、v4→v5 的真实迁移路径（2026-08-10 文档整理）。 |
 
 ## 3. GitHub Issue 拆分
 
@@ -59,7 +57,7 @@
 | [#97](https://github.com/LitaoG/daily-record-app/issues/97) | M3：账号删除后的本地清理恢复语义 |
 | [#98](https://github.com/LitaoG/daily-record-app/issues/98) | M4：认证恢复后重新订阅实时监听 |
 | [#99](https://github.com/LitaoG/daily-record-app/issues/99) | M7：最早支持周的日期范围 |
-| [#104](https://github.com/LitaoG/daily-record-app/issues/104) | M5b：云端记录删除后的 `remoteRevision` pending 自愈 |
+| [#104](https://github.com/LitaoG/daily-record-app/issues/104) | M5b：云端记录删除后的 `remoteRevision` pending 自愈（生产修复已随 review-candidate 合并；测试与 ADR-017 见 PR #120） |
 | [#100](https://github.com/LitaoG/daily-record-app/issues/100) | 模块同步失败隔离 |
 | [#101](https://github.com/LitaoG/daily-record-app/issues/101) | TalkBack 9+ 语义与日期格点击热区 |
 | [#102](https://github.com/LitaoG/daily-record-app/issues/102) | 边界回归测试与 v4 迁移文档 |

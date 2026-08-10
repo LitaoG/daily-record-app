@@ -76,7 +76,7 @@ adb shell am instrument -w `
 
 ## 当前运维边界与后续事项
 
-- 稳定 release keystore、证书指纹、GitHub tag 工作流、隐私说明和账号/云数据删除已经建立并用于 `v1.0.0-beta.1`；私钥和生产配置只存在于受控恢复镜像、本机安全文件或 GitHub Actions Secrets，不进入公开仓库。
+- 稳定 release keystore、证书指纹、GitHub tag 工作流、隐私说明和账号/云数据删除已经建立并用于 `v1.0.0-beta.1` 与 `v1.0.0-beta.2`；私钥和生产配置只存在于受控恢复镜像、本机安全文件或 GitHub Actions Secrets，不进入公开仓库。
 - App Check 评估结论：Play Integrity 可配置为支持 Play 外分发，但仍需要 Play Console 应用/Cloud 项目关联并关闭不适合侧载的默认识别要求。当前 GitHub-only 分发暂不接入、不强制；不能用 debug provider 保护生产 APK。
 - 本人和少量使用者继续通过日常真实使用反馈问题；不再设置固定人数的正式真人测试门槛。
 - 中国大陆无代理云恢复不属于当前承诺；本机模式不受影响。若未来要求无代理云功能，必须另立后端迁移项目。

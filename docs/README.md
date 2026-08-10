@@ -1,10 +1,10 @@
 # 私密日历文档中心
 
-最后复核：2026-08-09
+最后复核：2026-08-10
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
-当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；本次整理以整理开始时的公共 `main` 为基线。Stage 0–6 和 `v1.0.0-beta.2` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办；合并后以 GitHub `main` 的最新提交为准。
+当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`。Stage 0–6 和 `v1.0.0-beta.2` 已完成，逐次详情与设置中心（Issue #105 / PR #119）已合入 `main`；历史阶段文档只用于追溯当时的截图与验证，不构成新的待办；合并后以 GitHub `main` 的最新提交为准。
 
 ## 当前事实文档
 
@@ -31,6 +31,7 @@
 | [安全策略](../SECURITY.md) | 漏洞报告、敏感材料和安全基线 |
 | [参与贡献](../CONTRIBUTING.md) | 分支、代码、测试和隐私要求 |
 | [仓库维护与文档生命周期](REPOSITORY_HYGIENE.md) | 公共/私有边界、分支清理、文档分类和生成物策略 |
+| [AI 协作记录](../AI_COLLABORATION.md) | AI 协助开发时被指正过的问题与通用做法 |
 
 ## 产品协作资料
 
@@ -38,7 +39,7 @@
 - [审计与验证证据索引](product/audit/README.md)
 - [设计资产索引](design/README.md)
 - [UI v2 分阶段执行计划](product/QUIET_PRIVATE_JOURNAL_GOALS.md)
-- [同步、隐私与统计一致性加固 Goal（待审阅）](product/GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
+- [同步、隐私与统计一致性加固 Goal（已完成）](product/GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
 - [已确认的 UI v2 设计基线与三张高保真图](product/design/quiet-private-journal-v2/README.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](product/MONTH_STATISTICS_REDESIGN.md)
 - [2026-08-02 统计与日历边界修复](product/audit/2026-08-02-boundary-fixes/README.md)
