@@ -237,6 +237,43 @@ class RoomHandBrewRecordRepositoryTest {
         assertEquals(emptyList<HandBrewRecordDetail>(), repository.observeDetails(date).first())
     }
 
+    @Test
+    fun editingADetailKeepsItsCreationTimestamp() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        val firstCreated = now
+        repository.saveRecord(
+            record("created-at", date, 1),
+            listOf(detail(date, 1, LocalTime.of(9, 20), LocalTime.of(9, 35), "平静")),
+        )
+        val stored = repository.observeDetails(date).first().single()
+        assertEquals(firstCreated, stored.createdAt)
+
+        // The UI always passes a fresh timestamp for every detail; the
+        // repository must keep the original createdAt and only advance
+        // updatedAt when the same occurrence is edited again.
+        val editTimestamp = now.plusSeconds(60)
+        repository.saveRecord(
+            record("created-at", date, 1).copy(updatedAt = editTimestamp),
+            listOf(
+                HandBrewRecordDetail(
+                    id = "ignored-new-id",
+                    localDate = date,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(10, 0),
+                    endTime = null,
+                    feeling = "更平静",
+                    createdAt = editTimestamp,
+                    updatedAt = editTimestamp,
+                ),
+            ),
+        )
+
+        val edited = repository.observeDetails(date).first().single()
+        assertEquals(firstCreated, edited.createdAt)
+        assertEquals(editTimestamp, edited.updatedAt)
+        assertEquals("更平静", edited.feeling)
+    }
+
     private fun detail(
         date: LocalDate,
         occurrenceIndex: Int,

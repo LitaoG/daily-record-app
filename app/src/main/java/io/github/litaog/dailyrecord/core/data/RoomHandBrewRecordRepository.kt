@@ -102,7 +102,10 @@ internal class RoomHandBrewRecordRepository(
             .associateBy { it.occurrenceIndex }
         val normalized = details.map { detail ->
             val existing = existingByOccurrence[detail.occurrenceIndex]
-            val createdAt = maxOf(detail.createdAt, existing?.createdAt ?: saved.createdAt)
+            // createdAt is the first-creation timestamp and must never move
+            // forward on later edits: keep the stored value for existing
+            // details and only take the passed-in value for new ones.
+            val createdAt = existing?.createdAt ?: detail.createdAt
             val updatedAt = maxOf(
                 detail.updatedAt,
                 createdAt,
