@@ -997,14 +997,20 @@ private fun TimePickerHost(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    DisposableEffect(request, entry, context) {
-        if (request == null) {
-            onDispose { }
-        } else {
-            val initialMinutes = when (request.target) {
+    // Snapshot the initial minutes when the request is opened; later Room
+    // emissions must not move the dialog's wheel while the user is picking.
+    val initialMinutes = remember(request) {
+        request?.let { r ->
+            when (r.target) {
                 DetailTimeTarget.Start -> entry?.startMinutes
                 DetailTimeTarget.End -> entry?.endMinutes
             } ?: LocalTime.now().let { it.hour * 60 + it.minute }
+        }
+    }
+    DisposableEffect(request, context) {
+        if (request == null || initialMinutes == null) {
+            onDispose { }
+        } else {
             val dialog = TimePickerDialog(
                 context,
                 { _, hour, minute -> onSelected(request, hour * 60 + minute) },
