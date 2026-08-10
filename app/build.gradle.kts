@@ -120,6 +120,9 @@ room {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(platform(libs.firebase.bom))
+    // Pins the kotlinx-serialization runtime required at test runtime by
+    // MigrationTestHelper (Room schema validation); no direct imports exist.
+    implementation(platform(libs.kotlinx.serialization.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
