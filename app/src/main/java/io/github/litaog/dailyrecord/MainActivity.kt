@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
             DailyRecordTheme {
                 DailyRecordRoot(
                     database = app.database,
-                    servicesProvider = { app.firebaseServices },
+                    services = app.firebaseServices,
                 )
             }
         }
