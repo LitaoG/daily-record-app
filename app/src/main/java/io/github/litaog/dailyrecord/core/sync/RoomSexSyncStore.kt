@@ -110,6 +110,18 @@ internal class RoomSexSyncStore(
         true
     }
 
+    override suspend fun rebasePending(
+        ownerId: String,
+        local: SexRecordEntity,
+        committed: RemoteSexRecord,
+    ): Int = database.withTransaction {
+        val current = dao.getByDate(ownerId, local.localDate) ?: return@withTransaction 0
+        if (current.syncState != SYNC_PENDING || current.id != local.id) {
+            return@withTransaction 0
+        }
+        dao.setRemoteRevisionForPending(ownerId, local.localDate, committed.revision)
+    }
+
     override suspend fun stageLocalRecoveryCopy(ownerId: String) {
         database.withTransaction {
             require(dao.countForOwner(LOCAL_OWNER_ID) == 0) {
