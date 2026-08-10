@@ -118,6 +118,9 @@ internal interface SexRecordDao {
     @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
     fun observePendingCount(ownerId: String): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
+    suspend fun countPending(ownerId: String): Int
+
     @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId")
     suspend fun countForOwner(ownerId: String): Int
 

@@ -118,6 +118,9 @@ internal interface HandBrewRecordDao {
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
     fun observePendingCount(ownerId: String): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
+    suspend fun countPending(ownerId: String): Int
+
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId")
     suspend fun countForOwner(ownerId: String): Int
 
