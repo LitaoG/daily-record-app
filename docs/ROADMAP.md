@@ -47,6 +47,15 @@
 - [x] Stage 6 完成公共 main 合并、签名发布门禁和 GitHub Release 发布。
 - [x] 发布 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，并在公共 main 验证后同步私有恢复镜像。
 
+## 已完成：日期记录页逐次详情
+
+- [x] Room v5 非破坏迁移，新增手冲与做爱独立详情表（`hand_brew_record_details` / `sex_record_details`）。
+- [x] 记录页支持按次数展开可选的开始/结束时间与不超过 100 个可见字符的感受；次数为 0 时不显示详情入口。
+- [x] 详情只属于当前模块和当前日期；不进入统计、日志或诊断摘要；清除记录同时清除详情。
+- [x] Firestore 规则与同步上传/下载覆盖逐次详情；跨设备可恢复，账号删除覆盖两套详情表。
+- [x] 窄屏、200% 字体、TalkBack、Saver 恢复和跨设备详情恢复验收完成；真机用户验收通过。
+- [x] 完成 GitHub Issue [#105](https://github.com/LitaoG/daily-record-app/issues/105)，PR [#119](https://github.com/LitaoG/daily-record-app/pull/119) 合并。
+
 ## 当前状态：安静的私密数据日志 UI v2 已完成，进入维护
 
 总 Goal 与唯一阶段顺序见 [`product/QUIET_PRIVATE_JOURNAL_GOALS.md`](product/QUIET_PRIVATE_JOURNAL_GOALS.md)：
