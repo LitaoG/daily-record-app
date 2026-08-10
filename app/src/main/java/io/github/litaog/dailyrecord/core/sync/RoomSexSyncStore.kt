@@ -124,14 +124,25 @@ internal class RoomSexSyncStore(
 
     override suspend fun stageLocalRecoveryCopy(ownerId: String) {
         database.withTransaction {
-            require(dao.countForOwner(LOCAL_OWNER_ID) == 0) {
-                "Local recovery space must be empty while an account is signed in"
+            // An interrupted previous deletion may have left a staged recovery
+            // copy in the local space. The account's own rows are still
+            // authoritative until deletion completes, so a stale copy is
+            // discarded before re-staging: retries of "keep local data" must
+            // not fail on the leftover.
+            if (dao.countForOwner(LOCAL_OWNER_ID) > 0) {
+                dao.deleteOwnerCache(LOCAL_OWNER_ID)
+                detailDao.deleteOwnerCache(LOCAL_OWNER_ID)
             }
             dao.getAllForSync(ownerId)
                 .filterNot { it.isDeleted }
                 .forEach { accountRecord ->
+                    // The copy must not share the account row's id: @Upsert
+                    // binds on the primary key, so a colliding id would
+                    // silently replace the account record and lose the source
+                    // for a later retry (and for deleteOwnerCache).
                     dao.upsert(
                         accountRecord.copy(
+                            id = localCopyId(accountRecord.id),
                             ownerId = LOCAL_OWNER_ID,
                             syncState = SYNC_PENDING,
                             remoteRevision = 0,
@@ -139,7 +150,7 @@ internal class RoomSexSyncStore(
                     )
                     detailDao.upsertAll(
                         detailDao.getByDate(ownerId, accountRecord.localDate).map {
-                            it.copy(ownerId = LOCAL_OWNER_ID)
+                            it.copy(id = localCopyId(it.id), ownerId = LOCAL_OWNER_ID)
                         },
                     )
                 }
@@ -183,6 +194,8 @@ private fun RemoteSexDetail.asEntity(
     createdAt = java.time.Instant.EPOCH,
     updatedAt = java.time.Instant.EPOCH,
 )
+
+private fun localCopyId(id: String): String = "__local__-copy-$id"
 
 private fun SexRecordEntity.isSamePendingVersion(other: SexRecordEntity): Boolean =
     syncState == SYNC_PENDING &&
