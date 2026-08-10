@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -166,15 +167,20 @@ fun DailyRecordApp(
     val allRecords = allRecordsState.orEmpty()
 
     if (selectedDate != null) {
-        DailyCountRecordScreen(
-            date = selectedDate,
-            today = effectiveToday,
-            controller = selectedController,
-            moduleSpec = moduleSpec,
-            monthRecords = allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) },
-            onBack = { selectedDateText = null },
-            onSaved = { selectedDateText = null },
-        )
+        // Key the record screen by module so each module keeps its own
+        // saveable draft slots: a hand-brew draft must never be restored as a
+        // sex draft for the same date (and vice versa).
+        key(selectedModule) {
+            DailyCountRecordScreen(
+                date = selectedDate,
+                today = effectiveToday,
+                controller = selectedController,
+                moduleSpec = moduleSpec,
+                monthRecords = allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) },
+                onBack = { selectedDateText = null },
+                onSaved = { selectedDateText = null },
+            )
+        }
         return
     }
 

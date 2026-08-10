@@ -212,6 +212,11 @@ internal fun DailyCountRecordScreen(
                 val result = runCatchingPreservingCancellation(operation)
                 saving = false
                 if (result.isSuccess) {
+                    // Saved and cleared drafts must not be restored when the
+                    // day is opened again; the registry would otherwise keep
+                    // them alive across navigation.
+                    countDraft = CountDraft()
+                    detailsDraft = RecordDetailsDraft()
                     onSaved()
                 } else {
                     errorMessage = failureMessage
@@ -489,6 +494,10 @@ internal fun DailyCountRecordScreen(
             onDismiss = { showDiscardDialog = false },
             onConfirm = {
                 showDiscardDialog = false
+                // The user confirmed the edits are discarded: clear the
+                // remembered drafts so reopening the day starts clean.
+                countDraft = CountDraft()
+                detailsDraft = RecordDetailsDraft()
                 onBack()
             },
         )
