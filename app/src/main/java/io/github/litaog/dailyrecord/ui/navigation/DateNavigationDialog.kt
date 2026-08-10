@@ -388,6 +388,11 @@ private fun DateWheelColumn(
      * back under the user's finger.
      */
     LaunchedEffect(selectedValue, values) {
+        // A running settle animation belongs to the previous values window;
+        // cancel it so it cannot keep writing dragOffsetPx into the orphaned
+        // state after the wheel re-bases (which would cause a visual jump).
+        settleJob?.cancel()
+        settleJob = null
         if (!isDragging) {
             selectedIndex = values.indexOf(selectedValue).coerceAtLeast(0)
             dragOffsetPx = 0f
