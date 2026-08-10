@@ -1,2 +1,4 @@
 onlyBuiltDependencies:
   - re2
+  - protobufjs
+  - '@firebase/util'
