@@ -99,13 +99,36 @@ class AccountDeletionCoordinatorTest {
         }
 
         assertSame(failure, result.exceptionOrNull())
-        assertEquals(listOf("reauth", "delete-cloud"), calls)
+        assertEquals(listOf("reauth", "delete-cloud", "mark-pending"), calls)
         assertFalse(auth.accountDeleted)
         assertFalse(local.localCopyStaged)
+        assertTrue(local.pendingForResync)
     }
 
     @Test
-    fun authDeletionFailureRollsBackStagedLocalCopy() = runBlocking {
+    fun cloudDeletionCancellationRequeuesCloudResync() = runBlocking {
+        val calls = mutableListOf<String>()
+        val cancellation = kotlinx.coroutines.CancellationException("cancelled")
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls, deleteFailure = cancellation)
+        val local = FakeLocalStore(calls)
+
+        val result = runCatching {
+            coordinator(auth, remote, local).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        assertSame(cancellation, result.exceptionOrNull())
+        assertEquals(listOf("reauth", "delete-cloud", "mark-pending"), calls)
+        assertFalse(auth.accountDeleted)
+        assertTrue(local.pendingForResync)
+    }
+
+    @Test
+    fun authDeletionFailureRollsBackStagedLocalCopyAndRequeuesCloudResync() = runBlocking {
         val calls = mutableListOf<String>()
         val failure = IllegalStateException("auth delete failed")
         val auth = FakeAuthRepository(calls, deleteFailure = failure)
@@ -122,11 +145,75 @@ class AccountDeletionCoordinatorTest {
 
         assertSame(failure, result.exceptionOrNull())
         assertEquals(
-            listOf("reauth", "delete-cloud", "stage-local", "delete-auth", "discard-local"),
+            listOf(
+                "reauth",
+                "delete-cloud",
+                "stage-local",
+                "delete-auth",
+                "discard-local",
+                "mark-pending",
+            ),
             calls,
         )
         assertFalse(local.localCopyStaged)
         assertFalse(local.ownerCacheDeleted)
+        assertTrue(local.pendingForResync)
+    }
+
+    @Test
+    fun authDeletionFailureWithoutLocalCopyStillRequeuesCloudResync() = runBlocking {
+        val calls = mutableListOf<String>()
+        val failure = IllegalStateException("auth delete failed")
+        val auth = FakeAuthRepository(calls, deleteFailure = failure)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+
+        val result = runCatching {
+            coordinator(auth, remote, local).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Delete,
+            )
+        }
+
+        assertSame(failure, result.exceptionOrNull())
+        assertEquals(
+            listOf("reauth", "delete-cloud", "delete-auth", "mark-pending"),
+            calls,
+        )
+        assertTrue(local.pendingForResync)
+    }
+
+    @Test
+    fun authDeletionCancellationAfterCloudDeleteRequeuesCloudResync() = runBlocking {
+        val calls = mutableListOf<String>()
+        val cancellation = kotlinx.coroutines.CancellationException("cancelled")
+        val auth = FakeAuthRepository(calls, deleteFailure = cancellation)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+
+        val result = runCatching {
+            coordinator(auth, remote, local).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        assertSame(cancellation, result.exceptionOrNull())
+        assertEquals(
+            listOf(
+                "reauth",
+                "delete-cloud",
+                "stage-local",
+                "delete-auth",
+                "discard-local",
+                "mark-pending",
+            ),
+            calls,
+        )
+        assertTrue(local.pendingForResync)
+        assertFalse(local.localCopyStaged)
     }
 
     @Test
@@ -248,6 +335,7 @@ private class FakeLocalStore(
 ) : AccountDeletionLocalStore {
     var localCopyStaged = false
     var ownerCacheDeleted = false
+    var pendingForResync = false
 
     override suspend fun stageLocalRecoveryCopy(ownerId: String) {
         calls += "stage-local"
@@ -264,5 +352,10 @@ private class FakeLocalStore(
         deleteOwnerCacheCancellation?.let { throw it }
         deleteOwnerCacheFailure?.let { throw it }
         ownerCacheDeleted = true
+    }
+
+    override suspend fun markOwnerPendingForResync(ownerId: String) {
+        calls += "mark-pending"
+        pendingForResync = true
     }
 }

@@ -190,6 +190,14 @@ internal fun parseRemoteSexRecord(
     require(updatedAtMillis in createdAtMillis..MAX_SUPPORTED_EPOCH_MILLIS)
     val details = (values[FIELD_DETAILS] as? List<*>).orEmpty().map(::parseRemoteSexDetail)
     require(details.size <= count) { "sex details exceed sexCount" }
+    requireUniqueRemoteDetailIdentity(
+        ids = details.map { it.id },
+        occurrenceIndexes = details.map { it.occurrenceIndex },
+        label = "sex",
+    )
+    require(details.all { it.occurrenceIndex <= count.toInt() }) {
+        "sex detail occurrenceIndex exceeds sexCount"
+    }
     RemoteSexRecord(
         id = requireNotNull(values[FIELD_ID] as? String),
         localDate = LocalDate.parse(dateText),
@@ -227,14 +235,14 @@ private fun parseRemoteSexDetail(value: Any?): RemoteSexDetail {
         IllegalArgumentException("sex detail must be a map"),
     )
     val id = map[DETAIL_ID] as? String
-    val occurrenceIndex = (map[DETAIL_OCCURRENCE_INDEX] as? Number)?.toInt()
+    val occurrenceIndex = parseRemoteOccurrenceIndex(
+        map[DETAIL_OCCURRENCE_INDEX],
+        "sex detail occurrenceIndex",
+    )
     val startTime = parseDetailTime(map[DETAIL_START_TIME])
     val endTime = parseDetailTime(map[DETAIL_END_TIME])
     val feeling = map[DETAIL_FEELING] as? String
     require(!id.isNullOrBlank()) { "sex detail id is missing" }
-    require(occurrenceIndex != null && occurrenceIndex >= 1) {
-        "sex detail occurrenceIndex is invalid"
-    }
     require(startTime == null || endTime == null || !endTime.isBefore(startTime)) {
         "sex detail endTime is before startTime"
     }

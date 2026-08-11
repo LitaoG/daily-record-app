@@ -1,6 +1,6 @@
 # 数据模型
 
-当前 schema：Room v4。最后复核：2026-08-08。
+当前 schema：Room v5。最后复核：2026-08-10。
 
 ## 两个独立领域实体
 
@@ -20,7 +20,7 @@
 
 不存在 `Activity`、`activityId`、`MeasurementType`、通用业务状态枚举、活动颜色或归档字段。未来记录类型应使用自己的实体和表，不向现有表追加用于区分活动种类的字段。
 
-## Room schema v4
+## Room schema v5
 
 业务表：`hand_brew_records`、`sex_records`
 

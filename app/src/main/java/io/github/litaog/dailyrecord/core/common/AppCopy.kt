@@ -24,7 +24,10 @@ internal object AppCopy {
     const val futureDate = "未来日期"
     private val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
-    fun weekdayName(dayOfWeek: Int): String = weekdayNames[(dayOfWeek - 1).coerceIn(0, 6)]
+    fun weekdayName(dayOfWeek: Int): String {
+        require(dayOfWeek in 1..7) { "dayOfWeek must be in 1..7, was $dayOfWeek" }
+        return weekdayNames[dayOfWeek - 1]
+    }
 
     fun selectedState(label: String, isSelected: Boolean): String =
         "$label，${if (isSelected) selected else unselected}"
@@ -123,7 +126,7 @@ internal object AppCopy {
         const val syncDialogMessage = "请检查网络或 VPN（梯子），然后重试。"
         const val dataFormatFailure = "部分云端记录无法读取，其余记录已同步。"
         fun timeoutFailure(timeoutMillis: Long): String =
-            "等待云服务超过 ${timeoutMillis / 1_000L} 秒，已停止同步；记录仍在本机。"
+            "等待云服务超过 ${(timeoutMillis / 1_000L).coerceAtLeast(1)} 秒，已停止同步；记录仍在本机。"
         const val networkFailure = "网络连接异常，记录仍在本机。"
         const val authFailure = "登录状态已失效，记录仍在本机。"
         const val permissionFailure = "账号暂时无法访问云端，记录仍在本机。"
@@ -212,6 +215,7 @@ internal object AppCopy {
             "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$state${if (focused) selectedSuffix else ""}"
         fun legendDescription(moduleLabel: String): String = legendDescription.format(moduleLabel)
         fun countDescription(count: Int): String = when (count) {
+            0 -> zero
             1 -> oneTime
             2 -> twoTimes
             in 3..8 -> "${count} 次"
@@ -261,10 +265,7 @@ internal object AppCopy {
             "七月", "八月", "九月", "十月", "十一月", "十二月",
         )
         fun switchYearDescription(year: Int): String = "$switchYear，当前${year}年"
-        fun nextMonthDescription(forward: Boolean): String = if (forward) "跳转到下个月" else "跳转到上个月"
         fun nextYearDescription(forward: Boolean): String = if (forward) "跳转到下一年" else "跳转到上一年"
-        fun dateDescription(date: LocalDate, weekday: String): String =
-            "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$weekday"
         fun dateText(date: LocalDate): String =
             date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy年M月d日"))
         fun dateLabel(date: LocalDate, weekday: String): String =
