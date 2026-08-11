@@ -70,7 +70,8 @@ internal interface SexRecordDao {
     @Query(
         """
         UPDATE sex_records
-        SET remote_revision = :remoteRevision
+        SET id = :remoteId,
+            remote_revision = :remoteRevision
         WHERE owner_id = :ownerId
           AND local_date = :localDate
           AND sync_state = 'PENDING'
@@ -80,6 +81,7 @@ internal interface SexRecordDao {
     suspend fun setRemoteRevisionForUnbasedPending(
         ownerId: String,
         localDate: LocalDate,
+        remoteId: String,
         remoteRevision: Long,
     ): Int
 
