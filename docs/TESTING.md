@@ -97,6 +97,15 @@ Stage 5 的测试日志只写入仓库 `build/tmp/stage5/` 临时目录，解析
 | 版本、签名、发布工作流 | 发布元数据测试；Release 构建；签名与升级验证 | 开发中每个小提交的设备全套 | 按 `RELEASE.md` 完整发布门禁 |
 | 跨模块重构或影响范围不明确 | 从共享边界向外运行相关测试，必要时直接完整验证 | 无 | 完整套件 |
 
+### 云端文档物理消失回归（Issue #104）
+
+同步边界改动必须覆盖两种不同的本地基线：
+
+- 已确认记录存在 pending 编辑且 `remoteRevision > 0` 时，云端同日文档被物理删除，手冲与做爱都必须以本机内容重建，revision 从 1 开始且 pending 清零。
+- 另一台设备没有 pending 编辑、但仍缓存旧代际时，必须通过重建文档生成的新 `id` 接受新代际，即使新 revision 较低；同一 `id` 代际仍按 revision 做乐观并发校验。
+
+最小证据为手冲与做爱 Android 同步测试（含 `AccountSyncManager` 恢复、显式清除墓碑和双设备代际收敛），以及 Auth/Firestore Emulator 的真实写入、物理删除、重建和读取测试。`DailyRecordSyncWorkerTest` 同时用测试 WorkerFactory 走真实 Worker 分支，验证物理删除后的 pending 编辑最终返回成功并清零。Worker 的删除闸门测试仍按上表独立执行；测试 provider 只替换 Firebase 初始化，绝不接触生产项目。
+
 ## 缺陷修复要求
 
 - 先用最小可重复步骤证明问题，再修复。

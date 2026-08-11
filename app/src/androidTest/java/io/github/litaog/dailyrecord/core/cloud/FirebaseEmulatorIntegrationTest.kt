@@ -1,6 +1,8 @@
 package io.github.litaog.dailyrecord.core.cloud
 
 import android.content.Context
+import com.google.firebase.FirebaseApp
+import com.google.firebase.firestore.FirebaseFirestore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
@@ -14,6 +16,7 @@ import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -160,6 +163,83 @@ class FirebaseEmulatorIntegrationTest {
                 "Deleted Firebase account must not accept the old credentials",
                 runCatching { services.authRepository.signIn(email, password) }.isFailure,
             )
+        } finally {
+            services.authRepository.signOut()
+        }
+    }
+
+    @Test
+    fun missingDocumentsRecreateBothModulesWithANewCloudGeneration() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertAuthEmulatorReachable()
+        val services = FirebaseServices.create(context, emulatorHost = "10.0.2.2")
+        services.authRepository.signOut()
+        val suffix = UUID.randomUUID().toString().take(10)
+        val email = "recreate-$suffix@example.com"
+        val password = "test-password-2026"
+        try {
+            val account = services.authRepository.register(email, password)
+            val date = LocalDate.of(2026, 7, 19)
+            val handLocal = HandBrewRecordEntity(
+                id = "recreate-hand-$suffix",
+                localDate = date,
+                ownerId = account.uid,
+                brewCount = 3,
+                createdAt = Instant.parse("2026-07-19T08:00:00Z"),
+                updatedAt = Instant.parse("2026-07-19T08:00:01Z"),
+                isDeleted = false,
+                syncState = SYNC_PENDING,
+                remoteRevision = 0,
+            )
+            val sexLocal = SexRecordEntity(
+                id = "recreate-sex-$suffix",
+                localDate = date,
+                ownerId = account.uid,
+                sexCount = 2,
+                createdAt = Instant.parse("2026-07-19T08:00:00Z"),
+                updatedAt = Instant.parse("2026-07-19T08:00:01Z"),
+                isDeleted = false,
+                syncState = SYNC_PENDING,
+                remoteRevision = 0,
+            )
+            val initialHand = services.remoteDataSource.commit(account.uid, handLocal)
+            val initialSex = services.sexRemoteDataSource.commit(account.uid, sexLocal)
+
+            val firestore = FirebaseFirestore.getInstance(
+                FirebaseApp.getInstance(FIREBASE_EMULATOR_APP_NAME),
+            )
+            firestore.collection("users").document(account.uid)
+                .collection("handBrewRecords").document(date.toString())
+                .delete().awaitResult()
+            firestore.collection("users").document(account.uid)
+                .collection("sexRecords").document(date.toString())
+                .delete().awaitResult()
+
+            val recreatedHand = services.remoteDataSource.commit(
+                account.uid,
+                handLocal.copy(
+                    id = initialHand.id,
+                    brewCount = 4,
+                    updatedAt = Instant.parse("2026-07-19T08:00:02Z"),
+                    remoteRevision = initialHand.revision,
+                ),
+            )
+            val recreatedSex = services.sexRemoteDataSource.commit(
+                account.uid,
+                sexLocal.copy(
+                    id = initialSex.id,
+                    sexCount = 3,
+                    updatedAt = Instant.parse("2026-07-19T08:00:02Z"),
+                    remoteRevision = initialSex.revision,
+                ),
+            )
+
+            assertNotEquals(initialHand.id, recreatedHand.id)
+            assertNotEquals(initialSex.id, recreatedSex.id)
+            assertEquals(1L, recreatedHand.revision)
+            assertEquals(1L, recreatedSex.revision)
+            assertEquals(4, services.remoteDataSource.fetch(account.uid).records.single().brewCount)
+            assertEquals(3, services.sexRemoteDataSource.fetch(account.uid).sexRecords.single().sexCount)
         } finally {
             services.authRepository.signOut()
         }

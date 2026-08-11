@@ -10,10 +10,26 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 
-class DailyRecordSyncWorker(
+internal fun interface DailyRecordSyncServicesProvider {
+    fun create(context: Context, database: DailyRecordDatabase): FirebaseServices
+}
+
+private object DefaultDailyRecordSyncServicesProvider : DailyRecordSyncServicesProvider {
+    override fun create(context: Context, database: DailyRecordDatabase): FirebaseServices =
+        FirebaseServices.create(context, database = database)
+}
+
+class DailyRecordSyncWorker internal constructor(
     appContext: Context,
     workerParams: WorkerParameters,
+    private val servicesProvider: DailyRecordSyncServicesProvider,
 ) : CoroutineWorker(appContext, workerParams) {
+    constructor(appContext: Context, workerParams: WorkerParameters) : this(
+        appContext = appContext,
+        workerParams = workerParams,
+        servicesProvider = DefaultDailyRecordSyncServicesProvider,
+    )
+
     override suspend fun doWork(): Result {
         // Kept for the lightweight unit-test hook and for callers that do not
         // yet have an authenticated owner. Production account barriers are
@@ -21,7 +37,7 @@ class DailyRecordSyncWorker(
         if (DailyRecordSyncScheduler.isLegacyDeletionBlocked) return Result.success()
         val database = DailyRecordDatabase.create(applicationContext)
         return try {
-            val services = FirebaseServices.create(applicationContext, database = database)
+            val services = servicesProvider.create(applicationContext, database)
             val ownerId = services.currentUserId()
             when {
                 !services.productionConfigured -> Result.failure()

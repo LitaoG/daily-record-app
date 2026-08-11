@@ -70,6 +70,7 @@ internal class RoomHandBrewSyncStore(
             dao.setRemoteRevisionForUnbasedPending(
                 ownerId = ownerId,
                 localDate = remote.localDate,
+                remoteId = remote.id,
                 remoteRevision = remote.revision,
             )
         }
@@ -159,7 +160,10 @@ internal class RoomHandBrewSyncStore(
         var changed = 0
         records.forEach { remote ->
             val local = dao.getByDate(ownerId, remote.localDate)
-            if (local?.syncState == SYNC_PENDING || (local != null && local.remoteRevision >= remote.revision)) {
+            if (local?.syncState == SYNC_PENDING) {
+                return@forEach
+            }
+            if (local != null && local.id == remote.id && local.remoteRevision >= remote.revision) {
                 return@forEach
             }
             if (local != null && local.id != remote.id) {
