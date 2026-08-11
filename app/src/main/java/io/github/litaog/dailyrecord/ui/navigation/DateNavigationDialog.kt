@@ -388,7 +388,7 @@ private fun DateWheelColumn(
     LaunchedEffect(selectedValue, values) {
         // A running settle animation belongs to the previous values window;
         // cancel it so it cannot keep writing dragOffsetPx into the orphaned
-        // state after the wheel re-bases (which would cause a visual jump).
+        // state after the wheel rebases (which would cause a visual jump).
         settleJob?.cancel()
         settleJob = null
         if (!isDragging) {
@@ -422,7 +422,7 @@ private fun DateWheelColumn(
         }
 
         if (targetIndex != currentIndex && commitIndex(targetIndex)) {
-            // Re-basing the three rendered rows keeps the visual position
+            // Rebasing the three rendered rows keeps the visual position
             // continuous when the centered item changes at the end of a drag.
             dragOffsetPx += if (targetIndex > currentIndex) rowHeightPx else -rowHeightPx
         }

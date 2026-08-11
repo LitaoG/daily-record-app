@@ -83,7 +83,10 @@ data class StatisticsDetail(
     val days: Int?,
     val future: Boolean = false,
     val recorded: Boolean = true,
-    /** Position in the source calendar range; null keeps legacy callers safe. */
+    /**
+     * Week position in the Monday-based week (week view only); null falls
+     * back to the caller-supplied list index.
+     */
     val calendarIndex: Int? = null,
 )
 

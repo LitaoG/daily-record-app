@@ -70,7 +70,7 @@ internal fun DailyRecordRoot(
                 cleanupStore.deleteOwnerCache(pendingOwnerId)
             }.onSuccess {
                 pendingCleanupPreference.remove(pendingOwnerId)
-                // Keep startup resilient if the durable journal cannot be
+                // Keep startup resilient if the durable marker cannot be
                 // committed; the next launch will retry from the marker.
                 runCatching {
                     DailyRecordSyncScheduler.completeDeletionCleanup(context, pendingOwnerId)
@@ -293,8 +293,9 @@ private fun SignedInRoot(
                 var cancellation: CancellationException? = null
                 var barrierFailure: Exception? = null
                 try {
-                    // Persist the barrier before cancelling any producer. This
-                    // closes the schedule-vs-delete race and survives process death.
+                // Persist the deletion marker before cancelling any producer.
+                // This closes the schedule-vs-delete race and survives process
+                // death.
                     DailyRecordSyncScheduler.beginDeletionBlock(context, ownerId)
                     began = true
                     deletionInProgress = true
@@ -316,7 +317,7 @@ private fun SignedInRoot(
                         else -> io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure
                     }
                     if (cleanupPending) {
-                        // Keep both the legacy marker and the durable journal;
+                        // Keep both the legacy marker and the durable marker;
                         // either one can recover local cleanup after a restart.
                         pendingCleanupPreference.add(ownerId)
                     }
@@ -327,7 +328,7 @@ private fun SignedInRoot(
                     }
                     result = if (cleanupPending) Result.success(Unit) else deletionResult
                 } catch (error: CancellationException) {
-                    // Do not clear an interrupted journal: a future sync must
+                    // Do not clear an interrupted marker: a future sync must
                     // stay blocked until the user retries or finishes deletion.
                     cancellation = error
                 } catch (error: Exception) {
@@ -338,7 +339,7 @@ private fun SignedInRoot(
                         try {
                             DailyRecordSyncScheduler.endDeletionBlock(context, ownerId, outcome)
                         } catch (error: Exception) {
-                            // Do not resume scheduling when the durable barrier
+                            // Do not resume scheduling when the durable marker
                             // could not be committed. The scheduler keeps a
                             // conservative in-process block until restart.
                             barrierFailure = error

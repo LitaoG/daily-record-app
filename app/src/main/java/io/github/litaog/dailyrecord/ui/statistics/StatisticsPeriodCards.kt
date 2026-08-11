@@ -183,18 +183,20 @@ internal fun weekRingSharedLabelGapDp(
 }
 
 /**
- * Keeps a clipped first week aligned with its real weekday angle. Older
- * callers that construct details without a source index retain the list
- * position as a safe fallback.
+ * Keeps a clipped first week aligned with its real weekday angle. Details
+ * without a source index fall back to the list position (used by tests).
  */
 internal fun weekRingSegmentIndex(detail: StatisticsDetail, fallbackIndex: Int): Int =
     detail.calendarIndex ?: fallbackIndex
 
 /**
- * Single source of truth for ring segment colors. The legend and the ring
- * drawing must resolve colors through this function so the legend can never
- * drift from the chart (for example, an explicit zero must never use the
- * unrecorded color).
+ * Single source of truth for the non-positive ring segment colors (future,
+ * unrecorded and explicit zero). Positive bands resolve through
+ * [weekRingColorForBand]; each state resolves through exactly one function so
+ * the legend can never drift from the chart (for example, an explicit zero
+ * must never use the unrecorded color). The positive branch below is kept for
+ * symmetry and test assertions; production renders positive bands via
+ * [weekRingColorForBand].
  */
 internal fun weekRingSegmentColor(
     state: WeekRingState,
