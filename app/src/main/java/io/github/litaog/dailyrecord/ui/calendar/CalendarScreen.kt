@@ -46,9 +46,11 @@ import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
+import io.github.litaog.dailyrecord.ui.EARLIEST_SUPPORTED_DATE
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
@@ -67,7 +69,7 @@ fun CalendarScreen(
     today: LocalDate,
     records: List<HandBrewRecord>,
     modifier: Modifier = Modifier,
-    earliestMonth: YearMonth = YearMonth.of(1970, 1),
+    earliestMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE),
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
@@ -101,7 +103,7 @@ internal fun DailyCountCalendarScreen(
     selectedModule: RecordModule,
     availableModules: List<RecordModuleUiSpec>,
     modifier: Modifier = Modifier,
-    earliestMonth: YearMonth = YearMonth.of(1970, 1),
+    earliestMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE),
     onModuleSelected: (RecordModule) -> Unit,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
@@ -118,7 +120,7 @@ internal fun DailyCountCalendarScreen(
     val canGoNext = month < YearMonth.from(today)
     val fontScale = LocalDensity.current.fontScale
     val largeText = fontScale >= 1.4f
-    val dayCellHeight = if (largeText) 76.dp else 48.dp
+    val dayCellHeight = if (largeText) 76.dp else DailyRecordSizes.MinimumTouchTarget
 
     BoxWithConstraints(
         modifier = modifier
@@ -415,14 +417,14 @@ private fun MonthHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = if (largeText) 108.dp else 48.dp),
+            .heightIn(min = if (largeText) 108.dp else DailyRecordSizes.MinimumTouchTarget),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MonthArrow(forward = false, description = AppCopy.Calendar.previousMonth, enabled = canGoPrevious, onClick = onPreviousMonth)
         Column(
             modifier = Modifier
                 .weight(1f)
-                .sizeIn(minHeight = 48.dp)
+                .sizeIn(minHeight = DailyRecordSizes.MinimumTouchTarget)
                 .clip(RoundedCornerShape(14.dp))
                 .clickable(role = Role.Button, onClick = onOpenDatePicker)
                 .semantics {
@@ -448,7 +450,7 @@ private fun MonthHeader(
         Box(
             modifier = Modifier
                 .padding(start = 6.dp)
-                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .sizeIn(minWidth = DailyRecordSizes.MinimumTouchTarget, minHeight = DailyRecordSizes.MinimumTouchTarget)
                 .clip(RoundedCornerShape(12.dp))
                 .clickable(role = Role.Button, onClick = onToday)
                 .semantics { role = Role.Button; contentDescription = AppCopy.Calendar.backToToday },
@@ -468,7 +470,7 @@ private fun MonthArrow(
 ) {
     Box(
         modifier = Modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .sizeIn(minWidth = DailyRecordSizes.MinimumTouchTarget, minHeight = DailyRecordSizes.MinimumTouchTarget)
             .clip(CircleShape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .alpha(if (enabled) 1f else .3f)
