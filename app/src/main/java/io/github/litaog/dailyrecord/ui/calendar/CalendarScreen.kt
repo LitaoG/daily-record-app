@@ -61,7 +61,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 @Composable
-fun CalendarScreen(
+internal fun CalendarScreen(
     month: YearMonth,
     focusedDate: LocalDate,
     today: LocalDate,

@@ -97,7 +97,7 @@ data class StatisticsUiModel(
     val year: YearStatistics? = null,
 )
 
-fun buildStatistics(
+internal fun buildStatistics(
     period: StatisticsPeriod,
     anchorDate: LocalDate,
     today: LocalDate,

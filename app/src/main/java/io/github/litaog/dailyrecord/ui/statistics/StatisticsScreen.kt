@@ -60,7 +60,7 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import java.time.LocalDate
 
 @Composable
-fun StatisticsScreen(
+internal fun StatisticsScreen(
     today: LocalDate,
     anchorDate: LocalDate,
     earliestDate: LocalDate,

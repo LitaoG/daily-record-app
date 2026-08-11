@@ -123,7 +123,7 @@ private data class TimePickerRequest(
 )
 
 @Composable
-fun RecordScreen(
+internal fun RecordScreen(
     date: LocalDate,
     today: LocalDate,
     repository: HandBrewRecordRepository,
