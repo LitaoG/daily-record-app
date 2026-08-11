@@ -178,7 +178,7 @@ internal fun DailyCountRecordScreen(
     var showClearDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var showDiscardDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var showRemoveDetailDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
-    var errorMessage by rememberSaveable(date.toString()) { mutableStateOf<String?>(null) }
+    var errorMessage by remember(date) { mutableStateOf<String?>(null) }
     var timePickerRequest by remember { mutableStateOf<TimePickerRequest?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()

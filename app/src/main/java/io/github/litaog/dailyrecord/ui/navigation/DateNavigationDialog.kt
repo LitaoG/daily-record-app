@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.ui.navigation
+﻿package io.github.litaog.dailyrecord.ui.navigation
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
@@ -388,6 +388,11 @@ private fun DateWheelColumn(
      * back under the user's finger.
      */
     LaunchedEffect(selectedValue, values) {
+        // A running settle animation belongs to the previous values window;
+        // cancel it so it cannot keep writing dragOffsetPx into the orphaned
+        // state after the wheel re-bases (which would cause a visual jump).
+        settleJob?.cancel()
+        settleJob = null
         if (!isDragging) {
             selectedIndex = values.indexOf(selectedValue).coerceAtLeast(0)
             dragOffsetPx = 0f
@@ -863,227 +868,10 @@ private fun DownChevronIcon(color: Color) {
     }
 }
 
-@Composable
-private fun MonthPicker(
-    displayedMonth: YearMonth,
-    selectedDate: LocalDate,
-    earliestDate: LocalDate,
-    latestDate: LocalDate,
-    colors: RecordModuleColorTokens,
-    onSwitchToYear: () -> Unit,
-    onMonthChanged: (YearMonth) -> Unit,
-    onDateSelected: (LocalDate) -> Unit,
-) {
-    val firstMonth = YearMonth.from(earliestDate)
-    val lastMonth = YearMonth.from(latestDate)
-    val canGoBack = displayedMonth > firstMonth
-    val canGoForward = displayedMonth < lastMonth
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        MonthArrow(
-            forward = false,
-            enabled = canGoBack,
-            onClick = { onMonthChanged(displayedMonth.minusMonths(1)) },
-        )
-        Box(
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .clickable(role = Role.Button, onClick = onSwitchToYear)
-                .semantics {
-                    role = Role.Button
-                    contentDescription = AppCopy.Navigation.switchYearDescription(displayedMonth.year)
-                }
-                .padding(horizontal = 18.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = AppCopy.Calendar.monthTitle(displayedMonth),
-                color = DailyRecordText,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-        MonthArrow(
-            forward = true,
-            enabled = canGoForward,
-            onClick = { onMonthChanged(displayedMonth.plusMonths(1)) },
-        )
-    }
-
-    Row(Modifier.fillMaxWidth()) {
-        AppCopy.Navigation.weekdays.forEach { day ->
-            Text(
-                text = day,
-                modifier = Modifier.weight(1f).padding(vertical = 8.dp),
-                color = DailyRecordTextMuted,
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-
-    val leadingBlanks = displayedMonth.atDay(1).dayOfWeek.value - DayOfWeek.MONDAY.value
-    val cells = leadingBlanks + displayedMonth.lengthOfMonth()
-    val rowCount = (cells + 6) / 7
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        repeat(rowCount) { row ->
-            Row(Modifier.fillMaxWidth()) {
-                repeat(7) { column ->
-                    val day = row * 7 + column - leadingBlanks + 1
-                    if (day in 1..displayedMonth.lengthOfMonth()) {
-                        val date = displayedMonth.atDay(day)
-                        DateCell(
-                            date = date,
-                            selected = date == selectedDate,
-                            enabled = date in earliestDate..latestDate,
-                            onClick = { onDateSelected(date) },
-                            colors = colors,
-                            modifier = Modifier.weight(1f),
-                        )
-                    } else {
-                        Spacer(Modifier.weight(1f).height(48.dp))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MonthArrow(forward: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(if (enabled) DailyRecordSurfaceMuted else Color.Transparent)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .semantics {
-                role = Role.Button
-                contentDescription = AppCopy.Navigation.nextMonthDescription(forward)
-                if (!enabled) disabled()
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        ChevronIcon(forward = forward, color = if (enabled) DailyRecordText else DailyRecordDivider)
-    }
-}
-
-@Composable
-private fun DateCell(
-    date: LocalDate,
-    selected: Boolean,
-    enabled: Boolean,
-    colors: RecordModuleColorTokens,
-    onClick: () -> Unit,
-    modifier: Modifier,
-) {
-    val weekday = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.SIMPLIFIED_CHINESE)
-    Box(
-        modifier = modifier
-            .height(48.dp)
-            // Clickable precedes padding so the full 48dp cell is the touch
-            // target; the inner visuals keep a 2dp inset as before.
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .semantics {
-                role = Role.Button
-                this.selected = selected
-                contentDescription = AppCopy.Navigation.dateDescription(date, weekday)
-                if (!enabled) disabled()
-            }
-            .padding(2.dp)
-            .clip(CircleShape)
-            .background(if (selected) colors.primary else Color.Transparent)
-            .border(if (selected) 0.dp else 1.dp, if (selected) Color.Transparent else DailyRecordSurface, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = date.dayOfMonth.toString(),
-            color = when {
-                selected -> colors.onPrimary
-                enabled -> DailyRecordText
-                else -> DailyRecordDivider
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-        )
-    }
-}
-
-@Composable
-private fun YearPicker(
-    selectedYear: Int,
-    years: List<Int>,
-    colors: RecordModuleColorTokens,
-    onYearSelected: (Int) -> Unit,
-    onBack: () -> Unit,
-) {
-    val selectedIndex = years.indexOf(selectedYear).coerceAtLeast(0)
-    val state = rememberLazyGridState(initialFirstVisibleItemIndex = (selectedIndex - 4).coerceAtLeast(0))
-    LaunchedEffect(selectedYear) {
-        state.animateScrollToItem((years.indexOf(selectedYear) - 4).coerceAtLeast(0))
-    }
-    Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(role = Role.Button, onClick = onBack)
-                .semantics { contentDescription = AppCopy.Navigation.returnToDatePicker },
-            contentAlignment = Alignment.Center,
-        ) {
-            ChevronIcon(forward = false)
-        }
-        Text(
-            AppCopy.Navigation.selectYear,
-            color = DailyRecordText,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        state = state,
-        modifier = Modifier.fillMaxWidth().height(290.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(years, key = { it }) { year ->
-            val selected = year == selectedYear
-            Box(
-                modifier = Modifier
-                    .heightIn(min = 52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(if (selected) colors.primary else DailyRecordSurfaceMuted)
-                    .border(1.dp, if (selected) colors.primary else DailyRecordDivider, RoundedCornerShape(14.dp))
-                    .clickable(role = Role.Button) { onYearSelected(year) }
-                    .semantics {
-                        role = Role.Button
-                        this.selected = selected
-                        contentDescription = AppCopy.Navigation.selectYearDescription(year)
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    "$year",
-                    color = if (selected) colors.onPrimary else DailyRecordText,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                )
-            }
-        }
-    }
-}
 
 private fun YearMonth.coerceIn(minimum: YearMonth, maximum: YearMonth): YearMonth = when {
     this < minimum -> minimum
     this > maximum -> maximum
     else -> this
 }
+

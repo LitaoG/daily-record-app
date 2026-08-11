@@ -30,7 +30,7 @@ internal fun previousPeriodAnchor(
 ): LocalDate? {
     return when (period) {
         StatisticsPeriod.Week -> anchorDate.minusWeeks(1)
-            .takeIf { it >= earliestDate }
+            .coerceAtLeast(earliestDate)
         StatisticsPeriod.Month -> {
             val targetMonth = YearMonth.from(anchorDate).minusMonths(1)
             if (targetMonth < YearMonth.from(earliestDate)) return null
