@@ -4,7 +4,7 @@
 审计提交：`de3db38`（`[gpt5.6luna]: harden issues 123-145 audit fixes`）  
 基线：`origin/main`，不合并到 `main`，等待用户验收。
 
-远端交付：Draft PR [#152](https://github.com/LitaoG/daily-record-app/pull/152)，head `d2117e0`；GitHub Actions Android CI run #241 已通过。PR 保持 Draft，不自动合并到 `main`。
+远端交付：Draft PR [#152](https://github.com/LitaoG/daily-record-app/pull/152)；其 Checks 页保留最新 Android CI 运行记录。PR 保持 Draft，不自动合并到 `main`。
 
 ## 结论
 
