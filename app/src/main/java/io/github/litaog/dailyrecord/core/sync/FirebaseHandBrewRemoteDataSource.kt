@@ -210,6 +210,9 @@ internal fun parseRemoteHandBrewRecord(
     }
     val details = (values[FIELD_DETAILS] as? List<*>).orEmpty().map(::parseRemoteHandBrewDetail)
     require(details.size <= count) { "hand-brew details exceed brewCount" }
+    require(details.all { it.occurrenceIndex <= count.toInt() }) {
+        "hand-brew detail occurrenceIndex exceeds brewCount"
+    }
     RemoteHandBrewRecord(
         id = requireNotNull(values[FIELD_ID] as? String),
         localDate = LocalDate.parse(dateText),

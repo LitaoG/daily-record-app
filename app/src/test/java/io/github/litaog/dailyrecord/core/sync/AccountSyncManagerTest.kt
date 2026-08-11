@@ -3,11 +3,20 @@ package io.github.litaog.dailyrecord.core.sync
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -15,7 +24,7 @@ import org.junit.Test
 
 class AccountSyncManagerTest {
     @Test
-    fun concurrentSyncTriggersShareTheInFlightAttempt() = runBlocking {
+    fun manualSyncWhileBusyIsQueuedInsteadOfDropped() = runBlocking {
         val operations = BlockingSyncOperations()
         val manager = AccountSyncManager(
             ownerId = "owner",
@@ -26,13 +35,17 @@ class AccountSyncManagerTest {
 
         val first = launch { manager.syncNow() }
         operations.started.await()
-        manager.syncNow()
-
+        // A manual request arriving while the mutex is held must be queued,
+        // not silently dropped: it returns immediately and the in-flight
+        // attempt's loop runs one more sync once the current one finishes.
+        val queued = launch { manager.syncNow() }
+        queued.join()
         assertEquals(1, operations.syncCalls.get())
         assertEquals(SyncStatus.Syncing, manager.status.value)
 
         operations.release.complete(Unit)
         first.join()
+        assertEquals(2, operations.syncCalls.get())
         assertEquals(SyncStatus.UpToDate, manager.status.value)
     }
 
@@ -125,6 +138,96 @@ class AccountSyncManagerTest {
     fun unknownFailureStopsAutomaticRetry() {
         assertFalse(IllegalArgumentException("malformed snapshot").isRetryableRemoteObservation())
     }
+
+    @Test
+    fun nonRetryableListenerErrorPublishesFailureWithoutCrashing() = runBlocking {
+        val manager = AccountSyncManager(
+            ownerId = "owner",
+            coordinator = NonRetryableFailingOperations(),
+            productionConfigured = true,
+        )
+        val uncaught = CompletableDeferred<Throwable>()
+        val scope = CoroutineScope(
+            SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
+                uncaught.complete(error)
+            },
+        )
+        val job = manager.start(scope).first()
+        withTimeout(10_000) {
+            while (manager.status.value !is SyncStatus.Failed) delay(10)
+        }
+        withTimeout(5_000) { job.join() }
+        // The non-retryable listener error ended the job with a sanitized
+        // status; it must never reach the uncaught exception handler.
+        assertFalse(uncaught.isCompleted)
+        scope.cancel()
+    }
+
+    @Test
+    fun applySnapshotFailureSurfacesStatusButKeepsTheChannelAlive() = runBlocking {
+        val manager = AccountSyncManager(
+            ownerId = "owner",
+            coordinator = FailingApplyOperations(),
+            productionConfigured = true,
+        )
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val job = manager.start(scope).first()
+        withTimeout(10_000) {
+            while (manager.status.value !is SyncStatus.Failed) delay(10)
+        }
+        assertFalse(job.isCompleted)
+        withTimeout(10_000) {
+            while (manager.status.value !is SyncStatus.UpToDate) delay(10)
+        }
+        assertFalse(job.isCompleted)
+        scope.cancel()
+    }
+}
+
+private class NonRetryableFailingOperations : AccountSyncOperations {
+    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
+        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        throw IllegalArgumentException("malformed snapshot")
+    }
+
+    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
+
+    override suspend fun pendingCount(ownerId: String): Int = 0
+
+    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int = 0
+
+    // The startup network job runs an immediate sync attempt; in production a
+    // permanent remote error fails that attempt too, so the fake mirrors the
+    // same behaviour instead of clobbering the failed status with UpToDate.
+    override suspend fun syncOnce(ownerId: String): SyncResult =
+        throw IllegalArgumentException("malformed snapshot")
+}
+
+private class FailingApplyOperations : AccountSyncOperations {
+    private val applyCalls = AtomicInteger()
+
+    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
+        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        delay(200)
+        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        awaitCancellation()
+    }
+
+    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
+
+    override suspend fun pendingCount(ownerId: String): Int = 0
+
+    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int {
+        if (applyCalls.getAndIncrement() == 0) throw IllegalStateException("Room unavailable")
+        return 0
+    }
+
+    // Mirrors production: the same Room failure that makes the observer's
+    // applySnapshot fail also fails the startup network-job sync attempt, so
+    // both paths publish the failed status and cannot race each other into
+    // overwriting it with a transient UpToDate.
+    override suspend fun syncOnce(ownerId: String): SyncResult =
+        throw IllegalStateException("Room unavailable")
 }
 
 private class BlockingSyncOperations : AccountSyncOperations {

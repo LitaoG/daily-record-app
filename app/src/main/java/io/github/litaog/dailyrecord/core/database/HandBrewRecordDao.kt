@@ -85,12 +85,38 @@ internal interface HandBrewRecordDao {
         remoteRevision: Long,
     ): Int
 
+    @Query(
+        """
+        UPDATE hand_brew_records
+        SET remote_revision = :remoteRevision
+        WHERE owner_id = :ownerId
+          AND local_date = :localDate
+          AND sync_state = 'PENDING'
+        """,
+    )
+    suspend fun setRemoteRevisionForPending(
+        ownerId: String,
+        localDate: LocalDate,
+        remoteRevision: Long,
+    ): Int
+
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
     fun observePendingCount(ownerId: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
+    suspend fun countPending(ownerId: String): Int
 
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId")
     suspend fun countForOwner(ownerId: String): Int
 
+    @Query(
+        """
+        UPDATE hand_brew_records
+        SET sync_state = 'PENDING'
+        WHERE owner_id = :ownerId
+        """,
+    )
+    suspend fun markOwnerPendingForResync(ownerId: String): Int
     @Query("DELETE FROM hand_brew_records WHERE owner_id = :ownerId")
     suspend fun deleteOwnerCache(ownerId: String): Int
 

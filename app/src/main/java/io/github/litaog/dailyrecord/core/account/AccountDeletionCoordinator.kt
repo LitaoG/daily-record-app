@@ -29,6 +29,14 @@ internal interface AccountDeletionLocalStore {
     suspend fun discardLocalRecoveryCopy()
 
     suspend fun deleteOwnerCache(ownerId: String)
+
+    /**
+     * Re-marks the owner's rows pending for sync after a failed deletion left
+     * the cloud cleared while the account still exists. The next successful
+     * sync then rebuilds the cloud data instead of leaving the account
+     * permanently desynced from the device.
+     */
+    suspend fun markOwnerPendingForResync(ownerId: String)
 }
 
 internal class AccountDeletionCoordinator(
@@ -58,6 +66,16 @@ internal class AccountDeletionCoordinator(
             throw error
         } catch (error: Exception) {
             if (stagedLocalCopy) localStore.discardLocalRecoveryCopySafely(error)
+            // The account still exists but its cloud data is already cleared.
+            // Re-mark the owner rows pending so the next successful sync
+            // rebuilds the cloud instead of leaving the account permanently
+            // desynced from this device. A failed re-mark must not mask the
+            // original deletion failure.
+            try {
+                localStore.markOwnerPendingForResync(ownerId)
+            } catch (markError: Exception) {
+                error.addSuppressed(markError)
+            }
             throw error
         }
         try {

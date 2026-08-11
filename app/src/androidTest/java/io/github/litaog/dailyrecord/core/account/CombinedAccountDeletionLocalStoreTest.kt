@@ -74,4 +74,37 @@ class CombinedAccountDeletionLocalStoreTest {
         assertNull(handBrew.observeRecord(date).first())
         assertNull(sex.observeRecord(date).first())
     }
+
+    @Test
+    fun interruptedDeletionLeftoverCopyDoesNotBlockARetryedKeepDeletion() = runBlocking {
+        val handBrew = RoomHandBrewRecordRepository(database, ownerId)
+        val sex = RoomSexRecordRepository(database, ownerId)
+        handBrew.saveRecord(HandBrewRecord("brew", date, 2, now, now))
+        sex.saveRecord(SexRecord("sex", date, 1, now, now))
+        val store = CombinedAccountDeletionLocalStore(
+            RoomHandBrewSyncStore(database),
+            RoomSexSyncStore(database),
+        )
+
+        // First interrupted attempt: a recovery copy is staged, then the
+        // process dies before the account is deleted. The user retries.
+        store.stageLocalRecoveryCopy(ownerId)
+        store.stageLocalRecoveryCopy(ownerId)
+        store.deleteOwnerCache(ownerId)
+
+        assertEquals(
+            2,
+            RoomHandBrewRecordRepository(database, LOCAL_OWNER_ID)
+                .observeRecord(date)
+                .first()
+                ?.brewCount,
+        )
+        assertEquals(
+            1,
+            RoomSexRecordRepository(database, LOCAL_OWNER_ID)
+                .observeRecord(date)
+                .first()
+                ?.sexCount,
+        )
+    }
 }

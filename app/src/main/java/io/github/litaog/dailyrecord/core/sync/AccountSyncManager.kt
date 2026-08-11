@@ -47,47 +47,73 @@ internal class AccountSyncManager(
     fun start(scope: CoroutineScope): List<Job> {
         if (!productionConfigured) return emptyList()
         val remoteJob = scope.launch {
-            coordinator.observeRemote(ownerId)
-                .onEach { snapshot ->
-                    coordinator.applySnapshot(ownerId, snapshot)
-                    if (snapshot.rejectedRecordCount > 0) {
-                        publishStatus(malformedRemoteRecordsFailure())
-                    }
-                    if (!snapshot.fromCache && networkAvailable.value) {
-                        if (coordinator.pendingCount(ownerId) > 0) {
-                            // A fresh server snapshot also proves Firebase is reachable. This
-                            // catches VPN/proxy recovery even when Android's network state did
-                            // not change and flushes edits that remained safely in Room.
-                            syncNow(queueIfBusy = true)
-                        } else if (snapshot.rejectedRecordCount == 0) {
-                            updateIdleStatus()
+            try {
+                coordinator.observeRemote(ownerId)
+                    .onEach { snapshot ->
+                        try {
+                            coordinator.applySnapshot(ownerId, snapshot)
+                        } catch (error: CancellationException) {
+                            throw error
+                        } catch (error: Exception) {
+                            // A local apply failure (Room, malformed record)
+                            // must not kill the realtime channel or the app:
+                            // surface a sanitized status and let the next
+                            // snapshot retry the same work.
+                            publishStatus(error.toSyncFailure())
+                            return@onEach
+                        }
+                        if (snapshot.rejectedRecordCount > 0) {
+                            publishStatus(malformedRemoteRecordsFailure())
+                        }
+                        if (!snapshot.fromCache && networkAvailable.value) {
+                            if (coordinator.pendingCount(ownerId) > 0) {
+                                // A fresh server snapshot also proves Firebase is reachable. This
+                                // catches VPN/proxy recovery even when Android's network state did
+                                // not change and flushes edits that remained safely in Room.
+                                syncNow(queueIfBusy = true)
+                            } else if (snapshot.rejectedRecordCount == 0) {
+                                updateIdleStatus()
+                            }
                         }
                     }
-                }
-                .retryWhen { error, attempt ->
-                    val retryable = error.isRetryableRemoteObservation()
-                    publishStatus(if (networkAvailable.value) {
-                        error.toSyncFailure()
-                    } else {
-                        SyncStatus.Offline
-                    })
-                    if (!retryable || !sessionActive()) return@retryWhen false
-                    // Wait for the network and re-subscribe after a transient
-                    // token failure instead of letting the realtime channel die.
-                    networkAvailable.first { it }
-                    delay(remoteRetryDelayMillis(attempt))
-                    true
-                }
-                .collect()
+                    .retryWhen { error, attempt ->
+                        val retryable = error.isRetryableRemoteObservation()
+                        publishStatus(if (networkAvailable.value) {
+                            error.toSyncFailure()
+                        } else {
+                            SyncStatus.Offline
+                        })
+                        if (!retryable || !sessionActive()) return@retryWhen false
+                        // Wait for the network and re-subscribe after a transient
+                        // token failure instead of letting the realtime channel die.
+                        networkAvailable.first { it }
+                        delay(remoteRetryDelayMillis(attempt))
+                        true
+                    }
+                    .collect()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                // The retryWhen predicate already published a sanitized status
+                // for non-retryable errors (permission rules, disabled user,
+                // permanent data failures). Ending the job here is the intended
+                // "stop listening" behaviour; the uncaught exception would
+                // otherwise crash the process.
+            }
         }
         val pendingJob = scope.launch {
             coordinator.observePendingCount(ownerId).collectLatest { count ->
-                if (
-                    networkAvailable.value &&
-                    mutableStatus.value !is SyncStatus.Syncing &&
-                    mutableStatus.value !is SyncStatus.Failed
-                ) {
-                    publishStatus(if (count == 0) SyncStatus.UpToDate else SyncStatus.Pending(count))
+                if (networkAvailable.value) {
+                    val target = if (count == 0) SyncStatus.UpToDate else SyncStatus.Pending(count)
+                    val current = mutableStatus.value
+                    // Atomically advance only a calm status (UpToDate/Pending).
+                    // A concurrently published Syncing or Failed must never be
+                    // clobbered by a stale pending-count observation.
+                    when (current) {
+                        is SyncStatus.UpToDate -> mutableStatus.compareAndSet(current, target)
+                        is SyncStatus.Pending -> mutableStatus.compareAndSet(current, target)
+                        else -> Unit
+                    }
                 }
             }
         }
@@ -111,7 +137,10 @@ internal class AccountSyncManager(
             return
         }
         if (!mutex.tryLock()) {
-            if (queueIfBusy) followUpSyncRequested.set(true)
+            // A manual request must never vanish silently when a background
+            // sync holds the mutex: queue it so the in-flight attempt's loop
+            // runs one more sync after the current one finishes.
+            followUpSyncRequested.set(true)
             return
         }
         try {
