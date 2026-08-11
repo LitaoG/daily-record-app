@@ -14,8 +14,8 @@
 
 ## 复核结果
 
-- 合并基线为公共 `main` `099eaf0`，最终审查提交为 `58c9a45`（之后的审查
-  注释修正仍在当前分支）。
+- 合并基线为公共 `main` `099eaf0`；本地整合合并提交为 `58c9a45`，公开
+  Draft PR #170 的当前 head 为 `dd1a9e7`（包含审查注释修正和完整源码 blob）。
 - `app/src/main/res` 中的自适应图标和运行时 WebP 没有变化；删除范围只在
   `docs/` 的历史设计导出和预览文件。
 - `EARLIEST_SUPPORTED_DATE`、`DailyRecordSizes.MinimumTouchTarget`、Firebase
@@ -42,11 +42,13 @@ git diff --check                                 PASS
 ```
 
 当前环境没有连接 Android 设备，因此没有在本地重复执行
-`connectedDebugAndroidTest`；三个来源 PR 的 CI 已分别通过，合并 PR 仍需以新的
-整合分支 CI 为最终门槛。
+`connectedDebugAndroidTest`；三个来源 PR 以及整合 PR #170 的 CI 均已通过，整合
+分支的远端验证可作为设备测试的最终证据。
+
+首次通过 GitHub API 生成整合提交时，`RecordScreen.kt` 的上传内容曾被截断，导致
+一次 CI 编译失败；已用完整 blob 修复并重新运行 CI，当前 head 不再包含截断内容。
 
 ## 审查决定
 
 当前未发现阻塞合并的代码问题。整合分支应以 Draft PR 提交，待 CI 完成后再由
 用户验收；在验收前不合并到 `main`，也不删除来源分支。
-
