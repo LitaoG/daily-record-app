@@ -70,7 +70,10 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
                       -- to 'UNSET'; never migrate an unset date into an
                       -- explicit zero-count record (it would change the
                       -- "recorded day" statistics for the whole history).
+                      -- quantity must be present too: a non-UNSET row without
+                      -- a quantity is not evidence of an explicit zero.
                       AND r.`status` != 'UNSET'
+                      AND r.`quantity` IS NOT NULL
                     GROUP BY r.`local_date`
                     """.trimIndent(),
                 )
