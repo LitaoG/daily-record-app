@@ -245,10 +245,12 @@ internal fun DailyCountRecordScreen(
 
     BackHandler(onBack = requestBack)
 
+    val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(moduleSpec.colors))
+            .background(backdropBrush)
             .testTag("record_screen"),
         containerColor = Color.Transparent,
         snackbarHost = {
