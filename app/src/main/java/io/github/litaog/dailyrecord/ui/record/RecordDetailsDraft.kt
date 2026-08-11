@@ -59,6 +59,19 @@ internal data class RecordDetailsDraft(
     val hasChanges: Boolean
         get() = initialized && entries.contentWithoutExpansion() != baseline.contentWithoutExpansion()
 
+    /**
+     * Reconciles the detail rows against the latest remote state.
+     *
+     * @param latest the latest stored details, resized to [count] as the
+     *   baseline the user's edits are compared against
+     * @param count the caller's reconciled **draft count** (countDraft.count),
+     *   not the raw remote count: when the draft is dirty this keeps the
+     *   user's own row size so a remote shrink never truncates in-progress
+     *   edits; when the draft is clean this normalizes the rows to the remote
+     *   value (a remote grow appends blank rows, a remote shrink truncates
+     *   entries beyond the authoritative count, consistent with the save
+     *   path's take(count)).
+     */
     fun reconcile(
         latest: List<RecordDetailEntry>,
         count: Int,
