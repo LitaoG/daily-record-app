@@ -44,7 +44,7 @@ internal interface SexRecordDao {
         UPDATE sex_records
         SET is_deleted = 1,
             updated_at = :updatedAt,
-            sync_state = 'PENDING'
+            sync_state = ''
         WHERE id = :id
           AND owner_id = :ownerId
           AND is_deleted = 0
@@ -60,7 +60,7 @@ internal interface SexRecordDao {
 
     @Query(
         "SELECT * FROM sex_records " +
-            "WHERE owner_id = :ownerId AND sync_state = 'PENDING' ORDER BY updated_at ASC",
+            "WHERE owner_id = :ownerId AND sync_state = '' ORDER BY updated_at ASC",
     )
     suspend fun getPending(ownerId: String): List<SexRecordEntity>
 
@@ -74,7 +74,7 @@ internal interface SexRecordDao {
             remote_revision = :remoteRevision
         WHERE owner_id = :ownerId
           AND local_date = :localDate
-          AND sync_state = 'PENDING'
+          AND sync_state = ''
           AND remote_revision = 0
         """,
     )
@@ -91,7 +91,7 @@ internal interface SexRecordDao {
         SET remote_revision = :remoteRevision
         WHERE owner_id = :ownerId
           AND local_date = :localDate
-          AND sync_state = 'PENDING'
+          AND sync_state = ''
         """,
     )
     suspend fun setRemoteRevisionForPending(
@@ -100,10 +100,10 @@ internal interface SexRecordDao {
         remoteRevision: Long,
     ): Int
 
-    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
+    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = ''")
     fun observePendingCount(ownerId: String): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
+    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = ''")
     suspend fun countPending(ownerId: String): Int
 
     @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId")
@@ -112,7 +112,7 @@ internal interface SexRecordDao {
     @Query(
         """
         UPDATE sex_records
-        SET sync_state = 'PENDING'
+        SET sync_state = ''
         WHERE owner_id = :ownerId
         """,
     )

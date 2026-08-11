@@ -63,6 +63,7 @@ import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -87,13 +88,6 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodSliderBrush
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodTrackBrush
-
-enum class StatisticsPeriod(val label: String) {
-    Week(AppCopy.Statistics.weekTab),
-    Month(AppCopy.Statistics.monthTab),
-    Year(AppCopy.Statistics.yearTab),
-    All(AppCopy.Statistics.allTab),
-}
 
 @Composable
 internal fun DailyRecordBottomBar(

@@ -15,7 +15,6 @@ import androidx.compose.ui.test.performScrollTo
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
-import io.github.litaog.dailyrecord.ui.account.VPN_SYNC_DIALOG_MESSAGE
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -271,7 +270,7 @@ class DailyRecordAppTest {
                 kind = SyncFailureKind.Network,
             )
         }
-        composeRule.onNodeWithText(VPN_SYNC_FAILURE_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(AppCopy.vpnSyncFailure).assertIsDisplayed()
         composeRule.onNodeWithTag("daily_record_snackbar").assertIsDisplayed()
     }
 
@@ -303,7 +302,7 @@ class DailyRecordAppTest {
 
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
         composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
-        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(AppCopy.Account.syncDialogMessage).assertIsDisplayed()
         composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 
@@ -332,7 +331,7 @@ class DailyRecordAppTest {
         }
 
         composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
-        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(AppCopy.Account.syncDialogMessage).assertIsDisplayed()
         composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 
@@ -357,7 +356,7 @@ class DailyRecordAppTest {
             )
         }
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithText(VPN_SYNC_FAILURE_MESSAGE).assertCountEquals(0)
+        composeRule.onAllNodesWithText(AppCopy.vpnSyncFailure).assertCountEquals(0)
         composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 
