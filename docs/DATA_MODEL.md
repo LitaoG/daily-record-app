@@ -8,7 +8,7 @@
 
 | 字段 | 含义 |
 |---|---|
-| id | 稳定 UUID；同日更新沿用原 ID |
+| id | 云端记录代际内稳定的 UUID；同日更新沿用原 ID，物理文档被删除后重建时生成新的 UUID 作为代际标记 |
 | localDate | `YYYY-MM-DD`，唯一 |
 | brewCount / sexCount | 非负整数；0 表示明确没有发生对应行为 |
 | createdAt | 首次创建时间 |
@@ -16,7 +16,7 @@
 | ownerId | `__local__` 或 Firebase UID，用于本机账号隔离 |
 | isDeleted | 同步清除操作的墓碑；墓碑不进入 UI/统计 |
 | syncState | `PENDING` / `SYNCED`，仅同步基础设施使用 |
-| remoteRevision | 最近确认的云端修订号 |
+| remoteRevision | 最近确认的云端修订号；只在同一 `id` 代际内比较，新的 `id` 代表新的云端记录代际 |
 
 不存在 `Activity`、`activityId`、`MeasurementType`、通用业务状态枚举、活动颜色或归档字段。未来记录类型应使用自己的实体和表，不向现有表追加用于区分活动种类的字段。
 
@@ -76,4 +76,4 @@ moduleCount > 0 -> OCCURRED（已发生）
 
 ## Firestore 文档
 
-两个集合的文档 ID 都与 `localDate` 相同。手冲文档使用 `brewCount`，做爱文档使用 `sexCount`；其余字段为 `id`、`localDate`、`createdAtMillis`、`clientUpdatedAtMillis`、`deleted`、`revision`、`schemaVersion`、`details` 和服务器时间。`details` 是当前模块专用的逐次数组，包含 `id`、`occurrenceIndex`、可空的 `startTime`/`endTime` 与 `feeling`，不会混入另一个模块。规则分别强制所有权、字段白名单、非负次数、时间范围、不可变身份、100 个可见字符上限和修订号逐次加一。普通记录清除必须写墓碑并清除本地详情；永久删除账号时，已登录本人可以物理删除自己路径下的全部文档。
+两个集合的文档 ID 都与 `localDate` 相同。手冲文档使用 `brewCount`，做爱文档使用 `sexCount`；其余字段为 `id`、`localDate`、`createdAtMillis`、`clientUpdatedAtMillis`、`deleted`、`revision`、`schemaVersion`、`details` 和服务器时间。`id` 在一个云端记录代际内不可变；物理文档被删除后，pending 编辑重建时生成新的 `id`，而 `revision` 从 1 开始。`details` 是当前模块专用的逐次数数组，包含 `id`、`occurrenceIndex`、可空的 `startTime`/`endTime` 与 `feeling`，不会混入另一个模块。规则分别强制所有权、字段白名单、非负次数、时间范围、不可变身份、100 个可见字符上限和修订号逐次加一。普通记录清除必须写墓碑并清除本地详情；永久删除账号时，已登录本人可以物理删除自己路径下的全部文档。

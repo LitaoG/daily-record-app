@@ -15,6 +15,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -24,6 +25,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -144,6 +146,37 @@ class SexSyncCoordinatorTest {
     }
 
     @Test
+    fun syncedPeerAcceptsRecreatedCloudGenerationWithRestartedRevision() = runBlocking {
+        val remote = FakeSexRemoteDataSource()
+        val firstDatabase = database()
+        val secondDatabase = database()
+        val firstRepository = repository(firstDatabase, firstInstant)
+        val secondRepository = repository(secondDatabase, firstInstant.plusSeconds(30))
+        val firstCoordinator = coordinator(firstDatabase, remote)
+        val secondCoordinator = coordinator(secondDatabase, remote)
+
+        firstRepository.saveRecord(record(1, firstInstant))
+        firstCoordinator.syncOnce(ownerId)
+        secondCoordinator.syncOnce(ownerId)
+        val originalId = firstRepository.observeRecord(date).first()!!.id
+
+        remote.removeRemote(date)
+        secondRepository.saveRecord(record(6, firstInstant.plusSeconds(60)))
+        secondCoordinator.syncOnce(ownerId)
+
+        val recreated = remote.fetch(ownerId).sexRecords.single()
+        assertNotEquals(originalId, recreated.id)
+        assertEquals(1L, recreated.revision)
+
+        // Device A has no pending edit, but must accept the new generation
+        // even though its numeric revision is equal to the old revision.
+        firstCoordinator.syncOnce(ownerId)
+        val restored = firstRepository.observeRecord(date).first()!!
+        assertEquals(6, restored.sexCount)
+        assertEquals(recreated.id, restored.id)
+    }
+
+    @Test
     fun combinedCoordinatorUploadsAndCountsBothModulesWithoutMixingThem() = runBlocking {
         val database = database()
         val handRemote = FakeHandBrewRemoteForCombined()
@@ -215,14 +248,18 @@ private class FakeSexRemoteDataSource : SexRemoteDataSource {
     override suspend fun commit(ownerId: String, local: SexRecordEntity): RemoteSexRecord =
         mutex.withLock {
             val current = values.value[local.localDate]
-            if (current != null && local.remoteRevision != current.revision) {
+            if (
+                current != null &&
+                (local.remoteRevision != current.revision || local.id != current.id)
+            ) {
                 return@withLock current
             }
             // Mirrors the production data source (issue #104): recreate a
             // missing cloud document from the local pending edit instead of
             // permanently failing the PENDING row on its stale baseline.
             val committed = RemoteSexRecord(
-                id = current?.id ?: local.id,
+                id = current?.id
+                    ?: if (local.remoteRevision > 0) UUID.randomUUID().toString() else local.id,
                 localDate = local.localDate,
                 sexCount = local.sexCount,
                 createdAt = current?.createdAt ?: local.createdAt,
@@ -262,13 +299,17 @@ private class FakeHandBrewRemoteForCombined : HandBrewRemoteDataSource {
         local: HandBrewRecordEntity,
     ): RemoteHandBrewRecord = mutex.withLock {
         val current = values.value[local.localDate]
-        if (current != null && local.remoteRevision != current.revision) {
+        if (
+            current != null &&
+            (local.remoteRevision != current.revision || local.id != current.id)
+        ) {
             return@withLock current
         }
         // Mirrors the production data source (issue #104): recreate a
         // missing cloud document from the local pending edit.
         val committed = RemoteHandBrewRecord(
-            id = current?.id ?: local.id,
+            id = current?.id
+                ?: if (local.remoteRevision > 0) UUID.randomUUID().toString() else local.id,
             localDate = local.localDate,
             brewCount = local.brewCount,
             createdAt = current?.createdAt ?: local.createdAt,

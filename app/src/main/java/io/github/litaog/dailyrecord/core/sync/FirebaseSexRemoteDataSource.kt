@@ -14,6 +14,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeParseException
+import java.util.UUID
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -66,14 +67,22 @@ internal class FirebaseSexRemoteDataSource(
             } else {
                 null
             }
-            if (currentRemote != null && local.remoteRevision != currentRemote.revision) {
+            if (
+                currentRemote != null &&
+                (local.remoteRevision != currentRemote.revision || local.id != currentRemote.id)
+            ) {
                 return@runTransaction currentRemote
             }
             // Recreate a missing document from a retained local pending edit.
             // Ordinary record clearing writes a tombstone, so the optimistic
             // revision check above still protects normal concurrent edits.
-            val revision = (current.getLong(FIELD_REVISION) ?: 0L) + 1L
-            val stableId = current.getString(FIELD_ID) ?: local.id
+            val revision = (currentRemote?.revision ?: 0L) + 1L
+            // Preserve the caller's id for the first creation (revision 0),
+            // but mint a new identity when a previously confirmed document
+            // is physically recreated. The latter marks a new cloud
+            // generation so peers can accept its restarted revision.
+            val stableId = currentRemote?.id
+                ?: if (local.remoteRevision > 0) UUID.randomUUID().toString() else local.id
             val stableCreatedAt = current.getLong(FIELD_CREATED_AT) ?: local.createdAt.toEpochMilli()
             val committedUpdatedAt = maxOf(
                 local.updatedAt,
