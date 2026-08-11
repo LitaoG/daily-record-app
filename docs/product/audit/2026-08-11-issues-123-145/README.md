@@ -4,6 +4,8 @@
 审计提交：`de3db38`（`[gpt5.6luna]: harden issues 123-145 audit fixes`）  
 基线：`origin/main`，不合并到 `main`，等待用户验收。
 
+远端交付：Draft PR [#152](https://github.com/LitaoG/daily-record-app/pull/152)，head `f1866f9`；GitHub Actions Android CI run #240 已通过。PR 保持 Draft，不自动合并到 `main`。
+
 ## 结论
 
 本轮逐项复核了 Issues #123–#145 对应的实现、测试和产品文档。没有发现需要推翻已有设计的系统性问题；发现的真实运行时风险已在本分支修复并补回归测试。其余条目属于已实现功能的验收记录、测试债务、文档整理或明确接受的产品取舍，不应伪报为新的运行时缺陷。
@@ -39,4 +41,4 @@
 
 ## 后续门槛
 
-本分支保持可审查状态，不自动合并到 `main`。用户验收后再决定是否合并；若重新运行设备套件，应先让模拟器能访问宿主机 Firebase Emulator，再把当前 3 个环境失败项补跑。
+本分支保持可审查状态，不自动合并到 `main`。用户验收后再决定是否合并；若重新运行设备套件，应先让模拟器能访问宿主机 Firebase Emulator，再把当前 3 个环境失败项补跑。远端 CI 已验证编译、单元测试、Lint、文档/发布元数据和 Firestore rules；设备套件仍需在可访问 Emulator 的环境补跑。
