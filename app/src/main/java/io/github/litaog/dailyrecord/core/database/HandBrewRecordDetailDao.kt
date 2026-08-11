@@ -31,16 +31,6 @@ internal interface HandBrewRecordDetailDao {
     )
     suspend fun deleteByOwnerDate(ownerId: String, localDate: LocalDate): Int
 
-    @Query("SELECT * FROM hand_brew_record_details WHERE owner_id = :ownerId ORDER BY local_date, occurrence_index")
-    suspend fun getAllForSync(ownerId: String): List<HandBrewRecordDetailEntity>
-
-    @Query(
-        "UPDATE hand_brew_record_details " +
-            "SET owner_id = :newOwnerId " +
-            "WHERE owner_id = :oldOwnerId",
-    )
-    suspend fun moveOwner(oldOwnerId: String, newOwnerId: String): Int
-
     @Query("SELECT COUNT(*) FROM hand_brew_record_details WHERE owner_id = :ownerId")
     suspend fun countForOwner(ownerId: String): Int
 

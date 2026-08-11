@@ -8,6 +8,7 @@ import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -64,6 +65,18 @@ class DatabaseSchemaTest {
                           'DONE', 2, 'Asia/Shanghai', 1000, 1000, 1000, 0)
                 """.trimIndent(),
             )
+            // An unset (never recorded) v1 date must not migrate into an
+            // explicit zero-count record: it would distort the recorded-day
+            // statistics of the entire migrated history.
+            execSQL(
+                """
+                INSERT INTO daily_records (
+                    id, owner_id, activity_id, local_date, status, quantity,
+                    timezone_id, occurred_at, created_at, updated_at, revision
+                ) VALUES ('unset-record', 'local-owner', 'hand-brew', '2026-07-17',
+                          'UNSET', NULL, 'Asia/Shanghai', 1000, 1000, 1000, 0)
+                """.trimIndent(),
+            )
             close()
         }
 
@@ -80,6 +93,11 @@ class DatabaseSchemaTest {
             assertEquals(3, migrated?.brewCount)
             assertEquals(LOCAL_OWNER_ID, migrated?.ownerId)
             assertEquals(SYNC_PENDING, migrated?.syncState)
+            // The unset v1 date must not appear as an explicit zero record.
+            assertNull(
+                database.handBrewRecordDao()
+                    .getByDate(LOCAL_OWNER_ID, java.time.LocalDate.of(2026, 7, 17)),
+            )
             assertEquals(5, database.openHelper.readableDatabase.version)
             assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
             assertEquals(0, database.handBrewRecordDetailDao().countForOwner(LOCAL_OWNER_ID))

@@ -76,6 +76,7 @@
 ```powershell
 pnpm install --frozen-lockfile
 pnpm test:docs
+pnpm test:copy
 pnpm test:release-metadata
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-parallel
 pnpm test:firestore-rules
