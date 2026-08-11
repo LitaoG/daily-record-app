@@ -50,6 +50,7 @@ import io.github.litaog.dailyrecord.ui.components.StatisticRow
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.navigation.nextPeriodAnchor
 import io.github.litaog.dailyrecord.ui.navigation.previousPeriodAnchor
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -292,7 +293,7 @@ private fun PeriodNavigator(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .sizeIn(minHeight = 48.dp)
+                    .sizeIn(minHeight = DailyRecordSizes.MinimumTouchTarget)
                     .clip(RoundedCornerShape(14.dp))
                     .clickable(role = Role.Button, onClick = { onOpenPeriodPicker(period) })
                     .semantics {
@@ -328,7 +329,7 @@ private fun PeriodArrow(
 ) {
     Box(
         modifier = Modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .sizeIn(minWidth = DailyRecordSizes.MinimumTouchTarget, minHeight = DailyRecordSizes.MinimumTouchTarget)
             .clip(CircleShape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .alpha(if (enabled) 1f else .3f)
@@ -378,3 +379,4 @@ private fun EmptyStatistics(
         )
     }
 }
+

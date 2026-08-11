@@ -33,8 +33,9 @@ internal object NoOpCloudWriteGate : CloudWriteGate {
 
 internal object DailyRecordSyncScheduler {
     private const val UNIQUE_WORK_NAME = "daily-record-cloud-sync"
-    // The old name is cancelled once so upgrades do not leave a hand-brew-only
-    // request running after the scheduler became module-agnostic.
+    // The legacy name is cancelled on every schedule so a hand-brew-only
+    // request enqueued before the scheduler became module-agnostic can
+    // never run concurrently (cancelling an absent work is a no-op).
     private const val LEGACY_UNIQUE_WORK_NAME = "hand-brew-cloud-sync"
     internal val workName = UNIQUE_WORK_NAME
     internal val workPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE
@@ -81,9 +82,9 @@ internal object DailyRecordSyncScheduler {
     }
 
     /**
-     * Persist the deletion barrier before cancelling workers or touching
-     * Firestore. This survives process death and is keyed by account, so a
-     * different account is not accidentally blocked by a stale marker.
+     * Persist the deletion barrier before the caller cancels workers or
+     * touches Firestore. This survives process death and is keyed by account,
+     * so a different account is not accidentally blocked by a stale marker.
      */
     internal fun beginDeletionBlock(context: Context, ownerId: String) {
         require(ownerId.isNotBlank()) { "ownerId must not be blank" }
@@ -174,7 +175,7 @@ internal object DailyRecordSyncScheduler {
         persistenceFailure?.let { throw it }
     }
 
-    /** Clears a durable cleanup marker after local owner data was removed. */
+    /** Clears a durable cleanup marker after the owner cache was removed. */
     internal fun completeDeletionCleanup(context: Context, ownerId: String) {
         synchronized(stateLock) {
             updateDeletionMarkers(
@@ -194,7 +195,7 @@ internal object DailyRecordSyncScheduler {
             isDeletionBlockedLocked(context, ownerId)
         }
 
-    /** Schedules only when the account is not durably blocked for deletion. */
+    /** Schedules only when the account is not blocked for deletion (durable or in-process). */
     fun schedule(context: Context, ownerId: String? = null) {
         synchronized(stateLock) {
             if (isDeletionBlockedLocked(context, ownerId)) return
@@ -317,3 +318,4 @@ internal object DailyRecordSyncScheduler {
     private const val KEY_IN_PROGRESS = "in_progress_owner_ids"
     private const val KEY_CLEANUP_PENDING = "cleanup_pending_owner_ids"
 }
+

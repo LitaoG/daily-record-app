@@ -48,6 +48,7 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -253,7 +254,7 @@ private fun SettingsButton(onClick: () -> Unit) {
     IconButton(
         onClick = onClick,
         modifier = Modifier
-            .size(48.dp)
+            .size(DailyRecordSizes.MinimumTouchTarget)
             .testTag("home_settings_button"),
     ) {
         Icon(
@@ -293,7 +294,7 @@ private fun SyncStatusChip(
             .border(1.dp, DailyRecordDivider, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 9.dp)
-            .heightIn(min = 48.dp)
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
             .semantics {
                 role = Role.Button
                 contentDescription = AppCopy.Account.syncChipDescription(status.label())
@@ -415,13 +416,13 @@ internal fun AccountDialog(
             DailyRecordTextAction(
                 label = AppCopy.Account.signOut,
                 onClick = { confirmSignOut = true },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = DailyRecordSizes.MinimumTouchTarget),
                 danger = true,
             )
             DailyRecordTextAction(
                 label = AppCopy.Account.deleteAccount,
                 onClick = onDeleteAccount,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = DailyRecordSizes.MinimumTouchTarget),
                 danger = true,
             )
         }
@@ -452,3 +453,4 @@ internal fun SyncStatus.color() = when (this) {
     SyncStatus.Offline, is SyncStatus.Pending -> DailyRecordWarning
     SyncStatus.NotConfigured, is SyncStatus.Failed -> DailyRecordDanger
 }
+

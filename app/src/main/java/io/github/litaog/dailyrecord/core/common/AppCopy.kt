@@ -1,5 +1,6 @@
 package io.github.litaog.dailyrecord.core.common
 
+import io.github.litaog.dailyrecord.core.model.MAX_RECORD_DETAIL_FEELING_CHARACTERS
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -304,7 +305,8 @@ internal object AppCopy {
         const val detailCollapseFeeling = "收起"
         const val detailFeelingLabel = "感受（可选）"
         const val detailFeelingHint = "写下这一刻的感受"
-        const val detailFeelingCounter = "%d / 100"
+        // Keep the displayed denominator aligned with the model validation limit.
+        val detailFeelingCounter = "%d / ${MAX_RECORD_DETAIL_FEELING_CHARACTERS}"
         const val detailEndBeforeStart = "结束时间不能早于开始时间"
         const val detailDiscardTitle = "移除这次详情？"
         const val detailDiscardMessage = "这次已填写的时间或感受会一起移除。"
@@ -522,3 +524,4 @@ internal object AppCopy {
         const val increase = "增加一次"
     }
 }
+

@@ -31,6 +31,7 @@
 | [安全策略](../SECURITY.md) | 漏洞报告、敏感材料和安全基线 |
 | [参与贡献](../CONTRIBUTING.md) | 分支、代码、测试和隐私要求 |
 | [仓库维护与文档生命周期](REPOSITORY_HYGIENE.md) | 公共/私有边界、分支清理、文档分类和生成物策略 |
+| [资源清理记录](RESOURCE_CLEANUP.md) | 当前运行时资源、设计源、历史证据与本次删除范围 |
 
 ## 产品协作资料
 
@@ -55,6 +56,7 @@
 - [2026-08-03 应用内中文文案审查](product/audit/2026-08-03-copy-audit/README.md)
 - [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](product/audit/2026-08-03-stage5-stage6-release/README.md)
 - [2026-08-09 Issue #105 Stage 4–5 记录页验收](product/audit/2026-08-09-record-details-stage4-stage5/README.md)
+- [2026-08-11 注释、写死值与资源清理整合审计](product/audit/2026-08-11-integrated-audit/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 
 ## 历史证据
@@ -76,3 +78,4 @@
 - [v1.0.0-beta.2 发布说明](releases/v1.0.0-beta.2.md)
 
 历史文档中的测试数量、截图日期、分支名和“下一步”只描述当时状态。当前版本、发布物和 CI 状态以仓库首页、GitHub Releases 与 `main` 为准。
+

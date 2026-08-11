@@ -80,7 +80,7 @@ internal class FirebaseHandBrewRemoteDataSource(
             // the local pending edit was retained for recovery. Treat it as a
             // new document rather than permanently failing the PENDING row on
             // its stale revision baseline. Normal clears use a tombstone and
-            // still participate in the revision check above.
+            // still participate in the optimistic revision/id check above.
             val revision = (currentRemote?.revision ?: 0L) + 1L
             // Preserve the caller's id for the first creation (revision 0),
             // but mint a new identity when a previously confirmed document
@@ -284,3 +284,4 @@ private fun parseDetailTime(value: Any?): LocalTime? {
         throw IllegalArgumentException("detail time is invalid", error)
     }
 }
+

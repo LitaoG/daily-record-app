@@ -20,11 +20,14 @@ Figma 页面现在按四个可核对的画板排列：完整预览、`background
 
 ## 商店导出
 
-- [`daily-record-icon-1024.png`](../../../design/icon-source/daily-record-icon-1024.png)：1024×1024 sRGB 备份图。
 - [`google-play-icon-512.png`](../../../design/icon-source/google-play-icon-512.png)：512×512、32-bit/sRGB、无预先圆角、约 320 KB，供 Play Console 使用。
+
+1024px 备份图、三层 PNG 副本和预览合成图不是运行时或交接输入，已在
+2026-08-11 资源整理中移除；需要复核旧导出时可从 Git 历史恢复。
 
 Google Play 与启动器会自行应用圆角和阴影，源图不重复添加外框。
 
 ## 规范
 
 三层均按 108×108dp 自适应图标画布制作，主要图形保持在约 66×66dp 安全区内；背景无外部阴影，前景透明，锁孔为清晰黑色负形。参考：[Android adaptive icon](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive) 和 [Google Play icon specifications](https://developer.android.com/distribute/google-play/resources/icon-design-specifications)。
+

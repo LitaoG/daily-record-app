@@ -27,6 +27,7 @@
 | [2026-08-03 copy audit](2026-08-03-copy-audit/README.md) | 集中文案和中文字符串审查 | 已纳入 beta.2 |
 | [2026-08-03 Stage 5/6 release](2026-08-03-stage5-stage6-release/README.md) | beta.2 发布、签名和私有镜像 | 发布完成 |
 | [2026-08-09 Issue #105 Stage 4–5](2026-08-09-record-details-stage4-stage5/README.md) | 记录页无障碍、窄屏、恢复、跨设备与候选 APK | 待用户验收，PR #119 Draft |
+| [2026-08-11 integrated audit](2026-08-11-integrated-audit/README.md) | 注释、写死值与过时资源的整合分支复核 | 待用户验收，review 分支 |
 
 ## 阅读规则
 
@@ -34,3 +35,4 @@
 - “历史，中间实现”表示后来被更好的实现或用户最终契约替代；不应从截图恢复旧布局或旧统计口径。
 - 设备截图和 XML 只使用虚构数据；不要把真实账号、真实日期或个人记录追加到这里。
 - 最新一次代码级修复是公共 `main` 的 PR #90；它没有新增截图审计目录，验证结果以 PR/CI 和当前代码为准。
+

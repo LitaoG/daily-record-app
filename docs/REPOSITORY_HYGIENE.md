@@ -1,6 +1,6 @@
 # 仓库整理与文档生命周期
 
-最后复核：2026-08-08
+最后复核：2026-08-11
 
 本文是 Daily Record 的仓库维护说明，解决“当前事实在哪里、历史材料如何保留、什么时候清理分支和生成物”这三个问题。它不替代产品、架构、数据模型或统计契约。
 
@@ -30,14 +30,16 @@
 
 ### 历史审计与设计资产
 
-`docs/product/audit/`、`docs/product/assets/hand-brew-v2/`、`docs/product/FIGMA_DESIGN_SYSTEM.md` 和 `docs/product/HAND_BREW_REFACTOR_LOG.md` 保留截图、命令、阶段结论和旧方案，不能当作当前待办。历史文档保留当时的状态，但必须有“归档/被后续版本取代”的说明；不得为了让旧截图看起来像当前 UI 而改写证据。
+`docs/product/audit/`、`docs/product/FIGMA_DESIGN_SYSTEM.md` 和 `docs/product/HAND_BREW_REFACTOR_LOG.md` 保留截图、命令、阶段结论和旧方案，不能当作当前待办。历史文档保留当时的状态，但必须有“归档/被后续版本取代”的说明；不得为了让旧截图看起来像当前 UI 而改写证据。旧版 `assets/hand-brew-v2/` 截图包已在 2026-08-11 资源整理中从工作树移除，旧文件仍可从 Git 历史恢复。
 
 `docs/design/icon-source/` 是图标源文件交接目录：SVG/PNG 设计源可以保留，运行时只引用轻量自适应图标层；营销大图不进入 APK 资源。
 
 ## 本次整理决策
 
 - 删除仓库根目录未被任何文档引用、且内容与 `docs/product/audit/2026-08-02-year-line-chart/README.md` 重复的 `design-qa.md`；历史证据仍在审计目录中。
-- 保留 Stage 1–5、旧月统计、旧 Figma 和仅手冲资产，因为它们包含可追溯的截图、测试和迁移背景；在索引和文档状态中明确它们是历史材料。
+- 保留 `docs/product/audit/` 的审计证据，因为它们包含可追溯的截图、测试和迁移背景；在索引和文档状态中明确它们是历史材料。
+- 删除已被当前双模块 UI 取代的 `docs/product/assets/hand-brew-v2/` 截图包；它不参与构建，且旧图像可从 Git 历史恢复。
+- 删除图标三层的重复 PNG、1024px 备份和本地预览合成图；保留 SVG 交接源、用户确认的 1254px 源图和 Play 512px 导出。运行时仍只使用 `drawable-nodpi` 下的轻量 WebP 层。
 - 将 UI v2 Goal、设计基线、玻璃主题、README、路线图、Backlog 和 UI 事实文档更新到 Stage 0–6 已完成、公共 `main` 已完成 beta.2 后维护的状态。
 - 不删除 GitHub Release、tag、已关闭 Issue、审计截图或 Room 迁移历史；删除这些内容会损失恢复和审查证据。
 
@@ -65,3 +67,4 @@ git ls-files | rg -i 'google-services\\.json|local\\.properties|keystore|\\.apk$
 ```
 
 代码、数据库、同步、Manifest 或发布配置发生变化时，再按 [`TESTING.md`](TESTING.md) 扩大到受影响的 Gradle、规则和 Android 设备测试；纯文档或历史截图整理不机械重复无关的完整设备套件。
+

@@ -13,7 +13,7 @@ enum class LocalDataAfterAccountDeletion {
 
 /**
  * Thrown when the Firebase account and cloud data were already deleted but the
- * local owner cache could not be cleared. This is not a retryable account
+ * owner cache could not be cleared. This is not a retryable account
  * deletion failure: re-authentication is impossible because the account no
  * longer exists. The owner id is kept so a later startup can retry the local
  * cleanup.
@@ -132,3 +132,4 @@ private suspend fun AccountDeletionLocalStore.markOwnerPendingForResyncSafely(
         primary.addSuppressed(cleanupError)
     }
 }
+

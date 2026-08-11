@@ -42,7 +42,7 @@
 - [历史 Figma Hand-brew-only v2 设计系统](FIGMA_DESIGN_SYSTEM.md)
 - [历史 Figma 设计文件](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
 - [历史 Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
-- [仅手冲 v2 历史设计与实现截图索引](assets/hand-brew-v2/README.md)
+- 仅手冲 v2 截图包已在 2026-08-11 资源整理中移除；旧版本仍可从 Git 历史恢复。
 - [交付与验证日志](HAND_BREW_REFACTOR_LOG.md)
 - [2026-07-28 局部一致性、扩展边界与安全加固](audit/2026-07-28-consistency-hardening/README.md)
 - [2026-07-27 快速真实运行审计](audit/2026-07-27-quick-runtime/README.md)
@@ -53,3 +53,4 @@
 - [早期运行时 UX 与统计验收](RUNTIME_UX_AUDIT.md)
 
 这些材料记录特定日期的截图、测试数量和阶段结论，不代表当前待办，也不能覆盖 UI v2 设计基线。旧“通用活动记录器”产品包已从当前文件树移除；未来记录模块也不会恢复旧通用活动模型。
+

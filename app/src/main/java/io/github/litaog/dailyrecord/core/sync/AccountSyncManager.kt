@@ -69,9 +69,12 @@ internal class AccountSyncManager(
                             if (snapshot.rejectedRecordCount == 0 &&
                                 coordinator.pendingCount(ownerId) > 0
                             ) {
-                                // A fresh server snapshot also proves Firebase is reachable. This
-                                // catches VPN/proxy recovery even when Android's network state did
-                                // not change and flushes edits that remained safely in Room.
+                                // A fresh, fully readable server snapshot also proves Firebase is
+                                // reachable. This catches VPN/proxy recovery even when Android's
+                                // network state did not change and flushes edits that remained
+                                // safely in Room. A snapshot with rejected (malformed) records
+                                // never triggers the flush: those rows can never sync, and
+                                // flushing would only repeat the failing commit on every snapshot.
                                 syncNow(queueIfBusy = true)
                             } else if (snapshot.rejectedRecordCount == 0) {
                                 updateIdleStatus()
@@ -99,7 +102,7 @@ internal class AccountSyncManager(
                 // The retryWhen predicate already published a sanitized status
                 // for non-retryable errors (permission rules, disabled user,
                 // permanent data failures). Ending the job here is the intended
-                // "stop listening" behaviour; the uncaught exception would
+                // "stop listening" behavior; the uncaught exception would
                 // otherwise crash the process.
             }
         }
@@ -253,9 +256,10 @@ private fun remoteRetryDelayMillis(attempt: Long): Long {
 
 internal fun Throwable.isRetryableRemoteObservation(): Boolean =
     generateSequence(this) { it.cause }.any { cause ->
-        // Only token/network/temporary quota auth failures are retryable.
-        // Invalid credentials, disabled users and other permanent auth errors
-        // must terminate the listener instead of spinning forever.
+        // Among auth failures, only token/network/temporary-quota ones are
+        // retryable; transient Firestore codes and I/O failures are retried as
+        // well. Invalid credentials, disabled users and other permanent auth
+        // errors must terminate the listener instead of spinning forever.
         (cause is FirebaseAuthException && isRetryableFirebaseAuthCode(cause.errorCode)) ||
             cause is FirebaseNetworkException ||
             cause is IOException ||
@@ -340,3 +344,4 @@ private fun Throwable.toSyncFailure(): SyncStatus.Failed {
     }
     return SyncStatus.Failed(message = message, kind = kind)
 }
+

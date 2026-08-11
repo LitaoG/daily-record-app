@@ -54,6 +54,7 @@ import io.github.litaog.dailyrecord.ui.account.color
 import io.github.litaog.dailyrecord.ui.account.label
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
@@ -184,7 +185,7 @@ private fun SettingsTopBar(onBack: () -> Unit) {
         ) {
             IconButton(
                 onClick = onBack,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(DailyRecordSizes.MinimumTouchTarget),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
@@ -420,3 +421,4 @@ private fun AboutRow(
         )
     }
 }
+
