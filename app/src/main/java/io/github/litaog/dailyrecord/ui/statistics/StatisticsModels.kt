@@ -118,6 +118,9 @@ internal fun buildDailyCountStatistics(
     records: List<DailyCountEntry>,
     earliestDate: LocalDate = LocalDate.of(1970, 1, 1),
 ): StatisticsUiModel {
+    // Future-dated records can reach the store through remote devices with a
+    // fast clock, so they are explicitly excluded from every period (the
+    // calendar itself never creates them).
     val completedRecords = records.filter { it.localDate <= today }
     val safeAnchor = anchorDate.coerceIn(earliestDate, today)
     return when (period) {
@@ -239,6 +242,9 @@ private fun buildYear(
     val start = LocalDate.of(anchorDate.year, 1, 1)
     val end = LocalDate.of(anchorDate.year, 12, 31)
     val rangeRecords = records.filter { it.localDate in start..end }
+    // Single grouping pass so the 12 monthly buckets and the year statistics
+    // share one O(n) scan instead of filtering the year records 24 times.
+    val byMonth = rangeRecords.groupBy { YearMonth.from(it.localDate) }
     val details = (1..12).map { monthNumber ->
         val month = YearMonth.of(anchorDate.year, monthNumber)
         if (month.atDay(1) > today) {
@@ -250,7 +256,7 @@ private fun buildYear(
                 recorded = false,
             )
         } else {
-            val monthRecords = rangeRecords.filter { YearMonth.from(it.localDate) == month }
+            val monthRecords = byMonth[month].orEmpty()
             val summary = summaryOf(monthRecords)
             StatisticsDetail(
                 label = AppCopy.Statistics.monthLabel(monthNumber),
@@ -266,14 +272,14 @@ private fun buildYear(
         summary = summaryOf(rangeRecords),
         detailsTitle = AppCopy.Statistics.monthlyDetails,
         details = details,
-        year = buildYearStatistics(anchorDate.year, today, rangeRecords),
+        year = buildYearStatistics(anchorDate.year, today, byMonth),
     )
 }
 
 private fun buildYearStatistics(
     year: Int,
     today: LocalDate,
-    records: List<DailyCountEntry>,
+    byMonth: Map<YearMonth, List<DailyCountEntry>>,
 ): YearStatistics {
     val months = (1..12).map { monthNumber ->
         val month = YearMonth.of(year, monthNumber)
@@ -283,7 +289,7 @@ private fun buildYearStatistics(
         // to 1/1, at which point December is eligible for extrema ranking.
         val complete = month.atEndOfMonth() < today
         val inProgress = !future && !complete
-        val monthRecords = records.filter { it.localDate in month.atDay(1)..month.atEndOfMonth() }
+        val monthRecords = byMonth[month].orEmpty()
         val recorded = !future && monthRecords.isNotEmpty()
         YearMonthStatistics(
             month = month,
@@ -320,10 +326,11 @@ private fun buildYearStatistics(
 }
 
 private fun buildAll(today: LocalDate, records: List<DailyCountEntry>): StatisticsUiModel {
-    val years = records.map { it.localDate.year }.distinct().sortedDescending()
+    // Single grouping pass: O(n) instead of one full scan per year.
+    val byYear = records.groupBy { it.localDate.year }
+    val years = byYear.keys.sortedDescending()
     val details = years.map { year ->
-        val yearRecords = records.filter { it.localDate.year == year }
-        val summary = summaryOf(yearRecords)
+        val summary = summaryOf(byYear.getValue(year))
         StatisticsDetail(AppCopy.Statistics.yearTitle(year), summary.totalCount, summary.recordedDays)
     }
     val status = AppCopy.Statistics.historyStatus(records.minOfOrNull { it.localDate }, today)
