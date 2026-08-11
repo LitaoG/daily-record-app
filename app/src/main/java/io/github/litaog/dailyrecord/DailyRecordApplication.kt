@@ -1,7 +1,7 @@
 package io.github.litaog.dailyrecord
 
 import android.app.Application
-import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 
 class DailyRecordApplication : Application() {

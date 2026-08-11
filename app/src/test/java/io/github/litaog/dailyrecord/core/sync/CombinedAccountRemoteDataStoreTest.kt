@@ -1,5 +1,7 @@
 package io.github.litaog.dailyrecord.core.sync
 
+import io.github.litaog.dailyrecord.core.account.AccountRemoteDataStore
+import io.github.litaog.dailyrecord.core.account.CombinedAccountRemoteDataStore
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test

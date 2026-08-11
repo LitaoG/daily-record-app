@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.remember
-import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.ui.DailyRecordRoot
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 

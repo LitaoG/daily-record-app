@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.cloud
+package io.github.litaog.dailyrecord.core.common
 
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task

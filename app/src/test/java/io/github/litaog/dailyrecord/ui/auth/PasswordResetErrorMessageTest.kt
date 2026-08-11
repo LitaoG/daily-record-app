@@ -1,6 +1,6 @@
 package io.github.litaog.dailyrecord.ui.auth
 
-import io.github.litaog.dailyrecord.core.cloud.InteractiveCloudTimeoutException
+import io.github.litaog.dailyrecord.core.common.InteractiveCloudTimeoutException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

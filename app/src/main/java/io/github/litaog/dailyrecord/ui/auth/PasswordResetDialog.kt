@@ -31,7 +31,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuthException
-import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
+import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
