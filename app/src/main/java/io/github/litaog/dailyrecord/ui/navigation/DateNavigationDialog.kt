@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items as lazyColumnItems
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -73,7 +72,6 @@ import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -378,7 +376,7 @@ private fun DateWheelColumn(
     val settleAnimation = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     var settleJob by remember { mutableStateOf<Job?>(null) }
-    val rowHeightPx = with(LocalDensity.current) { 44.dp.toPx() }
+    val rowHeightPx = with(LocalDensity.current) { 48.dp.toPx() }
     val shape = RoundedCornerShape(14.dp)
 
     /**
@@ -486,7 +484,7 @@ private fun DateWheelColumn(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(148.dp)
+                .height(160.dp)
                 .clip(shape)
                 .background(DailyRecordSurfaceMuted)
                 .border(1.dp, DailyRecordDivider, shape)
@@ -500,8 +498,8 @@ private fun DateWheelColumn(
                     onDragStopped = { settleWheel() },
                 ),
         ) {
-            Canvas(Modifier.fillMaxWidth().height(148.dp)) {
-                val bandHeight = 44.dp.toPx()
+            Canvas(Modifier.fillMaxWidth().height(160.dp)) {
+                val bandHeight = 48.dp.toPx()
                 val top = (size.height - bandHeight) / 2f
                 drawRect(
                     color = colors.soft.copy(alpha = .78f),
@@ -585,7 +583,7 @@ private fun WheelValueRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(44.dp)
+            .height(48.dp)
             .clickable(enabled = value != null && enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
@@ -874,4 +872,3 @@ private fun YearMonth.coerceIn(minimum: YearMonth, maximum: YearMonth): YearMont
     this > maximum -> maximum
     else -> this
 }
-

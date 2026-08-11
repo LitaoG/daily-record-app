@@ -187,11 +187,12 @@ internal fun DailyCountRecordScreen(
     LaunchedEffect(dataReady, record, storedDetails) {
         if (dataReady) {
             val latestCount = record?.count ?: 0
-            countDraft = countDraft.reconcile(latestCount)
+            val reconciledCountDraft = countDraft.reconcile(latestCount)
+            countDraft = reconciledCountDraft
             // Normalize the detail rows to the reconciled draft count: a dirty
             // count keeps its size (no remote truncation of in-progress edits)
             // and a clean count stays in sync with the server.
-            detailsDraft = detailsDraft.reconcile(storedDetails, countDraft.count)
+            detailsDraft = detailsDraft.reconcile(storedDetails, reconciledCountDraft.count)
         }
     }
 

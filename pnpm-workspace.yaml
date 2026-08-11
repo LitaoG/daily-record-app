@@ -1,4 +1,4 @@
-onlyBuiltDependencies:
-  - re2
-  - protobufjs
-  - '@firebase/util'
+allowBuilds:
+  '@firebase/util': true
+  protobufjs: true
+  re2: true

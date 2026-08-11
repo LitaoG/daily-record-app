@@ -66,7 +66,9 @@ internal class AccountSyncManager(
                             publishStatus(malformedRemoteRecordsFailure())
                         }
                         if (!snapshot.fromCache && networkAvailable.value) {
-                            if (coordinator.pendingCount(ownerId) > 0) {
+                            if (snapshot.rejectedRecordCount == 0 &&
+                                coordinator.pendingCount(ownerId) > 0
+                            ) {
                                 // A fresh server snapshot also proves Firebase is reachable. This
                                 // catches VPN/proxy recovery even when Android's network state did
                                 // not change and flushes edits that remained safely in Room.
@@ -160,6 +162,16 @@ internal class AccountSyncManager(
             )
         } finally {
             mutex.unlock()
+            // A request can arrive after the do/while condition has consumed the
+            // flag but before the lock is released. Re-checking only inside the
+            // loop would leave that request stranded forever because the caller
+            // that observed a busy mutex has already returned. Consume it after
+            // unlocking; a caller that acquires the mutex in the same window will
+            // simply perform its own attempt, while a queued request is drained
+            // here.
+            if (followUpSyncRequested.compareAndSet(true, false)) {
+                syncNow(queueIfBusy)
+            }
         }
     }
 

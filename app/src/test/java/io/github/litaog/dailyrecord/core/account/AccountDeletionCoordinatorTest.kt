@@ -99,9 +99,32 @@ class AccountDeletionCoordinatorTest {
         }
 
         assertSame(failure, result.exceptionOrNull())
-        assertEquals(listOf("reauth", "delete-cloud"), calls)
+        assertEquals(listOf("reauth", "delete-cloud", "mark-pending"), calls)
         assertFalse(auth.accountDeleted)
         assertFalse(local.localCopyStaged)
+        assertTrue(local.pendingForResync)
+    }
+
+    @Test
+    fun cloudDeletionCancellationRequeuesCloudResync() = runBlocking {
+        val calls = mutableListOf<String>()
+        val cancellation = kotlinx.coroutines.CancellationException("cancelled")
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls, deleteFailure = cancellation)
+        val local = FakeLocalStore(calls)
+
+        val result = runCatching {
+            coordinator(auth, remote, local).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        assertSame(cancellation, result.exceptionOrNull())
+        assertEquals(listOf("reauth", "delete-cloud", "mark-pending"), calls)
+        assertFalse(auth.accountDeleted)
+        assertTrue(local.pendingForResync)
     }
 
     @Test
@@ -159,6 +182,38 @@ class AccountDeletionCoordinatorTest {
             calls,
         )
         assertTrue(local.pendingForResync)
+    }
+
+    @Test
+    fun authDeletionCancellationAfterCloudDeleteRequeuesCloudResync() = runBlocking {
+        val calls = mutableListOf<String>()
+        val cancellation = kotlinx.coroutines.CancellationException("cancelled")
+        val auth = FakeAuthRepository(calls, deleteFailure = cancellation)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+
+        val result = runCatching {
+            coordinator(auth, remote, local).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        assertSame(cancellation, result.exceptionOrNull())
+        assertEquals(
+            listOf(
+                "reauth",
+                "delete-cloud",
+                "stage-local",
+                "delete-auth",
+                "discard-local",
+                "mark-pending",
+            ),
+            calls,
+        )
+        assertTrue(local.pendingForResync)
+        assertFalse(local.localCopyStaged)
     }
 
     @Test

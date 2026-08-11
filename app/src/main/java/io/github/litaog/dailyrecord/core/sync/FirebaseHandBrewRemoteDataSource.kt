@@ -210,6 +210,11 @@ internal fun parseRemoteHandBrewRecord(
     }
     val details = (values[FIELD_DETAILS] as? List<*>).orEmpty().map(::parseRemoteHandBrewDetail)
     require(details.size <= count) { "hand-brew details exceed brewCount" }
+    requireUniqueRemoteDetailIdentity(
+        ids = details.map { it.id },
+        occurrenceIndexes = details.map { it.occurrenceIndex },
+        label = "hand-brew",
+    )
     require(details.all { it.occurrenceIndex <= count.toInt() }) {
         "hand-brew detail occurrenceIndex exceeds brewCount"
     }
@@ -251,14 +256,14 @@ private fun parseRemoteHandBrewDetail(value: Any?): RemoteHandBrewDetail {
         IllegalArgumentException("hand-brew detail must be a map"),
     )
     val id = map[DETAIL_ID] as? String
-    val occurrenceIndex = (map[DETAIL_OCCURRENCE_INDEX] as? Number)?.toInt()
+    val occurrenceIndex = parseRemoteOccurrenceIndex(
+        map[DETAIL_OCCURRENCE_INDEX],
+        "hand-brew detail occurrenceIndex",
+    )
     val startTime = parseDetailTime(map[DETAIL_START_TIME])
     val endTime = parseDetailTime(map[DETAIL_END_TIME])
     val feeling = map[DETAIL_FEELING] as? String
     require(!id.isNullOrBlank()) { "hand-brew detail id is missing" }
-    require(occurrenceIndex != null && occurrenceIndex >= 1) {
-        "hand-brew detail occurrenceIndex is invalid"
-    }
     require(startTime == null || endTime == null || !endTime.isBefore(startTime)) {
         "hand-brew detail endTime is before startTime"
     }

@@ -53,16 +53,35 @@ internal class AccountDeletionCoordinator(
         require(password.isNotBlank()) { "password must not be blank" }
 
         authRepository.reauthenticate(password)
-        remoteDataSource.deleteAll(ownerId)
-
-        val stagedLocalCopy = localData == LocalDataAfterAccountDeletion.Keep
-        if (stagedLocalCopy) {
-            localStore.stageLocalRecoveryCopy(ownerId)
-        }
         try {
+            remoteDataSource.deleteAll(ownerId)
+        } catch (error: CancellationException) {
+            // A batch delete may have completed before cancellation was observed.
+            // Keep the owner pending so a still-live account can rebuild any
+            // partially deleted cloud data on the next successful sync.
+            localStore.markOwnerPendingForResyncSafely(ownerId, error)
+            throw error
+        } catch (error: Exception) {
+            // deleteAll can span several batches/modules, so an error does not
+            // prove that no cloud records were removed. Re-queue the owner before
+            // returning the original failure; retrying deletion remains safe.
+            localStore.markOwnerPendingForResyncSafely(ownerId, error)
+            throw error
+        }
+
+        var stagedLocalCopy = false
+        try {
+            if (localData == LocalDataAfterAccountDeletion.Keep) {
+                localStore.stageLocalRecoveryCopy(ownerId)
+                stagedLocalCopy = true
+            }
             authRepository.deleteCurrentAccount()
         } catch (error: CancellationException) {
             if (stagedLocalCopy) localStore.discardLocalRecoveryCopySafely(error)
+            // Cloud deletion has already completed, but cancellation means the auth
+            // deletion may not have reached Firebase. Preserve the recovery path for
+            // a still-existing account even though the coroutine is being cancelled.
+            localStore.markOwnerPendingForResyncSafely(ownerId, error)
             throw error
         } catch (error: Exception) {
             if (stagedLocalCopy) localStore.discardLocalRecoveryCopySafely(error)
@@ -95,6 +114,19 @@ private suspend fun AccountDeletionLocalStore.discardLocalRecoveryCopySafely(pri
     try {
         withContext(NonCancellable) {
             discardLocalRecoveryCopy()
+        }
+    } catch (cleanupError: Exception) {
+        primary.addSuppressed(cleanupError)
+    }
+}
+
+private suspend fun AccountDeletionLocalStore.markOwnerPendingForResyncSafely(
+    ownerId: String,
+    primary: Throwable,
+) {
+    try {
+        withContext(NonCancellable) {
+            markOwnerPendingForResync(ownerId)
         }
     } catch (cleanupError: Exception) {
         primary.addSuppressed(cleanupError)
