@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.core.data
 
 import io.github.litaog.dailyrecord.core.model.DailyCountRecord
+import io.github.litaog.dailyrecord.core.model.nextRecordTimestamp
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
@@ -31,10 +32,6 @@ internal fun requireValidRecordRange(startDate: LocalDate, endExclusive: LocalDa
         "Date range must be non-empty and use [start, endExclusive)."
     }
 }
-
-/** Keeps edits strictly monotonic when multiple writes share the same clock tick. */
-internal fun Instant.nextRecordTimestamp(): Instant =
-    if (this == Instant.MAX) this else plusMillis(1)
 
 /** Local persistence stays successful even when best-effort cloud scheduling fails. */
 internal fun notifyLocalChangeSafely(onLocalChange: () -> Unit) {

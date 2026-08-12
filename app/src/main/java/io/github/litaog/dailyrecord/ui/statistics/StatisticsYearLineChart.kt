@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.statistics.YearStatistics
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted

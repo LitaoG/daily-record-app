@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.core.data
 
-import java.time.Instant
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -19,14 +18,6 @@ class DailyCountRecordRepositorySupportTest {
         } catch (_: IllegalArgumentException) {
             // Expected.
         }
-    }
-
-    @Test
-    fun nextRecordTimestampAdvancesWithoutOverflow() {
-        val timestamp = Instant.parse("2026-01-01T00:00:00Z")
-
-        assertEquals(timestamp.plusMillis(1), timestamp.nextRecordTimestamp())
-        assertEquals(Instant.MAX, Instant.MAX.nextRecordTimestamp())
     }
 
     @Test

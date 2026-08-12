@@ -56,6 +56,9 @@ internal data class SyncResult(
     val rejectedRemoteRecords: Int = 0,
 )
 
+/** Identity prefix for the local recovery copy of an account's records. */
+internal fun localCopyId(id: String): String = "__local__-copy-$id"
+
 enum class SyncFailureKind {
     Network,
     Authentication,

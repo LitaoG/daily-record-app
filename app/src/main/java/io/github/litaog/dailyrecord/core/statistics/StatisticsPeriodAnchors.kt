@@ -1,16 +1,7 @@
-package io.github.litaog.dailyrecord.ui.navigation
+package io.github.litaog.dailyrecord.core.statistics
 
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
-import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.ZoneOffset
-
-internal fun LocalDate.toUtcDateMillis(): Long =
-    atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-
-internal fun utcDateMillisToLocalDate(value: Long): LocalDate =
-    Instant.ofEpochMilli(value).atZone(ZoneOffset.UTC).toLocalDate()
 
 internal fun shiftMonthAnchor(
     anchorDate: LocalDate,

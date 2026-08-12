@@ -7,11 +7,11 @@ import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.DailyCountRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.model.DailyCountRecord
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
-import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
+import io.github.litaog.dailyrecord.core.model.RecordFactory
 import io.github.litaog.dailyrecord.core.model.SexRecord
-import io.github.litaog.dailyrecord.core.model.SexRecordDetail
 import io.github.litaog.dailyrecord.ui.components.IntimacyIcon
 import io.github.litaog.dailyrecord.ui.components.PlaneIcon
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -20,7 +20,6 @@ import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -66,15 +65,6 @@ internal val SexModuleSpec = RecordModuleUiSpec(
 internal fun RecordModule.uiSpec(): RecordModuleUiSpec = when (this) {
     RecordModule.HandBrew -> HandBrewModuleSpec
     RecordModule.Sex -> SexModuleSpec
-}
-
-internal data class DailyCountEntry(
-    val localDate: LocalDate,
-    val count: Int,
-) {
-    init {
-        require(count >= 0) { "Daily count must be non-negative." }
-    }
 }
 
 internal data class RecordDetailEntry(
@@ -148,16 +138,13 @@ internal abstract class RepositoryRecordModuleController<T : DailyCountRecord>(
     ) {
         val existing = repository.observeRecord(localDate).firstValue()
         val now = Instant.now()
-        val safeUpdatedAt = existing?.updatedAt
-            ?.plusMillis(1)
-            ?.takeIf { it.isAfter(now) }
-            ?: now
+        val updatedAt = RecordFactory.resolveUpdatedAt(existing?.updatedAt, now)
         val record = createRecord(
             existing = existing,
             localDate = localDate,
             count = count,
             createdAt = existing?.createdAt ?: now,
-            updatedAt = safeUpdatedAt,
+            updatedAt = updatedAt,
         )
         if (details == null) {
             repository.saveRecord(record)
@@ -215,8 +202,8 @@ internal class HandBrewModuleController(
             record,
             details.map {
                 val existing = existingByIndex[it.occurrenceIndex]
-                HandBrewRecordDetail(
-                    id = existing?.id ?: UUID.randomUUID().toString(),
+                RecordFactory.createHandBrewDetail(
+                    existing = existing,
                     localDate = localDate,
                     occurrenceIndex = it.occurrenceIndex,
                     startTime = it.startTime,
@@ -235,10 +222,10 @@ internal class HandBrewModuleController(
         count: Int,
         createdAt: Instant,
         updatedAt: Instant,
-    ) = HandBrewRecord(
-        id = existing?.id ?: UUID.randomUUID().toString(),
+    ): HandBrewRecord = RecordFactory.createHandBrewRecord(
+        existing = existing,
         localDate = localDate,
-        brewCount = count,
+        count = count,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
@@ -273,8 +260,8 @@ internal class SexModuleController(
             record,
             details.map {
                 val existing = existingByIndex[it.occurrenceIndex]
-                SexRecordDetail(
-                    id = existing?.id ?: UUID.randomUUID().toString(),
+                RecordFactory.createSexDetail(
+                    existing = existing,
                     localDate = localDate,
                     occurrenceIndex = it.occurrenceIndex,
                     startTime = it.startTime,
@@ -293,10 +280,10 @@ internal class SexModuleController(
         count: Int,
         createdAt: Instant,
         updatedAt: Instant,
-    ) = SexRecord(
-        id = existing?.id ?: UUID.randomUUID().toString(),
+    ): SexRecord = RecordFactory.createSexRecord(
+        existing = existing,
         localDate = localDate,
-        sexCount = count,
+        count = count,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )

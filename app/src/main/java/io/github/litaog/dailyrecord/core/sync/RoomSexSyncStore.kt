@@ -200,8 +200,6 @@ private fun RemoteSexDetail.asEntity(
     updatedAt = java.time.Instant.EPOCH,
 )
 
-private fun localCopyId(id: String): String = "__local__-copy-$id"
-
 private fun SexRecordEntity.isSamePendingVersion(other: SexRecordEntity): Boolean =
     syncState == SYNC_PENDING &&
         id == other.id &&
@@ -209,3 +207,4 @@ private fun SexRecordEntity.isSamePendingVersion(other: SexRecordEntity): Boolea
         sexCount == other.sexCount &&
         updatedAt == other.updatedAt &&
         isDeleted == other.isDeleted
+

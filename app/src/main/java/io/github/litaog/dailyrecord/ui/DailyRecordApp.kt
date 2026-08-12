@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.ui
+﻿package io.github.litaog.dailyrecord.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -28,6 +28,10 @@ import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
+import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
+import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
+import io.github.litaog.dailyrecord.core.statistics.shiftMonthAnchor
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.AccountDialog
 import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
@@ -37,18 +41,18 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordBottomBar
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationSelection
-import io.github.litaog.dailyrecord.ui.navigation.shiftMonthAnchor
 import io.github.litaog.dailyrecord.ui.calendar.DailyCountCalendarScreen
 import io.github.litaog.dailyrecord.ui.record.DailyCountRecordScreen
 import io.github.litaog.dailyrecord.ui.statistics.DailyCountStatisticsScreen
 import io.github.litaog.dailyrecord.ui.settings.SettingsScreen
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import java.time.LocalDate
 import java.time.YearMonth
 
 internal const val VPN_SYNC_FAILURE_MESSAGE =
     AppCopy.vpnSyncFailure
+
+private val EarliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
 
 internal enum class TopDestination {
     Calendar,
@@ -108,7 +112,7 @@ fun DailyRecordApp(
             syncStatus.networkRelated
         ) {
             snackbarHostState.showSnackbar(
-                message = VPN_SYNC_FAILURE_MESSAGE,
+                message = AppCopy.vpnSyncFailure,
                 duration = SnackbarDuration.Short,
             )
         }
@@ -145,6 +149,7 @@ fun DailyRecordApp(
     val recordsFlow = remember(selectedController, effectiveToday) {
         selectedController.observeRecords(EARLIEST_SUPPORTED_DATE, effectiveToday.plusDays(1))
     }
+    val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
     val allRecordsState by recordsFlow.collectAsState<List<DailyCountEntry>, List<DailyCountEntry>?>(
         initial = null,
     )
@@ -152,7 +157,7 @@ fun DailyRecordApp(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(dailyRecordBackdropBrush(moduleSpec.colors))
+                .background(backdropBrush)
                 .testTag("records_loading")
                 .semantics { contentDescription = AppCopy.readingLocalRecords },
             contentAlignment = Alignment.Center,
@@ -168,12 +173,15 @@ fun DailyRecordApp(
         // saveable draft slots: a hand-brew draft must never be restored as a
         // sex draft for the same date (and vice versa).
         key(selectedModule) {
+            val monthRecords = remember(allRecords, selectedDate) {
+                allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) }
+            }
             DailyCountRecordScreen(
                 date = selectedDate,
                 today = effectiveToday,
                 controller = selectedController,
                 moduleSpec = moduleSpec,
-                monthRecords = allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) },
+                monthRecords = monthRecords,
                 onBack = { selectedDateText = null },
                 onSaved = { selectedDateText = null },
             )
@@ -184,7 +192,7 @@ fun DailyRecordApp(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(moduleSpec.colors)),
+            .background(backdropBrush),
     ) {
         if (showSettings) {
             SettingsScreen(
@@ -239,11 +247,11 @@ fun DailyRecordApp(
                         moduleSpec = moduleSpec,
                         selectedModule = selectedModule,
                         availableModules = availableModuleSpecs,
-                        earliestMonth = EARLIEST_SUPPORTED_MONTH,
+                        earliestMonth = EarliestSupportedMonth,
                         modifier = Modifier.padding(contentPadding),
                         onPreviousMonth = {
                             val previous = displayedMonth.minusMonths(1)
-                            if (!previous.isBefore(EARLIEST_SUPPORTED_MONTH)) {
+                            if (!previous.isBefore(EarliestSupportedMonth)) {
                                 browseDateText = shiftMonthAnchor(
                                     browseDate,
                                     months = -1,

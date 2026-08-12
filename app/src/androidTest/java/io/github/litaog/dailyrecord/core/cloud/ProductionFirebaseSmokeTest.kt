@@ -1,5 +1,7 @@
 package io.github.litaog.dailyrecord.core.cloud
 
+import io.github.litaog.dailyrecord.core.common.awaitResult
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4

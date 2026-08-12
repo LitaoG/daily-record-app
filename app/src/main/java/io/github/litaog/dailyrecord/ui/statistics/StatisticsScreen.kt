@@ -35,9 +35,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.ui.DailyCountEntry
+import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
+import io.github.litaog.dailyrecord.core.statistics.StatisticsUiModel
+import io.github.litaog.dailyrecord.core.statistics.buildDailyCountStatistics
+import io.github.litaog.dailyrecord.core.statistics.nextPeriodAnchor
+import io.github.litaog.dailyrecord.core.statistics.previousPeriodAnchor
 import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
@@ -47,9 +52,6 @@ import io.github.litaog.dailyrecord.ui.components.PeriodTabs
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.components.StatisticRow
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
-import io.github.litaog.dailyrecord.ui.navigation.nextPeriodAnchor
-import io.github.litaog.dailyrecord.ui.navigation.previousPeriodAnchor
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -61,7 +63,7 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import java.time.LocalDate
 
 @Composable
-fun StatisticsScreen(
+internal fun StatisticsScreen(
     today: LocalDate,
     anchorDate: LocalDate,
     earliestDate: LocalDate,

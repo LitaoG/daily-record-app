@@ -1,8 +1,6 @@
-package io.github.litaog.dailyrecord.ui.statistics
+package io.github.litaog.dailyrecord.core.statistics
 
-import io.github.litaog.dailyrecord.core.model.HandBrewRecord
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
-import java.time.Instant
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,7 +19,7 @@ class StatisticsModelsTest {
 
     @Test
     fun weekDistinguishesExplicitZeroAndFutureDays() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Week,
             anchorDate = today,
             today = today,
@@ -47,7 +45,7 @@ class StatisticsModelsTest {
 
     @Test
     fun pastUnfilledDayIsNotReportedAsExplicitZero() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Week,
             anchorDate = today,
             today = today,
@@ -73,7 +71,7 @@ class StatisticsModelsTest {
             record(LocalDate.of(2026, 7, 9), 18),
         )
 
-        val model = buildStatistics(StatisticsPeriod.Year, today, today, records)
+        val model = buildDailyCountStatistics(StatisticsPeriod.Year, today, today, records)
 
         assertEquals(128L, model.summary.totalCount)
         assertEquals(7, model.summary.recordedDays)
@@ -83,7 +81,7 @@ class StatisticsModelsTest {
 
     @Test
     fun allHistoryGroupsByYearAndIgnoresFutureRecords() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             StatisticsPeriod.All,
             today,
             today,
@@ -103,7 +101,7 @@ class StatisticsModelsTest {
     @Test
     fun earliestWeekNeverShowsPre1970Dates() {
         val earliest = LocalDate.of(1970, 1, 1)
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Week,
             anchorDate = earliest,
             today = LocalDate.of(1970, 1, 4),
@@ -129,7 +127,7 @@ class StatisticsModelsTest {
     @Test
     fun earliestWeekStillMarksFutureDaysInsideSupportedRange() {
         val earliest = LocalDate.of(1970, 1, 1)
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Week,
             anchorDate = earliest,
             today = earliest,
@@ -143,7 +141,7 @@ class StatisticsModelsTest {
 
     @Test
     fun crossYearWeekEndingInJanuaryKeepsMondayStartAndSummary() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Week,
             anchorDate = LocalDate.of(2026, 1, 2),
             today = LocalDate.of(2026, 1, 4),
@@ -166,7 +164,7 @@ class StatisticsModelsTest {
     @Test
     fun earliestWeekTitleUsesClippedStartNotMondayOfPre1970Week() {
         val earliest = LocalDate.of(1970, 1, 1)
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Week,
             anchorDate = earliest,
             today = earliest,
@@ -179,7 +177,7 @@ class StatisticsModelsTest {
 
     @Test
     fun historicalMonthUsesAnchorAndDailyDetailsReconcile() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2026, 5, 31),
             today = today,
@@ -214,13 +212,13 @@ class StatisticsModelsTest {
             record(LocalDate.of(2026, 6, 8), 7),
         )
 
-        val may = buildStatistics(
+        val may = buildDailyCountStatistics(
             StatisticsPeriod.Month,
             LocalDate.of(2026, 5, 17),
             today,
             records,
         )
-        val june = buildStatistics(
+        val june = buildDailyCountStatistics(
             StatisticsPeriod.Month,
             LocalDate.of(2026, 6, 17),
             today,
@@ -236,7 +234,7 @@ class StatisticsModelsTest {
 
     @Test
     fun historicalWeekUsesWeekContainingAnchorWithoutCurrentMonthLeakage() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Week,
             anchorDate = LocalDate.of(2026, 5, 6),
             today = today,
@@ -258,7 +256,7 @@ class StatisticsModelsTest {
 
     @Test
     fun pastYearContainsNoFuturePlaceholders() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Year,
             anchorDate = LocalDate.of(2025, 7, 17),
             today = today,
@@ -273,7 +271,7 @@ class StatisticsModelsTest {
 
     @Test
     fun totalsUseLongAndDoNotOverflowAcrossHighCountDays() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2026, 5, 17),
             today = today,
@@ -289,7 +287,7 @@ class StatisticsModelsTest {
 
     @Test
     fun monthStatisticsSeparatesSavedZeroUnfilledAndFutureDays() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2026, 8, 15),
             today = LocalDate.of(2026, 8, 15),
@@ -321,7 +319,7 @@ class StatisticsModelsTest {
 
     @Test
     fun leapFebruaryContainsEveryRealDayWithoutWeekBuckets() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2028, 2, 10),
             today = LocalDate.of(2028, 2, 29),
@@ -340,7 +338,7 @@ class StatisticsModelsTest {
 
     @Test
     fun monthCompositionAndExtremesExcludeZeroFromMinimum() {
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Month,
             anchorDate = LocalDate.of(2026, 7, 15),
             today = LocalDate.of(2026, 8, 2),
@@ -373,7 +371,7 @@ class StatisticsModelsTest {
     @Test
     fun yearAnalysisExcludesIncompleteMonthFromExtremaButKeepsItsTotals() {
         val today = LocalDate.of(2026, 7, 17)
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Year,
             anchorDate = today,
             today = today,
@@ -402,7 +400,7 @@ class StatisticsModelsTest {
     @Test
     fun quarterSlicesAssignMonthsToTheCorrectCalendarQuarter() {
         val today = LocalDate.of(2026, 12, 31)
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Year,
             anchorDate = LocalDate.of(2026, 12, 31),
             today = today,
@@ -435,7 +433,7 @@ class StatisticsModelsTest {
     @Test
     fun completedDecemberParticipatesInExtremaAtTheYearBoundary() {
         val today = LocalDate.of(2027, 1, 1)
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Year,
             anchorDate = LocalDate.of(2026, 12, 31),
             today = today,
@@ -454,7 +452,7 @@ class StatisticsModelsTest {
     @Test
     fun currentDecemberIsKeptOutOfExtremaUntilTheYearHasEnded() {
         val today = LocalDate.of(2026, 12, 31)
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Year,
             anchorDate = today,
             today = today,
@@ -475,7 +473,7 @@ class StatisticsModelsTest {
     @Test
     fun decemberRemainsInTiedExtremaListsInsteadOfBeingDroppedAtTheEnd() {
         val today = LocalDate.of(2027, 1, 1)
-        val model = buildStatistics(
+        val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Year,
             anchorDate = LocalDate.of(2026, 12, 20),
             today = today,
@@ -491,11 +489,8 @@ class StatisticsModelsTest {
         assertEquals(listOf(6), year.minimumMonths.map { it.month.monthValue })
     }
 
-    private fun record(date: LocalDate, count: Int) = HandBrewRecord(
-        id = date.toString(),
+    private fun record(date: LocalDate, count: Int) = DailyCountEntry(
         localDate = date,
-        brewCount = count,
-        createdAt = Instant.EPOCH,
-        updatedAt = Instant.EPOCH,
+        count = count,
     )
 }

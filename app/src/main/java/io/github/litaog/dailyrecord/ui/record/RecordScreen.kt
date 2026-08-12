@@ -66,10 +66,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.formatMinutesOfDay
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
+import io.github.litaog.dailyrecord.core.common.toMinutesOfDay
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
-import io.github.litaog.dailyrecord.ui.DailyCountEntry
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
+import io.github.litaog.dailyrecord.core.model.visibleCharacterCount
 import io.github.litaog.dailyrecord.ui.HandBrewModuleController
 import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
@@ -127,7 +130,7 @@ private data class TimePickerRequest(
 )
 
 @Composable
-fun RecordScreen(
+internal fun RecordScreen(
     date: LocalDate,
     today: LocalDate,
     repository: HandBrewRecordRepository,
@@ -242,10 +245,12 @@ internal fun DailyCountRecordScreen(
 
     BackHandler(onBack = requestBack)
 
+    val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(moduleSpec.colors))
+            .background(backdropBrush)
             .testTag("record_screen"),
         containerColor = Color.Transparent,
         snackbarHost = {
@@ -383,7 +388,7 @@ internal fun DailyCountRecordScreen(
                             val minutes = when (target) {
                                 DetailTimeTarget.Start -> current?.startMinutes
                                 DetailTimeTarget.End -> current?.endMinutes
-                            } ?: LocalTime.now().let { it.hour * 60 + it.minute }
+                            } ?: LocalTime.now().toMinutesOfDay()
                             timePickerRequest = TimePickerRequest(index, target, minutes)
                         },
                         onFeelingToggle = { index ->
@@ -784,7 +789,7 @@ private fun DetailTimeField(
                     contentDescription = AppCopy.Record.detailTimeDescription(
                         occurrence = occurrence,
                         label = label,
-                        value = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
+                        value = minutes?.let(::formatMinutesOfDay) ?: AppCopy.Record.detailTimeUnset,
                     )
                 }
                 .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
@@ -792,7 +797,7 @@ private fun DetailTimeField(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
+                text = minutes?.let(::formatMinutesOfDay) ?: AppCopy.Record.detailTimeUnset,
                 color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
                 style = MaterialTheme.typography.labelLarge,
             )
@@ -935,7 +940,7 @@ private fun FeelingEditor(
             horizontalArrangement = Arrangement.End,
         ) {
             Text(
-                text = AppCopy.Record.detailFeelingCounter(value.codePointCount(0, value.length)),
+                text = AppCopy.Record.detailFeelingCounter(value.visibleCharacterCount()),
                 color = DailyRecordTextMuted,
                 style = MaterialTheme.typography.labelSmall,
             )
@@ -1017,7 +1022,7 @@ private fun TimePickerHost(
         } else {
             val dialog = TimePickerDialog(
                 context,
-                { _, hour, minute -> onSelected(request, hour * 60 + minute) },
+                { _, hour, minute -> onSelected(request, LocalTime.of(hour, minute).toMinutesOfDay()) },
                 request.initialMinutes / 60,
                 request.initialMinutes % 60,
                 true,
@@ -1199,8 +1204,5 @@ private fun RecordTextAction(
         )
     }
 }
-
-private fun formatMinutes(minutes: Int): String =
-    "%02d:%02d".format(minutes / 60, minutes % 60)
 
 private fun weekdayName(date: LocalDate): String = AppCopy.weekdayName(date.dayOfWeek.value)

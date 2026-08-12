@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -39,9 +40,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.ui.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
@@ -63,7 +64,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 @Composable
-fun CalendarScreen(
+internal fun CalendarScreen(
     month: YearMonth,
     focusedDate: LocalDate,
     today: LocalDate,
@@ -111,11 +112,13 @@ internal fun DailyCountCalendarScreen(
     onOpenDatePicker: () -> Unit,
     onDateSelected: (LocalDate) -> Unit,
 ) {
-    val monthRecords = records.filter { YearMonth.from(it.localDate) == month }
-    val recordsByDate = monthRecords.associateBy { it.localDate }
-    val totalCount = monthRecords.sumOf { it.count.toLong() }
-    val recordedDays = monthRecords.count { it.count > 0 }
-    val gridDates = calendarGridDates(month)
+    val monthRecords = remember(records, month) {
+        records.filter { YearMonth.from(it.localDate) == month }
+    }
+    val recordsByDate = remember(monthRecords) { monthRecords.associateBy { it.localDate } }
+    val totalCount = remember(monthRecords) { monthRecords.sumOf { it.count.toLong() } }
+    val recordedDays = remember(monthRecords) { monthRecords.count { it.count > 0 } }
+    val gridDates = remember(month) { calendarGridDates(month) }
     val canGoPrevious = month > earliestMonth
     val canGoNext = month < YearMonth.from(today)
     val fontScale = LocalDensity.current.fontScale

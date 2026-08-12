@@ -5,36 +5,17 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
-import io.github.litaog.dailyrecord.core.cloud.awaitResult
+import io.github.litaog.dailyrecord.core.common.awaitResult
 import io.github.litaog.dailyrecord.core.database.SexRecordEntity
 import io.github.litaog.dailyrecord.core.database.SexRecordDetailEntity
-import io.github.litaog.dailyrecord.core.model.MAX_RECORD_DETAIL_FEELING_CHARACTERS
-import io.github.litaog.dailyrecord.core.model.visibleCharacterCount
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeParseException
 import java.util.UUID
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-private const val FIELD_ID = "id"
-private const val FIELD_LOCAL_DATE = "localDate"
 private const val FIELD_SEX_COUNT = "sexCount"
-private const val FIELD_CREATED_AT = "createdAtMillis"
-private const val FIELD_CLIENT_UPDATED_AT = "clientUpdatedAtMillis"
-private const val FIELD_DELETED = "deleted"
-private const val FIELD_REVISION = "revision"
-private const val FIELD_SCHEMA_VERSION = "schemaVersion"
-private const val FIELD_SERVER_UPDATED_AT = "serverUpdatedAt"
-private const val FIELD_DETAILS = "details"
-private const val DETAIL_ID = "id"
-private const val DETAIL_OCCURRENCE_INDEX = "occurrenceIndex"
-private const val DETAIL_START_TIME = "startTime"
-private const val DETAIL_END_TIME = "endTime"
-private const val DETAIL_FEELING = "feeling"
-private const val DELETE_BATCH_SIZE = 400L
 
 internal class FirebaseSexRemoteDataSource(
     private val firestore: FirebaseFirestore,
@@ -99,7 +80,9 @@ internal class FirebaseSexRemoteDataSource(
                     FIELD_DELETED to local.isDeleted,
                     FIELD_REVISION to revision,
                     FIELD_SCHEMA_VERSION to 1L,
-                    FIELD_DETAILS to details.map(::detailToMap),
+                    FIELD_DETAILS to details.map {
+                        detailToMap(it.id, it.occurrenceIndex, it.startTime, it.endTime, it.feeling)
+                    },
                     FIELD_SERVER_UPDATED_AT to FieldValue.serverTimestamp(),
                 ),
             )
@@ -111,7 +94,9 @@ internal class FirebaseSexRemoteDataSource(
                 clientUpdatedAt = committedUpdatedAt,
                 deleted = local.isDeleted,
                 revision = revision,
-                details = details.map(::detailToRemote),
+                details = details.map {
+                    RemoteSexDetail(it.id, it.occurrenceIndex, it.startTime, it.endTime, it.feeling)
+                },
             )
         }.awaitResult()
     }
@@ -130,7 +115,7 @@ internal class FirebaseSexRemoteDataSource(
     }
 
     private fun records(ownerId: String) = firestore
-        .collection("users")
+        .collection(USERS_COLLECTION)
         .document(ownerId)
         .collection("sexRecords")
 
@@ -188,7 +173,11 @@ internal fun parseRemoteSexRecord(
     require(createdAtMillis in 0..MAX_SUPPORTED_EPOCH_MILLIS)
     val updatedAtMillis = requireNotNull(values[FIELD_CLIENT_UPDATED_AT] as? Long)
     require(updatedAtMillis in createdAtMillis..MAX_SUPPORTED_EPOCH_MILLIS)
-    val details = (values[FIELD_DETAILS] as? List<*>).orEmpty().map(::parseRemoteSexDetail)
+    val details = (values[FIELD_DETAILS] as? List<*>).orEmpty().map {
+        parseRemoteDetail(it, "sex").let { parsed ->
+            RemoteSexDetail(parsed.id, parsed.occurrenceIndex, parsed.startTime, parsed.endTime, parsed.feeling)
+        }
+    }
     require(details.size <= count) { "sex details exceed sexCount" }
     requireUniqueRemoteDetailIdentity(
         ids = details.map { it.id },
@@ -214,52 +203,3 @@ internal fun parseRemoteSexRecord(
     throw MalformedRemoteRecordException(error)
 }
 
-private fun detailToMap(detail: SexRecordDetailEntity): Map<String, Any?> = mapOf(
-    DETAIL_ID to detail.id,
-    DETAIL_OCCURRENCE_INDEX to detail.occurrenceIndex.toLong(),
-    DETAIL_START_TIME to detail.startTime?.toString(),
-    DETAIL_END_TIME to detail.endTime?.toString(),
-    DETAIL_FEELING to detail.feeling,
-)
-
-private fun detailToRemote(detail: SexRecordDetailEntity): RemoteSexDetail = RemoteSexDetail(
-    id = detail.id,
-    occurrenceIndex = detail.occurrenceIndex,
-    startTime = detail.startTime,
-    endTime = detail.endTime,
-    feeling = detail.feeling,
-)
-
-private fun parseRemoteSexDetail(value: Any?): RemoteSexDetail {
-    val map = value as? Map<*, *> ?: throw MalformedRemoteRecordException(
-        IllegalArgumentException("sex detail must be a map"),
-    )
-    val id = map[DETAIL_ID] as? String
-    val occurrenceIndex = parseRemoteOccurrenceIndex(
-        map[DETAIL_OCCURRENCE_INDEX],
-        "sex detail occurrenceIndex",
-    )
-    val startTime = parseDetailTime(map[DETAIL_START_TIME])
-    val endTime = parseDetailTime(map[DETAIL_END_TIME])
-    val feeling = map[DETAIL_FEELING] as? String
-    require(!id.isNullOrBlank()) { "sex detail id is missing" }
-    require(startTime == null || endTime == null || !endTime.isBefore(startTime)) {
-        "sex detail endTime is before startTime"
-    }
-    require(feeling != null && feeling.visibleCharacterCount() <= MAX_RECORD_DETAIL_FEELING_CHARACTERS) {
-        "sex detail feeling is invalid"
-    }
-    return RemoteSexDetail(id, occurrenceIndex, startTime, endTime, feeling)
-}
-
-private fun parseDetailTime(value: Any?): LocalTime? {
-    if (value == null) return null
-    val text = value as? String ?: throw IllegalArgumentException("detail time must be a string")
-    return try {
-        LocalTime.parse(text).also {
-            require(it.second == 0 && it.nano == 0) { "detail time must have minute precision" }
-        }
-    } catch (error: DateTimeParseException) {
-        throw IllegalArgumentException("detail time is invalid", error)
-    }
-}

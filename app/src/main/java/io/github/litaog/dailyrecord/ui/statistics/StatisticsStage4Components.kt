@@ -38,6 +38,8 @@ import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.statistics.YearMonthStatistics
+import io.github.litaog.dailyrecord.core.statistics.YearStatistics
 
 @Composable
 internal fun StatisticsSummaryCard(

@@ -7,6 +7,7 @@ import io.github.litaog.dailyrecord.core.database.asEntity
 import io.github.litaog.dailyrecord.core.database.asExternalModel
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.core.model.SexRecordDetail
+import io.github.litaog.dailyrecord.core.model.nextRecordTimestamp
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

@@ -1,7 +1,6 @@
 package io.github.litaog.dailyrecord.core.account
 
 import io.github.litaog.dailyrecord.core.auth.AuthRepository
-import io.github.litaog.dailyrecord.core.sync.AccountRemoteDataStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext

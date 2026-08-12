@@ -5,10 +5,13 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.github.litaog.dailyrecord.core.di.FIREBASE_EMULATOR_APP_NAME
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
+import io.github.litaog.dailyrecord.core.common.awaitResult
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
 import io.github.litaog.dailyrecord.core.database.SexRecordEntity
-import io.github.litaog.dailyrecord.core.sync.CombinedAccountRemoteDataStore
+import io.github.litaog.dailyrecord.core.account.CombinedAccountRemoteDataStore
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant

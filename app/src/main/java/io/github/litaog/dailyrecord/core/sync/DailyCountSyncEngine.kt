@@ -1,5 +1,7 @@
 package io.github.litaog.dailyrecord.core.sync
 
+import io.github.litaog.dailyrecord.core.account.AccountRemoteDataStore
+
 import kotlinx.coroutines.flow.Flow
 
 /**

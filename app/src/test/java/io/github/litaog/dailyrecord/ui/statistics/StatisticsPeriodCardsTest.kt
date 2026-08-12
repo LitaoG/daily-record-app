@@ -1,5 +1,6 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
+import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens

@@ -29,9 +29,9 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
+import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.PeriodTabs
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
