@@ -136,7 +136,7 @@ internal abstract class RepositoryRecordModuleController<T : DailyCountRecord>(
         count: Int,
         details: List<RecordDetailEntry>?,
     ) {
-        val existing = repository.observeRecord(localDate).firstValue()
+        val existing = repository.getRecord(localDate)
         val now = Instant.now()
         val updatedAt = RecordFactory.resolveUpdatedAt(existing?.updatedAt, now)
         val record = createRecord(
@@ -293,5 +293,3 @@ internal fun DailyCountRecord.asDailyCountEntry() = DailyCountEntry(
     localDate = localDate,
     count = count,
 )
-
-private suspend fun <T> Flow<T>.firstValue(): T = first()

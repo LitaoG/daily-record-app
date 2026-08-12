@@ -22,15 +22,15 @@ class DailyRecordSyncSchedulerTest {
 
     @Test
     fun deletionBlockStartsBlockedAndEndsUnblocked() {
-        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked)
+        assertFalse(DeletionBarrier.isDeletionBlocked)
         try {
-            DailyRecordSyncScheduler.beginDeletionBlock()
-            assertTrue(DailyRecordSyncScheduler.isDeletionBlocked)
-            DailyRecordSyncScheduler.beginDeletionBlock()
-            assertTrue(DailyRecordSyncScheduler.isDeletionBlocked)
+            DeletionBarrier.beginDeletionBlock()
+            assertTrue(DeletionBarrier.isDeletionBlocked)
+            DeletionBarrier.beginDeletionBlock()
+            assertTrue(DeletionBarrier.isDeletionBlocked)
         } finally {
-            DailyRecordSyncScheduler.endDeletionBlock()
+            DeletionBarrier.endDeletionBlock()
         }
-        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked)
+        assertFalse(DeletionBarrier.isDeletionBlocked)
     }
 }

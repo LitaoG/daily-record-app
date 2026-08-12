@@ -200,7 +200,8 @@ private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, Remo
 
     override suspend fun fetch(ownerId: String): RemoteSnapshot = fetchSnapshot()
 
-    override fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteHandBrewRecord> = snapshot.records
+    override fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteHandBrewRecord> =
+        snapshot.records.filterIsInstance<RemoteHandBrewRecord>()
 
     override suspend fun commit(
         ownerId: String,

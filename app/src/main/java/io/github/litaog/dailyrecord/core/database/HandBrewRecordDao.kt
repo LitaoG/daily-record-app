@@ -8,18 +8,18 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-internal interface HandBrewRecordDao {
+internal interface HandBrewRecordDao : DailyCountRecordDao<HandBrewRecordEntity> {
     @Query(
         "SELECT * FROM hand_brew_records " +
             "WHERE owner_id = :ownerId AND local_date = :localDate AND is_deleted = 0 LIMIT 1",
     )
-    fun observeByDate(ownerId: String, localDate: LocalDate): Flow<HandBrewRecordEntity?>
+    override fun observeByDate(ownerId: String, localDate: LocalDate): Flow<HandBrewRecordEntity?>
 
     @Query(
         "SELECT * FROM hand_brew_records " +
             "WHERE owner_id = :ownerId AND local_date = :localDate LIMIT 1",
     )
-    suspend fun getByDate(ownerId: String, localDate: LocalDate): HandBrewRecordEntity?
+    override suspend fun getByDate(ownerId: String, localDate: LocalDate): HandBrewRecordEntity?
 
     @Query(
         """
@@ -30,14 +30,14 @@ internal interface HandBrewRecordDao {
         ORDER BY local_date ASC
         """,
     )
-    fun observeForRange(
+    override fun observeForRange(
         ownerId: String,
         startDate: LocalDate,
         endExclusive: LocalDate,
     ): Flow<List<HandBrewRecordEntity>>
 
     @Upsert
-    suspend fun upsert(record: HandBrewRecordEntity)
+    override suspend fun upsert(record: HandBrewRecordEntity)
 
     @Query(
         """
@@ -51,7 +51,7 @@ internal interface HandBrewRecordDao {
           AND updated_at = :expectedUpdatedAt
         """,
     )
-    suspend fun markDeleted(
+    override suspend fun markDeleted(
         ownerId: String,
         id: String,
         expectedUpdatedAt: Instant,
@@ -62,10 +62,10 @@ internal interface HandBrewRecordDao {
         "SELECT * FROM hand_brew_records " +
             "WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING' ORDER BY updated_at ASC",
     )
-    suspend fun getPending(ownerId: String): List<HandBrewRecordEntity>
+    override suspend fun getPending(ownerId: String): List<HandBrewRecordEntity>
 
     @Query("SELECT * FROM hand_brew_records WHERE owner_id = :ownerId ORDER BY local_date ASC")
-    suspend fun getAllForSync(ownerId: String): List<HandBrewRecordEntity>
+    override suspend fun getAllForSync(ownerId: String): List<HandBrewRecordEntity>
 
     @Query(
         """
@@ -78,7 +78,7 @@ internal interface HandBrewRecordDao {
           AND remote_revision = 0
         """,
     )
-    suspend fun setRemoteRevisionForUnbasedPending(
+    override suspend fun setRemoteRevisionForUnbasedPending(
         ownerId: String,
         localDate: LocalDate,
         remoteId: String,
@@ -94,20 +94,20 @@ internal interface HandBrewRecordDao {
           AND sync_state = 'PENDING'
         """,
     )
-    suspend fun setRemoteRevisionForPending(
+    override suspend fun setRemoteRevisionForPending(
         ownerId: String,
         localDate: LocalDate,
         remoteRevision: Long,
     ): Int
 
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING'")
-    fun observePendingCount(ownerId: String): Flow<Int>
+    override fun observePendingCount(ownerId: String): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING'")
-    suspend fun countPending(ownerId: String): Int
+    override suspend fun countPending(ownerId: String): Int
 
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId")
-    suspend fun countForOwner(ownerId: String): Int
+    override suspend fun countForOwner(ownerId: String): Int
 
     @Query(
         """
@@ -116,10 +116,10 @@ internal interface HandBrewRecordDao {
         WHERE owner_id = :ownerId
         """,
     )
-    suspend fun markOwnerPendingForResync(ownerId: String): Int
+    override suspend fun markOwnerPendingForResync(ownerId: String): Int
     @Query("DELETE FROM hand_brew_records WHERE owner_id = :ownerId")
-    suspend fun deleteOwnerCache(ownerId: String): Int
+    override suspend fun deleteOwnerCache(ownerId: String): Int
 
     @Query("DELETE FROM hand_brew_records WHERE owner_id = :ownerId AND local_date = :localDate")
-    suspend fun deleteByOwnerDate(ownerId: String, localDate: LocalDate): Int
+    override suspend fun deleteByOwnerDate(ownerId: String, localDate: LocalDate): Int
 }

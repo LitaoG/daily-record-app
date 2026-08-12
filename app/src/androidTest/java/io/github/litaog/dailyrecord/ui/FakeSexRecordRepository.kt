@@ -18,6 +18,9 @@ internal class FakeSexRecordRepository(
     override fun observeRecord(localDate: LocalDate): Flow<SexRecord?> =
         records.map { values -> values.firstOrNull { it.localDate == localDate } }
 
+    override suspend fun getRecord(localDate: LocalDate): SexRecord? =
+        records.value.firstOrNull { it.localDate == localDate }
+
     override fun observeRecords(
         startDate: LocalDate,
         endExclusive: LocalDate,

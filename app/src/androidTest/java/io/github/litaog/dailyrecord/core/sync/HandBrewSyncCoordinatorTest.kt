@@ -78,7 +78,7 @@ class HandBrewSyncCoordinatorTest {
         // edit uploads instead of being silently dropped.
         val result = accountCoordinator.syncOnce(ownerId)
         assertEquals(1, result.uploaded)
-        assertEquals(5, remote.fetch(ownerId).records.single().brewCount)
+        assertEquals(5, remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
     }
 
     @Test
@@ -114,7 +114,7 @@ class HandBrewSyncCoordinatorTest {
         // The server revision moved past the adopted baseline, so the server
         // value wins; the device clock plays no part in the outcome.
         assertEquals(9, firstRepository.observeRecord(date).first()?.brewCount)
-        assertEquals(9, remote.fetch(ownerId).records.single().brewCount)
+        assertEquals(9, remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
     }
 
     @Test
@@ -214,7 +214,7 @@ class HandBrewSyncCoordinatorTest {
 
         assertEquals(1, result.uploaded)
         assertEquals(0, result.pending)
-        val cloud = remote.fetch(ownerId).records.single()
+        val cloud = remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single()
         assertEquals(2, cloud.brewCount)
         // The recreated document restarts its revision count at 1 (ADR-017).
         assertEquals(1L, cloud.revision)
@@ -261,7 +261,7 @@ class HandBrewSyncCoordinatorTest {
 
         coordinator.syncOnce(ownerId)
 
-        val cloud = remote.fetch(ownerId).records.single()
+        val cloud = remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single()
         assertTrue(cloud.deleted)
         assertNull(repository.observeRecord(date).first())
         assertEquals(0, RoomHandBrewSyncStore(database).pendingCount(ownerId))
@@ -286,7 +286,7 @@ class HandBrewSyncCoordinatorTest {
         secondRepository.saveRecord(record(7, firstInstant.plusSeconds(60)))
         secondCoordinator.syncOnce(ownerId)
 
-        val recreated = remote.fetch(ownerId).records.single()
+        val recreated = remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single()
         assertNotEquals(originalId, recreated.id)
         assertEquals(1L, recreated.revision)
 
@@ -320,14 +320,14 @@ class HandBrewSyncCoordinatorTest {
         secondCoordinator.syncOnce(ownerId)
         secondRepository.saveRecord(record(10, firstInstant.plusSeconds(61)))
         secondCoordinator.syncOnce(ownerId)
-        assertEquals(2L, remote.fetch(ownerId).records.single().revision)
+        assertEquals(2L, remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single().revision)
 
         firstRepository.saveRecord(record(2, firstInstant.plusSeconds(90)))
         firstCoordinator.syncOnce(ownerId)
 
         // The recreated server document has moved past the stale baseline, so
         // the server value wins; no device clock is involved.
-        val cloud = remote.fetch(ownerId).records.single()
+        val cloud = remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single()
         assertEquals(10, cloud.brewCount)
         assertEquals(10, firstRepository.observeRecord(date).first()?.brewCount)
     }
@@ -401,7 +401,7 @@ class HandBrewSyncCoordinatorTest {
 
         assertEquals(4, firstRepository.observeRecord(date).first()?.brewCount)
         assertEquals(4, secondRepository.observeRecord(date).first()?.brewCount)
-        assertEquals(4, remote.fetch(ownerId).records.single().brewCount)
+        assertEquals(4, remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
     }
 
     @Test
@@ -426,7 +426,7 @@ class HandBrewSyncCoordinatorTest {
 
         assertEquals(2, firstRepository.observeRecord(date).first()?.brewCount)
         assertEquals(2, secondRepository.observeRecord(date).first()?.brewCount)
-        assertEquals(2, remote.fetch(ownerId).records.single().brewCount)
+        assertEquals(2, remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
     }
 
     @Test
@@ -453,7 +453,7 @@ class HandBrewSyncCoordinatorTest {
             manager.status.first { it == SyncStatus.UpToDate }
         }
         assertTrue(remote.fetchCalls > 0)
-        assertEquals(3, remote.fetch(ownerId).records.single().brewCount)
+        assertEquals(3, remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
         jobs.forEach { it.cancel() }
     }
 
@@ -545,7 +545,7 @@ class HandBrewSyncCoordinatorTest {
         val result = accountCoordinator.syncOnce(ownerId)
         assertEquals(1, result.uploaded)
         assertEquals(6, accountRepository.observeRecord(date).first()?.brewCount)
-        assertEquals(6, remote.fetch(ownerId).records.single().brewCount)
+        assertEquals(6, remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
         assertTrue(
             RoomHandBrewSyncStore(database)
                 .pending(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID)
@@ -597,7 +597,7 @@ class HandBrewSyncCoordinatorTest {
         kotlinx.coroutines.withTimeout(5_000) {
             manager.status.first { it == SyncStatus.UpToDate }
         }
-        assertEquals(7, remote.fetch(ownerId).records.single().brewCount)
+        assertEquals(7, remote.fetch(ownerId).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
         assertTrue(remote.observationAttempts.value >= 2)
         jobs.forEach { it.cancel() }
     }
@@ -705,7 +705,7 @@ class HandBrewSyncCoordinatorTest {
     )
 
     private fun coordinator(database: DailyRecordDatabase, remote: FakeRemoteDataSource) =
-        HandBrewSyncCoordinator(RoomHandBrewSyncStore(database), remote)
+        moduleSyncCoordinator(RoomHandBrewSyncStore(database), remote)
 
     private fun record(count: Int, updatedAt: Instant) = HandBrewRecord(
         id = "record-${date}",

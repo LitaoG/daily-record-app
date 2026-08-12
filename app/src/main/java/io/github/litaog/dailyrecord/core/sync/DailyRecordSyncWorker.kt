@@ -34,7 +34,7 @@ class DailyRecordSyncWorker internal constructor(
         // Kept for the lightweight unit-test hook and for callers that do not
         // yet have an authenticated owner. Production account barriers are
         // checked again below, after resolving the Firebase owner id.
-        if (DailyRecordSyncScheduler.isLegacyDeletionBlocked) return Result.success()
+        if (DeletionBarrier.isLegacyDeletionBlocked) return Result.success()
         val database = DailyRecordDatabase.create(applicationContext)
         return try {
             val services = servicesProvider.create(applicationContext, database)
@@ -45,25 +45,15 @@ class DailyRecordSyncWorker internal constructor(
                 // Account deletion owns the user's cloud paths. Check the durable
                 // account marker after resolving the owner so a stale marker for a
                 // different account cannot silently affect this session.
-                DailyRecordSyncScheduler.isLegacyDeletionBlocked ||
-                    DailyRecordSyncScheduler.isDeletionBlocked(applicationContext, ownerId) -> {
+                DeletionBarrier.isLegacyDeletionBlocked ||
+                    DeletionBarrier.isDeletionBlocked(ownerId) -> {
                     Result.success()
                 }
                 else -> {
-                    val coordinator = CombinedSyncCoordinator(
-                        handBrew = HandBrewSyncCoordinator(
-                            store = RoomHandBrewSyncStore(database),
-                            remote = services.remoteDataSource,
-                        ),
-                        sex = SexSyncCoordinator(
-                            store = RoomSexSyncStore(database),
-                            remote = services.sexRemoteDataSource,
-                        ),
-                    )
+                    val coordinator = buildCombinedSyncCoordinator(database, services)
                     val result = withTimeout(BACKGROUND_CLOUD_TIMEOUT_MILLIS) {
-                        DailyRecordSyncScheduler.withCloudWrite(
-                            context = applicationContext,
-                            ownerId = ownerId,
+                        DeletionBarrier.withCloudWrite(
+            ownerId = ownerId,
                         ) {
                             coordinator.syncOnce(ownerId)
                         }

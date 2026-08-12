@@ -7,8 +7,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
+import io.github.litaog.dailyrecord.core.model.SexRecordDetail
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -109,6 +113,175 @@ class RoomSexRecordRepositoryTest {
         assertEquals(3, after.sexCount)
         assertFalse(after.isDeleted)
     }
+
+    @Test
+    fun fixedYearFixtureReportsExactCountsAndDays() = runBlocking {
+        val monthlyCounts = listOf(13, 11, 12, 14, 15, 16, 13, 14, 11, 9)
+        val monthlyDays = listOf(9, 7, 8, 8, 10, 9, 8, 9, 4, 2)
+
+        monthlyCounts.zip(monthlyDays).forEachIndexed { monthIndex, (count, days) ->
+            val baseCount = count / days
+            val remainder = count % days
+            repeat(days) { dayIndex ->
+                sexRepository.saveRecord(
+                    sexRecord(
+                        id = "2026-${monthIndex + 1}-${dayIndex + 1}",
+                        date = LocalDate.of(2026, monthIndex + 1, dayIndex + 1),
+                        count = baseCount + if (dayIndex < remainder) 1 else 0,
+                    ),
+                )
+            }
+        }
+
+        val start = LocalDate.of(2026, 1, 1)
+        val end = LocalDate.of(2027, 1, 1)
+        val records = sexRepository.observeRecords(start, end).first()
+        val totalCount = records.sumOf { it.sexCount.toLong() }
+        val sexDays = records.count { it.sexCount > 0 }
+
+        assertEquals(74, records.size)
+        assertEquals(128L, totalCount)
+        assertEquals(74, sexDays)
+        assertEquals(1.7, totalCount.toDouble() / sexDays, 0.05)
+        assertFalse(records.any { it.localDate.monthValue > 10 })
+    }
+
+    @Test
+    fun explicitNoBrewDoesNotIncreaseStatistics() = runBlocking {
+        val start = LocalDate.of(2026, 7, 1)
+        sexRepository.saveRecord(sexRecord("no-sex", start, 0))
+        sexRepository.saveRecord(sexRecord("sexed", start.plusDays(1), 2))
+
+        val records = sexRepository.observeRecords(start, start.plusMonths(1)).first()
+        assertEquals(2L, records.sumOf { it.sexCount.toLong() })
+        assertEquals(1, records.count { it.sexCount > 0 })
+    }
+
+    @Test
+    fun deviceClockRollbackCannotMakeEditsOlderThanStoredRecord() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        val first = sexRepository.saveRecord(
+            sexRecord("clock-record", date, 1).copy(updatedAt = now.plusSeconds(20)),
+        )
+        val rollbackRepository = RoomSexRecordRepository(
+            database = database,
+            clock = Clock.fixed(now.minusSeconds(60), ZoneOffset.UTC),
+        )
+
+        val saved = rollbackRepository.saveRecord(
+            SexRecord(
+                id = "replacement-id",
+                localDate = date,
+                sexCount = 2,
+                createdAt = now.minusSeconds(10),
+                updatedAt = now.minusSeconds(5),
+            ),
+        )
+        assertTrue(saved.updatedAt.isAfter(first.updatedAt))
+
+        assertTrue(rollbackRepository.clearRecord(date))
+        val tombstone = database.sexRecordDao()
+            .getByDate(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID, date)
+        assertTrue(requireNotNull(tombstone).updatedAt.isAfter(saved.updatedAt))
+    }
+
+    @Test
+    fun matchingTimestampClearStillRemovesTheRecord() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        sexRepository.saveRecord(sexRecord("fresh-clear", date, 2))
+        val dao = database.sexRecordDao()
+        val existing = requireNotNull(
+            dao.getByDate(io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID, date),
+        )
+
+        val affected = dao.markDeleted(
+            ownerId = io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            id = existing.id,
+            expectedUpdatedAt = existing.updatedAt,
+            updatedAt = existing.updatedAt.plusSeconds(1),
+        )
+
+        assertEquals(1, affected)
+        assertTrue(requireNotNull(dao.getByDate(
+            io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID,
+            date,
+        )).isDeleted)
+    }
+
+    @Test
+    fun detailsSaveAtomicallyAndCountOnlyEditsPruneRemovedOccurrences() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        sexRepository.saveRecord(
+            sexRecord("with-details", date, 2),
+            listOf(
+                sexDetail(date, 1, LocalTime.of(9, 20), LocalTime.of(9, 35), "平静"),
+                sexDetail(date, 2, LocalTime.of(21, 40), LocalTime.of(21, 52), "更专注"),
+            ),
+        )
+
+        assertEquals(2, sexRepository.observeDetails(date).first().size)
+        assertEquals("更专注", sexRepository.observeDetails(date).first()[1].feeling)
+
+        sexRepository.saveRecord(sexRecord("replacement", date, 1).copy(updatedAt = now.plusSeconds(1)))
+        assertEquals(listOf(1), sexRepository.observeDetails(date).first().map { it.occurrenceIndex })
+
+        assertTrue(sexRepository.clearRecord(date))
+        assertEquals(emptyList<SexRecordDetail>(), sexRepository.observeDetails(date).first())
+    }
+
+    @Test
+    fun editingADetailKeepsItsCreationTimestamp() = runBlocking {
+        val date = LocalDate.of(2026, 7, 16)
+        val firstCreated = now
+        sexRepository.saveRecord(
+            sexRecord("created-at", date, 1),
+            listOf(sexDetail(date, 1, LocalTime.of(9, 20), LocalTime.of(9, 35), "平静")),
+        )
+        val stored = sexRepository.observeDetails(date).first().single()
+        assertEquals(firstCreated, stored.createdAt)
+
+        // The UI always passes a fresh timestamp for every detail; the
+        // repository must keep the original createdAt and only advance
+        // updatedAt when the same occurrence is edited again.
+        val editTimestamp = now.plusSeconds(60)
+        sexRepository.saveRecord(
+            sexRecord("created-at", date, 1).copy(updatedAt = editTimestamp),
+            listOf(
+                SexRecordDetail(
+                    id = "ignored-new-id",
+                    localDate = date,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(10, 0),
+                    endTime = null,
+                    feeling = "更平静",
+                    createdAt = editTimestamp,
+                    updatedAt = editTimestamp,
+                ),
+            ),
+        )
+
+        val edited = sexRepository.observeDetails(date).first().single()
+        assertEquals(firstCreated, edited.createdAt)
+        assertEquals(editTimestamp, edited.updatedAt)
+        assertEquals("更平静", edited.feeling)
+    }
+
+    private fun sexDetail(
+        date: LocalDate,
+        occurrenceIndex: Int,
+        startTime: LocalTime,
+        endTime: LocalTime,
+        feeling: String,
+    ) = SexRecordDetail(
+        id = "$date-$occurrenceIndex",
+        localDate = date,
+        occurrenceIndex = occurrenceIndex,
+        startTime = startTime,
+        endTime = endTime,
+        feeling = feeling,
+        createdAt = now,
+        updatedAt = now,
+    )
 
     private fun sexRecord(id: String, date: LocalDate, count: Int) = SexRecord(
         id = id,

@@ -20,31 +20,44 @@ internal data class RemoteSexDetail(
     val feeling: String,
 )
 
+/**
+ * One module's remote record at the sync boundary. Modules keep their own
+ * count field and detail types; the sealed shape lets snapshots stay
+ * module-agnostic so adding a module never changes [RemoteSnapshot].
+ */
+internal sealed interface RemoteDailyCountRecord {
+    val id: String
+    val localDate: LocalDate
+    val createdAt: Instant
+    val clientUpdatedAt: Instant
+    val deleted: Boolean
+    val revision: Long
+}
+
 internal data class RemoteHandBrewRecord(
-    val id: String,
-    val localDate: LocalDate,
+    override val id: String,
+    override val localDate: LocalDate,
     val brewCount: Int,
-    val createdAt: Instant,
-    val clientUpdatedAt: Instant,
-    val deleted: Boolean,
-    val revision: Long,
+    override val createdAt: Instant,
+    override val clientUpdatedAt: Instant,
+    override val deleted: Boolean,
+    override val revision: Long,
     val details: List<RemoteHandBrewDetail> = emptyList(),
-)
+) : RemoteDailyCountRecord
 
 internal data class RemoteSexRecord(
-    val id: String,
-    val localDate: LocalDate,
+    override val id: String,
+    override val localDate: LocalDate,
     val sexCount: Int,
-    val createdAt: Instant,
-    val clientUpdatedAt: Instant,
-    val deleted: Boolean,
-    val revision: Long,
+    override val createdAt: Instant,
+    override val clientUpdatedAt: Instant,
+    override val deleted: Boolean,
+    override val revision: Long,
     val details: List<RemoteSexDetail> = emptyList(),
-)
+) : RemoteDailyCountRecord
 
 internal data class RemoteSnapshot(
-    val records: List<RemoteHandBrewRecord> = emptyList(),
-    val sexRecords: List<RemoteSexRecord> = emptyList(),
+    val records: List<RemoteDailyCountRecord> = emptyList(),
     val fromCache: Boolean,
     val rejectedRecordCount: Int = 0,
 )

@@ -7,7 +7,8 @@ internal interface HandBrewRemoteDataSource :
     DailyCountRemoteDataSource<HandBrewRecordEntity, RemoteHandBrewRecord> {
     override fun observe(ownerId: String): Flow<RemoteSnapshot>
     override suspend fun fetch(ownerId: String): RemoteSnapshot
-    override fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteHandBrewRecord> = snapshot.records
+    override fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteHandBrewRecord> =
+        snapshot.records.filterIsInstance<RemoteHandBrewRecord>()
     override suspend fun commit(
         ownerId: String,
         local: HandBrewRecordEntity,

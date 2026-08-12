@@ -16,6 +16,13 @@ import kotlinx.coroutines.flow.Flow
 interface DailyCountRecordRepository<T : DailyCountRecord> {
     fun observeRecord(localDate: LocalDate): Flow<T?>
 
+    /**
+     * One-shot read used by save paths that already know which date they
+     * touch; observing through [observeRecord] would run the flow machinery
+     * for a value that is read again inside the save transaction.
+     */
+    suspend fun getRecord(localDate: LocalDate): T?
+
     fun observeRecords(
         startDate: LocalDate,
         endExclusive: LocalDate,

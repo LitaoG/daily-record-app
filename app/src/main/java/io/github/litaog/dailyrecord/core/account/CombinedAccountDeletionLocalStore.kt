@@ -1,17 +1,10 @@
 package io.github.litaog.dailyrecord.core.account
 
-import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
-import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
 import kotlinx.coroutines.CancellationException
 
 internal class CombinedAccountDeletionLocalStore(
     private val stores: List<AccountDeletionLocalStore>,
 ) : AccountDeletionLocalStore {
-    constructor(
-        handBrew: RoomHandBrewSyncStore,
-        sex: RoomSexSyncStore,
-    ) : this(listOf(handBrew, sex))
-
     init {
         require(stores.isNotEmpty()) { "At least one local account store is required." }
     }
