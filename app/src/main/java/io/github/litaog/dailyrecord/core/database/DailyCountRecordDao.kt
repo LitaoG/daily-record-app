@@ -65,6 +65,8 @@ internal interface DailyCountRecordDetailDao<DetailEntity : Any> {
 
     suspend fun getByDate(ownerId: String, localDate: LocalDate): List<DetailEntity>
 
+    suspend fun getAllForSync(ownerId: String): List<DetailEntity>
+
     suspend fun upsertAll(details: List<DetailEntity>)
 
     suspend fun deleteByOwnerDate(ownerId: String, localDate: LocalDate): Int

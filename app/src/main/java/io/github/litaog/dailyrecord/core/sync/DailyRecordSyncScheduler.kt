@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.di
 
 import android.content.Context
 import androidx.work.Constraints
@@ -6,6 +6,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

@@ -94,6 +94,12 @@ class DeletionBarrierTest {
         assertFalse(DeletionBarrier.isDeletionBlocked)
         assertFalse(DeletionBarrier.isLegacyDeletionBlocked)
         assertTrue(DeletionBarrier.isDeletionBlocked(owner))
+
+        // The durable marker still gates a new process, but this process can
+        // retry because no cloud/Auth/recovery phase advanced.
+        DeletionBarrier.beginDeletionBlock(owner)
+        DeletionBarrier.endDeletionBlock(owner, AccountDeletionOutcome.Completed)
+        assertFalse(DeletionBarrier.isDeletionBlocked(owner))
     }
 
     @Test
@@ -213,12 +219,13 @@ class DeletionBarrierTest {
     }
 
     @Test
-    fun recoveryCopyMarkerBlocksEveryOwnerBecauseLocalSpaceIsGlobal() {
+    fun recoveryCopyMarkerBlocksOnlyItsOwnerBecauseRecoverySpaceIsIsolated() {
         val pendingOwner = "owner-a"
         val otherOwner = "owner-b"
         DeletionBarrier.markLocalRecoveryCopyPending(pendingOwner)
 
-        assertTrue(DeletionBarrier.isDeletionBlocked(otherOwner))
+        assertTrue(DeletionBarrier.isDeletionBlocked(pendingOwner))
+        assertFalse(DeletionBarrier.isDeletionBlocked(otherOwner))
         DeletionBarrier.clearLocalRecoveryCopyPending(pendingOwner)
         assertFalse(DeletionBarrier.isDeletionBlocked(otherOwner))
     }

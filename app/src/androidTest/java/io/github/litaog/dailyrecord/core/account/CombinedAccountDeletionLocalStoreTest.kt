@@ -58,6 +58,7 @@ class CombinedAccountDeletionLocalStoreTest {
 
         store.stageLocalRecoveryCopy(ownerId)
         store.deleteOwnerCache(ownerId)
+        store.promoteLocalRecoveryCopy(ownerId)
 
         assertEquals(
             2,
@@ -95,6 +96,7 @@ class CombinedAccountDeletionLocalStoreTest {
         store.stageLocalRecoveryCopy(ownerId)
         store.stageLocalRecoveryCopy(ownerId)
         store.deleteOwnerCache(ownerId)
+        store.promoteLocalRecoveryCopy(ownerId)
 
         assertEquals(
             2,

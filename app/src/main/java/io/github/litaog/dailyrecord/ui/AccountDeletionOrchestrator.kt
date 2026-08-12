@@ -2,6 +2,7 @@ package io.github.litaog.dailyrecord.ui
 
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
 import io.github.litaog.dailyrecord.core.account.AccountDeletionAuthPendingException
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryConflictException
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryPendingException
 import io.github.litaog.dailyrecord.core.account.AccountDeletionResult
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
@@ -55,12 +56,14 @@ internal class AccountDeletionOrchestrator(
             }
             val cleanupPending = deletionResult.exceptionOrNull() is
                 AccountDeletionLocalCleanupPendingException
+            val recoveryConflict = deletionResult.exceptionOrNull() is
+                AccountDeletionLocalRecoveryConflictException
             val localRecoveryPending = deletionResult.exceptionOrNull() is
                 AccountDeletionLocalRecoveryPendingException
             val authPending = deletionResult.getOrNull() as?
                 AccountDeletionResult.AuthDeletionPending
             outcome = when {
-                cleanupPending -> AccountDeletionOutcome.CleanupPending
+                cleanupPending || recoveryConflict -> AccountDeletionOutcome.CleanupPending
                 localRecoveryPending -> AccountDeletionOutcome.LocalRecoveryPending
                 authPending != null -> AccountDeletionOutcome.AuthDeletionPending
                 deletionResult.isSuccess -> AccountDeletionOutcome.Completed
@@ -81,7 +84,8 @@ internal class AccountDeletionOrchestrator(
                     deletionResult.exceptionOrNull()?.addSuppressed(error)
                 }
             }
-            if (((deletionResult.isSuccess && authPending == null && !localRecoveryPending) || cleanupPending) &&
+            if (((deletionResult.isSuccess && authPending == null && !localRecoveryPending) ||
+                (cleanupPending && !recoveryConflict)) &&
                 localData == LocalDataAfterAccountDeletion.Keep
             ) {
                 try {
@@ -97,7 +101,7 @@ internal class AccountDeletionOrchestrator(
                 }
             }
             result = when {
-                cleanupPending -> Result.success(Unit)
+                cleanupPending && !recoveryConflict -> Result.success(Unit)
                 localRecoveryPending -> Result.failure(
                     deletionResult.exceptionOrNull()!!,
                 )

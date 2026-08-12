@@ -11,6 +11,9 @@ import androidx.work.WorkerParameters
 import androidx.work.WorkManager
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.testing.WorkManagerTestInitHelper
+import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
+import io.github.litaog.dailyrecord.core.di.DailyRecordSyncServicesProvider
+import io.github.litaog.dailyrecord.core.di.DailyRecordSyncWorker
 import io.github.litaog.dailyrecord.core.di.FIREBASE_EMULATOR_APP_NAME
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.common.awaitResult

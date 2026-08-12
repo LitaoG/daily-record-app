@@ -22,6 +22,12 @@ internal interface SexRecordDetailDao : DailyCountRecordDetailDao<SexRecordDetai
     )
     override suspend fun getByDate(ownerId: String, localDate: LocalDate): List<SexRecordDetailEntity>
 
+    @Query(
+        "SELECT * FROM sex_record_details " +
+            "WHERE owner_id = :ownerId ORDER BY local_date ASC, occurrence_index ASC",
+    )
+    override suspend fun getAllForSync(ownerId: String): List<SexRecordDetailEntity>
+
     @Upsert
     override suspend fun upsertAll(details: List<SexRecordDetailEntity>)
 

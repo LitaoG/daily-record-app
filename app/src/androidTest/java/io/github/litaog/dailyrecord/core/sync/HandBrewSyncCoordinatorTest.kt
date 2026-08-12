@@ -637,6 +637,7 @@ class HandBrewSyncCoordinatorTest {
 
         store.stageLocalRecoveryCopy(ownerId)
         store.deleteOwnerCache(ownerId)
+        store.promoteLocalRecoveryCopy(ownerId)
 
         val localRepository = RoomHandBrewRecordRepository(
             database = database,

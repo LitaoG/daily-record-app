@@ -641,6 +641,7 @@ class SexSyncCoordinatorTest {
 
         store.stageLocalRecoveryCopy(ownerId)
         store.deleteOwnerCache(ownerId)
+        store.promoteLocalRecoveryCopy(ownerId)
 
         val localRepository = RoomSexRecordRepository(
             database = database,

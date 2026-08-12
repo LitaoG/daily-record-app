@@ -63,6 +63,12 @@ internal class FirebaseAuthRepository(
             // The Firebase Task may still complete after the coroutine is
             // cancelled. The coordinator records this as an unknown outcome.
             throw error
+        } catch (error: FirebaseAuthException) {
+            if (error.errorCode in DEFINITIVE_DELETE_FAILURE_CODES) {
+                AuthDeletionResult.Failed(error)
+            } else {
+                AuthDeletionResult.Unknown(error)
+            }
         } catch (error: Exception) {
             AuthDeletionResult.Unknown(error)
         }
@@ -101,6 +107,14 @@ internal class FirebaseAuthRepository(
 }
 
 private fun String.normalizedEmail(): String = trim().lowercase()
+
+private val DEFINITIVE_DELETE_FAILURE_CODES = setOf(
+    "ERROR_INVALID_CREDENTIAL",
+    "ERROR_OPERATION_NOT_ALLOWED",
+    "ERROR_REQUIRES_RECENT_LOGIN",
+    "ERROR_TOO_MANY_REQUESTS",
+    "ERROR_USER_MISMATCH",
+)
 
 private fun FirebaseUser.toAccount(): AuthAccount = AuthAccount(
     uid = uid,

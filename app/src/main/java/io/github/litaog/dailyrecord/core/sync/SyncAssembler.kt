@@ -1,9 +1,13 @@
-package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.di
 
+import androidx.room.withTransaction
 import io.github.litaog.dailyrecord.core.account.CombinedAccountDeletionLocalStore
 import io.github.litaog.dailyrecord.core.account.CombinedAccountRemoteDataStore
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
-import io.github.litaog.dailyrecord.core.di.FirebaseServices
+import io.github.litaog.dailyrecord.core.sync.CombinedSyncCoordinator
+import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
+import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
+import io.github.litaog.dailyrecord.core.sync.moduleSyncCoordinator
 
 /**
  * Single composition point for the isolated daily-count modules.
@@ -29,6 +33,7 @@ internal fun buildCombinedAccountDeletionLocalStore(
         RoomHandBrewSyncStore(database),
         RoomSexSyncStore(database),
     ),
+    transactionRunner = { operation -> database.withTransaction { operation() } },
 )
 
 internal fun buildCombinedAccountRemoteDataStore(

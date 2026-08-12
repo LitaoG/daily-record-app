@@ -3,6 +3,7 @@ package io.github.litaog.dailyrecord.ui.account
 import io.github.litaog.dailyrecord.core.account.AccountDeletionAuthPendingException
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryPendingException
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryConflictException
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import java.io.IOException
 import org.junit.Assert.assertEquals
@@ -62,11 +63,32 @@ class AccountDeletionErrorMessageTest {
     }
 
     @Test
+    fun definitiveAuthFailureDoesNotUseTheUnknownOutcomeMessage() {
+        assertEquals(
+            AppCopy.Deletion.unknownError,
+            accountDeletionErrorMessage(IllegalStateException("recent login required")),
+        )
+    }
+
+    @Test
     fun localRecoveryPendingExplainsThatSyncIsPausedUntilCleanup() {
         assertEquals(
             AppCopy.Deletion.localRecoveryPending,
             accountDeletionErrorMessage(
                 AccountDeletionLocalRecoveryPendingException("owner", IOException("local copy unavailable")),
+            ),
+        )
+    }
+
+    @Test
+    fun localRecoveryConflictExplainsThatExistingLocalDataWasProtected() {
+        assertEquals(
+            AppCopy.Deletion.recoveryConflict,
+            accountDeletionErrorMessage(
+                AccountDeletionLocalRecoveryConflictException(
+                    "owner",
+                    IllegalStateException("local data exists"),
+                ),
             ),
         )
     }

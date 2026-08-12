@@ -52,8 +52,12 @@ internal class RoomSexSyncStore(
     override fun SexRecordDetailEntity.withOwner(ownerId: String): SexRecordDetailEntity =
         copy(ownerId = ownerId)
 
-    override fun SexRecordDetailEntity.withLocalCopyIdentity(): SexRecordDetailEntity =
-        copy(id = localCopyId(id), ownerId = LOCAL_OWNER_ID)
+    override fun SexRecordDetailEntity.withRecoveryCopyIdentity(
+        ownerId: String,
+    ): SexRecordDetailEntity = copy(id = localCopyId(id), ownerId = ownerId)
+
+    override fun SexRecordDetailEntity.withPromotedLocalIdentity(): SexRecordDetailEntity =
+        copy(id = localCopySourceId(id), ownerId = LOCAL_OWNER_ID)
 
     override fun recordEntityIdOf(entity: SexRecordEntity): String = entity.id
 

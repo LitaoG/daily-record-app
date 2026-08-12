@@ -52,8 +52,12 @@ internal class RoomHandBrewSyncStore(
     override fun HandBrewRecordDetailEntity.withOwner(ownerId: String): HandBrewRecordDetailEntity =
         copy(ownerId = ownerId)
 
-    override fun HandBrewRecordDetailEntity.withLocalCopyIdentity(): HandBrewRecordDetailEntity =
-        copy(id = localCopyId(id), ownerId = LOCAL_OWNER_ID)
+    override fun HandBrewRecordDetailEntity.withRecoveryCopyIdentity(
+        ownerId: String,
+    ): HandBrewRecordDetailEntity = copy(id = localCopyId(id), ownerId = ownerId)
+
+    override fun HandBrewRecordDetailEntity.withPromotedLocalIdentity(): HandBrewRecordDetailEntity =
+        copy(id = localCopySourceId(id), ownerId = LOCAL_OWNER_ID)
 
     override fun recordEntityIdOf(entity: HandBrewRecordEntity): String = entity.id
 

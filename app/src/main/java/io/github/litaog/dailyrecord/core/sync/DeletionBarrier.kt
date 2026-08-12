@@ -106,8 +106,9 @@ internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionS
  * Process-wide deletion barrier: serializes cloud writes against account
  * deletion and persists the barrier durably per owner.
  *
- * This is the single owner of the deletion state machine. [DailyRecordSyncScheduler]
- * only schedules WorkManager work and consults this barrier before enqueuing.
+ * This is the single owner of the deletion state machine. The WorkManager
+ * adapter is [io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler].
+ * It only schedules WorkManager work and consults this barrier before enqueuing.
  */
 internal object DeletionBarrier {
     /**
@@ -120,6 +121,8 @@ internal object DeletionBarrier {
     private var inProcessDeletionOwner: String? = null
     private var deletionLockHeld = false
     private var legacyDeletionBlocked = false
+    /** Allows only a same-process retry of an interruption before any phase advanced. */
+    private val sameProcessInterruptedOwners = mutableSetOf<String>()
     /** Invalidates writers that observed an open gate but were still queued. */
     private var cloudWriteGeneration = 0L
 
@@ -131,12 +134,18 @@ internal object DeletionBarrier {
 
     /** Binds the durable journal; called once at process start. */
     internal fun configure(context: Context) {
-        stateStore = SharedPreferencesDeletionStateStore(context)
+        synchronized(stateLock) {
+            stateStore = SharedPreferencesDeletionStateStore(context)
+            sameProcessInterruptedOwners.clear()
+        }
     }
 
     /** Test hook: swaps the durable journal for an in-memory one. */
     internal fun installStateStoreForTest(store: DeletionStateStore) {
-        stateStore = store
+        synchronized(stateLock) {
+            stateStore = store
+            sameProcessInterruptedOwners.clear()
+        }
     }
 
     internal val isDeletionBlocked: Boolean
@@ -160,6 +169,7 @@ internal object DeletionBarrier {
         synchronized(stateLock) {
             legacyDeletionBlocked = false
             inProcessDeletionOwner = null
+            sameProcessInterruptedOwners.clear()
             deletionBlocked = false
         }
     }
@@ -182,20 +192,19 @@ internal object DeletionBarrier {
             val authDeletionComplete = readOwners(KEY_AUTH_DELETION_COMPLETE)
             val localRecoveryCopyPending = readOwners(KEY_LOCAL_RECOVERY_COPY_PENDING)
             val localRecoveryCopyReady = readOwners(KEY_LOCAL_RECOVERY_COPY_READY)
+            val sameProcessRetry = ownerId in sameProcessInterruptedOwners
             check(
-                localRecoveryCopyPending.isEmpty() && localRecoveryCopyReady.isEmpty(),
-            ) {
-                "A local recovery copy is awaiting durable recovery."
-            }
-            check(
-                ownerId !in inProgress &&
+                (ownerId !in inProgress || sameProcessRetry) &&
                     ownerId !in cleanupPending &&
                     ownerId !in cloudDeletionPending &&
                     ownerId !in authDeletionStarted &&
-                    ownerId !in authDeletionComplete,
+                    ownerId !in authDeletionComplete &&
+                    ownerId !in localRecoveryCopyPending &&
+                    ownerId !in localRecoveryCopyReady,
             ) {
                 "Account deletion for $ownerId is awaiting durable recovery."
             }
+            sameProcessInterruptedOwners.remove(ownerId)
             inProcessDeletionOwner = ownerId
             deletionBlocked = true
             cloudWriteGeneration += 1
@@ -345,6 +354,7 @@ internal object DeletionBarrier {
      */
     internal fun resolveAuthDeletionAccountStillExists(ownerId: String) {
         synchronized(stateLock) {
+            sameProcessInterruptedOwners.remove(ownerId)
             updateDeletionMarkers(
                 inProgress = { it - ownerId },
                 cleanupPending = { it - ownerId },
@@ -428,7 +438,7 @@ internal object DeletionBarrier {
                     }
                     AccountDeletionOutcome.LocalRecoveryPending -> {
                         // The cloud data is gone, but Auth was not invoked and
-                        // the global __local__ recovery copy could not be
+                        // the owner-scoped recovery copy could not be
                         // discarded. Keep the cloud phase and recovery marker
                         // until startup can finish the discard and re-queue the
                         // still-existing account.
@@ -443,8 +453,23 @@ internal object DeletionBarrier {
                         )
                     }
                     // Keep the durable in-progress marker, but release the
-                    // process-local lock so a user can retry after cancellation.
-                    AccountDeletionOutcome.Interrupted -> Unit
+                    // process-local lock. A same-process retry is safe only
+                    // when no cloud/Auth/recovery phase has advanced; after
+                    // process death the in-memory exception is unavailable,
+                    // so the durable marker remains a hard recovery gate.
+                    AccountDeletionOutcome.Interrupted -> {
+                        val advanced = ownerId in readOwners(KEY_CLEANUP_PENDING) ||
+                            ownerId in readOwners(KEY_CLOUD_DELETION_PENDING) ||
+                            ownerId in readOwners(KEY_AUTH_DELETION_STARTED) ||
+                            ownerId in readOwners(KEY_AUTH_DELETION_COMPLETE) ||
+                            ownerId in readOwners(KEY_LOCAL_RECOVERY_COPY_PENDING) ||
+                            ownerId in readOwners(KEY_LOCAL_RECOVERY_COPY_READY)
+                        if (advanced) {
+                            sameProcessInterruptedOwners.remove(ownerId)
+                        } else {
+                            sameProcessInterruptedOwners += ownerId
+                        }
+                    }
                 }
             } catch (error: Exception) {
                 // A failed commit is safer as a global in-process block than
@@ -466,6 +491,7 @@ internal object DeletionBarrier {
     /** Clears a durable cleanup marker after the owner cache was removed. */
     internal fun completeDeletionCleanup(ownerId: String) {
         synchronized(stateLock) {
+            sameProcessInterruptedOwners.remove(ownerId)
             updateDeletionMarkers(
                 inProgress = { it - ownerId },
                 cleanupPending = { it - ownerId },
@@ -537,17 +563,16 @@ internal object DeletionBarrier {
         val authDeletionComplete = readOwners(KEY_AUTH_DELETION_COMPLETE)
         val localRecoveryCopyPending = readOwners(KEY_LOCAL_RECOVERY_COPY_PENDING)
         val localRecoveryCopyReady = readOwners(KEY_LOCAL_RECOVERY_COPY_READY)
-        // The recovery copy uses one global LOCAL_OWNER_ID namespace. It must
-        // therefore block every account until it is either discarded or
-        // promoted to durable cleanup; otherwise another account's first sync
-        // could adopt the unresolved copy.
-        if (localRecoveryCopyPending.isNotEmpty() || localRecoveryCopyReady.isNotEmpty()) {
-            return true
-        }
         return if (ownerId == null) {
-            inProgress.isNotEmpty() || cleanupPending.isNotEmpty() || cloudDeletionPending.isNotEmpty() || authDeletionStarted.isNotEmpty() || authDeletionComplete.isNotEmpty()
+            inProgress.isNotEmpty() || cleanupPending.isNotEmpty() ||
+                cloudDeletionPending.isNotEmpty() || authDeletionStarted.isNotEmpty() ||
+                authDeletionComplete.isNotEmpty() || localRecoveryCopyPending.isNotEmpty() ||
+                localRecoveryCopyReady.isNotEmpty()
         } else {
-            ownerId in inProgress || ownerId in cleanupPending || ownerId in cloudDeletionPending || ownerId in authDeletionStarted || ownerId in authDeletionComplete
+            ownerId in inProgress || ownerId in cleanupPending ||
+                ownerId in cloudDeletionPending || ownerId in authDeletionStarted ||
+                ownerId in authDeletionComplete || ownerId in localRecoveryCopyPending ||
+                ownerId in localRecoveryCopyReady
         }
     }
 

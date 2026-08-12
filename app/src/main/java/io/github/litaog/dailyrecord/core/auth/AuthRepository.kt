@@ -17,6 +17,9 @@ sealed interface AuthAccountPresence {
 
 sealed interface AuthDeletionResult {
     data object Completed : AuthDeletionResult
+    /** The request was rejected before Auth could delete the account. */
+    data class Failed(val cause: Throwable) : AuthDeletionResult
+    /** The request outcome cannot be inferred from the client response. */
     data class Unknown(val cause: Throwable) : AuthDeletionResult
 }
 

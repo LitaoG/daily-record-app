@@ -2,6 +2,7 @@
 
 import androidx.room.withTransaction
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalStore
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryConflictException
 import io.github.litaog.dailyrecord.core.database.DailyCountRecordDao
 import io.github.litaog.dailyrecord.core.database.DailyCountRecordDetailDao
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
@@ -45,7 +46,9 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
 
     protected abstract fun LD.withOwner(ownerId: String): LD
 
-    protected abstract fun LD.withLocalCopyIdentity(): LD
+    protected abstract fun LD.withPromotedLocalIdentity(): LD
+
+    protected abstract fun LD.withRecoveryCopyIdentity(ownerId: String): LD
 
     override fun observePendingCount(ownerId: String): Flow<Int> = dao.observePendingCount(ownerId)
 
@@ -138,42 +141,79 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
 
     override suspend fun stageLocalRecoveryCopy(ownerId: String) {
         database.withTransaction {
-            // An interrupted previous deletion may have left a staged recovery
-            // copy in the local space. The account's own rows are still
-            // authoritative until deletion completes, so a stale copy is
-            // discarded before re-staging: retries of "keep local data" must
-            // not fail on the leftover.
-            if (dao.countForOwner(LOCAL_OWNER_ID) > 0) {
-                dao.deleteOwnerCache(LOCAL_OWNER_ID)
-                detailDao.deleteOwnerCache(LOCAL_OWNER_ID)
-            }
+            val recoveryOwner = recoveryOwnerId(ownerId)
+            // Re-staging replaces only this account's private recovery area.
+            // Existing user-authored __local__ data is never touched here.
+            dao.deleteOwnerCache(recoveryOwner)
+            detailDao.deleteOwnerCache(recoveryOwner)
             dao.getAllForSync(ownerId)
                 .filterNot { recordIsDeletedOf(it) }
                 .forEach { accountRecord ->
-                    // The copy must not share the account row's id: @Upsert
-                    // binds on the primary key, so a colliding id would
-                    // silently replace the account record and lose the source
-                    // for a later retry (and for deleteOwnerCache).
                     dao.upsert(
                         accountRecord.withSyncIdentity(
                             id = localCopyId(recordEntityIdOf(accountRecord)),
-                            ownerId = LOCAL_OWNER_ID,
+                            ownerId = recoveryOwner,
                             syncState = SYNC_PENDING,
                             remoteRevision = 0,
                         ),
                     )
                     detailDao.upsertAll(
                         detailDao.getByDate(ownerId, recordLocalDateOf(accountRecord)).map {
-                            it.withLocalCopyIdentity()
+                            it.withRecoveryCopyIdentity(recoveryOwner)
                         },
                     )
                 }
         }
     }
 
-    override suspend fun discardLocalRecoveryCopy() {
-        dao.deleteOwnerCache(LOCAL_OWNER_ID)
-        detailDao.deleteOwnerCache(LOCAL_OWNER_ID)
+    override suspend fun discardLocalRecoveryCopy(ownerId: String) {
+        val recoveryOwner = recoveryOwnerId(ownerId)
+        dao.deleteOwnerCache(recoveryOwner)
+        detailDao.deleteOwnerCache(recoveryOwner)
+    }
+
+    override suspend fun promoteLocalRecoveryCopy(ownerId: String) {
+        val recoveryOwner = recoveryOwnerId(ownerId)
+        database.withTransaction {
+            val recoveryRecords = dao.getAllForSync(recoveryOwner)
+            val recoveryDetails = detailDao.getAllForSync(recoveryOwner)
+            if (recoveryRecords.isEmpty() && recoveryDetails.isEmpty()) return@withTransaction
+            if (dao.countForOwner(LOCAL_OWNER_ID) > 0 ||
+                detailDao.countForOwner(LOCAL_OWNER_ID) > 0
+            ) {
+                throw AccountDeletionLocalRecoveryConflictException(
+                    ownerId,
+                    IllegalStateException(
+                        "Local records already exist; recovery promotion requires explicit resolution",
+                    ),
+                )
+            }
+            recoveryRecords.forEach { recoveryRecord ->
+                dao.upsert(
+                    recoveryRecord.withSyncIdentity(
+                        id = localCopySourceId(recordEntityIdOf(recoveryRecord)),
+                        ownerId = LOCAL_OWNER_ID,
+                        syncState = SYNC_PENDING,
+                        remoteRevision = 0,
+                    ),
+                )
+            }
+            recoveryDetails.forEach { recoveryDetail ->
+                detailDao.upsertAll(listOf(recoveryDetail.withPromotedLocalIdentity()))
+            }
+            dao.deleteOwnerCache(recoveryOwner)
+            detailDao.deleteOwnerCache(recoveryOwner)
+        }
+    }
+
+    override suspend fun hasLocalRecoveryConflict(ownerId: String): Boolean {
+        val recoveryOwner = recoveryOwnerId(ownerId)
+        val hasRecovery = dao.countForOwner(recoveryOwner) > 0 ||
+            detailDao.countForOwner(recoveryOwner) > 0
+        return hasRecovery && (
+            dao.countForOwner(LOCAL_OWNER_ID) > 0 ||
+                detailDao.countForOwner(LOCAL_OWNER_ID) > 0
+            )
     }
 
     override suspend fun deleteOwnerCache(ownerId: String) {

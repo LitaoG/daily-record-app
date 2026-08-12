@@ -72,6 +72,12 @@ internal data class SyncResult(
 /** Identity prefix for the local recovery copy of an account's records. */
 internal fun localCopyId(id: String): String = "__local__-copy-$id"
 
+/** Dedicated Room owner namespace for a pending account-deletion recovery copy. */
+internal fun recoveryOwnerId(ownerId: String): String = "__recovery__:$ownerId"
+
+internal fun localCopySourceId(id: String): String =
+    id.removePrefix("__local__-copy-")
+
 enum class SyncFailureKind {
     Network,
     Authentication,

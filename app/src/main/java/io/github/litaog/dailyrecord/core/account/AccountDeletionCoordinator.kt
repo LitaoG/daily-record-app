@@ -29,7 +29,7 @@ sealed interface AccountDeletionResult {
  * longer exists. The owner id is kept so a later startup can retry the local
  * cleanup.
  */
-internal class AccountDeletionLocalCleanupPendingException(
+internal open class AccountDeletionLocalCleanupPendingException(
     val ownerId: String,
     cause: Throwable,
 ) : IllegalStateException("Account deleted but local owner cache cleanup is pending", cause)
@@ -44,10 +44,23 @@ internal class AccountDeletionLocalRecoveryPendingException(
     cause: Throwable,
 ) : IllegalStateException("Local recovery copy cleanup is pending", cause)
 
+internal class AccountDeletionLocalRecoveryConflictException(
+    ownerId: String,
+    cause: Throwable,
+) : AccountDeletionLocalCleanupPendingException(
+    ownerId,
+    IllegalStateException("Local records already exist; recovery promotion is blocked", cause),
+)
+
 internal interface AccountDeletionLocalStore {
     suspend fun stageLocalRecoveryCopy(ownerId: String)
 
-    suspend fun discardLocalRecoveryCopy()
+    suspend fun discardLocalRecoveryCopy(ownerId: String)
+
+    /** Promotes a completed recovery copy into the local/offline namespace. */
+    suspend fun promoteLocalRecoveryCopy(ownerId: String)
+
+    suspend fun hasLocalRecoveryConflict(ownerId: String): Boolean
 
     suspend fun deleteOwnerCache(ownerId: String)
 
@@ -117,6 +130,7 @@ internal class AccountDeletionCoordinator(
         var localRecoveryCopyCleanupConfirmed = false
         var authDeletionStarted = false
         var authDeleted = false
+        var authDeletionDefinitivelyFailed = false
         try {
             if (localData == LocalDataAfterAccountDeletion.Keep) {
                 try {
@@ -125,14 +139,14 @@ internal class AccountDeletionCoordinator(
                     localStore.stageLocalRecoveryCopy(ownerId)
                     markLocalRecoveryCopyReady(ownerId)
                 } catch (error: CancellationException) {
-                    if (!localRecoveryCopyIntent || localStore.discardLocalRecoveryCopySafely(error)) {
+                    if (!localRecoveryCopyIntent || localStore.discardLocalRecoveryCopySafely(ownerId, error)) {
                         localRecoveryCopyCleanupConfirmed = true
                     } else {
                         throw AccountDeletionLocalRecoveryPendingException(ownerId, error)
                     }
                     throw error
                 } catch (error: Exception) {
-                    if (!localRecoveryCopyIntent || localStore.discardLocalRecoveryCopySafely(error)) {
+                    if (!localRecoveryCopyIntent || localStore.discardLocalRecoveryCopySafely(ownerId, error)) {
                         localRecoveryCopyCleanupConfirmed = true
                     } else {
                         throw AccountDeletionLocalRecoveryPendingException(ownerId, error)
@@ -149,6 +163,10 @@ internal class AccountDeletionCoordinator(
                     // gone. If the process dies after this point, startup can
                     // clean local data without guessing from a signed-out SDK.
                     markAuthDeletionComplete(ownerId)
+                }
+                is AuthDeletionResult.Failed -> {
+                    authDeletionDefinitivelyFailed = true
+                    throw authResult.cause
                 }
                 is AuthDeletionResult.Unknown -> {
                     // Do not discard the staged copy or mark rows pending. The
@@ -171,7 +189,7 @@ internal class AccountDeletionCoordinator(
                 return AccountDeletionResult.AuthDeletionPending(error)
             }
             if (localRecoveryCopyIntent && !localRecoveryCopyCleanupConfirmed) {
-                if (localStore.discardLocalRecoveryCopySafely(error)) {
+                if (localStore.discardLocalRecoveryCopySafely(ownerId, error)) {
                     localRecoveryCopyCleanupConfirmed = true
                 } else {
                     throw AccountDeletionLocalRecoveryPendingException(ownerId, error)
@@ -186,12 +204,15 @@ internal class AccountDeletionCoordinator(
             if (authDeleted) {
                 throw AccountDeletionLocalCleanupPendingException(ownerId, error)
             }
-            if (authDeletionStarted && error !is AccountDeletionAuthPendingException) {
+            if (authDeletionStarted &&
+                !authDeletionDefinitivelyFailed &&
+                error !is AccountDeletionAuthPendingException
+            ) {
                 return AccountDeletionResult.AuthDeletionPending(error)
             }
             if (error is AccountDeletionLocalRecoveryPendingException) throw error
             if (localRecoveryCopyIntent && !localRecoveryCopyCleanupConfirmed) {
-                if (localStore.discardLocalRecoveryCopySafely(error)) {
+                if (localStore.discardLocalRecoveryCopySafely(ownerId, error)) {
                     localRecoveryCopyCleanupConfirmed = true
                 } else {
                     throw AccountDeletionLocalRecoveryPendingException(ownerId, error)
@@ -211,9 +232,13 @@ internal class AccountDeletionCoordinator(
         }
         try {
             localStore.deleteOwnerCache(ownerId)
+            if (localData == LocalDataAfterAccountDeletion.Keep) {
+                localStore.promoteLocalRecoveryCopy(ownerId)
+            }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
+            if (error is AccountDeletionLocalRecoveryConflictException) throw error
             // The account and cloud data are already gone. Report a dedicated
             // recoverable cleanup state instead of a retryable deletion failure,
             // because re-authentication is impossible once the account is deleted.
@@ -223,10 +248,13 @@ internal class AccountDeletionCoordinator(
     }
 }
 
-private suspend fun AccountDeletionLocalStore.discardLocalRecoveryCopySafely(primary: Throwable): Boolean {
+private suspend fun AccountDeletionLocalStore.discardLocalRecoveryCopySafely(
+    ownerId: String,
+    primary: Throwable,
+): Boolean {
     return try {
         withContext(NonCancellable) {
-            discardLocalRecoveryCopy()
+            discardLocalRecoveryCopy(ownerId)
         }
         true
     } catch (error: CancellationException) {

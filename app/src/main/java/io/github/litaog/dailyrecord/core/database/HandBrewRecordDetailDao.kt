@@ -22,6 +22,12 @@ internal interface HandBrewRecordDetailDao : DailyCountRecordDetailDao<HandBrewR
     )
     override suspend fun getByDate(ownerId: String, localDate: LocalDate): List<HandBrewRecordDetailEntity>
 
+    @Query(
+        "SELECT * FROM hand_brew_record_details " +
+            "WHERE owner_id = :ownerId ORDER BY local_date ASC, occurrence_index ASC",
+    )
+    override suspend fun getAllForSync(ownerId: String): List<HandBrewRecordDetailEntity>
+
     @Upsert
     override suspend fun upsertAll(details: List<HandBrewRecordDetailEntity>)
 

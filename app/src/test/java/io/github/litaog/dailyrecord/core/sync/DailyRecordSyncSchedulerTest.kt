@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.core.sync
 
 import androidx.work.ExistingWorkPolicy
+import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
