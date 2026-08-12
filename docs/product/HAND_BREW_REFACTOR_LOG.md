@@ -78,7 +78,7 @@
 ## 阶段 7：交付资产收口
 
 - 产品契约、架构、统计口径、UI 说明、路线图和 Backlog 已与当前 Compose 行为对齐。
-- Figma v2 四张总览与 API 34 日历/统计截图纳入 `assets/hand-brew-v2/`。
+- Figma v2 四张总览与 API 34 日历/统计截图曾纳入 `assets/hand-brew-v2/`；该仅手冲截图包已在 2026-08-11 资源整理中从工作树移除，历史版本仍可从 Git 历史恢复。
 - 旧 `figma-v1/` 与 `prototype-v1/` 多活动图片从当前分支删除，Git 历史仍可恢复。
 - Figma 执行账本标记为完成，下一步为用户 Android Studio/实体设备验收。
 

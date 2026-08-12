@@ -15,6 +15,10 @@ import io.github.litaog.dailyrecord.core.sync.SexRemoteDataSource
 
 internal const val FIREBASE_EMULATOR_APP_NAME = "daily-record-emulator"
 
+/** Ports match the firebase.json emulator configuration. */
+internal const val FIREBASE_AUTH_EMULATOR_PORT = 9099
+internal const val FIREBASE_FIRESTORE_EMULATOR_PORT = 8080
+
 internal data class FirebaseServices(
     val authRepository: AuthRepository,
     val remoteDataSource: HandBrewRemoteDataSource,
@@ -41,8 +45,8 @@ internal data class FirebaseServices(
             val auth = FirebaseAuth.getInstance(app)
             val firestore = FirebaseFirestore.getInstance(app)
             if (emulatorHost != null && emulatorAppCreated) {
-                auth.useEmulator(emulatorHost, 9099)
-                firestore.useEmulator(emulatorHost, 8080)
+                auth.useEmulator(emulatorHost, FIREBASE_AUTH_EMULATOR_PORT)
+                firestore.useEmulator(emulatorHost, FIREBASE_FIRESTORE_EMULATOR_PORT)
             }
             return FirebaseServices(
                 authRepository = FirebaseAuthRepository(auth),

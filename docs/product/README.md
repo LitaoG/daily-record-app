@@ -42,7 +42,7 @@
 - [历史 Figma Hand-brew-only v2 设计系统](FIGMA_DESIGN_SYSTEM.md)
 - [历史 Figma 设计文件](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
 - [历史 Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
-- [仅手冲 v2 历史设计与实现截图索引](assets/hand-brew-v2/README.md)
+- 仅手冲 v2 截图包已在 2026-08-11 资源整理中移除；旧版本仍可从 Git 历史恢复。
 - [交付与验证日志](HAND_BREW_REFACTOR_LOG.md)
 - [2026-07-28 局部一致性、扩展边界与安全加固](audit/2026-07-28-consistency-hardening/README.md)
 - [2026-07-27 快速真实运行审计](audit/2026-07-27-quick-runtime/README.md)

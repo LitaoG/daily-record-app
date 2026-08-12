@@ -3,6 +3,7 @@ package io.github.litaog.dailyrecord.ui
 import android.content.Context
 import androidx.core.content.edit
 
+/** Persists the user's last selected record module across launches. */
 internal class SelectedRecordModulePreference(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(
         PREFERENCES_NAME,

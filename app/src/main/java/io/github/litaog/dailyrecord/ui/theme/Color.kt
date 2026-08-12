@@ -102,7 +102,7 @@ data class RecordModuleColorTokens(
 /**
  * Module-aware glass atmosphere for shared controls.
  *
- * The light tint keeps the surface airy while the primary colour gives the
+ * The light tint keeps the surface airy while the primary color gives the
  * selected slider a restrained module-specific glow (purple for hand brew,
  * deep red for intimacy). Keeping this derived from the module token prevents
  * a shared control from silently falling back to the hand-brew palette.

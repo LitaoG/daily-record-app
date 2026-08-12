@@ -221,8 +221,8 @@ internal fun DailyCountRecordScreen(
                 saving = false
                 if (result.isSuccess) {
                     // Saved and cleared drafts must not be restored when the
-                    // day is opened again; the registry would otherwise keep
-                    // them alive across navigation.
+                    // day is opened again; rememberSaveable would otherwise
+                    // keep them alive across navigation.
                     countDraft = CountDraft()
                     detailsDraft = RecordDetailsDraft()
                     onSaved()

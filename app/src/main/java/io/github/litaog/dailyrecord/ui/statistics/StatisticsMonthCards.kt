@@ -79,8 +79,8 @@ internal fun monthDailyChartNeedsNonAnchorBaselineDot(
 
 /**
  * Returns the x-coordinate for a day using the same edge inset as the plot.
- * Keeping this calculation shared by the plot and labels prevents the first
- * tick from drifting to the second baseline marker when the label is clamped.
+ * Keeping this calculation shared by the plot and labels keeps the first
+ * tick aligned with its baseline marker.
  */
 internal fun monthDailyChartXPosition(
     day: Int,

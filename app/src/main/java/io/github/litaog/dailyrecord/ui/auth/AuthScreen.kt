@@ -49,6 +49,7 @@ import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -312,7 +313,7 @@ internal fun AuthScreen(
 private fun AuthModeButton(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .height(48.dp)
+            .height(DailyRecordSizes.MinimumTouchTarget)
             .clip(RoundedCornerShape(14.dp))
             .background(if (selected) DailyRecordSurfaceMuted else DailyRecordSurface)
             .border(

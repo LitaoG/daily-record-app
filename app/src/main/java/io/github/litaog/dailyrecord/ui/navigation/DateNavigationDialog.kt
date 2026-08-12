@@ -61,6 +61,7 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -376,7 +377,7 @@ private fun DateWheelColumn(
     val settleAnimation = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     var settleJob by remember { mutableStateOf<Job?>(null) }
-    val rowHeightPx = with(LocalDensity.current) { 48.dp.toPx() }
+    val rowHeightPx = with(LocalDensity.current) { DailyRecordSizes.MinimumTouchTarget.toPx() }
     val shape = RoundedCornerShape(14.dp)
 
     /**
@@ -388,7 +389,7 @@ private fun DateWheelColumn(
     LaunchedEffect(selectedValue, values) {
         // A running settle animation belongs to the previous values window;
         // cancel it so it cannot keep writing dragOffsetPx into the orphaned
-        // state after the wheel re-bases (which would cause a visual jump).
+        // state after the wheel rebases (which would cause a visual jump).
         settleJob?.cancel()
         settleJob = null
         if (!isDragging) {
@@ -422,7 +423,7 @@ private fun DateWheelColumn(
         }
 
         if (targetIndex != currentIndex && commitIndex(targetIndex)) {
-            // Re-basing the three rendered rows keeps the visual position
+            // Rebasing the three rendered rows keeps the visual position
             // continuous when the centered item changes at the end of a drag.
             dragOffsetPx += if (targetIndex > currentIndex) rowHeightPx else -rowHeightPx
         }
@@ -499,7 +500,7 @@ private fun DateWheelColumn(
                 ),
         ) {
             Canvas(Modifier.fillMaxWidth().height(160.dp)) {
-                val bandHeight = 48.dp.toPx()
+                val bandHeight = DailyRecordSizes.MinimumTouchTarget.toPx()
                 val top = (size.height - bandHeight) / 2f
                 drawRect(
                     color = colors.soft.copy(alpha = .78f),
@@ -583,7 +584,7 @@ private fun WheelValueRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(DailyRecordSizes.MinimumTouchTarget)
             .clickable(enabled = value != null && enabled, role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
@@ -827,7 +828,7 @@ private fun YearArrow(
 ) {
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .size(DailyRecordSizes.MinimumTouchTarget)
             .clip(CircleShape)
             .background(if (enabled) colors.soft.copy(alpha = .16f) else Color.Transparent)
             .border(

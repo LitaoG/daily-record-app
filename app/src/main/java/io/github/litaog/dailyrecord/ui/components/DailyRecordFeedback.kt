@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
@@ -161,7 +162,7 @@ fun DailyRecordTextAction(
 ) {
     Box(
         modifier = modifier
-            .heightIn(min = 48.dp)
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
             .clip(RoundedCornerShape(14.dp))
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics {

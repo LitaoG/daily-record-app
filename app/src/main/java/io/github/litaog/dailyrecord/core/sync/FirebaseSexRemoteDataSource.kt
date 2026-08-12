@@ -75,7 +75,7 @@ internal class FirebaseSexRemoteDataSource(
             }
             // Recreate a missing document from a retained local pending edit.
             // Ordinary record clearing writes a tombstone, so the optimistic
-            // revision check above still protects normal concurrent edits.
+            // revision/id check above still protects normal concurrent edits.
             val revision = (currentRemote?.revision ?: 0L) + 1L
             // Preserve the caller's id for the first creation (revision 0),
             // but mint a new identity when a previously confirmed document
