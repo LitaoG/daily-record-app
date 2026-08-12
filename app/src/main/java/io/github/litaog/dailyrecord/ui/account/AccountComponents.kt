@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -48,6 +46,7 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.components.PrivateSettingsIcon
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -60,6 +59,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordWarning
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 
 internal const val VPN_SYNC_DIALOG_MESSAGE =
@@ -125,6 +125,7 @@ internal fun SyncFailureKind.presentation(): SyncFailurePresentation = when (thi
 @Composable
 internal fun AccountTopBar(
     status: SyncStatus,
+    colors: RecordModuleColorTokens,
     onClick: () -> Unit,
     onSettings: () -> Unit,
 ) {
@@ -153,7 +154,7 @@ internal fun AccountTopBar(
                         onClick = onClick,
                         modifier = Modifier.weight(1f),
                     )
-                    SettingsButton(onClick = onSettings)
+                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
                 }
             }
         } else {
@@ -175,7 +176,7 @@ internal fun AccountTopBar(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     SyncStatusChip(status = status, onClick = onClick)
-                    SettingsButton(onClick = onSettings)
+                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
                 }
             }
         }
@@ -184,6 +185,7 @@ internal fun AccountTopBar(
 
 @Composable
 internal fun LocalAccountTopBar(
+    colors: RecordModuleColorTokens,
     onSignIn: (() -> Unit)?,
     onSettings: () -> Unit,
 ) {
@@ -214,7 +216,7 @@ internal fun LocalAccountTopBar(
                             accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                         )
                     }
-                    SettingsButton(onClick = onSettings)
+                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
                 }
             }
         } else {
@@ -242,7 +244,7 @@ internal fun LocalAccountTopBar(
                             accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                         )
                     }
-                    SettingsButton(onClick = onSettings)
+                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
                 }
             }
         }
@@ -250,17 +252,19 @@ internal fun LocalAccountTopBar(
 }
 
 @Composable
-private fun SettingsButton(onClick: () -> Unit) {
+private fun SettingsButton(
+    onClick: () -> Unit,
+    heartTint: Color,
+) {
     IconButton(
         onClick = onClick,
         modifier = Modifier
             .size(DailyRecordSizes.MinimumTouchTarget)
             .testTag("home_settings_button"),
     ) {
-        Icon(
-            imageVector = Icons.Outlined.Settings,
+        PrivateSettingsIcon(
             contentDescription = AppCopy.Settings.open,
-            tint = DailyRecordTextSecondary,
+            heartTint = heartTint,
         )
     }
 }
