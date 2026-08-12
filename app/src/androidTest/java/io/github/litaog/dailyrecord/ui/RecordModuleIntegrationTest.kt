@@ -27,6 +27,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
@@ -69,6 +70,20 @@ class RecordModuleIntegrationTest {
 
         composeRule.onNodeWithText("本月 0 次 · 0 天有记录").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("选择年份和日期，当前2026年6月").assertIsDisplayed()
+    }
+
+    @Test
+    fun settingsIconFollowsActiveModuleAccentAndKeepsTalkBackLabel() {
+        setDualModuleContent()
+
+        composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
+        assertSettingsIconContains(HandBrewColorTokens.primary)
+
+        composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
+        assertSettingsIconContains(SexColorTokens.primary)
     }
 
     @Test
@@ -293,6 +308,26 @@ class RecordModuleIntegrationTest {
         val sampleX = (pixels.width - 8).coerceAtLeast(0)
         val sampleY = pixels.height / 2
         assertEquals(expected.toArgb(), pixels[sampleX, sampleY].toArgb())
+    }
+
+    private fun assertSettingsIconContains(expected: Color) {
+        var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            runCatching {
+                bitmap = composeRule.onNodeWithTag("home_settings_button").captureToImage()
+            }.isSuccess
+        }
+        val pixels = requireNotNull(bitmap).toPixelMap()
+        val expectedArgb = expected.toArgb()
+        var exactMatches = 0
+        for (x in 0 until pixels.width) {
+            for (y in 0 until pixels.height) {
+                if (pixels[x, y].toArgb() == expectedArgb) {
+                    exactMatches++
+                }
+            }
+        }
+        assertTrue("Expected settings icon to contain $expected, found $exactMatches pixels", exactMatches > 0)
     }
 
     private fun assertMinimumHeight(tag: String, minimumDp: Float) {
