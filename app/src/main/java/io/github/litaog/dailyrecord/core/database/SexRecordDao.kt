@@ -1,4 +1,4 @@
-﻿package io.github.litaog.dailyrecord.core.database
+package io.github.litaog.dailyrecord.core.database
 
 import androidx.room.Dao
 import androidx.room.Query
@@ -44,7 +44,7 @@ internal interface SexRecordDao : DailyCountRecordDao<SexRecordEntity> {
         UPDATE sex_records
         SET is_deleted = 1,
             updated_at = :updatedAt,
-            sync_state = ''
+            sync_state = '$SYNC_PENDING'
         WHERE id = :id
           AND owner_id = :ownerId
           AND is_deleted = 0
@@ -60,7 +60,7 @@ internal interface SexRecordDao : DailyCountRecordDao<SexRecordEntity> {
 
     @Query(
         "SELECT * FROM sex_records " +
-            "WHERE owner_id = :ownerId AND sync_state = '' ORDER BY updated_at ASC",
+            "WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING' ORDER BY updated_at ASC",
     )
     override suspend fun getPending(ownerId: String): List<SexRecordEntity>
 
@@ -74,7 +74,7 @@ internal interface SexRecordDao : DailyCountRecordDao<SexRecordEntity> {
             remote_revision = :remoteRevision
         WHERE owner_id = :ownerId
           AND local_date = :localDate
-          AND sync_state = ''
+          AND sync_state = '$SYNC_PENDING'
           AND remote_revision = 0
         """,
     )
@@ -91,7 +91,7 @@ internal interface SexRecordDao : DailyCountRecordDao<SexRecordEntity> {
         SET remote_revision = :remoteRevision
         WHERE owner_id = :ownerId
           AND local_date = :localDate
-          AND sync_state = ''
+          AND sync_state = '$SYNC_PENDING'
         """,
     )
     override suspend fun setRemoteRevisionForPending(
@@ -100,10 +100,10 @@ internal interface SexRecordDao : DailyCountRecordDao<SexRecordEntity> {
         remoteRevision: Long,
     ): Int
 
-    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = ''")
+    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING'")
     override fun observePendingCount(ownerId: String): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = ''")
+    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING'")
     override suspend fun countPending(ownerId: String): Int
 
     @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId")
@@ -112,7 +112,7 @@ internal interface SexRecordDao : DailyCountRecordDao<SexRecordEntity> {
     @Query(
         """
         UPDATE sex_records
-        SET sync_state = ''
+        SET sync_state = '$SYNC_PENDING'
         WHERE owner_id = :ownerId
         """,
     )

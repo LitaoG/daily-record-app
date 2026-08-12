@@ -709,7 +709,7 @@ class SexSyncCoordinatorTest {
             entityUpdatedAt = { it.updatedAt },
             entityDeleted = { it.isDeleted },
             entityRemoteRevision = { it.remoteRevision },
-            buildRemote = { id, localDate, count, createdAt, clientUpdatedAt, deleted, revision ->
+            buildRemote = { id, localDate, count, createdAt, clientUpdatedAt, deleted, revision, details ->
                 RemoteHandBrewRecord(
                     id = id,
                     localDate = localDate,
@@ -718,6 +718,7 @@ class SexSyncCoordinatorTest {
                     clientUpdatedAt = clientUpdatedAt,
                     deleted = deleted,
                     revision = revision,
+                    details = details,
                 )
             },
         )
@@ -763,7 +764,7 @@ class SexSyncCoordinatorTest {
         entityUpdatedAt = { it.updatedAt },
         entityDeleted = { it.isDeleted },
         entityRemoteRevision = { it.remoteRevision },
-        buildRemote = { id, localDate, count, createdAt, clientUpdatedAt, deleted, revision ->
+        buildRemote = { id, localDate, count, createdAt, clientUpdatedAt, deleted, revision, details ->
             RemoteSexRecord(
                 id = id,
                 localDate = localDate,
@@ -772,6 +773,7 @@ class SexSyncCoordinatorTest {
                 clientUpdatedAt = clientUpdatedAt,
                 deleted = deleted,
                 revision = revision,
+                details = details,
             )
         },
     )

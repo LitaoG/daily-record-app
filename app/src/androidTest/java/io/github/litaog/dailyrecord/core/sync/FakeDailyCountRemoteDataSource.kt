@@ -37,6 +37,7 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
         clientUpdatedAt: Instant,
         deleted: Boolean,
         revision: Long,
+        details: List<RD>,
     ) -> R,
 ) : DailyCountRemoteDataSource<E, R> {
     private val mutex = Mutex()
@@ -94,7 +95,8 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
             // permanently failing the PENDING row on its stale revision
             // baseline. Normal clears still write a tombstone and participate
             // in the revision check above.
-            val committed = buildRemote(current?.id
+            val committed = buildRemote(
+                current?.id
                     ?: if (entityRemoteRevision(local) > 0) UUID.randomUUID().toString() else entityId(local),
                 entityLocalDate(local),
                 entityCount(local),
@@ -105,6 +107,7 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
                 ),
                 entityDeleted(local),
                 (current?.revision ?: 0) + 1,
+                detailsProvider(entityLocalDate(local)),
             )
             values.value = values.value + (entityLocalDate(local) to committed)
             committed
