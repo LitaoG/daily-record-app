@@ -272,6 +272,40 @@ class RecordScreenTest {
     }
 
     @Test
+    fun recordActionsStayOutsideScrollableContent() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 12)),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithTag("record_actions").assertIsDisplayed()
+
+        repeat(12) {
+            composeRule.onNodeWithTag("record_scroll_content")
+                .performTouchInput { swipeUp() }
+        }
+        composeRule.waitForIdle()
+
+        val scrollBounds = composeRule.onNodeWithTag("record_scroll_content")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val actionBounds = composeRule.onNodeWithTag("record_actions")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val lastDetailBounds = composeRule.onNodeWithTag("record_detail_12")
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertTrue(actionBounds.top >= scrollBounds.bottom)
+        assertTrue(lastDetailBounds.bottom <= actionBounds.top)
+        composeRule.onNodeWithTag("record_detail_12").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("保存记录").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("清除记录").assertIsDisplayed()
+    }
+
+    @Test
     fun expandedDetailsFollowCountAndDisappearWhenCountReturnsToZero() {
         val repository = FakeHandBrewRecordRepository()
         setRecordContent(repository)

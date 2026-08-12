@@ -252,11 +252,148 @@ internal fun DailyCountRecordScreen(
                 colors = moduleSpec.colors,
             )
         },
-        bottomBar = {
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .padding(contentPadding),
+        ) {
+            val recordScrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(recordScrollState)
+                    .testTag("record_scroll_content")
+                    .padding(
+                        horizontal = DailyRecordSpacing.ScreenHorizontal,
+                        vertical = DailyRecordSpacing.ScreenVertical,
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
+            ) {
+                RecordHeader(date = date, today = today, moduleSpec = moduleSpec, onBack = requestBack)
+                Text(
+                    text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
+                    color = DailyRecordText,
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = when {
+                        detailsDraft.expanded && countDraft.count > 0 -> AppCopy.Record.countAndDetails
+                        countDraft.count > 0 -> AppCopy.Record.countFirst
+                        else -> AppCopy.Record.countOnly
+                    },
+                    color = DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                DailyCountControl(
+                    count = countDraft.count,
+                    enabled = editable && dataReady && countDraft.initialized && !saving,
+                    onDecrease = {
+                        val last = detailsDraft.entries.lastOrNull()
+                        if (countDraft.count > 0 && last?.hasContent == true) {
+                            showRemoveDetailDialog = true
+                        } else {
+                            applyCount((countDraft.count - 1).coerceAtLeast(0))
+                        }
+                    },
+                    onIncrease = {
+                        if (countDraft.count < Int.MAX_VALUE) {
+                            applyCount(countDraft.count + 1)
+                        }
+                    },
+                    colors = moduleSpec.colors,
+                    compact = detailsDraft.expanded,
+                )
+                Text(
+                    text = when {
+                        !dataReady -> AppCopy.Record.loadingRecords
+                        !editable -> AppCopy.Record.futureUnavailable
+                        hasUnsavedChanges -> AppCopy.Record.savedStatus(countDraft.count)
+                        record == null -> AppCopy.Record.notSaved
+                        record.count == 0 -> AppCopy.Record.zeroRecorded
+                        else -> AppCopy.Record.recordedStatus(record.count)
+                    },
+                    color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                if (!detailsDraft.expanded) {
+                    Text(
+                        AppCopy.Record.explicitZeroHint(moduleSpec.explicitZeroText),
+                        color = DailyRecordTextMuted,
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                if (countDraft.count > 0) {
+                    if (detailsDraft.expanded) {
+                        RecordDetailsSection(
+                            entries = detailsDraft.entries,
+                            accent = moduleSpec.colors.primary,
+                            onCollapse = { detailsDraft = detailsDraft.copy(expanded = false) },
+                            onTimeClick = { index, target ->
+                                val current = detailsDraft.entries.getOrNull(index)
+                                val minutes = when (target) {
+                                    DetailTimeTarget.Start -> current?.startMinutes
+                                    DetailTimeTarget.End -> current?.endMinutes
+                                } ?: LocalTime.now().let { it.hour * 60 + it.minute }
+                                timePickerRequest = TimePickerRequest(index, target, minutes)
+                            },
+                            onFeelingToggle = { index ->
+                                detailsDraft = detailsDraft.update(index) {
+                                    it.copy(feelingExpanded = !it.feelingExpanded)
+                                }
+                            },
+                            onFeelingChange = { index, value ->
+                                detailsDraft = detailsDraft.update(index) { it.withFeeling(value) }
+                            },
+                        )
+                    } else {
+                        DetailEntryButton(
+                            count = countDraft.count,
+                            accent = moduleSpec.colors.primary,
+                            colors = moduleSpec.colors,
+                            onClick = {
+                                detailsDraft = detailsDraft.resize(countDraft.count)
+                                    .copy(expanded = true)
+                            },
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = DailyRecordSpacing.Inline)
+                        .height(1.dp)
+                        .background(DailyRecordDivider),
+                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
+                ) {
+                    Text(
+                        text = AppCopy.Record.monthSaved(YearMonth.from(date).monthValue),
+                        color = DailyRecordTextSecondary,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    Text(
+                        AppCopy.Record.monthSummary(storedMonthCount, storedMonthDays),
+                        color = DailyRecordText,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
             Surface(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .navigationBarsPadding()
-                    .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted),
+                    .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted)
+                    .testTag("record_actions"),
                 color = Color.Transparent,
             ) {
                 Column(
@@ -298,136 +435,6 @@ internal fun DailyCountRecordScreen(
                         onClick = { showClearDialog = true },
                     )
                 }
-            }
-        },
-    ) { contentPadding ->
-        val recordScrollState = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .imePadding()
-                .verticalScroll(recordScrollState)
-                .padding(contentPadding)
-                .padding(
-                    horizontal = DailyRecordSpacing.ScreenHorizontal,
-                    vertical = DailyRecordSpacing.ScreenVertical,
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
-        ) {
-            RecordHeader(date = date, today = today, moduleSpec = moduleSpec, onBack = requestBack)
-            Text(
-                text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
-                color = DailyRecordText,
-                style = MaterialTheme.typography.headlineLarge,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = when {
-                    detailsDraft.expanded && countDraft.count > 0 -> AppCopy.Record.countAndDetails
-                    countDraft.count > 0 -> AppCopy.Record.countFirst
-                    else -> AppCopy.Record.countOnly
-                },
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            DailyCountControl(
-                count = countDraft.count,
-                enabled = editable && dataReady && countDraft.initialized && !saving,
-                onDecrease = {
-                    val last = detailsDraft.entries.lastOrNull()
-                    if (countDraft.count > 0 && last?.hasContent == true) {
-                        showRemoveDetailDialog = true
-                    } else {
-                        applyCount((countDraft.count - 1).coerceAtLeast(0))
-                    }
-                },
-                onIncrease = {
-                    if (countDraft.count < Int.MAX_VALUE) {
-                        applyCount(countDraft.count + 1)
-                    }
-                },
-                colors = moduleSpec.colors,
-                compact = detailsDraft.expanded,
-            )
-            Text(
-                text = when {
-                    !dataReady -> AppCopy.Record.loadingRecords
-                    !editable -> AppCopy.Record.futureUnavailable
-                    hasUnsavedChanges -> AppCopy.Record.savedStatus(countDraft.count)
-                    record == null -> AppCopy.Record.notSaved
-                    record.count == 0 -> AppCopy.Record.zeroRecorded
-                    else -> AppCopy.Record.recordedStatus(record.count)
-                },
-                color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            if (!detailsDraft.expanded) {
-                Text(
-                    AppCopy.Record.explicitZeroHint(moduleSpec.explicitZeroText),
-                    color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            if (countDraft.count > 0) {
-                if (detailsDraft.expanded) {
-                    RecordDetailsSection(
-                        entries = detailsDraft.entries,
-                        accent = moduleSpec.colors.primary,
-                        onCollapse = { detailsDraft = detailsDraft.copy(expanded = false) },
-                        onTimeClick = { index, target ->
-                            val current = detailsDraft.entries.getOrNull(index)
-                            val minutes = when (target) {
-                                DetailTimeTarget.Start -> current?.startMinutes
-                                DetailTimeTarget.End -> current?.endMinutes
-                            } ?: LocalTime.now().let { it.hour * 60 + it.minute }
-                            timePickerRequest = TimePickerRequest(index, target, minutes)
-                        },
-                        onFeelingToggle = { index ->
-                            detailsDraft = detailsDraft.update(index) {
-                                it.copy(feelingExpanded = !it.feelingExpanded)
-                            }
-                        },
-                        onFeelingChange = { index, value ->
-                            detailsDraft = detailsDraft.update(index) { it.withFeeling(value) }
-                        },
-                    )
-                } else {
-                    DetailEntryButton(
-                        count = countDraft.count,
-                        accent = moduleSpec.colors.primary,
-                        colors = moduleSpec.colors,
-                        onClick = {
-                            detailsDraft = detailsDraft.resize(countDraft.count)
-                                .copy(expanded = true)
-                        },
-                    )
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = DailyRecordSpacing.Inline)
-                    .height(1.dp)
-                    .background(DailyRecordDivider),
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
-            ) {
-                Text(
-                    text = AppCopy.Record.monthSaved(YearMonth.from(date).monthValue),
-                    color = DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                Text(
-                    AppCopy.Record.monthSummary(storedMonthCount, storedMonthDays),
-                    color = DailyRecordText,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                )
             }
         }
     }
