@@ -145,6 +145,7 @@ fun DailyRecordApp(
     val recordsFlow = remember(selectedController, effectiveToday) {
         selectedController.observeRecords(EarliestSupportedDate, effectiveToday.plusDays(1))
     }
+    val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
     val allRecordsState by recordsFlow.collectAsState<List<DailyCountEntry>, List<DailyCountEntry>?>(
         initial = null,
     )
@@ -152,7 +153,7 @@ fun DailyRecordApp(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(dailyRecordBackdropBrush(moduleSpec.colors))
+                .background(backdropBrush)
                 .testTag("records_loading")
                 .semantics { contentDescription = AppCopy.readingLocalRecords },
             contentAlignment = Alignment.Center,
@@ -168,12 +169,15 @@ fun DailyRecordApp(
         // saveable draft slots: a hand-brew draft must never be restored as a
         // sex draft for the same date (and vice versa).
         key(selectedModule) {
+            val monthRecords = remember(allRecords, selectedDate) {
+                allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) }
+            }
             DailyCountRecordScreen(
                 date = selectedDate,
                 today = effectiveToday,
                 controller = selectedController,
                 moduleSpec = moduleSpec,
-                monthRecords = allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) },
+                monthRecords = monthRecords,
                 onBack = { selectedDateText = null },
                 onSaved = { selectedDateText = null },
             )
@@ -184,7 +188,7 @@ fun DailyRecordApp(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(moduleSpec.colors)),
+            .background(backdropBrush),
     ) {
         if (showSettings) {
             SettingsScreen(

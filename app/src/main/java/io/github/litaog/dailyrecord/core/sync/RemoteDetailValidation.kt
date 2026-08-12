@@ -2,6 +2,11 @@ package io.github.litaog.dailyrecord.core.sync
 
 import java.math.BigDecimal
 
+/** Raised when a cloud record or detail cannot be interpreted. */
+internal class MalformedRemoteRecordException(
+    cause: Throwable,
+) : IllegalArgumentException("Cloud record is malformed", cause)
+
 /**
  * Parses a Firestore detail index without allowing Number.toInt() truncation or overflow.
  * Firestore normally returns a Long, but accepting other integral Number implementations keeps
