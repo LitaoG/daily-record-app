@@ -24,6 +24,9 @@ class StatisticsPeriodAnchorsTest {
     @Test
     fun periodNavigationStopsAtSupportedAndCurrentBoundaries() {
         assertNull(previousPeriodAnchor(StatisticsPeriod.Week, earliest, earliest))
+        assertNull(
+            previousPeriodAnchor(StatisticsPeriod.Week, LocalDate.of(1970, 1, 2), earliest),
+        )
         assertEquals(
             earliest,
             previousPeriodAnchor(StatisticsPeriod.Week, LocalDate.of(1970, 1, 5), earliest),

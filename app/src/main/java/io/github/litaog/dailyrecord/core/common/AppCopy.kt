@@ -177,8 +177,11 @@ internal object AppCopy {
         const val serviceError = "云服务暂时不可用；本机记录仍保留，请稍后重试。"
         const val unknownError = "删除未完成，本机记录仍保留。部分云端记录可能已删除，请重试。"
         const val localCleanupPending = "账号和云端数据已删除，但本机记录清理未完成，将在下次启动时自动完成。"
+        const val authDeletionPending = "删除请求的最终结果暂时无法确认；本机记录已保留，云同步已暂停。请保持网络可用后重新打开应用。"
         const val wrongPassword = "密码不正确，请重新输入"
         const val tooManyAttempts = "尝试次数过多，请稍后再试"
+
+        const val localRecoveryPending = "本机恢复副本清理未完成，云服务同步已暂停。请保持网络可用后重新打开应用。"
 
         fun selectionDescription(title: String, isSelected: Boolean): String =
             "$title，${if (isSelected) AppCopy.selected else AppCopy.unselected}"

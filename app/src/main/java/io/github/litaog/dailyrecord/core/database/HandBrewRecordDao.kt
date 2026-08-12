@@ -74,7 +74,7 @@ internal interface HandBrewRecordDao : DailyCountRecordDao<HandBrewRecordEntity>
             remote_revision = :remoteRevision
         WHERE owner_id = :ownerId
           AND local_date = :localDate
-          AND sync_state = 'PENDING'
+          AND sync_state = '$SYNC_PENDING'
           AND remote_revision = 0
         """,
     )
@@ -91,7 +91,7 @@ internal interface HandBrewRecordDao : DailyCountRecordDao<HandBrewRecordEntity>
         SET remote_revision = :remoteRevision
         WHERE owner_id = :ownerId
           AND local_date = :localDate
-          AND sync_state = 'PENDING'
+          AND sync_state = '$SYNC_PENDING'
         """,
     )
     override suspend fun setRemoteRevisionForPending(
@@ -112,7 +112,7 @@ internal interface HandBrewRecordDao : DailyCountRecordDao<HandBrewRecordEntity>
     @Query(
         """
         UPDATE hand_brew_records
-        SET sync_state = 'PENDING'
+        SET sync_state = '$SYNC_PENDING'
         WHERE owner_id = :ownerId
         """,
     )

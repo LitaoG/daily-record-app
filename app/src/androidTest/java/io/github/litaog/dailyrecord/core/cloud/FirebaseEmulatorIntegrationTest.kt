@@ -12,6 +12,7 @@ import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
 import io.github.litaog.dailyrecord.core.database.SexRecordEntity
 import io.github.litaog.dailyrecord.core.account.CombinedAccountRemoteDataStore
+import io.github.litaog.dailyrecord.core.auth.AuthDeletionResult
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
@@ -162,7 +163,7 @@ class FirebaseEmulatorIntegrationTest {
             ).deleteAll(account.uid)
             assertTrue(services.remoteDataSource.fetch(account.uid).records.isEmpty())
             assertTrue(services.sexRemoteDataSource.fetch(account.uid).records.filterIsInstance<RemoteSexRecord>().isEmpty())
-            services.authRepository.deleteCurrentAccount()
+            assertTrue(services.authRepository.deleteCurrentAccount() is AuthDeletionResult.Completed)
 
             assertTrue(
                 "Deleted Firebase account must not accept the old credentials",

@@ -1,7 +1,6 @@
 package io.github.litaog.dailyrecord.core.sync
 
 import android.content.Context
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -10,6 +9,10 @@ import kotlinx.coroutines.withContext
 internal enum class AccountDeletionOutcome {
     Completed,
     CleanupPending,
+    /** Auth deletion was requested but its final result is unknown. */
+    AuthDeletionPending,
+    /** The temporary local recovery copy could not be safely discarded. */
+    LocalRecoveryPending,
     RetryableFailure,
     Interrupted,
 }
@@ -33,11 +36,19 @@ internal interface DeletionStateStore {
     fun writeOwners(key: String, owners: Set<String>)
 
     /**
-     * Replaces both marker sets as one durable state transition. Implementations
-     * must make the pair visible atomically so a process crash cannot leave an
-     * account unblocked between the cloud deletion and local cleanup steps.
+     * Replaces every deletion marker set as one durable state transition.
+     * Implementations must make the complete journal visible atomically so a
+     * process crash cannot leave an account unblocked between deletion phases.
      */
-    fun writeMarkers(inProgress: Set<String>, cleanupPending: Set<String>)
+    fun writeMarkers(
+        inProgress: Set<String>,
+        cleanupPending: Set<String>,
+        cloudDeletionPending: Set<String>,
+        authDeletionStarted: Set<String>,
+        authDeletionComplete: Set<String>,
+        localRecoveryCopyPending: Set<String>,
+        localRecoveryCopyReady: Set<String>,
+    )
 }
 
 internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionStateStore {
@@ -55,11 +66,24 @@ internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionS
         }
     }
 
-    override fun writeMarkers(inProgress: Set<String>, cleanupPending: Set<String>) {
+    override fun writeMarkers(
+        inProgress: Set<String>,
+        cleanupPending: Set<String>,
+        cloudDeletionPending: Set<String>,
+        authDeletionStarted: Set<String>,
+        authDeletionComplete: Set<String>,
+        localRecoveryCopyPending: Set<String>,
+        localRecoveryCopyReady: Set<String>,
+    ) {
         check(
             preferences.edit()
                 .putStringSet(KEY_IN_PROGRESS, inProgress)
                 .putStringSet(KEY_CLEANUP_PENDING, cleanupPending)
+                .putStringSet(KEY_CLOUD_DELETION_PENDING, cloudDeletionPending)
+                .putStringSet(KEY_AUTH_DELETION_STARTED, authDeletionStarted)
+                .putStringSet(KEY_AUTH_DELETION_COMPLETE, authDeletionComplete)
+                .putStringSet(KEY_LOCAL_RECOVERY_COPY_PENDING, localRecoveryCopyPending)
+                .putStringSet(KEY_LOCAL_RECOVERY_COPY_READY, localRecoveryCopyReady)
                 .commit(),
         ) {
             "Unable to persist account deletion state"
@@ -70,6 +94,11 @@ internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionS
         const val PREFERENCES_NAME = "daily_record_deletion_state"
         const val KEY_IN_PROGRESS = "in_progress_owner_ids"
         const val KEY_CLEANUP_PENDING = "cleanup_pending_owner_ids"
+        const val KEY_CLOUD_DELETION_PENDING = "cloud_deletion_pending_owner_ids"
+        const val KEY_AUTH_DELETION_STARTED = "auth_deletion_started_owner_ids"
+        const val KEY_AUTH_DELETION_COMPLETE = "auth_deletion_complete_owner_ids"
+        const val KEY_LOCAL_RECOVERY_COPY_PENDING = "local_recovery_copy_pending_owner_ids"
+        const val KEY_LOCAL_RECOVERY_COPY_READY = "local_recovery_copy_ready_owner_ids"
     }
 }
 
@@ -146,6 +175,27 @@ internal object DeletionBarrier {
             check(inProcessDeletionOwner == null) {
                 "An account deletion is already active in this process."
             }
+            val cleanupPending = readOwners(KEY_CLEANUP_PENDING)
+            val inProgress = readOwners(KEY_IN_PROGRESS)
+            val cloudDeletionPending = readOwners(KEY_CLOUD_DELETION_PENDING)
+            val authDeletionStarted = readOwners(KEY_AUTH_DELETION_STARTED)
+            val authDeletionComplete = readOwners(KEY_AUTH_DELETION_COMPLETE)
+            val localRecoveryCopyPending = readOwners(KEY_LOCAL_RECOVERY_COPY_PENDING)
+            val localRecoveryCopyReady = readOwners(KEY_LOCAL_RECOVERY_COPY_READY)
+            check(
+                localRecoveryCopyPending.isEmpty() && localRecoveryCopyReady.isEmpty(),
+            ) {
+                "A local recovery copy is awaiting durable recovery."
+            }
+            check(
+                ownerId !in inProgress &&
+                    ownerId !in cleanupPending &&
+                    ownerId !in cloudDeletionPending &&
+                    ownerId !in authDeletionStarted &&
+                    ownerId !in authDeletionComplete,
+            ) {
+                "Account deletion for $ownerId is awaiting durable recovery."
+            }
             inProcessDeletionOwner = ownerId
             deletionBlocked = true
             cloudWriteGeneration += 1
@@ -167,6 +217,149 @@ internal object DeletionBarrier {
                 throw error
             }
         }
+    }
+
+    /**
+     * Records the post-cloud phase before local owner-cache cleanup begins.
+     * This is deliberately separate from [KEY_IN_PROGRESS]: an interrupted
+     * deletion before Auth succeeds must not cause startup to delete local
+     * data for an account that can still be recovered.
+     */
+    internal fun markCloudDeletionComplete(ownerId: String) {
+        require(ownerId.isNotBlank()) { "ownerId must not be blank" }
+        synchronized(stateLock) {
+            updateDeletionMarkers(
+                inProgress = { it },
+                cleanupPending = { it },
+                cloudDeletionPending = { it + ownerId },
+            )
+        }
+    }
+
+    /** Durable intent written immediately before invoking Firebase Auth delete. */
+    internal fun markAuthDeletionStarted(ownerId: String) {
+        require(ownerId.isNotBlank()) { "ownerId must not be blank" }
+        synchronized(stateLock) {
+            updateDeletionMarkers(
+                inProgress = { it },
+                cleanupPending = { it },
+                cloudDeletionPending = { it },
+                authDeletionStarted = { it + ownerId },
+                authDeletionComplete = { it - ownerId },
+            )
+        }
+    }
+
+    /** Durable intent that the optional local recovery copy is being prepared. */
+    internal fun markLocalRecoveryCopyPending(ownerId: String) {
+        require(ownerId.isNotBlank()) { "ownerId must not be blank" }
+        synchronized(stateLock) {
+            updateDeletionMarkers(
+                inProgress = { it },
+                cleanupPending = { it },
+                localRecoveryCopyPending = { it + ownerId },
+                localRecoveryCopyReady = { it - ownerId },
+            )
+        }
+    }
+
+    internal fun localRecoveryCopyPendingOwnerIds(): Set<String> = synchronized(stateLock) {
+        readOwners(KEY_LOCAL_RECOVERY_COPY_PENDING)
+    }
+
+    internal fun markLocalRecoveryCopyReady(ownerId: String) {
+        require(ownerId.isNotBlank()) { "ownerId must not be blank" }
+        synchronized(stateLock) {
+            updateDeletionMarkers(
+                inProgress = { it },
+                cleanupPending = { it },
+                localRecoveryCopyPending = { it - ownerId },
+                localRecoveryCopyReady = { it + ownerId },
+            )
+        }
+    }
+
+    internal fun localRecoveryCopyReadyOwnerIds(): Set<String> = synchronized(stateLock) {
+        readOwners(KEY_LOCAL_RECOVERY_COPY_READY)
+    }
+
+    internal fun clearLocalRecoveryCopyPending(ownerId: String) {
+        require(ownerId.isNotBlank()) { "ownerId must not be blank" }
+        synchronized(stateLock) {
+            updateDeletionMarkers(
+                inProgress = { it },
+                cleanupPending = { it },
+                localRecoveryCopyPending = { it - ownerId },
+                localRecoveryCopyReady = { it - ownerId },
+            )
+        }
+    }
+
+    /** Records a definitive Auth success before local cache cleanup begins. */
+    internal fun markAuthDeletionComplete(ownerId: String) {
+        require(ownerId.isNotBlank()) { "ownerId must not be blank" }
+        synchronized(stateLock) {
+            updateDeletionMarkers(
+                inProgress = { it },
+                cleanupPending = { it },
+                cloudDeletionPending = { it - ownerId },
+                authDeletionStarted = { it - ownerId },
+                authDeletionComplete = { it + ownerId },
+                localRecoveryCopyPending = { it - ownerId },
+                localRecoveryCopyReady = { it },
+            )
+        }
+    }
+
+    /** Owners whose Auth deletion was started but not durably completed. */
+    internal fun authDeletionStartedOwnerIds(): Set<String> = synchronized(stateLock) {
+        readOwners(KEY_AUTH_DELETION_STARTED)
+    }
+
+    /** Owners whose deletion was active when the process last stopped. */
+    internal fun inProgressOwnerIds(): Set<String> = synchronized(stateLock) {
+        readOwners(KEY_IN_PROGRESS)
+    }
+
+    /**
+     * Promotes an Auth-deletion intent to local cleanup only after the caller
+     * has confirmed that Auth no longer reports that owner on this device.
+     */
+    internal fun promoteAuthDeletionCleanup(ownerId: String) {
+        synchronized(stateLock) {
+            updateDeletionMarkers(
+                inProgress = { it - ownerId },
+                cleanupPending = { it + ownerId },
+                cloudDeletionPending = { it - ownerId },
+                authDeletionStarted = { it - ownerId },
+                authDeletionComplete = { it + ownerId },
+                localRecoveryCopyPending = { it },
+                localRecoveryCopyReady = { it },
+            )
+        }
+    }
+
+    /**
+     * Explicitly resolves a pending Auth request as still present. The account
+     * can resume normal synchronization after its local rows are re-queued.
+     */
+    internal fun resolveAuthDeletionAccountStillExists(ownerId: String) {
+        synchronized(stateLock) {
+            updateDeletionMarkers(
+                inProgress = { it - ownerId },
+                cleanupPending = { it - ownerId },
+                cloudDeletionPending = { it - ownerId },
+                authDeletionStarted = { it - ownerId },
+                authDeletionComplete = { it - ownerId },
+                localRecoveryCopyPending = { it - ownerId },
+                localRecoveryCopyReady = { it - ownerId },
+            )
+        }
+    }
+
+    /** Clears an interrupted pre-Auth deletion after its local rows are queued. */
+    internal fun resolveInterruptedDeletion(ownerId: String) {
+        resolveAuthDeletionAccountStillExists(ownerId)
     }
 
     /** Wait until any sync that acquired the write gate before the barrier has ended. */
@@ -200,12 +393,53 @@ internal object DeletionBarrier {
                         updateDeletionMarkers(
                             inProgress = { it - ownerId },
                             cleanupPending = { it - ownerId },
+                            cloudDeletionPending = { it - ownerId },
+                            authDeletionStarted = { it - ownerId },
+                            authDeletionComplete = { it - ownerId },
+                            localRecoveryCopyPending = { it - ownerId },
+                            localRecoveryCopyReady = { it - ownerId },
                         )
                     }
                     AccountDeletionOutcome.CleanupPending -> {
                         updateDeletionMarkers(
                             inProgress = { it - ownerId },
                             cleanupPending = { it + ownerId },
+                            cloudDeletionPending = { it + ownerId },
+                            authDeletionStarted = { it - ownerId },
+                            authDeletionComplete = { it + ownerId },
+                            localRecoveryCopyPending = { it - ownerId },
+                            localRecoveryCopyReady = { it },
+                        )
+                    }
+                    AccountDeletionOutcome.AuthDeletionPending -> {
+                        // Keep the auth intent as the durable owner block, but
+                        // release the process-local in-progress lock. We must
+                        // not clear the staged copy or schedule a resync until
+                        // Firebase confirms whether the account still exists.
+                        updateDeletionMarkers(
+                            inProgress = { it - ownerId },
+                            cleanupPending = { it },
+                            cloudDeletionPending = { it },
+                            authDeletionStarted = { it + ownerId },
+                            authDeletionComplete = { it - ownerId },
+                            localRecoveryCopyPending = { it },
+                            localRecoveryCopyReady = { it },
+                        )
+                    }
+                    AccountDeletionOutcome.LocalRecoveryPending -> {
+                        // The cloud data is gone, but Auth was not invoked and
+                        // the global __local__ recovery copy could not be
+                        // discarded. Keep the cloud phase and recovery marker
+                        // until startup can finish the discard and re-queue the
+                        // still-existing account.
+                        updateDeletionMarkers(
+                            inProgress = { it - ownerId },
+                            cleanupPending = { it },
+                            cloudDeletionPending = { it + ownerId },
+                            authDeletionStarted = { it - ownerId },
+                            authDeletionComplete = { it - ownerId },
+                            localRecoveryCopyPending = { it },
+                            localRecoveryCopyReady = { it },
                         )
                     }
                     // Keep the durable in-progress marker, but release the
@@ -235,12 +469,24 @@ internal object DeletionBarrier {
             updateDeletionMarkers(
                 inProgress = { it - ownerId },
                 cleanupPending = { it - ownerId },
+                cloudDeletionPending = { it - ownerId },
+                authDeletionStarted = { it - ownerId },
+                authDeletionComplete = { it - ownerId },
+                localRecoveryCopyPending = { it - ownerId },
+                localRecoveryCopyReady = { it - ownerId },
             )
         }
     }
 
     internal fun pendingCleanupOwnerIds(): Set<String> = synchronized(stateLock) {
-        readOwners(KEY_CLEANUP_PENDING)
+        readOwners(KEY_CLEANUP_PENDING) + readOwners(KEY_AUTH_DELETION_COMPLETE)
+    }
+
+    /** Owners whose cloud data is gone but Auth completion is not resolved. */
+    internal fun cloudDeletionPendingOwnerIds(): Set<String> = synchronized(stateLock) {
+        readOwners(KEY_CLOUD_DELETION_PENDING) -
+            readOwners(KEY_CLEANUP_PENDING) -
+            readOwners(KEY_AUTH_DELETION_COMPLETE)
     }
 
     internal fun isDeletionBlocked(ownerId: String?): Boolean =
@@ -286,10 +532,22 @@ internal object DeletionBarrier {
         }
         val inProgress = readOwners(KEY_IN_PROGRESS)
         val cleanupPending = readOwners(KEY_CLEANUP_PENDING)
+        val cloudDeletionPending = readOwners(KEY_CLOUD_DELETION_PENDING)
+        val authDeletionStarted = readOwners(KEY_AUTH_DELETION_STARTED)
+        val authDeletionComplete = readOwners(KEY_AUTH_DELETION_COMPLETE)
+        val localRecoveryCopyPending = readOwners(KEY_LOCAL_RECOVERY_COPY_PENDING)
+        val localRecoveryCopyReady = readOwners(KEY_LOCAL_RECOVERY_COPY_READY)
+        // The recovery copy uses one global LOCAL_OWNER_ID namespace. It must
+        // therefore block every account until it is either discarded or
+        // promoted to durable cleanup; otherwise another account's first sync
+        // could adopt the unresolved copy.
+        if (localRecoveryCopyPending.isNotEmpty() || localRecoveryCopyReady.isNotEmpty()) {
+            return true
+        }
         return if (ownerId == null) {
-            inProgress.isNotEmpty() || cleanupPending.isNotEmpty()
+            inProgress.isNotEmpty() || cleanupPending.isNotEmpty() || cloudDeletionPending.isNotEmpty() || authDeletionStarted.isNotEmpty() || authDeletionComplete.isNotEmpty()
         } else {
-            ownerId in inProgress || ownerId in cleanupPending
+            ownerId in inProgress || ownerId in cleanupPending || ownerId in cloudDeletionPending || ownerId in authDeletionStarted || ownerId in authDeletionComplete
         }
     }
 
@@ -299,16 +557,36 @@ internal object DeletionBarrier {
     private fun updateDeletionMarkers(
         inProgress: (Set<String>) -> Set<String>,
         cleanupPending: (Set<String>) -> Set<String>,
+        cloudDeletionPending: (Set<String>) -> Set<String> = { it },
+        authDeletionStarted: (Set<String>) -> Set<String> = { it },
+        authDeletionComplete: (Set<String>) -> Set<String> = { it },
+        localRecoveryCopyPending: (Set<String>) -> Set<String> = { it },
+        localRecoveryCopyReady: (Set<String>) -> Set<String> = { it },
     ) {
         val store = requireNotNull(stateStore)
         val currentInProgress = store.readOwners(KEY_IN_PROGRESS)
         val currentCleanupPending = store.readOwners(KEY_CLEANUP_PENDING)
+        val currentCloudDeletionPending = store.readOwners(KEY_CLOUD_DELETION_PENDING)
+        val currentAuthDeletionStarted = store.readOwners(KEY_AUTH_DELETION_STARTED)
+        val currentAuthDeletionComplete = store.readOwners(KEY_AUTH_DELETION_COMPLETE)
+        val currentLocalRecoveryCopyPending = store.readOwners(KEY_LOCAL_RECOVERY_COPY_PENDING)
+        val currentLocalRecoveryCopyReady = store.readOwners(KEY_LOCAL_RECOVERY_COPY_READY)
         store.writeMarkers(
             inProgress(currentInProgress),
             cleanupPending(currentCleanupPending),
+            cloudDeletionPending(currentCloudDeletionPending),
+            authDeletionStarted(currentAuthDeletionStarted),
+            authDeletionComplete(currentAuthDeletionComplete),
+            localRecoveryCopyPending(currentLocalRecoveryCopyPending),
+            localRecoveryCopyReady(currentLocalRecoveryCopyReady),
         )
     }
 
     private const val KEY_IN_PROGRESS = "in_progress_owner_ids"
     private const val KEY_CLEANUP_PENDING = "cleanup_pending_owner_ids"
+    private const val KEY_CLOUD_DELETION_PENDING = "cloud_deletion_pending_owner_ids"
+    private const val KEY_AUTH_DELETION_STARTED = "auth_deletion_started_owner_ids"
+    private const val KEY_AUTH_DELETION_COMPLETE = "auth_deletion_complete_owner_ids"
+    private const val KEY_LOCAL_RECOVERY_COPY_PENDING = "local_recovery_copy_pending_owner_ids"
+    private const val KEY_LOCAL_RECOVERY_COPY_READY = "local_recovery_copy_ready_owner_ids"
 }

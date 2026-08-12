@@ -1,6 +1,8 @@
 package io.github.litaog.dailyrecord.core.account
 
 import io.github.litaog.dailyrecord.core.auth.AuthAccount
+import io.github.litaog.dailyrecord.core.auth.AuthAccountPresence
+import io.github.litaog.dailyrecord.core.auth.AuthDeletionResult
 import io.github.litaog.dailyrecord.core.auth.AuthRepository
 import io.github.litaog.dailyrecord.core.auth.AuthState
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
@@ -128,92 +130,210 @@ class AccountDeletionCoordinatorTest {
     }
 
     @Test
-    fun authDeletionFailureRollsBackStagedLocalCopyAndRequeuesCloudResync() = runBlocking {
+    fun unknownAuthDeletionKeepsRecoveryCopyAndDoesNotRequeueCloudResync() = runBlocking {
         val calls = mutableListOf<String>()
         val failure = IllegalStateException("auth delete failed")
         val auth = FakeAuthRepository(calls, deleteFailure = failure)
         val remote = FakeRemote(calls)
         val local = FakeLocalStore(calls)
 
-        val result = runCatching {
-            coordinator(auth, remote, local).deleteAccount(
-                ownerId = OWNER,
-                password = "correct-password",
-                localData = LocalDataAfterAccountDeletion.Keep,
-            )
-        }
+        val result = coordinator(auth, remote, local).deleteAccount(
+            ownerId = OWNER,
+            password = "correct-password",
+            localData = LocalDataAfterAccountDeletion.Keep,
+        )
 
-        assertSame(failure, result.exceptionOrNull())
+        assertTrue(result is AccountDeletionResult.AuthDeletionPending)
+        assertSame(failure, (result as AccountDeletionResult.AuthDeletionPending).cause)
         assertEquals(
             listOf(
                 "reauth",
                 "delete-cloud",
                 "stage-local",
                 "delete-auth",
-                "discard-local",
-                "mark-pending",
             ),
             calls,
         )
-        assertFalse(local.localCopyStaged)
+        assertTrue(local.localCopyStaged)
         assertFalse(local.ownerCacheDeleted)
-        assertTrue(local.pendingForResync)
+        assertFalse(local.pendingForResync)
     }
 
     @Test
-    fun authDeletionFailureWithoutLocalCopyStillRequeuesCloudResync() = runBlocking {
+    fun unknownAuthDeletionWithoutLocalCopyDoesNotRequeueCloudResync() = runBlocking {
         val calls = mutableListOf<String>()
         val failure = IllegalStateException("auth delete failed")
         val auth = FakeAuthRepository(calls, deleteFailure = failure)
         val remote = FakeRemote(calls)
         val local = FakeLocalStore(calls)
 
-        val result = runCatching {
-            coordinator(auth, remote, local).deleteAccount(
-                ownerId = OWNER,
-                password = "correct-password",
-                localData = LocalDataAfterAccountDeletion.Delete,
-            )
-        }
+        val result = coordinator(auth, remote, local).deleteAccount(
+            ownerId = OWNER,
+            password = "correct-password",
+            localData = LocalDataAfterAccountDeletion.Delete,
+        )
 
-        assertSame(failure, result.exceptionOrNull())
+        assertTrue(result is AccountDeletionResult.AuthDeletionPending)
+        assertSame(failure, (result as AccountDeletionResult.AuthDeletionPending).cause)
         assertEquals(
-            listOf("reauth", "delete-cloud", "delete-auth", "mark-pending"),
+            listOf("reauth", "delete-cloud", "delete-auth"),
             calls,
         )
-        assertTrue(local.pendingForResync)
+        assertFalse(local.pendingForResync)
     }
 
     @Test
-    fun authDeletionCancellationAfterCloudDeleteRequeuesCloudResync() = runBlocking {
+    fun authDeletionCancellationAfterRequestStartsKeepsUnknownState() = runBlocking {
         val calls = mutableListOf<String>()
         val cancellation = kotlinx.coroutines.CancellationException("cancelled")
         val auth = FakeAuthRepository(calls, deleteFailure = cancellation)
         val remote = FakeRemote(calls)
         val local = FakeLocalStore(calls)
 
-        val result = runCatching {
-            coordinator(auth, remote, local).deleteAccount(
-                ownerId = OWNER,
-                password = "correct-password",
-                localData = LocalDataAfterAccountDeletion.Keep,
-            )
-        }
+        val result = coordinator(auth, remote, local).deleteAccount(
+            ownerId = OWNER,
+            password = "correct-password",
+            localData = LocalDataAfterAccountDeletion.Keep,
+        )
 
-        assertSame(cancellation, result.exceptionOrNull())
+        assertTrue(result is AccountDeletionResult.AuthDeletionPending)
+        assertSame(cancellation, (result as AccountDeletionResult.AuthDeletionPending).cause)
         assertEquals(
             listOf(
                 "reauth",
                 "delete-cloud",
                 "stage-local",
                 "delete-auth",
-                "discard-local",
-                "mark-pending",
             ),
             calls,
         )
-        assertTrue(local.pendingForResync)
+        assertFalse(local.pendingForResync)
+        assertTrue(local.localCopyStaged)
+    }
+
+    @Test
+    fun recoveryCopyIntentFailureDoesNotTouchLocalCopy() = runBlocking {
+        val calls = mutableListOf<String>()
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+        val markerFailure = IllegalStateException("disk full")
+
+        val result = runCatching {
+            coordinator(
+                auth = auth,
+                remote = remote,
+                local = local,
+                markLocalRecoveryCopyPending = { throw markerFailure },
+            ).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        assertSame(markerFailure, result.exceptionOrNull())
+        assertEquals(
+            listOf("reauth", "delete-cloud", "mark-pending"),
+            calls,
+        )
         assertFalse(local.localCopyStaged)
+        assertFalse(auth.accountDeleted)
+        assertTrue(local.pendingForResync)
+    }
+
+    @Test
+    fun recoveryCopyReadyMarkerIsWrittenAfterRoomCopy() = runBlocking {
+        val calls = mutableListOf<String>()
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+
+        coordinator(
+            auth = auth,
+            remote = remote,
+            local = local,
+            markLocalRecoveryCopyPending = { calls += "mark-copy-pending" },
+            markLocalRecoveryCopyReady = { calls += "mark-copy-ready" },
+        ).deleteAccount(
+            ownerId = OWNER,
+            password = "correct-password",
+            localData = LocalDataAfterAccountDeletion.Keep,
+        )
+
+        assertEquals(
+            listOf(
+                "reauth",
+                "delete-cloud",
+                "mark-copy-pending",
+                "stage-local",
+                "mark-copy-ready",
+                "delete-auth",
+                "delete-owner-cache",
+            ),
+            calls,
+        )
+    }
+
+    @Test
+    fun recoveryCopyFailureAfterWriteDiscardsTheCopy() = runBlocking {
+        val calls = mutableListOf<String>()
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+        val markerFailure = IllegalStateException("disk full")
+
+        val result = runCatching {
+            coordinator(
+                auth = auth,
+                remote = remote,
+                local = local,
+                markLocalRecoveryCopyReady = { throw markerFailure },
+            ).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        assertSame(markerFailure, result.exceptionOrNull())
+        assertEquals(
+            listOf("reauth", "delete-cloud", "stage-local", "discard-local", "mark-pending"),
+            calls,
+        )
+        assertFalse(local.localCopyStaged)
+        assertTrue(local.pendingForResync)
+    }
+
+    @Test
+    fun recoveryCopyDiscardFailureKeepsARecoverableResult() = runBlocking {
+        val calls = mutableListOf<String>()
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(
+            calls,
+            discardLocalRecoveryCopyFailure = IllegalStateException("local db unavailable"),
+        )
+        val markerFailure = IllegalStateException("copy marker unavailable")
+
+        val result = runCatching {
+            coordinator(
+                auth = auth,
+                remote = remote,
+                local = local,
+                markLocalRecoveryCopyReady = { throw markerFailure },
+            ).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is AccountDeletionLocalRecoveryPendingException)
+        assertEquals(OWNER, (exception as AccountDeletionLocalRecoveryPendingException).ownerId)
+        assertFalse(local.pendingForResync)
+        assertFalse(auth.accountDeleted)
     }
 
     @Test
@@ -246,6 +366,25 @@ class AccountDeletionCoordinatorTest {
     }
 
     @Test
+    fun cloudDeletionPhaseIsPersistedBeforeLocalCleanup() = runBlocking {
+        val calls = mutableListOf<String>()
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+        coordinator(auth, remote, local, markCloudDeletionComplete = { calls += "mark-cloud-deleted" })
+            .deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Delete,
+            )
+
+        assertEquals(
+            listOf("reauth", "delete-cloud", "mark-cloud-deleted", "delete-auth", "delete-owner-cache"),
+            calls,
+        )
+    }
+
+    @Test
     fun cancellationDuringLocalCleanupPropagatesWithoutPendingState() = runBlocking {
         val calls = mutableListOf<String>()
         val cancellation = kotlinx.coroutines.CancellationException("cancelled")
@@ -273,7 +412,21 @@ class AccountDeletionCoordinatorTest {
         auth: AuthRepository,
         remote: HandBrewRemoteDataSource,
         local: AccountDeletionLocalStore,
-    ) = AccountDeletionCoordinator(auth, remote, local)
+        markCloudDeletionComplete: (String) -> Unit = {},
+        markAuthDeletionStarted: (String) -> Unit = {},
+        markLocalRecoveryCopyPending: (String) -> Unit = {},
+        markLocalRecoveryCopyReady: (String) -> Unit = {},
+        markAuthDeletionComplete: (String) -> Unit = {},
+    ) = AccountDeletionCoordinator(
+        auth,
+        remote,
+        local,
+        markCloudDeletionComplete,
+        markAuthDeletionStarted,
+        markLocalRecoveryCopyPending,
+        markLocalRecoveryCopyReady,
+        markAuthDeletionComplete,
+    )
 
     private companion object {
         const val OWNER = "owner-id"
@@ -300,11 +453,18 @@ private class FakeAuthRepository(
         reauthFailure?.let { throw it }
     }
 
-    override suspend fun deleteCurrentAccount() {
+    override suspend fun deleteCurrentAccount(): AuthDeletionResult {
         calls += "delete-auth"
-        deleteFailure?.let { throw it }
+        deleteFailure?.let {
+            if (it is kotlinx.coroutines.CancellationException) throw it
+            return AuthDeletionResult.Unknown(it)
+        }
         accountDeleted = true
+        return AuthDeletionResult.Completed
     }
+
+    override suspend fun inspectAccountPresence(ownerId: String): AuthAccountPresence =
+        AuthAccountPresence.Exists
 
     override fun signOut() = Unit
 }
@@ -332,6 +492,7 @@ private class FakeLocalStore(
     private val calls: MutableList<String>,
     private val deleteOwnerCacheFailure: Exception? = null,
     private val deleteOwnerCacheCancellation: kotlinx.coroutines.CancellationException? = null,
+    private val discardLocalRecoveryCopyFailure: Exception? = null,
 ) : AccountDeletionLocalStore {
     var localCopyStaged = false
     var ownerCacheDeleted = false
@@ -344,6 +505,7 @@ private class FakeLocalStore(
 
     override suspend fun discardLocalRecoveryCopy() {
         calls += "discard-local"
+        discardLocalRecoveryCopyFailure?.let { throw it }
         localCopyStaged = false
     }
 

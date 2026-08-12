@@ -1,6 +1,9 @@
 package io.github.litaog.dailyrecord.ui
 
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
+import io.github.litaog.dailyrecord.core.account.AccountDeletionAuthPendingException
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryPendingException
+import io.github.litaog.dailyrecord.core.account.AccountDeletionResult
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome
@@ -23,7 +26,7 @@ internal class AccountDeletionOrchestrator(
         ownerId: String,
         password: String,
         localData: LocalDataAfterAccountDeletion,
-    ) -> Unit,
+    ) -> AccountDeletionResult,
     private val markCleanupPending: (ownerId: String) -> Unit,
     private val onLocalRecordsKept: () -> Unit,
     private val onScheduleSync: (ownerId: String) -> Unit,
@@ -38,6 +41,7 @@ internal class AccountDeletionOrchestrator(
         var outcome = AccountDeletionOutcome.Interrupted
         var result: Result<Unit>? = null
         var barrierFailure: Exception? = null
+        var nonCriticalCallbackFailure: Exception? = null
         try {
             // Persist the deletion marker before cancelling any producer.
             // This closes the schedule-vs-delete race and survives process
@@ -45,28 +49,66 @@ internal class AccountDeletionOrchestrator(
             DeletionBarrier.beginDeletionBlock(ownerId)
             began = true
             DeletionBarrier.awaitDeletionWriters()
-            val deletionResult: Result<Unit> = runCatchingPreservingCancellation {
+            val deletionResult = runCatchingPreservingCancellation {
                 cancelAndAwait()
                 performDeletion(ownerId, password, localData)
             }
-                val cleanupPending = deletionResult.exceptionOrNull() is
+            val cleanupPending = deletionResult.exceptionOrNull() is
                 AccountDeletionLocalCleanupPendingException
+            val localRecoveryPending = deletionResult.exceptionOrNull() is
+                AccountDeletionLocalRecoveryPendingException
+            val authPending = deletionResult.getOrNull() as?
+                AccountDeletionResult.AuthDeletionPending
             outcome = when {
                 cleanupPending -> AccountDeletionOutcome.CleanupPending
+                localRecoveryPending -> AccountDeletionOutcome.LocalRecoveryPending
+                authPending != null -> AccountDeletionOutcome.AuthDeletionPending
                 deletionResult.isSuccess -> AccountDeletionOutcome.Completed
                 else -> AccountDeletionOutcome.RetryableFailure
             }
             if (cleanupPending) {
                 // Keep both the legacy marker and the durable marker;
                 // either one can recover local cleanup after a restart.
-                markCleanupPending(ownerId)
+                try {
+                    markCleanupPending(ownerId)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    // The durable barrier is the source of truth. A failure in
+                    // the legacy compatibility preference must not turn a
+                    // confirmed Auth deletion into a retryable account
+                    // deletion, which could never re-authenticate.
+                    deletionResult.exceptionOrNull()?.addSuppressed(error)
+                }
             }
-            if ((deletionResult.isSuccess || cleanupPending) &&
+            if (((deletionResult.isSuccess && authPending == null && !localRecoveryPending) || cleanupPending) &&
                 localData == LocalDataAfterAccountDeletion.Keep
             ) {
-                onLocalRecordsKept()
+                try {
+                    onLocalRecordsKept()
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    // Local-mode navigation is a UI side effect. A failure to
+                    // flip that preference must not turn a confirmed Auth
+                    // deletion into a retryable deletion or schedule a write
+                    // under an account that no longer exists.
+                    nonCriticalCallbackFailure = error
+                }
             }
-            result = if (cleanupPending) Result.success(Unit) else deletionResult
+            result = when {
+                cleanupPending -> Result.success(Unit)
+                localRecoveryPending -> Result.failure(
+                    deletionResult.exceptionOrNull()!!,
+                )
+                authPending != null -> Result.failure(
+                    AccountDeletionAuthPendingException(ownerId, authPending.cause),
+                )
+                else -> deletionResult.map { Unit }
+            }
+            nonCriticalCallbackFailure?.let { error ->
+                result?.exceptionOrNull()?.addSuppressed(error)
+            }
         } catch (error: CancellationException) {
             // Do not clear an interrupted marker: a future sync must stay
             // blocked until the user retries or finishes deletion.
@@ -90,7 +132,16 @@ internal class AccountDeletionOrchestrator(
             } else if (outcome == AccountDeletionOutcome.RetryableFailure) {
                 // A failed deletion must not leave pending local records
                 // stuck: re-enable the normal background sync path.
-                onScheduleSync(ownerId)
+                try {
+                    onScheduleSync(ownerId)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    // Scheduling is best effort; keep the original deletion
+                    // failure as the public result and let the next local
+                    // change or app start schedule the retry.
+                    result?.exceptionOrNull()?.addSuppressed(error)
+                }
             }
         }
         return requireNotNull(result)
