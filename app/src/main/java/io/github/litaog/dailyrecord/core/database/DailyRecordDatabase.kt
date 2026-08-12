@@ -82,9 +82,11 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
                         "ON `hand_brew_records` (`local_date`)",
                 )
 
-                // Keep the unreleased generic v1 tables as read-only recovery evidence.
-                // They are no longer referenced by product code and can be removed in a
-                // later audited migration after the hand-brew extraction is verified.
+                // Keep the deprecated generic v1 tables as read-only recovery
+                // evidence. The generic activity model was never productized,
+                // but its released v1 hand-brew rows were migrated above; the
+                // legacy tables are no longer referenced by product code and
+                // can be removed in a later audited migration.
                 db.execSQL("ALTER TABLE `daily_records` RENAME TO `legacy_daily_records_v1`")
                 db.execSQL("ALTER TABLE `activities` RENAME TO `legacy_activities_v1`")
             }
