@@ -201,6 +201,64 @@ class RecordScreenTest {
     }
 
     @Test
+    fun timeFieldUsesWheelDialogAndCancelKeepsOriginalValue() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 1)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(23, 59),
+                    endTime = null,
+                    feeling = "",
+                ),
+            ),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 1 次，开始，23:59").performClick()
+
+        composeRule.onNodeWithTag("time_picker_dialog").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("小时，当前 23").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("分钟，当前 59").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("取消").performClick()
+
+        assertTrue(composeRule.onAllNodesWithTag("time_picker_dialog").fetchSemanticsNodes().isEmpty())
+        composeRule.onNodeWithContentDescription("第 1 次，开始，23:59").assertIsDisplayed()
+    }
+
+    @Test
+    fun confirmingWheelSelectionUpdatesOnlyTheRequestedTime() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 1)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(9, 15),
+                    endTime = LocalTime.of(12, 45),
+                    feeling = "",
+                ),
+            ),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 1 次，开始，09:15").performClick()
+        composeRule.onNodeWithContentDescription("选择小时 10").performClick()
+        composeRule.onNodeWithContentDescription("选择分钟 16").performClick()
+        composeRule.onNodeWithContentDescription("确定").performClick()
+
+        composeRule.onNodeWithContentDescription("第 1 次，开始，10:16").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，结束，12:45").assertIsDisplayed()
+    }
+
+    @Test
     fun detailsReflowInsideANarrowViewport() {
         val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 1)))
         setRecordContent(repository, width = 260.dp)

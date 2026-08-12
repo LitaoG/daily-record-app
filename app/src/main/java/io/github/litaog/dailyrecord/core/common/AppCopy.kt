@@ -300,6 +300,12 @@ internal object AppCopy {
         const val detailStartTime = "开始"
         const val detailEndTime = "结束"
         const val detailTimeUnset = "选择时间"
+        const val detailTimePickerTitle = "选择时间"
+        const val detailTimePickerSubtitle = "上下滑动选择小时和分钟"
+        const val detailTimePickerHour = "小时"
+        const val detailTimePickerMinute = "分钟"
+        const val detailTimePickerHint = "滚动停止后会自动对齐"
+        const val detailTimePickerConfirm = "确定"
         const val detailWriteFeeling = "写感受"
         const val detailEditFeeling = "编辑感受"
         const val detailCollapseFeeling = "收起"
@@ -315,6 +321,12 @@ internal object AppCopy {
 
         fun detailTimeDescription(occurrence: Int, label: String, value: String): String =
             "${detailOccurrence(occurrence)}，$label，$value"
+
+        fun detailTimeWheelCurrent(unit: String, value: String): String =
+            "$unit，当前 $value"
+
+        fun detailTimeWheelOption(unit: String, value: String): String =
+            "选择$unit $value"
 
         fun detailFeelingActionDescription(occurrence: Int, action: String): String =
             "${detailOccurrence(occurrence)}，$action"

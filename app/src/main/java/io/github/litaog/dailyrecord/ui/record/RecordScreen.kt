@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui.record
 
-import android.app.TimePickerDialog
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -36,7 +35,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,7 +52,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -436,6 +433,7 @@ internal fun DailyCountRecordScreen(
 
     TimePickerHost(
         request = timePickerRequest,
+        colors = moduleSpec.colors,
         onSelected = { request, minutes ->
             val current = detailsDraft.entries.getOrNull(request.index) ?: return@TimePickerHost
             if (
@@ -1004,31 +1002,17 @@ private fun DetailEntryButton(
 @Composable
 private fun TimePickerHost(
     request: TimePickerRequest?,
+    colors: RecordModuleColorTokens,
     onSelected: (TimePickerRequest, Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val context = LocalContext.current
-    // The effect keys on the request only: later Room emissions must not
-    // dismiss and re-show the dialog while the user is picking. The wheel
-    // values are snapshotted into the request when it is created.
-    DisposableEffect(request, context) {
-        if (request == null) {
-            onDispose { }
-        } else {
-            val dialog = TimePickerDialog(
-                context,
-                { _, hour, minute -> onSelected(request, hour * 60 + minute) },
-                request.initialMinutes / 60,
-                request.initialMinutes % 60,
-                true,
-            )
-            dialog.setOnDismissListener { onDismiss() }
-            dialog.show()
-            onDispose {
-                dialog.setOnDismissListener(null)
-                dialog.dismiss()
-            }
-        }
+    if (request != null) {
+        RecordTimePickerDialog(
+            initialMinutes = request.initialMinutes,
+            colors = colors,
+            onDismiss = onDismiss,
+            onConfirm = { minutes -> onSelected(request, minutes) },
+        )
     }
 }
 
