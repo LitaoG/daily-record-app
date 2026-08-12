@@ -692,6 +692,7 @@ private fun DetailTimeFields(
             occurrence = occurrence,
             target = DetailTimeTarget.Start,
             label = AppCopy.Record.detailStartTime,
+            placeholder = AppCopy.Record.detailStartTimeUnset,
             minutes = entry.startMinutes,
             accent = accent,
             modifier = Modifier.weight(1f),
@@ -705,6 +706,7 @@ private fun DetailTimeFields(
             occurrence = occurrence,
             target = DetailTimeTarget.End,
             label = AppCopy.Record.detailEndTime,
+            placeholder = AppCopy.Record.detailEndTimeUnset,
             minutes = entry.endMinutes,
             accent = accent,
             modifier = Modifier.weight(1f),
@@ -740,6 +742,7 @@ private fun DetailTimeField(
     occurrence: Int,
     target: DetailTimeTarget,
     label: String,
+    placeholder: String,
     minutes: Int?,
     accent: Color,
     modifier: Modifier = Modifier,
@@ -762,17 +765,18 @@ private fun DetailTimeField(
                 contentDescription = AppCopy.Record.detailTimeDescription(
                     occurrence = occurrence,
                     label = label,
-                    value = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
+                    value = minutes?.let(::formatMinutes) ?: placeholder,
                 )
             }
             .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
             .padding(horizontal = DailyRecordSpacing.Inline),
-        contentAlignment = Alignment.CenterStart,
+        contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
+            text = minutes?.let(::formatMinutes) ?: placeholder,
             color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
             style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center,
         )
     }
 }

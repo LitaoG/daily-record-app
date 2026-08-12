@@ -225,6 +225,28 @@ class RecordScreenTest {
     }
 
     @Test
+    fun unsetTimeLabelsAreSpecificAndCenteredInsideTheirFields() {
+        val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 1)))
+        setRecordContent(repository, width = 390.dp)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+
+        val startField = composeRule.onNodeWithTag("record_detail_1_start_time").fetchSemanticsNode().boundsInRoot
+        val endField = composeRule.onNodeWithTag("record_detail_1_end_time").fetchSemanticsNode().boundsInRoot
+        val startText = composeRule.onNodeWithText("开始时间", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val endText = composeRule.onNodeWithText("结束时间", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+
+        composeRule.onNodeWithText("开始时间", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("结束时间", useUnmergedTree = true).assertIsDisplayed()
+        assertTrue(composeRule.onAllNodesWithText("选择时间", useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        assertEquals(startField.center.x, startText.center.x, 0.5f)
+        assertEquals(startField.center.y, startText.center.y, 0.5f)
+        assertEquals(endField.center.x, endText.center.x, 0.5f)
+        assertEquals(endField.center.y, endText.center.y, 0.5f)
+    }
+
+    @Test
     fun detailsReflowInsideANarrowViewport() {
         val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 1)))
         setRecordContent(repository, width = 260.dp)
