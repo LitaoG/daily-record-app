@@ -1,6 +1,6 @@
 package io.github.litaog.dailyrecord.ui.navigation
 
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
+import io.github.litaog.dailyrecord.ui.statistics.StatisticsPeriod
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth

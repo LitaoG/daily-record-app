@@ -1,5 +1,6 @@
 package io.github.litaog.dailyrecord.ui.account
 
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -63,7 +64,7 @@ class AccountDialogTest {
         }
         composeRule.onNodeWithText("网络连接异常").assertIsDisplayed()
         composeRule.onNodeWithText("网络连接异常，记录仍在本机。").assertIsDisplayed()
-        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(AppCopy.Account.syncDialogMessage).assertIsDisplayed()
         composeRule.onNodeWithContentDescription("立即同步").assertIsDisplayed()
 
         composeRule.runOnIdle {

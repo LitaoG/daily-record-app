@@ -3,8 +3,8 @@ package io.github.litaog.dailyrecord.core.sync
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import io.github.litaog.dailyrecord.core.cloud.BACKGROUND_CLOUD_TIMEOUT_MILLIS
-import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
+import io.github.litaog.dailyrecord.core.common.BACKGROUND_CLOUD_TIMEOUT_MILLIS
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException

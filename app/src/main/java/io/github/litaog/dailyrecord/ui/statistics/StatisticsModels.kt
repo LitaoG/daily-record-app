@@ -4,7 +4,6 @@ import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import java.time.LocalDate
 import java.time.YearMonth
 

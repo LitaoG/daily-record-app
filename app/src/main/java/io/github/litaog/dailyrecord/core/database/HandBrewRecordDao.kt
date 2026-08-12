@@ -44,7 +44,7 @@ internal interface HandBrewRecordDao {
         UPDATE hand_brew_records
         SET is_deleted = 1,
             updated_at = :updatedAt,
-            sync_state = 'PENDING'
+            sync_state = '$SYNC_PENDING'
         WHERE id = :id
           AND owner_id = :ownerId
           AND is_deleted = 0
@@ -60,7 +60,7 @@ internal interface HandBrewRecordDao {
 
     @Query(
         "SELECT * FROM hand_brew_records " +
-            "WHERE owner_id = :ownerId AND sync_state = 'PENDING' ORDER BY updated_at ASC",
+            "WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING' ORDER BY updated_at ASC",
     )
     suspend fun getPending(ownerId: String): List<HandBrewRecordEntity>
 
@@ -100,10 +100,10 @@ internal interface HandBrewRecordDao {
         remoteRevision: Long,
     ): Int
 
-    @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
+    @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING'")
     fun observePendingCount(ownerId: String): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
+    @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId AND sync_state = '$SYNC_PENDING'")
     suspend fun countPending(ownerId: String): Int
 
     @Query("SELECT COUNT(*) FROM hand_brew_records WHERE owner_id = :ownerId")

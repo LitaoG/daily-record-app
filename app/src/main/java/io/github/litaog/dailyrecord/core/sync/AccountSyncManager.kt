@@ -3,9 +3,9 @@ package io.github.litaog.dailyrecord.core.sync
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestoreException
-import io.github.litaog.dailyrecord.core.cloud.BACKGROUND_CLOUD_TIMEOUT_MILLIS
-import io.github.litaog.dailyrecord.core.cloud.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
-import io.github.litaog.dailyrecord.core.cloud.InteractiveCloudTimeoutException
+import io.github.litaog.dailyrecord.core.common.BACKGROUND_CLOUD_TIMEOUT_MILLIS
+import io.github.litaog.dailyrecord.core.common.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
+import io.github.litaog.dailyrecord.core.common.InteractiveCloudTimeoutException
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean

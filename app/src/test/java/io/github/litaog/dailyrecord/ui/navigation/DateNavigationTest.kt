@@ -1,6 +1,6 @@
 package io.github.litaog.dailyrecord.ui.navigation
 
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
+import io.github.litaog.dailyrecord.ui.statistics.StatisticsPeriod
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

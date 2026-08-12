@@ -28,6 +28,7 @@ import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.AccountDialog
 import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
@@ -42,16 +43,12 @@ import io.github.litaog.dailyrecord.ui.calendar.DailyCountCalendarScreen
 import io.github.litaog.dailyrecord.ui.record.DailyCountRecordScreen
 import io.github.litaog.dailyrecord.ui.statistics.DailyCountStatisticsScreen
 import io.github.litaog.dailyrecord.ui.settings.SettingsScreen
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import java.time.LocalDate
 import java.time.YearMonth
 
 private val EarliestSupportedDate: LocalDate = LocalDate.of(1970, 1, 1)
 private val EarliestSupportedMonth: YearMonth = YearMonth.from(EarliestSupportedDate)
-
-internal const val VPN_SYNC_FAILURE_MESSAGE =
-    AppCopy.vpnSyncFailure
 
 internal enum class TopDestination {
     Calendar,
@@ -111,7 +108,7 @@ fun DailyRecordApp(
             syncStatus.networkRelated
         ) {
             snackbarHostState.showSnackbar(
-                message = VPN_SYNC_FAILURE_MESSAGE,
+                message = AppCopy.vpnSyncFailure,
                 duration = SnackbarDuration.Short,
             )
         }
