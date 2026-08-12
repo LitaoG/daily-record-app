@@ -4,7 +4,7 @@
 
 ## 目标
 
-- 专注手冲与做爱两个固定、独立的垂直模块，不建立通用活动框架。
+- 专注自慰与做爱两个固定、独立的垂直模块，不建立通用活动框架。
 - 离线可用，记录反馈及时。
 - Room 是唯一业务事实来源。
 - 账号和云端是可选恢复通道，不阻塞本地记录。
@@ -69,10 +69,10 @@ app
 
 ## 功能演进边界
 
-- 当前运行时有手冲与做爱两个垂直切片；实体、表、DAO、Repository、远端字段和 Firestore 路径保持专用语义。
+- 当前运行时有自慰与做爱两个垂直切片；实体、表、DAO、Repository、远端字段和 Firestore 路径保持专用语义。
 - 账号外壳、日期导航、主题、可取消操作结果和基础反馈等语义一致的能力可以复用。
 - 两个真实模块已证明相同的日期导航、次数编辑、统计纯函数和冲突流程由强类型 UI 适配器与 `DailyCountSyncEngine` 共享。
-- `CombinedSyncCoordinator`、`CombinedAccountRemoteDataStore` 与 `CombinedAccountDeletionLocalStore` 接受非空模块列表；新增模块不需要继续扩展手冲/做爱的二元构造逻辑。兼容构造函数只服务当前两个模块的组合入口。
+- `CombinedSyncCoordinator`、`CombinedAccountRemoteDataStore` 与 `CombinedAccountDeletionLocalStore` 接受非空模块列表；新增模块不需要继续扩展自慰/做爱的二元构造逻辑。兼容构造函数只服务当前两个模块的组合入口。
 - 未来新增记录类型时，先建立 ADR，再新增自己的领域实体、Repository、统计计算、同步路径和迁移测试；不向既有记录塞活动 ID，也不建立万能字段。
 
 ## 日期规则
@@ -84,7 +84,7 @@ app
 
 ## 数据库演进
 
-Room 当前版本为 5。v1→v2 只提取旧 `flight` 机器图标标识的记录，不依赖用户可见名称；旧表改名为 `legacy_*_v1` 保留作恢复证据。v2→v3 为手冲记录增加账号所有者、墓碑、同步状态和远端修订号。v3→v4 非破坏地创建空的 `sex_records`，不改写任何手冲行。v4→v5 非破坏地创建两套逐次详情表，现有聚合次数不变。运行时代码不读取 legacy 表。
+Room 当前版本为 5。v1→v2 只提取旧 `flight` 机器图标标识的记录，不依赖用户可见名称；旧表改名为 `legacy_*_v1` 保留作恢复证据。v2→v3 为自慰记录增加账号所有者、墓碑、同步状态和远端修订号。v3→v4 非破坏地创建空的 `sex_records`，不改写任何自慰行。v4→v5 非破坏地创建两套逐次详情表，现有聚合次数不变。运行时代码不读取 legacy 表。
 
 禁止 destructive migration。
 

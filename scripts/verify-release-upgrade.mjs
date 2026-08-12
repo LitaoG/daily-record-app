@@ -135,7 +135,7 @@ function main() {
   clickText("保存记录");
   waitForNode(
     (node) => node["content-desc"]?.startsWith(datePrefix)
-      && node["content-desc"].includes("手冲，1 次"),
+      && node["content-desc"].includes("自慰，1 次"),
     "saved one-count calendar state",
   );
 
@@ -147,7 +147,7 @@ function main() {
   startApp();
   waitForNode(
     (node) => node["content-desc"]?.startsWith(datePrefix)
-      && node["content-desc"].includes("手冲，1 次"),
+      && node["content-desc"].includes("自慰，1 次"),
     "preserved Room record after overlay",
   );
 

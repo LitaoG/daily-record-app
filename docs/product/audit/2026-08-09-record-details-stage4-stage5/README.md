@@ -27,7 +27,7 @@
 | 200% 字体仍可读 | `RecordScreenTest.detailsRemainReadableAt200PercentFontScale` | 通过 |
 | 进程重建后草稿保留 | `RecordDetailsDraftTest.saverRoundTripsExpandedDraftForProcessRecreation` | 通过（Saver 层证据） |
 | 跨设备详情同步 | `HandBrewSyncCoordinatorTest.perOccurrenceDetailsRoundTripAcrossDevices` | 通过 |
-| 手冲/做爱模块隔离 | 两模块独立模型、Repository、同步测试；本轮未改变边界 | 通过（回归范围未改变） |
+| 自慰/做爱模块隔离 | 两模块独立模型、Repository、同步测试；本轮未改变边界 | 通过（回归范围未改变） |
 | TalkBack 语义和最小触摸目标 | 详情操作使用 `Role.Button`、集中描述和 `MinimumTouchTarget`；定向 Compose 测试通过 | 通过 |
 
 本轮没有用自定义 Activity 强行模拟进程重建：该方式会绕过正式 Manifest/安全边界，并在当前测试环境触发解析失败。进程恢复以生产使用的 `RecordDetailsDraft.Saver` 单元测试为证据；真实 Activity 进程杀死/恢复仍应由用户在 Android Studio 设备上做最终验收。
@@ -91,7 +91,7 @@ HandBrewSyncCoordinatorTest connected            18/18 PASS
 
 - 候选 APK 已生成，可供 Android Studio/真机验收；安装前请校验本轮提交后的 SHA-256。
 - PR #119 只合并到 `integration/review-candidate`，保持 Draft；`main`、Release 和私有恢复仓库均不在本轮自动推进范围内。
-- Issue #105 的“用户验收/发布收口”复选框仍保持未勾选。用户应重点验证：正常字号与 200% 字体、窄屏、TalkBack、返回/旋转/进程恢复、手冲与做爱切换、0/1/2/9+ 次、未填写详情仍可保存，以及跨设备登录后的详情恢复。
+- Issue #105 的“用户验收/发布收口”复选框仍保持未勾选。用户应重点验证：正常字号与 200% 字体、窄屏、TalkBack、返回/旋转/进程恢复、自慰与做爱切换、0/1/2/9+ 次、未填写详情仍可保存，以及跨设备登录后的详情恢复。
 - 若真机发现问题，按一个可复现问题一个 Issue 记录；不要以截图主观差异为理由继续无目标重构。
 
 ## 最后一次输入可见性复核

@@ -8,7 +8,7 @@
 
 | 日期/目录 | 主题 | 当前状态 |
 |---|---|---|
-| [2026-07-19 deep UX](2026-07-19-deep-ux/README.md) | 首轮深度 UX 与仅手冲基线 | 历史 |
+| [2026-07-19 deep UX](2026-07-19-deep-ux/README.md) | 首轮深度 UX 与仅自慰基线 | 历史 |
 | [2026-07-22 calendar/statistics](2026-07-22-calendar-statistics/README.md) | 日历与统计边界 | 历史 |
 | [2026-07-22 native UI](2026-07-22-native-ui/README.md) | 应用内弹窗与系统 UI 边界 | 历史 |
 | [2026-07-22 password reset/sync](2026-07-22-password-reset-sync/README.md) | 密码重置和同步回归 | 历史 |
