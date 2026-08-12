@@ -208,8 +208,6 @@ private fun RemoteHandBrewDetail.asEntity(
     updatedAt = java.time.Instant.EPOCH,
 )
 
-private fun localCopyId(id: String): String = "__local__-copy-$id"
-
 private fun HandBrewRecordEntity.isSamePendingVersion(other: HandBrewRecordEntity): Boolean =
     syncState == SYNC_PENDING &&
         id == other.id &&
@@ -217,3 +215,4 @@ private fun HandBrewRecordEntity.isSamePendingVersion(other: HandBrewRecordEntit
         brewCount == other.brewCount &&
         updatedAt == other.updatedAt &&
         isDeleted == other.isDeleted
+
