@@ -360,7 +360,7 @@ class RecordScreenTest {
         assertTrue(actionBounds.top >= scrollBounds.bottom)
         assertTrue(lastDetailBounds.bottom <= actionBounds.top)
         composeRule.onNodeWithTag("record_detail_12").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("保存记录").assertIsDisplayed()
+        composeRule.onNodeWithTag("save_record_button").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("清除记录").assertIsDisplayed()
     }
 
