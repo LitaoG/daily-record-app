@@ -52,3 +52,6 @@ git diff --check                                 PASS
 
 当前未发现阻塞合并的代码问题。整合分支应以 Draft PR 提交，待 CI 完成后再由
 用户验收；在验收前不合并到 `main`，也不删除来源分支。
+
+来源分支保留用于逐项追溯；`maintenance/resource-cleanup` 与 `main` 无差异，
+没有需要再次合并的提交。
