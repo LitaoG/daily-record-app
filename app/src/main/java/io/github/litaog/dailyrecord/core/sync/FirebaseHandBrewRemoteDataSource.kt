@@ -20,6 +20,7 @@ internal class FirebaseHandBrewRemoteDataSource(
         detailsProvider = detailsProvider,
         collectionName = "handBrewRecords",
         countFieldName = FIELD_BREW_COUNT,
+        parseRecord = ::parseRemoteHandBrewRecord,
         parseRecords = ::parseRemoteHandBrewRecords,
         toRemoteDetails = { details ->
             details.map {

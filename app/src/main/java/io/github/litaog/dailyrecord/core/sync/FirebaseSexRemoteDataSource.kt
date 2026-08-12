@@ -20,6 +20,7 @@ internal class FirebaseSexRemoteDataSource(
         detailsProvider = detailsProvider,
         collectionName = "sexRecords",
         countFieldName = FIELD_SEX_COUNT,
+        parseRecord = ::parseRemoteSexRecord,
         parseRecords = ::parseRemoteSexRecords,
         toRemoteDetails = { details ->
             details.map {

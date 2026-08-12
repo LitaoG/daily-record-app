@@ -85,6 +85,12 @@ data class StatisticsDetail(
      * back to the caller-supplied list index.
      */
     val calendarIndex: Int? = null,
+    /**
+     * Source date for week-ring rendering.  Keeping the date alongside the
+     * display label lets the UI derive localized weekday/day text without
+     * parsing a localized string.
+     */
+    val date: LocalDate? = null,
 )
 
 data class StatisticsUiModel(
@@ -140,6 +146,7 @@ private fun buildWeek(
                 future = true,
                 recorded = false,
                 calendarIndex = offset.toInt(),
+                date = date,
             )
         } else {
             val record = rangeRecords.firstOrNull { it.localDate == date }
@@ -149,6 +156,7 @@ private fun buildWeek(
                 days = if ((record?.count ?: 0) > 0) 1 else 0,
                 recorded = record != null,
                 calendarIndex = offset.toInt(),
+                date = date,
             )
         }
     }

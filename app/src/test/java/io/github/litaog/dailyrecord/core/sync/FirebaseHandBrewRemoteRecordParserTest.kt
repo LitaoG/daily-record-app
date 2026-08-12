@@ -81,6 +81,30 @@ class FirebaseHandBrewRemoteRecordParserTest {
     }
 
     @Test
+    fun singleDocumentPathPreservesMalformedTypeForSyncEngine() {
+        val error = assertThrows(MalformedRemoteRecordException::class.java) {
+            parseRemoteRecordOrThrow(
+                documentId = DATE,
+                values = validValues() + ("brewCount" to -1L),
+                parse = ::parseRemoteHandBrewRecord,
+            )
+        }
+
+        assertEquals("Cloud record is malformed", error.message)
+    }
+
+    @Test
+    fun singleDocumentPathRejectsMissingDataAsMalformed() {
+        assertThrows(MalformedRemoteRecordException::class.java) {
+            parseRemoteRecordOrThrow(
+                documentId = DATE,
+                values = null,
+                parse = ::parseRemoteHandBrewRecord,
+            )
+        }
+    }
+
+    @Test
     fun parsesOptionalDetailsAndAcceptsNumericOccurrenceIndexes() {
         val record = parseRemoteHandBrewRecord(
             documentId = DATE,

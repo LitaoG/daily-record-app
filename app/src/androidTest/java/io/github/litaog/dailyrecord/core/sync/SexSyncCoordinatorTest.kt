@@ -695,6 +695,48 @@ class SexSyncCoordinatorTest {
     }
 
     @Test
+    fun fakeRemoteScopesRecordsByOwnerAndMatchesAllSyncFields() = runBlocking {
+        val remote = remote()
+        val ownerRecord = SexRecordEntity(
+            id = "record-owner-a",
+            localDate = date,
+            ownerId = ownerId,
+            sexCount = 2,
+            createdAt = firstInstant,
+            updatedAt = firstInstant,
+            isDeleted = false,
+            syncState = io.github.litaog.dailyrecord.core.database.SYNC_PENDING,
+            remoteRevision = 0,
+        )
+        val otherOwnerRecord = ownerRecord.copy(
+            id = "record-owner-b",
+            ownerId = "other-user",
+        )
+
+        val committed = remote.commit(ownerId, ownerRecord)
+        assertEquals(1, remote.fetch(ownerId).records.size)
+        assertTrue(remote.fetch("other-user").records.isEmpty())
+        assertTrue(remote.matches(committed, ownerRecord))
+
+        assertFalse(remote.matches(committed, ownerRecord.copy(localDate = date.plusDays(1))))
+        assertFalse(remote.matches(committed, ownerRecord.copy(sexCount = 3)))
+        assertFalse(remote.matches(committed, ownerRecord.copy(updatedAt = firstInstant.plusSeconds(1))))
+        assertFalse(remote.matches(committed, ownerRecord.copy(isDeleted = true)))
+
+        remote.commit("other-user", otherOwnerRecord)
+        assertEquals(1, remote.fetch(ownerId).records.size)
+        assertEquals(1, remote.fetch("other-user").records.size)
+
+        var rejected = false
+        try {
+            remote.commit(ownerId, otherOwnerRecord)
+        } catch (_: IllegalArgumentException) {
+            rejected = true
+        }
+        assertTrue(rejected)
+    }
+
+    @Test
     fun combinedCoordinatorUploadsAndCountsBothModulesWithoutMixingThem() = runBlocking {
         val database = database()
         val handRemote = FakeDailyCountRemoteDataSource<
@@ -709,6 +751,8 @@ class SexSyncCoordinatorTest {
             entityUpdatedAt = { it.updatedAt },
             entityDeleted = { it.isDeleted },
             entityRemoteRevision = { it.remoteRevision },
+            entityOwnerId = { it.ownerId },
+            remoteCount = { it.brewCount },
             buildRemote = { id, localDate, count, createdAt, clientUpdatedAt, deleted, revision, details ->
                 RemoteHandBrewRecord(
                     id = id,
@@ -764,6 +808,8 @@ class SexSyncCoordinatorTest {
         entityUpdatedAt = { it.updatedAt },
         entityDeleted = { it.isDeleted },
         entityRemoteRevision = { it.remoteRevision },
+        entityOwnerId = { it.ownerId },
+        remoteCount = { it.sexCount },
         buildRemote = { id, localDate, count, createdAt, clientUpdatedAt, deleted, revision, details ->
             RemoteSexRecord(
                 id = id,

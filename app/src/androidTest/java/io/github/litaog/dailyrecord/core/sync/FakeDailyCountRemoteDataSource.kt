@@ -29,6 +29,8 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
     private val entityUpdatedAt: (E) -> Instant,
     private val entityDeleted: (E) -> Boolean,
     private val entityRemoteRevision: (E) -> Long,
+    private val entityOwnerId: (E) -> String,
+    private val remoteCount: (R) -> Int,
     private val buildRemote: (
         id: String,
         localDate: LocalDate,
@@ -41,7 +43,12 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
     ) -> R,
 ) : DailyCountRemoteDataSource<E, R> {
     private val mutex = Mutex()
-    private val values = MutableStateFlow<Map<LocalDate, R>>(emptyMap())
+    /**
+     * Keep each account in its own in-memory collection. The production data
+     * source scopes every Firestore query by owner, so the test double must not
+     * accidentally make a record uploaded by one account visible to another.
+     */
+    private val values = MutableStateFlow<Map<String, Map<LocalDate, R>>>(emptyMap())
     val observationAttempts = MutableStateFlow(0)
     var fetchCalls: Int = 0
         private set
@@ -51,7 +58,11 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
     override fun recordsFrom(snapshot: RemoteSnapshot): List<R> =
         snapshot.records.mapNotNull { it as? R }
 
-    override fun matches(remote: R, local: E): Boolean = true
+    override fun matches(remote: R, local: E): Boolean =
+        remote.localDate == entityLocalDate(local) &&
+            remoteCount(remote) == entityCount(local) &&
+            remote.clientUpdatedAt == entityUpdatedAt(local) &&
+            remote.deleted == entityDeleted(local)
 
     override fun observe(ownerId: String): Flow<RemoteSnapshot> = flow {
         val attempt = observationAttempts.value + 1
@@ -60,9 +71,9 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
             throw IOException("temporary listener failure")
         }
         emitAll(
-            values.map {
+            values.map { allOwners ->
                 RemoteSnapshot(
-                    records = it.values.toList(),
+                    records = allOwners[ownerId].orEmpty().values.toList(),
                     fromCache = false,
                     rejectedRecordCount = rejectedRecordCount,
                 )
@@ -75,7 +86,7 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
         if (fetchCalls <= failFetchAttempts) throw IOException("temporary fetch failure")
         fetchGate?.await()
         return RemoteSnapshot(
-            records = values.value.values.toList(),
+            records = values.value[ownerId].orEmpty().values.toList(),
             fromCache = false,
             rejectedRecordCount = rejectedRecordCount,
         )
@@ -83,7 +94,11 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
 
     override suspend fun commit(ownerId: String, local: E): R =
         mutex.withLock {
-            val current = values.value[entityLocalDate(local)]
+            require(entityOwnerId(local) == ownerId) {
+                "Cannot upload a record owned by another account"
+            }
+            val ownerValues = values.value[ownerId].orEmpty()
+            val current = ownerValues[entityLocalDate(local)]
             if (
                 current != null &&
                 (entityRemoteRevision(local) != current.revision || entityId(local) != current.id)
@@ -109,16 +124,21 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
                 (current?.revision ?: 0) + 1,
                 detailsProvider(entityLocalDate(local)),
             )
-            values.value = values.value + (entityLocalDate(local) to committed)
+            values.value = values.value + (ownerId to (ownerValues + (entityLocalDate(local) to committed)))
             committed
         }
 
     override suspend fun deleteAll(ownerId: String) {
-        values.value = emptyMap()
+        values.value = values.value - ownerId
     }
 
     /** Simulates the cloud document disappearing (e.g. account data cleanup). */
-    fun removeRemote(localDate: LocalDate) {
-        values.value = values.value - localDate
+    fun removeRemote(localDate: LocalDate, ownerId: String? = null) {
+        values.value = if (ownerId == null) {
+            values.value.mapValues { (_, ownerValues) -> ownerValues - localDate }
+        } else {
+            val ownerValues = values.value[ownerId].orEmpty()
+            values.value + (ownerId to (ownerValues - localDate))
+        }
     }
 }

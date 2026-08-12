@@ -99,14 +99,33 @@ class DeletionBarrierTest {
         assertFalse(DeletionBarrier.isDeletionBlocked(owner))
         assertTrue(DeletionBarrier.pendingCleanupOwnerIds().isEmpty())
     }
+
+    @Test
+    fun markerTransitionsUseOneStoreCommit() = runBlocking {
+        val owner = "owner-a"
+
+        store.markerWriteCount = 0
+        DeletionBarrier.beginDeletionBlock(owner)
+        assertEquals(1, store.markerWriteCount)
+
+        DeletionBarrier.endDeletionBlock(owner, AccountDeletionOutcome.Completed)
+        assertEquals(2, store.markerWriteCount)
+    }
 }
 
 internal class InMemoryDeletionStateStore : DeletionStateStore {
     private val values = mutableMapOf<String, Set<String>>()
+    var markerWriteCount: Int = 0
 
     override fun readOwners(key: String): Set<String> = values[key].orEmpty()
 
     override fun writeOwners(key: String, owners: Set<String>) {
         values[key] = owners
+    }
+
+    override fun writeMarkers(inProgress: Set<String>, cleanupPending: Set<String>) {
+        markerWriteCount += 1
+        values["in_progress_owner_ids"] = inProgress
+        values["cleanup_pending_owner_ids"] = cleanupPending
     }
 }

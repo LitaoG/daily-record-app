@@ -143,4 +143,8 @@ private class FailingDeletionStateStore : DeletionStateStore {
     override fun writeOwners(key: String, owners: Set<String>) {
         error("disk full")
     }
+
+    override fun writeMarkers(inProgress: Set<String>, cleanupPending: Set<String>) {
+        error("disk full")
+    }
 }

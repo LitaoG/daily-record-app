@@ -31,6 +31,13 @@ internal interface DeletionStateStore {
     fun readOwners(key: String): Set<String>
 
     fun writeOwners(key: String, owners: Set<String>)
+
+    /**
+     * Replaces both marker sets as one durable state transition. Implementations
+     * must make the pair visible atomically so a process crash cannot leave an
+     * account unblocked between the cloud deletion and local cleanup steps.
+     */
+    fun writeMarkers(inProgress: Set<String>, cleanupPending: Set<String>)
 }
 
 internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionStateStore {
@@ -48,8 +55,21 @@ internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionS
         }
     }
 
+    override fun writeMarkers(inProgress: Set<String>, cleanupPending: Set<String>) {
+        check(
+            preferences.edit()
+                .putStringSet(KEY_IN_PROGRESS, inProgress)
+                .putStringSet(KEY_CLEANUP_PENDING, cleanupPending)
+                .commit(),
+        ) {
+            "Unable to persist account deletion state"
+        }
+    }
+
     private companion object {
         const val PREFERENCES_NAME = "daily_record_deletion_state"
+        const val KEY_IN_PROGRESS = "in_progress_owner_ids"
+        const val KEY_CLEANUP_PENDING = "cleanup_pending_owner_ids"
     }
 }
 
@@ -130,7 +150,10 @@ internal object DeletionBarrier {
             deletionBlocked = true
             cloudWriteGeneration += 1
             try {
-                updateOwners(KEY_IN_PROGRESS) { it + ownerId }
+                updateDeletionMarkers(
+                    inProgress = { it + ownerId },
+                    cleanupPending = { it },
+                )
                 // A previous failed commit may have conservatively blocked the
                 // process; a successful durable journal clears that fallback.
                 legacyDeletionBlocked = false
@@ -175,15 +198,15 @@ internal object DeletionBarrier {
                     AccountDeletionOutcome.RetryableFailure,
                     -> {
                         updateDeletionMarkers(
-            inProgress = { it - ownerId },
-            cleanupPending = { it - ownerId },
-        )
+                            inProgress = { it - ownerId },
+                            cleanupPending = { it - ownerId },
+                        )
                     }
                     AccountDeletionOutcome.CleanupPending -> {
                         updateDeletionMarkers(
-            inProgress = { it - ownerId },
-            cleanupPending = { it + ownerId },
-        )
+                            inProgress = { it - ownerId },
+                            cleanupPending = { it + ownerId },
+                        )
                     }
                     // Keep the durable in-progress marker, but release the
                     // process-local lock so a user can retry after cancellation.
@@ -210,9 +233,9 @@ internal object DeletionBarrier {
     internal fun completeDeletionCleanup(ownerId: String) {
         synchronized(stateLock) {
             updateDeletionMarkers(
-            inProgress = { it - ownerId },
-            cleanupPending = { it - ownerId },
-        )
+                inProgress = { it - ownerId },
+                cleanupPending = { it - ownerId },
+            )
         }
     }
 
@@ -273,25 +296,16 @@ internal object DeletionBarrier {
     private fun readOwners(key: String): Set<String> =
         requireNotNull(stateStore).readOwners(key)
 
-    private fun updateOwners(key: String,
-        transform: (Set<String>) -> Set<String>,
-    ) {
-        val store = requireNotNull(stateStore)
-        val updated = transform(store.readOwners(key))
-        store.writeOwners(key, updated)
-    }
-
-    private fun updateDeletionMarkers(inProgress: (Set<String>) -> Set<String>,
+    private fun updateDeletionMarkers(
+        inProgress: (Set<String>) -> Set<String>,
         cleanupPending: (Set<String>) -> Set<String>,
     ) {
         val store = requireNotNull(stateStore)
-        store.writeOwners(
-            KEY_IN_PROGRESS,
-            inProgress(store.readOwners(KEY_IN_PROGRESS)),
-        )
-        store.writeOwners(
-            KEY_CLEANUP_PENDING,
-            cleanupPending(store.readOwners(KEY_CLEANUP_PENDING)),
+        val currentInProgress = store.readOwners(KEY_IN_PROGRESS)
+        val currentCleanupPending = store.readOwners(KEY_CLEANUP_PENDING)
+        store.writeMarkers(
+            inProgress(currentInProgress),
+            cleanupPending(currentCleanupPending),
         )
     }
 

@@ -49,4 +49,4 @@ jobs:
         run: pnpm test:firestore-rules
 
       - name: Validate and build
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug --stacktrace
+        run: ./gradlew testDebugUnitTest compileDebugAndroidTestKotlin lintDebug assembleDebug --stacktrace

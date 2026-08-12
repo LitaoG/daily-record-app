@@ -25,6 +25,7 @@ internal open class FirebaseDailyCountRemoteDataSource<E : Any, D : Any, R : Rem
     private val detailsProvider: suspend (ownerId: String, localDate: LocalDate) -> List<D>,
     private val collectionName: String,
     private val countFieldName: String,
+    private val parseRecord: (documentId: String, values: Map<String, Any?>) -> R,
     private val parseRecords: (List<Pair<String, Map<String, Any?>?>>) -> ParsedRemoteRecords<R>,
     private val toRemoteDetails: (List<D>) -> List<RD>,
     private val entityId: (E) -> String,
@@ -138,9 +139,11 @@ internal open class FirebaseDailyCountRemoteDataSource<E : Any, D : Any, R : Rem
         .document(ownerId)
         .collection(collectionName)
 
-    private fun DocumentSnapshot.toRemoteRecord(): R = requireNotNull(
-        parseRecords(listOf(id to data)).records.firstOrNull(),
-    ) { "Cloud record has no data" }
+    private fun DocumentSnapshot.toRemoteRecord(): R = parseRemoteRecordOrThrow(
+        documentId = id,
+        values = data,
+        parse = parseRecord,
+    )
 
     private fun QuerySnapshot.toRemoteSnapshot(): RemoteSnapshot {
         val parsed = parseRecords(
@@ -154,6 +157,24 @@ internal open class FirebaseDailyCountRemoteDataSource<E : Any, D : Any, R : Rem
             rejectedRecordCount = parsed.rejectedRecordCount,
         )
     }
+}
+
+/**
+ * Parse a single document without the rejection-swallowing behavior used for
+ * list snapshots. Transactional compare-and-set reads need the typed
+ * [MalformedRemoteRecordException] so the sync engine can quarantine the bad
+ * document instead of aborting the whole module sync with a generic error.
+ */
+internal fun <R> parseRemoteRecordOrThrow(
+    documentId: String,
+    values: Map<String, Any?>?,
+    parse: (documentId: String, values: Map<String, Any?>) -> R,
+): R = try {
+    parse(documentId, requireNotNull(values) { "Cloud record has no data" })
+} catch (error: MalformedRemoteRecordException) {
+    throw error
+} catch (error: RuntimeException) {
+    throw MalformedRemoteRecordException(error)
 }
 
 /** Shared parse-result shape for all daily-count modules. */
