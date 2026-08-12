@@ -198,6 +198,30 @@ class RecordScreenTest {
         composeRule.onNodeWithContentDescription("第 1 次，开始，09:15").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("第 1 次，结束，09:45").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("第 1 次，编辑感受").assertIsDisplayed()
+        assertTrue(composeRule.onAllNodesWithText("开始").fetchSemanticsNodes().isEmpty())
+        assertTrue(composeRule.onAllNodesWithText("结束").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun detailActionsAlignAndDoNotReserveATimelineColumn() {
+        val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 2)))
+        setRecordContent(repository, width = 390.dp)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+
+        val section = composeRule.onNodeWithTag("record_details_section").fetchSemanticsNode().boundsInRoot
+        val firstStart = composeRule.onNodeWithTag("record_detail_1_start_time").fetchSemanticsNode().boundsInRoot
+        val firstEnd = composeRule.onNodeWithTag("record_detail_1_end_time").fetchSemanticsNode().boundsInRoot
+        val firstFeeling = composeRule.onNodeWithTag("record_detail_1_feeling").fetchSemanticsNode().boundsInRoot
+        val secondStart = composeRule.onNodeWithTag("record_detail_2_start_time").fetchSemanticsNode().boundsInRoot
+
+        assertEquals(section.left, firstStart.left, 0.5f)
+        assertEquals(firstStart.top, firstEnd.top, 0.5f)
+        assertEquals(firstStart.top, firstFeeling.top, 0.5f)
+        assertEquals(firstStart.height, firstEnd.height, 0.5f)
+        assertEquals(firstStart.height, firstFeeling.height, 0.5f)
+        assertEquals(firstStart.left, secondStart.left, 0.5f)
     }
 
     @Test

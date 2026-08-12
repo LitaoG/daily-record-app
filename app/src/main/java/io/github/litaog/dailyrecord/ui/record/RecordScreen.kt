@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -592,31 +590,31 @@ private fun RecordDetailRow(
     onFeelingToggle: (Int) -> Unit,
     onFeelingChange: (Int, String) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("record_detail_${index + 1}"),
+        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
     ) {
-        TimelineNode(
-            number = index + 1,
-            accent = accent,
-            modifier = Modifier.width(36.dp).fillMaxHeight(),
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+        ) {
+            OccurrenceBadge(number = index + 1, accent = accent)
+            Text(
+                text = AppCopy.Record.detailOccurrence(index + 1),
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
         BoxWithConstraints(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = DailyRecordSpacing.Inline),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             val compactLayout = maxWidth < 340.dp || LocalDensity.current.fontScale >= 1.5f
             Column(
-                modifier = Modifier.testTag("record_detail_${index + 1}"),
                 verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
             ) {
-                Text(
-                    text = AppCopy.Record.detailOccurrence(index + 1),
-                    color = DailyRecordText,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
                 if (compactLayout) {
                     DetailTimeFields(
                         occurrence = index + 1,
@@ -716,37 +714,24 @@ private fun DetailTimeFields(
 }
 
 @Composable
-private fun TimelineNode(
+private fun OccurrenceBadge(
     number: Int,
     accent: Color,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier) {
-        Canvas(Modifier.fillMaxSize()) {
-            val centerX = size.width / 2f
-            val nodeRadius = 16.dp.toPx()
-            drawLine(
-                color = accent.copy(alpha = .28f),
-                start = androidx.compose.ui.geometry.Offset(centerX, nodeRadius * 2f),
-                end = androidx.compose.ui.geometry.Offset(centerX, size.height),
-                strokeWidth = 1.5.dp.toPx(),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(accent),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = number.toString(),
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
+    Box(
+        modifier = modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(accent),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = number.toString(),
+            color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
@@ -760,49 +745,35 @@ private fun DetailTimeField(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            color = DailyRecordTextMuted,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = DailyRecordSpacing.Compact),
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
-                .clip(DailyRecordShapes.Control)
-                .background(DailyRecordSurface)
-                .border(
-                    DailyRecordBorders.Standard,
-                    accent.copy(alpha = .20f),
-                    DailyRecordShapes.Control,
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+            .clip(DailyRecordShapes.Control)
+            .background(DailyRecordSurface)
+            .border(
+                DailyRecordBorders.Standard,
+                accent.copy(alpha = .20f),
+                DailyRecordShapes.Control,
+            )
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics {
+                role = Role.Button
+                contentDescription = AppCopy.Record.detailTimeDescription(
+                    occurrence = occurrence,
+                    label = label,
+                    value = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
                 )
-                .clickable(role = Role.Button, onClick = onClick)
-                .semantics {
-                    role = Role.Button
-                    contentDescription = AppCopy.Record.detailTimeDescription(
-                        occurrence = occurrence,
-                        label = label,
-                        value = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
-                    )
-                }
-                .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
-                .padding(horizontal = DailyRecordSpacing.Inline),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
-                color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Spacer(Modifier.weight(1f))
-            ChevronIcon(
-                forward = true,
-                modifier = Modifier.size(18.dp),
-                color = DailyRecordTextMuted,
-            )
-        }
+            }
+            .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
+            .padding(horizontal = DailyRecordSpacing.Inline),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
+            color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
+            style = MaterialTheme.typography.labelLarge,
+        )
     }
 }
 
