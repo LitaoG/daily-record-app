@@ -47,9 +47,6 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import java.time.LocalDate
 import java.time.YearMonth
 
-private val EarliestSupportedDate: LocalDate = LocalDate.of(1970, 1, 1)
-private val EarliestSupportedMonth: YearMonth = YearMonth.from(EarliestSupportedDate)
-
 internal const val VPN_SYNC_FAILURE_MESSAGE =
     AppCopy.vpnSyncFailure
 
@@ -139,14 +136,14 @@ fun DailyRecordApp(
     }
     val selectedDate = selectedDateText
         ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-        ?.takeIf { it in EarliestSupportedDate..effectiveToday }
+        ?.takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
     val browseDate = runCatching { LocalDate.parse(browseDateText) }
         .getOrDefault(effectiveToday)
-        .takeIf { it in EarliestSupportedDate..effectiveToday }
+        .takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
         ?: effectiveToday
     val displayedMonth = YearMonth.from(browseDate)
     val recordsFlow = remember(selectedController, effectiveToday) {
-        selectedController.observeRecords(EarliestSupportedDate, effectiveToday.plusDays(1))
+        selectedController.observeRecords(EARLIEST_SUPPORTED_DATE, effectiveToday.plusDays(1))
     }
     val allRecordsState by recordsFlow.collectAsState<List<DailyCountEntry>, List<DailyCountEntry>?>(
         initial = null,
@@ -242,15 +239,15 @@ fun DailyRecordApp(
                         moduleSpec = moduleSpec,
                         selectedModule = selectedModule,
                         availableModules = availableModuleSpecs,
-                        earliestMonth = EarliestSupportedMonth,
+                        earliestMonth = EARLIEST_SUPPORTED_MONTH,
                         modifier = Modifier.padding(contentPadding),
                         onPreviousMonth = {
                             val previous = displayedMonth.minusMonths(1)
-                            if (!previous.isBefore(EarliestSupportedMonth)) {
+                            if (!previous.isBefore(EARLIEST_SUPPORTED_MONTH)) {
                                 browseDateText = shiftMonthAnchor(
                                     browseDate,
                                     months = -1,
-                                    earliestDate = EarliestSupportedDate,
+                                    earliestDate = EARLIEST_SUPPORTED_DATE,
                                     latestDate = effectiveToday,
                                 ).toString()
                             }
@@ -262,7 +259,7 @@ fun DailyRecordApp(
                                 browseDateText = shiftMonthAnchor(
                                     browseDate,
                                     months = 1,
-                                    earliestDate = EarliestSupportedDate,
+                                    earliestDate = EARLIEST_SUPPORTED_DATE,
                                     latestDate = effectiveToday,
                                 ).toString()
                             }
@@ -281,7 +278,7 @@ fun DailyRecordApp(
                     TopDestination.Statistics -> DailyCountStatisticsScreen(
                         today = effectiveToday,
                         anchorDate = browseDate,
-                        earliestDate = EarliestSupportedDate,
+                        earliestDate = EARLIEST_SUPPORTED_DATE,
                         records = allRecords,
                         moduleSpec = moduleSpec,
                         selectedModule = selectedModule,
@@ -312,7 +309,7 @@ fun DailyRecordApp(
     if (showDatePicker) {
         DateNavigationDialog(
             initialDate = browseDate,
-            earliestDate = EarliestSupportedDate,
+            earliestDate = EARLIEST_SUPPORTED_DATE,
             latestDate = effectiveToday,
             colors = moduleSpec.colors,
             selection = datePickerSelection,

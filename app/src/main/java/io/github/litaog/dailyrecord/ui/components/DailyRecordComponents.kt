@@ -582,8 +582,8 @@ private fun CountButton(
     }
     Box(
         modifier = Modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-            .size(48.dp)
+            .sizeIn(minWidth = DailyRecordSizes.MinimumTouchTarget, minHeight = DailyRecordSizes.MinimumTouchTarget)
+            .size(DailyRecordSizes.MinimumTouchTarget)
             .clip(CircleShape)
             .background(background)
             .border(

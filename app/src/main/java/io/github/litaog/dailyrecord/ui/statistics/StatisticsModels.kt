@@ -2,6 +2,7 @@ package io.github.litaog.dailyrecord.ui.statistics
 
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.EARLIEST_SUPPORTED_DATE
 import io.github.litaog.dailyrecord.ui.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
@@ -105,7 +106,7 @@ fun buildStatistics(
     anchorDate: LocalDate,
     today: LocalDate,
     records: List<HandBrewRecord>,
-    earliestDate: LocalDate = LocalDate.of(1970, 1, 1),
+    earliestDate: LocalDate = EARLIEST_SUPPORTED_DATE,
 ): StatisticsUiModel = buildDailyCountStatistics(
     period = period,
     anchorDate = anchorDate,
@@ -119,7 +120,7 @@ internal fun buildDailyCountStatistics(
     anchorDate: LocalDate,
     today: LocalDate,
     records: List<DailyCountEntry>,
-    earliestDate: LocalDate = LocalDate.of(1970, 1, 1),
+    earliestDate: LocalDate = EARLIEST_SUPPORTED_DATE,
 ): StatisticsUiModel {
     val completedRecords = records.filter { it.localDate <= today }
     val safeAnchor = anchorDate.coerceIn(earliestDate, today)
