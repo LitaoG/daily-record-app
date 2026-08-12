@@ -142,10 +142,10 @@ internal object AppCopy {
     }
 
     object RecordModule {
-        const val handBrewLabel = "手冲"
-        const val handBrewQuestionToday = "今天手冲了几次？"
-        const val handBrewQuestionPast = "当天手冲了几次？"
-        const val handBrewZero = "当天没有手冲"
+        const val handBrewLabel = "自慰"
+        const val handBrewQuestionToday = "今天自慰了几次？"
+        const val handBrewQuestionPast = "当天自慰了几次？"
+        const val handBrewZero = "当天没有自慰"
         const val sexLabel = "做爱"
         const val sexQuestionToday = "今天做爱了几次？"
         const val sexQuestionPast = "当天做爱了几次？"

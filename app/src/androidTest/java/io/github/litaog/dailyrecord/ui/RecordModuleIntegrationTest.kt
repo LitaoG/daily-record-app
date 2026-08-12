@@ -107,7 +107,7 @@ class RecordModuleIntegrationTest {
     fun handBrewDraftNeverLeaksIntoSexModuleForTheSameDate() {
         setDualModuleContent()
 
-        composeRule.onNodeWithContentDescription("2026年7月17日，手冲，2 次，今天，已选择").performClick()
+        composeRule.onNodeWithContentDescription("2026年7月17日，自慰，2 次，今天，已选择").performClick()
         composeRule.onNodeWithContentDescription("增加一次").performClick()
         composeRule.onNodeWithText("待保存 · 3 次").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("返回日历").performClick()
@@ -178,7 +178,7 @@ class RecordModuleIntegrationTest {
         assertMinimumHeight("record_module_Sex", 52f)
         assertMinimumHeight("bottom_destination_日历", 48f)
         assertMinimumHeight("bottom_destination_统计", 48f)
-        composeRule.onNodeWithText("手冲").assertIsDisplayed()
+        composeRule.onNodeWithText("自慰").assertIsDisplayed()
         composeRule.onNodeWithText("做爱").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()

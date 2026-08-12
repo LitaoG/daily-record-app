@@ -18,7 +18,7 @@
 - 未来日期使用区别于过去未填写的独立浅色、弱化日期并禁用，不在格内显示“未来”；相邻月份日期保持空位且不进入 TalkBack。
 - 短月份使用贴近底部导航的轻量提示与四态图例收尾；六周月和大字体仍可自然滚动。
 - 日历由真实 `YearMonth` 生成，覆盖五周月、六周月和闰年 2 月。
-- 手冲紫色与做爱深红使用同一布局语法，但读取完全独立的数据。
+- 自慰紫色与做爱深红使用同一布局语法，但读取完全独立的数据。
 - 删除仅为旧日历说明卡服务的模块文案字段，避免把已移除 UI 留成无效配置。
 
 ## 视觉证据
@@ -26,7 +26,7 @@
 | 证据 | 说明 |
 |---|---|
 | [01-calendar-normal.png](01-calendar-normal.png) | 390dp 级视口、正常字号、空日历 |
-| [02-calendar-seeded-hand.png](02-calendar-seeded-hand.png) | 手冲：未填写、明确 0、1、2、3+、今天、未来 |
+| [02-calendar-seeded-hand.png](02-calendar-seeded-hand.png) | 自慰：未填写、明确 0、1、2、3+、今天、未来 |
 | [03-calendar-seeded-sex.png](03-calendar-seeded-sex.png) | 做爱：独立数据与深红色阶 |
 | [04-calendar-200-percent.png](04-calendar-200-percent.png) | 200% 字体首屏，无标题或控件裁切 |
 | [05-calendar-200-percent-scrolled.png](05-calendar-200-percent-scrolled.png) | 200% 字体滚动后可到达完整日期网格与记录提示 |
@@ -43,7 +43,7 @@
 - `CalendarGridTest`：3 项通过，覆盖五周月、六周月和 2028 闰年 2 月 29 日。
 - `CalendarScreenTest` 与 `RecordModuleIntegrationTest`：API 34 模拟器共 12 项通过、0 失败、0 跳过。
 - 真实 UI 逐日保存 0、1、2、3 次后，两个模块分别得到 6 次、3 天、记录日均 2.0；切换模块没有混用日期数据。
-- 视觉检查覆盖正常字号、200% 字体、360dp 窄屏、五周月、六周月、手冲和做爱两套颜色。
+- 视觉检查覆盖正常字号、200% 字体、360dp 窄屏、五周月、六周月、自慰和做爱两套颜色。
 - Android Crash Buffer：空。
 
 本阶段只改变 Compose 日历、纯日期网格函数与相关文档；没有修改 Room、同步、Firebase、Manifest、依赖或发布元数据，因此没有重复运行这些未受影响的完整套件。完整测试仍按 [`docs/TESTING.md`](../../../TESTING.md)在 Stage 5 小版本最终功能 head 上统一执行一次。

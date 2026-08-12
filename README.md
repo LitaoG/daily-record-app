@@ -5,10 +5,10 @@
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3F7D6B)](https://github.com/LitaoG/daily-record-app/releases)
 [![License](https://img.shields.io/github/license/LitaoG/daily-record-app)](LICENSE)
 
-一个本地优先的 Android 私密次数日历，分别记录“手冲”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。当前 beta.2 已完成日历、日期记录、周/月/年/全部统计，以及两套模块主题适配。
+一个本地优先的 Android 私密次数日历，分别记录“自慰”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。当前 beta.2 已完成日历、日期记录、周/月/年/全部统计，以及两套模块主题适配。
 
 <p align="center">
-  <img src="docs/product/audit/2026-07-30-ui-v2-stage2-follow-up/01-calendar-normal.png" alt="当前手冲次数热力日历" width="31%">
+  <img src="docs/product/audit/2026-07-30-ui-v2-stage2-follow-up/01-calendar-normal.png" alt="当前自慰次数热力日历" width="31%">
   <img src="docs/product/audit/2026-08-01-ui-v2-stage3/01-record-hand-empty.png" alt="当前日期记录页" width="31%">
   <img src="docs/product/audit/2026-08-02-year-line-chart/implementation.png" alt="当前年度统计折线图" width="31%">
 </p>
@@ -18,21 +18,21 @@
 ## 已实现
 
 - 月历查看、相邻月份切换和 1970 年至今天的年月日快速跳转。
-- 手冲与做爱两个独立模块；切换模块时保留浏览日期和统计周期，重启后恢复上次模块。
+- 自慰与做爱两个独立模块；切换模块时保留浏览日期和统计周期，重启后恢复上次模块。
 - 两个模块分别支持每日次数加减、显式保存 `0` 次、清除记录和未保存返回确认。
 - 明确区分“未填写”“0 次”和正次数。
 - 每个模块各自提供周、月、年和全部历史的总次数、发生天数、记录日均与明细，不合并总数。
 - Room 本地数据库；断网时记录、日历和统计照常使用。
 - 可选邮箱密码注册/登录、密码重置、跨设备恢复和离线待同步。
 - 同步错误分级，以及账号与本人云端数据永久删除。
-- 主页设置入口集中账号同步、本机优先说明、版本与开源许可，不占用第三个底部导航；手冲 / 做爱切换继续留在主页。
+- 主页设置入口集中账号同步、本机优先说明、版本与开源许可，不占用第三个底部导航；自慰 / 做爱切换继续留在主页。
 - TalkBack 语义、48dp 点击目标、200% 系统字体和应用内统一弹窗。
 
-当前范围只包含手冲和做爱次数，不保存伴侣、时间、地点、时长、备注、图片或医疗信息，也不包含健身、提醒、目标、社交、广告或短信验证码。两个模块拥有独立实体、表、Repository 和云端路径，不使用万能活动表。
+当前范围只包含自慰和做爱次数，不保存伴侣、时间、地点、时长、备注、图片或医疗信息，也不包含健身、提醒、目标、社交、广告或短信验证码。两个模块拥有独立实体、表、Repository 和云端路径，不使用万能活动表。
 
 ## 下载与安装
 
-当前公开 Release 为双模块候选版 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，包含手冲与做爱两个独立记录模块。
+当前公开 Release 为双模块候选版 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，包含自慰与做爱两个独立记录模块。
 
 1. 从本仓库 [GitHub Releases](https://github.com/LitaoG/daily-record-app/releases) 下载 APK 和同名 `.sha256`。
 2. 在 Windows PowerShell 中校验：

@@ -25,7 +25,7 @@ class AppCopyTest {
     @Test
     fun zeroHintExplainsTheDifferenceFromAnUnsetDay() {
         assertEquals(
-            "填 0 表示当天没有手冲，会保留记录。",
+            "填 0 表示当天没有自慰，会保留记录。",
             AppCopy.Record.explicitZeroHint(AppCopy.RecordModule.handBrewZero),
         )
     }
@@ -38,7 +38,7 @@ class AppCopyTest {
         assertEquals("3 天", AppCopy.Statistics.categoryDays(3))
         assertEquals("月均 0.6 次", AppCopy.Statistics.annualAverage(.6))
         assertEquals(
-            "手冲，记录为 0 次，今天",
+            "自慰，记录为 0 次，今天",
             AppCopy.Calendar.statusDescription(
                 date = LocalDate.of(2026, 8, 2),
                 today = LocalDate.of(2026, 8, 2),
@@ -60,28 +60,28 @@ class AppCopyTest {
         // TalkBack and the visible cell must share the exact same bucketing:
         // 1..8 stay exact, 9+ collapses to "9 次以上".
         assertEquals(
-            "手冲，1 次",
+            "自慰，1 次",
             AppCopy.Calendar.statusDescription(
                 pastDate, today, unsupported = false, future = false,
                 count = 1, moduleLabel = moduleLabel,
             ),
         )
         assertEquals(
-            "手冲，8 次",
+            "自慰，8 次",
             AppCopy.Calendar.statusDescription(
                 pastDate, today, unsupported = false, future = false,
                 count = 8, moduleLabel = moduleLabel,
             ),
         )
         assertEquals(
-            "手冲，9 次以上",
+            "自慰，9 次以上",
             AppCopy.Calendar.statusDescription(
                 pastDate, today, unsupported = false, future = false,
                 count = 9, moduleLabel = moduleLabel,
             ),
         )
         assertEquals(
-            "手冲，9 次以上",
+            "自慰，9 次以上",
             AppCopy.Calendar.statusDescription(
                 pastDate, today, unsupported = false, future = false,
                 count = 10, moduleLabel = moduleLabel,

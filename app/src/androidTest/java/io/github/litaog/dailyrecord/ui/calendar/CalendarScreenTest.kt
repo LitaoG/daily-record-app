@@ -55,18 +55,18 @@ class CalendarScreenTest {
         }
 
         composeRule
-            .onNodeWithContentDescription("2026年7月16日，手冲，记录为 0 次")
+            .onNodeWithContentDescription("2026年7月16日，自慰，记录为 0 次")
             .assertExists()
         composeRule
             .onNodeWithContentDescription("2026年7月18日，未来日期，不可记录")
             .assertExists()
             .assertIsNotEnabled()
-        composeRule.onNodeWithContentDescription("2026年7月13日，手冲，3 次").assertExists()
-        composeRule.onNodeWithContentDescription("2026年7月14日，手冲，2 次").assertExists()
-        composeRule.onNodeWithContentDescription("2026年7月15日，手冲，1 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月13日，自慰，3 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月14日，自慰，2 次").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月15日，自慰，1 次").assertExists()
         // The 9+ cell must read with the same bucketing as its visual label;
         // an exact "10 次" description would break the consistency contract.
-        composeRule.onNodeWithContentDescription("2026年7月12日，手冲，9 次以上").assertExists()
+        composeRule.onNodeWithContentDescription("2026年7月12日，自慰，9 次以上").assertExists()
         composeRule.onAllNodes(
             hasText("未填") and hasAnyAncestor(hasTestTag("calendar_day_2026-07-01")),
             useUnmergedTree = true,
@@ -110,7 +110,7 @@ class CalendarScreenTest {
             .assertExists()
         composeRule
             .onNodeWithContentDescription(
-                "点击日期填写手冲次数。状态包括：未填写、未来不可填写、0 次和已记录",
+                "点击日期填写自慰次数。状态包括：未填写、未来不可填写、0 次和已记录",
             )
             .assertExists()
     }
