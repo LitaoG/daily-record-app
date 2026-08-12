@@ -48,6 +48,58 @@ class FirebaseSexRemoteRecordParserTest {
         assertEquals(2, parsed.rejectedRecordCount)
     }
 
+    @Test
+    fun rejectsFractionalAndOverflowingOccurrenceIndexes() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteSexRecord(
+                DATE,
+                validValues() + ("details" to listOf(detail("fraction", 1.9))),
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteSexRecord(
+                DATE,
+                validValues() + (
+                    "details" to listOf(detail("overflow", 4_294_967_297L))
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun rejectsDuplicateDetailIdentity() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteSexRecord(
+                DATE,
+                validValues() + (
+                    "details" to listOf(
+                        detail("same", 1),
+                        detail("same", 2),
+                    )
+                ),
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteSexRecord(
+                DATE,
+                validValues() + (
+                    "details" to listOf(
+                        detail("first", 1),
+                        detail("second", 1),
+                    )
+                ),
+            )
+        }
+    }
+
+    private fun detail(id: String, occurrenceIndex: Any): Map<String, Any?> = mapOf(
+        "id" to id,
+        "occurrenceIndex" to occurrenceIndex,
+        "startTime" to null,
+        "endTime" to null,
+        "feeling" to "平静",
+    )
+
     private fun validValues(): Map<String, Any?> = mapOf(
         "id" to "sex-record-id",
         "localDate" to DATE,

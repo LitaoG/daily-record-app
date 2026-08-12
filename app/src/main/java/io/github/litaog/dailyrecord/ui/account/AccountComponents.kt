@@ -61,9 +61,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordWarning
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 
-internal const val VPN_SYNC_DIALOG_MESSAGE =
-    AppCopy.Account.syncDialogMessage
-
 internal enum class SyncFailureAction {
     Retry,
     Reauthenticate,
@@ -79,7 +76,7 @@ internal data class SyncFailurePresentation(
 internal fun SyncFailureKind.presentation(): SyncFailurePresentation = when (this) {
     SyncFailureKind.Network -> SyncFailurePresentation(
         title = AppCopy.Account.networkFailureTitle,
-        guidance = VPN_SYNC_DIALOG_MESSAGE,
+        guidance = AppCopy.Account.syncDialogMessage,
         actionLabel = AppCopy.Account.syncNow,
         action = SyncFailureAction.Retry,
     )
@@ -293,6 +290,7 @@ private fun SyncStatusChip(
             .border(1.dp, DailyRecordDivider, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 9.dp)
+            .heightIn(min = 48.dp)
             .semantics {
                 role = Role.Button
                 contentDescription = AppCopy.Account.syncChipDescription(status.label())

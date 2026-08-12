@@ -2,6 +2,7 @@
   "name": "daily-record-firebase-tests",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "test:docs": "node --test scripts/docs-integrity.test.mjs",
     "test:copy": "node --test scripts/copy-integrity.test.mjs",

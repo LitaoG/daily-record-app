@@ -64,6 +64,7 @@ test("current documentation matches release and Android configuration", () => {
   );
   const readme = read("README.md");
   const product = read("docs/PRODUCT.md");
+  const dataModel = read("docs/DATA_MODEL.md");
 
   const minSdk = build.match(/\bminSdk\s*=\s*(\d+)/)?.[1];
   const targetSdk = build.match(/\btargetSdk\s*=\s*(\d+)/)?.[1];
@@ -77,6 +78,7 @@ test("current documentation matches release and Android configuration", () => {
   assert.ok(readme.includes(`minSdk ${minSdk}`), "README minSdk is stale");
   assert.ok(readme.includes(`targetSdk ${targetSdk}`), "README targetSdk is stale");
   assert.ok(readme.includes(`Room v${roomVersion}`), "README Room schema is stale");
+  assert.ok(dataModel.includes(`Room v${roomVersion}`), "DATA_MODEL Room schema is stale");
   assert.ok(
     fs.existsSync(path.join(root, `docs/releases/v${versionName}.md`)),
     `Missing release notes for v${versionName}`,

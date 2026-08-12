@@ -30,8 +30,23 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install test dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Validate copy, documentation, and release metadata
         run: node --test scripts/copy-integrity.test.mjs scripts/docs-integrity.test.mjs scripts/release-metadata.test.mjs
+
+      - name: Validate Firestore rules
+        run: pnpm test:firestore-rules
 
       - name: Validate and build
         run: ./gradlew testDebugUnitTest lintDebug assembleDebug --stacktrace

@@ -121,6 +121,58 @@ class FirebaseHandBrewRemoteRecordParserTest {
         }
     }
 
+    @Test
+    fun rejectsFractionalOrOverflowingOccurrenceIndexesBeforeConversion() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteHandBrewRecord(
+                documentId = DATE,
+                values = validValues() + ("details" to listOf(detail("detail-fraction", 1.9))),
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteHandBrewRecord(
+                documentId = DATE,
+                values = validValues() + (
+                    "details" to listOf(detail("detail-overflow", 4_294_967_297L))
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun rejectsDuplicateDetailIdsAndOccurrenceIndexes() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteHandBrewRecord(
+                documentId = DATE,
+                values = validValues() + (
+                    "details" to listOf(
+                        detail("detail-a", 1),
+                        detail("detail-b", 1),
+                    )
+                ),
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteHandBrewRecord(
+                documentId = DATE,
+                values = validValues() + (
+                    "details" to listOf(
+                        detail("same-id", 1),
+                        detail("same-id", 2),
+                    )
+                ),
+            )
+        }
+    }
+
+    private fun detail(id: String, occurrenceIndex: Any): Map<String, Any?> = mapOf(
+        "id" to id,
+        "occurrenceIndex" to occurrenceIndex,
+        "startTime" to null,
+        "endTime" to null,
+        "feeling" to "平静",
+    )
+
     private fun validValues(
         createdAtMillis: Long = 1,
         updatedAtMillis: Long = createdAtMillis,

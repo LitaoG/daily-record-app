@@ -121,7 +121,7 @@ function main() {
 
   const initialNodes = dumpNodes();
   if (!initialNodes.some((node) => node.tag === "calendar_screen")) {
-    clickText("先在本机使用");
+    clickText("暂不登录，先使用“本机记录”");
   }
 
   const dateText = runAdb(["shell", "date", "+%Y-%m-%d"]);
@@ -135,7 +135,7 @@ function main() {
   clickText("保存记录");
   waitForNode(
     (node) => node["content-desc"]?.startsWith(datePrefix)
-      && node["content-desc"].includes("手冲 1 次"),
+      && node["content-desc"].includes("手冲，1 次"),
     "saved one-count calendar state",
   );
 
@@ -147,7 +147,7 @@ function main() {
   startApp();
   waitForNode(
     (node) => node["content-desc"]?.startsWith(datePrefix)
-      && node["content-desc"].includes("手冲 1 次"),
+      && node["content-desc"].includes("手冲，1 次"),
     "preserved Room record after overlay",
   );
 

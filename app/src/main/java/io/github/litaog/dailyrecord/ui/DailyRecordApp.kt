@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,6 +28,7 @@ import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.AccountDialog
 import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
@@ -41,16 +43,12 @@ import io.github.litaog.dailyrecord.ui.calendar.DailyCountCalendarScreen
 import io.github.litaog.dailyrecord.ui.record.DailyCountRecordScreen
 import io.github.litaog.dailyrecord.ui.statistics.DailyCountStatisticsScreen
 import io.github.litaog.dailyrecord.ui.settings.SettingsScreen
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import java.time.LocalDate
 import java.time.YearMonth
 
 private val EarliestSupportedDate: LocalDate = LocalDate.of(1970, 1, 1)
 private val EarliestSupportedMonth: YearMonth = YearMonth.from(EarliestSupportedDate)
-
-internal const val VPN_SYNC_FAILURE_MESSAGE =
-    AppCopy.vpnSyncFailure
 
 internal enum class TopDestination {
     Calendar,
@@ -110,7 +108,7 @@ fun DailyRecordApp(
             syncStatus.networkRelated
         ) {
             snackbarHostState.showSnackbar(
-                message = VPN_SYNC_FAILURE_MESSAGE,
+                message = AppCopy.vpnSyncFailure,
                 duration = SnackbarDuration.Short,
             )
         }
@@ -147,6 +145,7 @@ fun DailyRecordApp(
     val recordsFlow = remember(selectedController, effectiveToday) {
         selectedController.observeRecords(EarliestSupportedDate, effectiveToday.plusDays(1))
     }
+    val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
     val allRecordsState by recordsFlow.collectAsState<List<DailyCountEntry>, List<DailyCountEntry>?>(
         initial = null,
     )
@@ -154,7 +153,7 @@ fun DailyRecordApp(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(dailyRecordBackdropBrush(moduleSpec.colors))
+                .background(backdropBrush)
                 .testTag("records_loading")
                 .semantics { contentDescription = AppCopy.readingLocalRecords },
             contentAlignment = Alignment.Center,
@@ -166,22 +165,30 @@ fun DailyRecordApp(
     val allRecords = allRecordsState.orEmpty()
 
     if (selectedDate != null) {
-        DailyCountRecordScreen(
-            date = selectedDate,
-            today = effectiveToday,
-            controller = selectedController,
-            moduleSpec = moduleSpec,
-            monthRecords = allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) },
-            onBack = { selectedDateText = null },
-            onSaved = { selectedDateText = null },
-        )
+        // Key the record screen by module so each module keeps its own
+        // saveable draft slots: a hand-brew draft must never be restored as a
+        // sex draft for the same date (and vice versa).
+        key(selectedModule) {
+            val monthRecords = remember(allRecords, selectedDate) {
+                allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) }
+            }
+            DailyCountRecordScreen(
+                date = selectedDate,
+                today = effectiveToday,
+                controller = selectedController,
+                moduleSpec = moduleSpec,
+                monthRecords = monthRecords,
+                onBack = { selectedDateText = null },
+                onSaved = { selectedDateText = null },
+            )
+        }
         return
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(moduleSpec.colors)),
+            .background(backdropBrush),
     ) {
         if (showSettings) {
             SettingsScreen(

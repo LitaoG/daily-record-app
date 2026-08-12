@@ -47,7 +47,6 @@ import io.github.litaog.dailyrecord.ui.components.PeriodTabs
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.components.StatisticRow
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.navigation.nextPeriodAnchor
 import io.github.litaog.dailyrecord.ui.navigation.previousPeriodAnchor
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted

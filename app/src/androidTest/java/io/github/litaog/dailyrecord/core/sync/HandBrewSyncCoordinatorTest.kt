@@ -518,7 +518,9 @@ class HandBrewSyncCoordinatorTest {
 
         val failure = manager.status.value as SyncStatus.Failed
         assertEquals(SyncFailureKind.Network, failure.kind)
-        assertTrue(failure.message.contains("等待云服务超过 0 秒"))
+        // Even a sub-second test timeout is presented as at least one second so
+        // user-facing copy never reports an impossible "0 秒" wait.
+        assertTrue(failure.message.contains("等待云服务超过 1 秒"))
         assertEquals(1, remote.fetchCalls)
     }
 

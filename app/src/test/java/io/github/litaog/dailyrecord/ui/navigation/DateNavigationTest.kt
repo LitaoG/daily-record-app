@@ -1,6 +1,6 @@
 package io.github.litaog.dailyrecord.ui.navigation
 
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
+import io.github.litaog.dailyrecord.ui.statistics.StatisticsPeriod
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -24,6 +24,11 @@ class DateNavigationTest {
 
     @Test
     fun periodNavigationStopsAtSupportedAndCurrentBoundaries() {
+        assertNull(previousPeriodAnchor(StatisticsPeriod.Week, earliest, earliest))
+        assertEquals(
+            earliest,
+            previousPeriodAnchor(StatisticsPeriod.Week, LocalDate.of(1970, 1, 5), earliest),
+        )
         assertNull(previousPeriodAnchor(StatisticsPeriod.Month, earliest, earliest))
         assertNull(previousPeriodAnchor(StatisticsPeriod.Year, earliest, earliest))
         assertNull(nextPeriodAnchor(StatisticsPeriod.Month, today, today))

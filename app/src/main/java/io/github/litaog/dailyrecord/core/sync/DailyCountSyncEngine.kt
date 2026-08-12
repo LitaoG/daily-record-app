@@ -1,5 +1,7 @@
 package io.github.litaog.dailyrecord.core.sync
 
+import io.github.litaog.dailyrecord.core.account.AccountRemoteDataStore
+
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -19,6 +21,19 @@ internal interface DailyCountSyncStore<LocalRecord, RemoteRecord> {
         local: LocalRecord,
         committed: RemoteRecord,
     ): Boolean
+
+    /**
+     * Re-bases a still-pending row on the revision that the server just
+     * confirmed for it. Called when a commit succeeded but the local row was
+     * edited while the request was in flight: the newer local edit keeps its
+     * content and pending state, and the next commit writes it against the
+     * confirmed revision instead of conflicting with our own earlier write.
+     */
+    suspend fun rebasePending(
+        ownerId: String,
+        local: LocalRecord,
+        committed: RemoteRecord,
+    ): Int
 }
 
 internal interface DailyCountRemoteDataSource<LocalRecord, RemoteRecord> :
@@ -67,7 +82,19 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
             }
             if (store.applyCommitIfUnchanged(ownerId, local, committed)) {
                 if (remote.matches(committed, local)) uploaded += 1 else downloaded += 1
+            } else if (remote.matches(committed, local)) {
+                // Our own commit succeeded (content identical) but the local
+                // row was edited while the request was in flight. Keep the
+                // newer local edit pending and re-base it on the confirmed
+                // revision so the next attempt writes it instead of silently
+                // losing it to a conflict with our own earlier commit.
+                store.rebasePending(ownerId, local, committed)
             }
+            // A conflicting committed record (server had a different revision)
+            // with an unchanged local row is applied by applyCommitIfUnchanged
+            // as the authoritative server version; with a changed local row the
+            // server version wins on the next attempt per ADR-010 and is never
+            // re-based over another device's data.
         }
 
         val confirmed = remote.fetch(ownerId)

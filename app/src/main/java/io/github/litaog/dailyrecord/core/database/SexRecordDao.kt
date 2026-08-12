@@ -44,7 +44,7 @@ internal interface SexRecordDao {
         UPDATE sex_records
         SET is_deleted = 1,
             updated_at = :updatedAt,
-            sync_state = 'PENDING'
+            sync_state = ''
         WHERE id = :id
           AND owner_id = :ownerId
           AND is_deleted = 0
@@ -60,7 +60,7 @@ internal interface SexRecordDao {
 
     @Query(
         "SELECT * FROM sex_records " +
-            "WHERE owner_id = :ownerId AND sync_state = 'PENDING' ORDER BY updated_at ASC",
+            "WHERE owner_id = :ownerId AND sync_state = '' ORDER BY updated_at ASC",
     )
     suspend fun getPending(ownerId: String): List<SexRecordEntity>
 
@@ -70,28 +70,11 @@ internal interface SexRecordDao {
     @Query(
         """
         UPDATE sex_records
-        SET sync_state = 'SYNCED', remote_revision = :remoteRevision
-        WHERE id = :id
-          AND owner_id = :ownerId
-          AND updated_at = :expectedUpdatedAt
-          AND sync_state = 'PENDING'
-        """,
-    )
-    suspend fun markSyncedIfUnchanged(
-        ownerId: String,
-        id: String,
-        expectedUpdatedAt: Instant,
-        remoteRevision: Long,
-    ): Int
-
-    @Query(
-        """
-        UPDATE sex_records
         SET id = :remoteId,
             remote_revision = :remoteRevision
         WHERE owner_id = :ownerId
           AND local_date = :localDate
-          AND sync_state = 'PENDING'
+          AND sync_state = ''
           AND remote_revision = 0
         """,
     )
@@ -102,8 +85,26 @@ internal interface SexRecordDao {
         remoteRevision: Long,
     ): Int
 
-    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = 'PENDING'")
+    @Query(
+        """
+        UPDATE sex_records
+        SET remote_revision = :remoteRevision
+        WHERE owner_id = :ownerId
+          AND local_date = :localDate
+          AND sync_state = ''
+        """,
+    )
+    suspend fun setRemoteRevisionForPending(
+        ownerId: String,
+        localDate: LocalDate,
+        remoteRevision: Long,
+    ): Int
+
+    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = ''")
     fun observePendingCount(ownerId: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId AND sync_state = ''")
+    suspend fun countPending(ownerId: String): Int
 
     @Query("SELECT COUNT(*) FROM sex_records WHERE owner_id = :ownerId")
     suspend fun countForOwner(ownerId: String): Int
@@ -111,12 +112,11 @@ internal interface SexRecordDao {
     @Query(
         """
         UPDATE sex_records
-        SET owner_id = :newOwnerId, sync_state = 'PENDING', remote_revision = 0
-        WHERE owner_id = :oldOwnerId
+        SET sync_state = ''
+        WHERE owner_id = :ownerId
         """,
     )
-    suspend fun moveOwner(oldOwnerId: String, newOwnerId: String): Int
-
+    suspend fun markOwnerPendingForResync(ownerId: String): Int
     @Query("DELETE FROM sex_records WHERE owner_id = :ownerId")
     suspend fun deleteOwnerCache(ownerId: String): Int
 

@@ -205,17 +205,24 @@ internal class HandBrewModuleController(
         details: List<RecordDetailEntry>,
     ) {
         val now = Instant.now()
+        // Reuse the stored id and createdAt per occurrence slot: a detail's id
+        // is its slot identity (see the repository's index-based matching), so
+        // edits must not churn ids or rewrite creation timestamps.
+        val existingByIndex = handBrewRepository.observeDetails(localDate)
+            .first()
+            .associateBy { it.occurrenceIndex }
         handBrewRepository.saveRecord(
             record,
             details.map {
+                val existing = existingByIndex[it.occurrenceIndex]
                 HandBrewRecordDetail(
-                    id = UUID.randomUUID().toString(),
+                    id = existing?.id ?: UUID.randomUUID().toString(),
                     localDate = localDate,
                     occurrenceIndex = it.occurrenceIndex,
                     startTime = it.startTime,
                     endTime = it.endTime,
                     feeling = it.feeling,
-                    createdAt = now,
+                    createdAt = existing?.createdAt ?: now,
                     updatedAt = now,
                 )
             },
@@ -256,17 +263,24 @@ internal class SexModuleController(
         details: List<RecordDetailEntry>,
     ) {
         val now = Instant.now()
+        // Reuse the stored id and createdAt per occurrence slot: a detail's id
+        // is its slot identity (see the repository's index-based matching), so
+        // edits must not churn ids or rewrite creation timestamps.
+        val existingByIndex = sexRepository.observeDetails(localDate)
+            .first()
+            .associateBy { it.occurrenceIndex }
         sexRepository.saveRecord(
             record,
             details.map {
+                val existing = existingByIndex[it.occurrenceIndex]
                 SexRecordDetail(
-                    id = UUID.randomUUID().toString(),
+                    id = existing?.id ?: UUID.randomUUID().toString(),
                     localDate = localDate,
                     occurrenceIndex = it.occurrenceIndex,
                     startTime = it.startTime,
                     endTime = it.endTime,
                     feeling = it.feeling,
-                    createdAt = now,
+                    createdAt = existing?.createdAt ?: now,
                     updatedAt = now,
                 )
             },

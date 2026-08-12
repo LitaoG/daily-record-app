@@ -15,7 +15,6 @@ import androidx.compose.ui.test.performScrollTo
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
-import io.github.litaog.dailyrecord.ui.account.VPN_SYNC_DIALOG_MESSAGE
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -133,23 +132,44 @@ class DailyRecordAppTest {
         composeRule
             .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
             .performClick()
-        composeRule.onNodeWithContentDescription("切换年份，当前2026年").performClick()
-        composeRule.onNodeWithContentDescription("选择2025年").performClick()
-        composeRule.onNodeWithContentDescription("2025年7月3日，星期四").performClick()
+        // The date wheels offer the past years directly; jumping to 2025 keeps
+        // the selected month and day and moves the calendar to July 2025.
+        composeRule.onNodeWithContentDescription("2025年").performClick()
         composeRule.onNodeWithText("跳转到此日").performClick()
 
         assertMonth(2025, 7)
     }
 
     @Test
-    fun datePickerDisablesFutureDatesAndMonths() {
+    fun datePickerWheelsExcludeFutureDatesMonthsAndYears() {
         setAppContent()
 
         composeRule
             .onNodeWithContentDescription("选择年份和日期，当前2026年7月")
             .performClick()
-        composeRule.onNodeWithContentDescription("2026年7月18日，星期六").assertIsNotEnabled()
-        composeRule.onNodeWithContentDescription("跳转到下个月").assertIsNotEnabled()
+        // Today is 2026-07-17: the wheels only offer days up to today, months
+        // up to the current month and years up to the current year.
+        composeRule.onAllNodesWithContentDescription("18日").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("八月").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("2027年").assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("17日").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("七月").assertIsDisplayed()
+    }
+
+    @Test
+    fun discardedDraftDoesNotReturnWhenReopeningTheSameDay() {
+        setAppContent()
+
+        composeRule.onNodeWithContentDescription("2026年7月17日，未填写，今天，已选择").performClick()
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithText("待保存 · 1 次").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("返回日历").performClick()
+        composeRule.onNodeWithText("放弃修改").performClick()
+
+        composeRule.onNodeWithTag("calendar_screen").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("2026年7月17日，未填写，今天，已选择").performClick()
+        composeRule.onAllNodesWithText("待保存 · 1 次").assertCountEquals(0)
+        composeRule.onNodeWithText("尚未填写").assertIsDisplayed()
     }
 
     @Test
@@ -250,7 +270,7 @@ class DailyRecordAppTest {
                 kind = SyncFailureKind.Network,
             )
         }
-        composeRule.onNodeWithText(VPN_SYNC_FAILURE_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(AppCopy.vpnSyncFailure).assertIsDisplayed()
         composeRule.onNodeWithTag("daily_record_snackbar").assertIsDisplayed()
     }
 
@@ -282,7 +302,7 @@ class DailyRecordAppTest {
 
         composeRule.onNodeWithTag("account_sync_dialog").assertIsDisplayed()
         composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
-        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(AppCopy.Account.syncDialogMessage).assertIsDisplayed()
         composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 
@@ -311,7 +331,7 @@ class DailyRecordAppTest {
         }
 
         composeRule.onNodeWithTag("account_vpn_sync_guidance").assertIsDisplayed()
-        composeRule.onNodeWithText(VPN_SYNC_DIALOG_MESSAGE).assertIsDisplayed()
+        composeRule.onNodeWithText(AppCopy.Account.syncDialogMessage).assertIsDisplayed()
         composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 
@@ -336,7 +356,7 @@ class DailyRecordAppTest {
             )
         }
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithText(VPN_SYNC_FAILURE_MESSAGE).assertCountEquals(0)
+        composeRule.onAllNodesWithText(AppCopy.vpnSyncFailure).assertCountEquals(0)
         composeRule.onAllNodesWithTag("daily_record_snackbar").assertCountEquals(0)
     }
 

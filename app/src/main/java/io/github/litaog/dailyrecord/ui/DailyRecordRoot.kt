@@ -22,15 +22,15 @@ import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
 import io.github.litaog.dailyrecord.core.account.CombinedAccountDeletionLocalStore
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
-import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
-import io.github.litaog.dailyrecord.core.cloud.runInteractiveCloudOperation
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
+import io.github.litaog.dailyrecord.core.common.runInteractiveCloudOperation
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.RoomSexRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.AccountSyncManager
 import io.github.litaog.dailyrecord.core.sync.AndroidNetworkMonitor
-import io.github.litaog.dailyrecord.core.sync.CombinedAccountRemoteDataStore
+import io.github.litaog.dailyrecord.core.account.CombinedAccountRemoteDataStore
 import io.github.litaog.dailyrecord.core.sync.CombinedSyncCoordinator
 import io.github.litaog.dailyrecord.core.sync.HandBrewSyncCoordinator
 import io.github.litaog.dailyrecord.core.sync.DailyRecordSyncScheduler
@@ -96,7 +96,11 @@ internal fun DailyRecordRoot(
         return
     }
 
-    val services = remember(servicesProvider) { servicesProvider() }
+    // Only reached when the user is not in persistent local mode. The provider
+    // is remembered with the stable app instance by the caller, so calling it
+    // here never recreates FirebaseServices; this read is what initializes
+    // Firebase for the first time (local-only startup never reaches it).
+    val services = servicesProvider()
     val authState by services.authRepository.state.collectAsState(initial = AuthState.Loading)
     when (val state = authState) {
         AuthState.Loading -> LoadingRoot()

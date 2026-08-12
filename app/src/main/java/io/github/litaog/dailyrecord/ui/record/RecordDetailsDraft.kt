@@ -2,6 +2,8 @@ package io.github.litaog.dailyrecord.ui.record
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
+import io.github.litaog.dailyrecord.core.common.toLocalTime
+import io.github.litaog.dailyrecord.core.common.toMinutesOfDay
 import io.github.litaog.dailyrecord.core.model.MAX_RECORD_DETAIL_FEELING_CHARACTERS
 import io.github.litaog.dailyrecord.core.model.truncateVisibleCharacters
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
@@ -59,6 +61,19 @@ internal data class RecordDetailsDraft(
     val hasChanges: Boolean
         get() = initialized && entries.contentWithoutExpansion() != baseline.contentWithoutExpansion()
 
+    /**
+     * Reconciles the detail rows against the latest remote state.
+     *
+     * @param latest the latest stored details, resized to [count] as the
+     *   baseline the user's edits are compared against
+     * @param count the caller's reconciled **draft count** (countDraft.count),
+     *   not the raw remote count: when the draft is dirty this keeps the
+     *   user's own row size so a remote shrink never truncates in-progress
+     *   edits; when the draft is clean this normalizes the rows to the remote
+     *   value (a remote grow appends blank rows, a remote shrink truncates
+     *   entries beyond the authoritative count, consistent with the save
+     *   path's take(count)).
+     */
     fun reconcile(
         latest: List<RecordDetailEntry>,
         count: Int,
@@ -68,6 +83,11 @@ internal data class RecordDetailsDraft(
             .sortedBy(RecordDetailEntry::occurrenceIndex)
             .map(RecordDetailDraft::fromEntry)
             .resize(count)
+        // count is the caller's draft count (the reconciled countDraft), not
+        // the raw remote count: a dirty draft keeps its own size so a remote
+        // shrink never truncates entries the user is still editing, while a
+        // remote grow (with a clean count) still normalizes the row list to
+        // match the displayed count.
         val nextEntries = if (!initialized || !hasChanges) latestDraft else entries.resize(count)
         return copy(
             entries = nextEntries,
@@ -142,6 +162,3 @@ private fun List<RecordDetailDraft>.resize(count: Int): List<RecordDetailDraft> 
 private fun List<RecordDetailDraft>.contentWithoutExpansion(): List<RecordDetailDraft> =
     map(RecordDetailDraft::withoutExpansion)
 
-private fun LocalTime.toMinutesOfDay(): Int = hour * 60 + minute
-
-private fun Int.toLocalTime(): LocalTime = LocalTime.of(this / 60, this % 60)

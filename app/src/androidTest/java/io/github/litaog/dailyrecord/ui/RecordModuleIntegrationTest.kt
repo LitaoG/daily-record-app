@@ -14,12 +14,16 @@ import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -27,7 +31,7 @@ import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.PeriodTabs
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
+import io.github.litaog.dailyrecord.ui.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -74,12 +78,30 @@ class RecordModuleIntegrationTest {
         composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()
         composeRule.onNodeWithText("本周 · 做爱次数").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("周五 17日，1 次，1 天").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("周五 17日，1 次，1 天")
+            .performScrollTo()
+            .assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("日历，未选择").performClick()
         composeRule.onNodeWithContentDescription("2026年7月17日，做爱，1 次，今天，已选择").performClick()
         composeRule.onNodeWithText("今天做爱了几次？").assertIsDisplayed()
         composeRule.onNodeWithText("填 0 表示当天没有做爱，会保留记录。").assertIsDisplayed()
+    }
+
+    @Test
+    fun handBrewDraftNeverLeaksIntoSexModuleForTheSameDate() {
+        setDualModuleContent()
+
+        composeRule.onNodeWithContentDescription("2026年7月17日，手冲，2 次，今天，已选择").performClick()
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithText("待保存 · 3 次").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("返回日历").performClick()
+        composeRule.onNodeWithText("放弃修改").performClick()
+
+        composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
+        composeRule.onNodeWithContentDescription("2026年7月17日，做爱，1 次，今天，已选择").performClick()
+        composeRule.onAllNodesWithText("待保存 · 3 次").assertCountEquals(0)
+        composeRule.onNodeWithText("已记录 · 1 次").assertIsDisplayed()
     }
 
     @Test

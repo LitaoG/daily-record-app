@@ -1,5 +1,7 @@
-package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.account
 
+import io.github.litaog.dailyrecord.core.sync.HandBrewRemoteDataSource
+import io.github.litaog.dailyrecord.core.sync.SexRemoteDataSource
 import kotlinx.coroutines.CancellationException
 
 internal interface AccountRemoteDataStore {

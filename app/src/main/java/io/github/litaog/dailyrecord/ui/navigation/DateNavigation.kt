@@ -1,6 +1,6 @@
 package io.github.litaog.dailyrecord.ui.navigation
 
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
+import io.github.litaog.dailyrecord.ui.statistics.StatisticsPeriod
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -29,8 +29,14 @@ internal fun previousPeriodAnchor(
     earliestDate: LocalDate,
 ): LocalDate? {
     return when (period) {
-        StatisticsPeriod.Week -> anchorDate.minusWeeks(1)
-            .takeIf { it >= earliestDate }
+        StatisticsPeriod.Week -> anchorDate.minusWeeks(1).let { candidate ->
+            // The first supported week may be a clipped partial week. Once the
+            // anchor is already at the supported lower bound there is no earlier
+            // period to navigate to; returning the same date would leave an
+            // enabled arrow that appears to do nothing.
+            if (anchorDate <= earliestDate && candidate < earliestDate) null
+            else candidate.coerceAtLeast(earliestDate)
+        }
         StatisticsPeriod.Month -> {
             val targetMonth = YearMonth.from(anchorDate).minusMonths(1)
             if (targetMonth < YearMonth.from(earliestDate)) return null

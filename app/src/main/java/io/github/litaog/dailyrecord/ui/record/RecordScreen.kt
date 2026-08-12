@@ -66,9 +66,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.formatMinutesOfDay
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
+import io.github.litaog.dailyrecord.core.common.toMinutesOfDay
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
+import io.github.litaog.dailyrecord.core.model.visibleCharacterCount
 import io.github.litaog.dailyrecord.ui.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.HandBrewModuleController
 import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
@@ -120,6 +123,10 @@ private enum class DetailTimeTarget {
 private data class TimePickerRequest(
     val index: Int,
     val target: DetailTimeTarget,
+    // Snapshotted when the request is created (the picker must not move while
+    // open, and reopening the same target must always start from the current
+    // entry value, not from a stale first-open value).
+    val initialMinutes: Int,
 )
 
 @Composable
@@ -174,7 +181,7 @@ internal fun DailyCountRecordScreen(
     var showClearDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var showDiscardDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var showRemoveDetailDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
-    var errorMessage by rememberSaveable(date.toString()) { mutableStateOf<String?>(null) }
+    var errorMessage by remember(date) { mutableStateOf<String?>(null) }
     var timePickerRequest by remember { mutableStateOf<TimePickerRequest?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -183,8 +190,12 @@ internal fun DailyCountRecordScreen(
     LaunchedEffect(dataReady, record, storedDetails) {
         if (dataReady) {
             val latestCount = record?.count ?: 0
-            countDraft = countDraft.reconcile(latestCount)
-            detailsDraft = detailsDraft.reconcile(storedDetails, latestCount)
+            val reconciledCountDraft = countDraft.reconcile(latestCount)
+            countDraft = reconciledCountDraft
+            // Normalize the detail rows to the reconciled draft count: a dirty
+            // count keeps its size (no remote truncation of in-progress edits)
+            // and a clean count stays in sync with the server.
+            detailsDraft = detailsDraft.reconcile(storedDetails, reconciledCountDraft.count)
         }
     }
 
@@ -212,6 +223,11 @@ internal fun DailyCountRecordScreen(
                 val result = runCatchingPreservingCancellation(operation)
                 saving = false
                 if (result.isSuccess) {
+                    // Saved and cleared drafts must not be restored when the
+                    // day is opened again; the registry would otherwise keep
+                    // them alive across navigation.
+                    countDraft = CountDraft()
+                    detailsDraft = RecordDetailsDraft()
                     onSaved()
                 } else {
                     errorMessage = failureMessage
@@ -229,10 +245,12 @@ internal fun DailyCountRecordScreen(
 
     BackHandler(onBack = requestBack)
 
+    val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(moduleSpec.colors))
+            .background(backdropBrush)
             .testTag("record_screen"),
         containerColor = Color.Transparent,
         snackbarHost = {
@@ -366,7 +384,12 @@ internal fun DailyCountRecordScreen(
                         accent = moduleSpec.colors.primary,
                         onCollapse = { detailsDraft = detailsDraft.copy(expanded = false) },
                         onTimeClick = { index, target ->
-                            timePickerRequest = TimePickerRequest(index, target)
+                            val current = detailsDraft.entries.getOrNull(index)
+                            val minutes = when (target) {
+                                DetailTimeTarget.Start -> current?.startMinutes
+                                DetailTimeTarget.End -> current?.endMinutes
+                            } ?: LocalTime.now().toMinutesOfDay()
+                            timePickerRequest = TimePickerRequest(index, target, minutes)
                         },
                         onFeelingToggle = { index ->
                             detailsDraft = detailsDraft.update(index) {
@@ -418,7 +441,6 @@ internal fun DailyCountRecordScreen(
 
     TimePickerHost(
         request = timePickerRequest,
-        entry = timePickerRequest?.let { detailsDraft.entries.getOrNull(it.index) },
         onSelected = { request, minutes ->
             val current = detailsDraft.entries.getOrNull(request.index) ?: return@TimePickerHost
             if (
@@ -489,6 +511,10 @@ internal fun DailyCountRecordScreen(
             onDismiss = { showDiscardDialog = false },
             onConfirm = {
                 showDiscardDialog = false
+                // The user confirmed the edits are discarded: clear the
+                // remembered drafts so reopening the day starts clean.
+                countDraft = CountDraft()
+                detailsDraft = RecordDetailsDraft()
                 onBack()
             },
         )
@@ -763,7 +789,7 @@ private fun DetailTimeField(
                     contentDescription = AppCopy.Record.detailTimeDescription(
                         occurrence = occurrence,
                         label = label,
-                        value = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
+                        value = minutes?.let(::formatMinutesOfDay) ?: AppCopy.Record.detailTimeUnset,
                     )
                 }
                 .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
@@ -771,7 +797,7 @@ private fun DetailTimeField(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = minutes?.let(::formatMinutes) ?: AppCopy.Record.detailTimeUnset,
+                text = minutes?.let(::formatMinutesOfDay) ?: AppCopy.Record.detailTimeUnset,
                 color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
                 style = MaterialTheme.typography.labelLarge,
             )
@@ -914,7 +940,7 @@ private fun FeelingEditor(
             horizontalArrangement = Arrangement.End,
         ) {
             Text(
-                text = AppCopy.Record.detailFeelingCounter(value.codePointCount(0, value.length)),
+                text = AppCopy.Record.detailFeelingCounter(value.visibleCharacterCount()),
                 color = DailyRecordTextMuted,
                 style = MaterialTheme.typography.labelSmall,
             )
@@ -983,24 +1009,22 @@ private fun DetailEntryButton(
 @Composable
 private fun TimePickerHost(
     request: TimePickerRequest?,
-    entry: RecordDetailDraft?,
     onSelected: (TimePickerRequest, Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    DisposableEffect(request, entry, context) {
+    // The effect keys on the request only: later Room emissions must not
+    // dismiss and re-show the dialog while the user is picking. The wheel
+    // values are snapshotted into the request when it is created.
+    DisposableEffect(request, context) {
         if (request == null) {
             onDispose { }
         } else {
-            val initialMinutes = when (request.target) {
-                DetailTimeTarget.Start -> entry?.startMinutes
-                DetailTimeTarget.End -> entry?.endMinutes
-            } ?: LocalTime.now().let { it.hour * 60 + it.minute }
             val dialog = TimePickerDialog(
                 context,
-                { _, hour, minute -> onSelected(request, hour * 60 + minute) },
-                initialMinutes / 60,
-                initialMinutes % 60,
+                { _, hour, minute -> onSelected(request, LocalTime.of(hour, minute).toMinutesOfDay()) },
+                request.initialMinutes / 60,
+                request.initialMinutes % 60,
                 true,
             )
             dialog.setOnDismissListener { onDismiss() }
@@ -1180,8 +1204,5 @@ private fun RecordTextAction(
         )
     }
 }
-
-private fun formatMinutes(minutes: Int): String =
-    "%02d:%02d".format(minutes / 60, minutes % 60)
 
 private fun weekdayName(date: LocalDate): String = AppCopy.weekdayName(date.dayOfWeek.value)
