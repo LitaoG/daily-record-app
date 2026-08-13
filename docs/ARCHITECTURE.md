@@ -47,7 +47,8 @@ app
    ├─ core:auth        email/password and reset-email boundary
    ├─ core:cloud       Firebase bootstrap
    ├─ core:common      shared invariants and user-facing copy
-   ├─ core:sync        remote source / coordinator / worker
+   ├─ core:di          Firebase bootstrap / composition root / WorkManager adapters
+   ├─ core:sync        remote source / coordinator / deletion barrier
    └─ ui
       ├─ calendar      CalendarScreen
       ├─ record        RecordScreen

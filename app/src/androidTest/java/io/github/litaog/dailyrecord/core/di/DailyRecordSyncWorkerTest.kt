@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.di
 
 import android.content.Context
 import com.google.firebase.FirebaseApp
@@ -20,6 +20,8 @@ import io.github.litaog.dailyrecord.core.common.awaitResult
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
+import io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome
+import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant

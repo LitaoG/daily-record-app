@@ -1,7 +1,7 @@
-package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.di
 
 import androidx.work.ExistingWorkPolicy
-import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
+import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
