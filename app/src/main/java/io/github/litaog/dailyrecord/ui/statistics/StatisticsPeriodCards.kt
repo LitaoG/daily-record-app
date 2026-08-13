@@ -167,8 +167,27 @@ internal fun weekRingLabelRadialDistance(
 internal fun weekRingLabelGapDp(
     segmentIndex: Int,
     sharedGap: Float,
-): Float = sharedGap +
+): Float = sharedGap + weekRingSideLabelExtraGapDp(segmentIndex)
+
+internal fun weekRingSideLabelExtraGapDp(segmentIndex: Int): Float =
     if (segmentIndex == 2 || segmentIndex == 5) WEEK_SIDE_LABEL_EXTRA_GAP_DP else 0f
+
+/**
+ * Returns the radial limit for a label while allowing a small amount of the
+ * surrounding card padding to be used by the Wednesday/Saturday labels.
+ */
+internal fun weekRingLabelHorizontalLimitDp(
+    angleDegrees: Float,
+    availableHalfWidth: Float,
+    boundaryAllowance: Float,
+): Float {
+    val angleSin = abs(sin(Math.toRadians(angleDegrees.toDouble()).toFloat()))
+    return if (angleSin > .001f) {
+        (availableHalfWidth + boundaryAllowance) / angleSin
+    } else {
+        Float.POSITIVE_INFINITY
+    }
+}
 
 internal fun weekRingSharedLabelGapDp(
     ringOuterRadius: Float,
@@ -182,13 +201,12 @@ internal fun weekRingSharedLabelGapDp(
     repeat(WEEK_SEGMENT_COUNT) { index ->
         val angleDegrees = weekRingLabelAngleDegrees(index)
         val angle = Math.toRadians(angleDegrees.toDouble())
-        val angleSin = abs(sin(angle).toFloat())
         val angleCos = abs(cos(angle).toFloat())
-        val horizontalLimit = if (angleSin > .001f) {
-            availableHalfWidth / angleSin
-        } else {
-            Float.POSITIVE_INFINITY
-        }
+        val horizontalLimit = weekRingLabelHorizontalLimitDp(
+            angleDegrees = angleDegrees,
+            availableHalfWidth = availableHalfWidth,
+            boundaryAllowance = 0f,
+        )
         val verticalLimit = if (angleCos > .001f) {
             availableHalfHeight / angleCos
         } else {
@@ -399,7 +417,6 @@ private fun WeekRingChart(
             val segmentIndex = weekRingSegmentIndex(detail, index)
             val angleDegrees = weekRingLabelAngleDegrees(segmentIndex)
             val angle = Math.toRadians(angleDegrees.toDouble())
-            val angleSin = abs(sin(angle).toFloat())
             val angleCos = abs(cos(angle).toFloat())
             val desiredRadius = weekRingLabelRadialDistance(
                 angleDegrees = angleDegrees,
@@ -408,11 +425,14 @@ private fun WeekRingChart(
                 labelHalfHeight = (labelHeight / 2).value,
                 gap = weekRingLabelGapDp(segmentIndex, sharedLabelGap),
             ).dp
-            val horizontalLimit = if (angleSin > .001f) {
-                ((maxWidth / 2 - labelWidth / 2).value / angleSin).dp
-            } else {
-                maxWidth
-            }
+            // DistributionSurface keeps 16dp of horizontal padding around the
+            // chart. Let the side labels use 6dp of that padding; otherwise
+            // their requested extra gap is clamped back to the chart edge.
+            val horizontalLimit = weekRingLabelHorizontalLimitDp(
+                angleDegrees = angleDegrees,
+                availableHalfWidth = (maxWidth / 2 - labelWidth / 2).value,
+                boundaryAllowance = weekRingSideLabelExtraGapDp(segmentIndex),
+            ).dp
             val verticalSpace = if (cos(angle) >= 0) {
                 centerY - labelHeight / 2
             } else {

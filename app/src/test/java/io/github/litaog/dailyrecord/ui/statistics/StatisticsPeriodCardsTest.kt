@@ -282,6 +282,49 @@ class StatisticsPeriodCardsTest {
         assertEquals(18f, weekRingLabelGapDp(segmentIndex = 5, sharedGap = 12f), 0f)
         assertEquals(12f, weekRingLabelGapDp(segmentIndex = 0, sharedGap = 12f), 0f)
         assertEquals(12f, weekRingLabelGapDp(segmentIndex = 6, sharedGap = 12f), 0f)
+        assertEquals(6f, weekRingSideLabelExtraGapDp(segmentIndex = 2), 0f)
+        assertEquals(6f, weekRingSideLabelExtraGapDp(segmentIndex = 5), 0f)
+        assertEquals(0f, weekRingSideLabelExtraGapDp(segmentIndex = 0), 0f)
+    }
+
+    @Test
+    fun `side label boundary allowance keeps the added radial gap from being clamped`() {
+        val ringOuterRadius = 92f
+        val labelHalfWidth = 34f
+        val labelHalfHeight = 22f
+        val availableHalfWidth = 130f
+        val availableHalfHeight = 130f
+        val sharedGap = weekRingSharedLabelGapDp(
+            ringOuterRadius = ringOuterRadius,
+            labelHalfWidth = labelHalfWidth,
+            labelHalfHeight = labelHalfHeight,
+            availableHalfWidth = availableHalfWidth,
+            availableHalfHeight = availableHalfHeight,
+            preferredGap = 12f,
+        )
+        val sideAngle = weekRingLabelAngleDegrees(2)
+        val baseRadius = weekRingLabelRadialDistance(
+            angleDegrees = sideAngle,
+            ringOuterRadius = ringOuterRadius,
+            labelHalfWidth = labelHalfWidth,
+            labelHalfHeight = labelHalfHeight,
+            gap = sharedGap,
+        )
+        val sideRadius = weekRingLabelRadialDistance(
+            angleDegrees = sideAngle,
+            ringOuterRadius = ringOuterRadius,
+            labelHalfWidth = labelHalfWidth,
+            labelHalfHeight = labelHalfHeight,
+            gap = weekRingLabelGapDp(2, sharedGap),
+        )
+        val sideLimit = weekRingLabelHorizontalLimitDp(
+            angleDegrees = sideAngle,
+            availableHalfWidth = availableHalfWidth,
+            boundaryAllowance = weekRingSideLabelExtraGapDp(2),
+        )
+
+        assertTrue(sideRadius > baseRadius)
+        assertTrue(sideLimit >= sideRadius)
     }
 
     @Test
