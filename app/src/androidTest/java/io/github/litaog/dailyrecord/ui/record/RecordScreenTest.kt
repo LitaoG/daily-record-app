@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -18,6 +19,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
@@ -204,7 +206,7 @@ class RecordScreenTest {
     }
 
     @Test
-    fun detailActionsAlignAndDoNotReserveATimelineColumn() {
+    fun detailActionsMatchReferenceRowsAndDoNotReserveATimelineColumn() {
         val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 2)))
         setRecordContent(repository, width = 390.dp)
         composeRule.waitForIdle()
@@ -219,10 +221,32 @@ class RecordScreenTest {
 
         assertEquals(section.left, firstStart.left, 0.5f)
         assertEquals(firstStart.top, firstEnd.top, 0.5f)
-        assertEquals(firstStart.top, firstFeeling.top, 0.5f)
+        assertTrue(firstFeeling.top >= maxOf(firstStart.bottom, firstEnd.bottom))
         assertEquals(firstStart.height, firstEnd.height, 0.5f)
-        assertEquals(firstStart.height, firstFeeling.height, 0.5f)
+        assertEquals(section.right, firstFeeling.right, 0.5f)
         assertEquals(firstStart.left, secondStart.left, 0.5f)
+    }
+
+    @Test
+    fun savingFeelingStaysOnExpandedRecordPageAndKeepsFeelingVisible() {
+        val repository = FakeHandBrewRecordRepository()
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 1 次，写感受").performClick()
+        composeRule.onNodeWithTag("record_detail_1_feeling_editor").performTextInput("今天感觉很好")
+        composeRule.onNodeWithTag("save_record_button").performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("已记录 · 1 次").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("record_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("record_details_section").assertIsDisplayed()
+        composeRule.onNodeWithText("今天感觉很好").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("record_detail_1_feeling_editor").assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("返回日历").assertIsDisplayed()
     }
 
     @Test
