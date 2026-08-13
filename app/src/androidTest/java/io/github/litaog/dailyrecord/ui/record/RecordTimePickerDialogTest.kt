@@ -178,6 +178,36 @@ class RecordTimePickerDialogTest {
     }
 
     @Test
+    fun fastReverseFlingWrapsBackAcrossTheHourBoundary() {
+        var confirmedMinutes: Int? = null
+
+        composeRule.setContent {
+            DailyRecordTheme {
+                RecordTimePickerDialog(
+                    initialMinutes = 0,
+                    colors = HandBrewColorTokens,
+                    onDismiss = {},
+                    onConfirm = { confirmedMinutes = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("time_picker_hour_wheel_surface").performTouchInput {
+            swipe(
+                start = center,
+                end = Offset(center.x, center.y + height * .9f),
+                durationMillis = 80,
+            )
+        }
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("确定").performClick()
+
+        val confirmedHour = requireNotNull(confirmedMinutes) / 60
+        assertTrue("Reverse fling should wrap below 00: confirmed=$confirmedHour", confirmedHour in 1..23)
+    }
+
+    @Test
     fun dialogContentStaysInsideTheAvailableWindow() {
         composeRule.setContent {
             DailyRecordTheme {

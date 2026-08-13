@@ -77,6 +77,9 @@ internal fun RecordTimePickerDialog(
     var selectedMinute by remember(boundedInitialMinutes) {
         mutableIntStateOf(boundedInitialMinutes % MINUTES_PER_HOUR)
     }
+    var hourSettling by remember(boundedInitialMinutes) { mutableStateOf(false) }
+    var minuteSettling by remember(boundedInitialMinutes) { mutableStateOf(false) }
+    val wheelSettling = hourSettling || minuteSettling
     val fontScale = LocalDensity.current.fontScale
     val stackActions = fontScale >= 1.35f
     val wheelRowHeight = if (fontScale >= 1.6f) 72.dp else 56.dp
@@ -103,6 +106,7 @@ internal fun RecordTimePickerDialog(
                 rowHeight = wheelRowHeight,
                 surfaceTestTag = "time_picker_hour_wheel_surface",
                 onValueChanged = { selectedHour = it },
+                onSettlingChanged = { hourSettling = it },
                 modifier = Modifier.weight(1f).testTag("time_picker_hour_wheel"),
             )
             Text(
@@ -121,6 +125,7 @@ internal fun RecordTimePickerDialog(
                 rowHeight = wheelRowHeight,
                 surfaceTestTag = "time_picker_minute_wheel_surface",
                 onValueChanged = { selectedMinute = it },
+                onSettlingChanged = { minuteSettling = it },
                 modifier = Modifier.weight(1f).testTag("time_picker_minute_wheel"),
             )
         }
@@ -140,9 +145,12 @@ internal fun RecordTimePickerDialog(
                 PrimaryActionButton(
                     label = AppCopy.Record.detailTimePickerConfirm,
                     onClick = {
-                        onConfirm(selectedHour * MINUTES_PER_HOUR + selectedMinute)
+                        if (!wheelSettling) {
+                            onConfirm(selectedHour * MINUTES_PER_HOUR + selectedMinute)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = !wheelSettling,
                     accent = colors.primary,
                 )
                 OutlineActionButton(
@@ -166,9 +174,12 @@ internal fun RecordTimePickerDialog(
                 PrimaryActionButton(
                     label = AppCopy.Record.detailTimePickerConfirm,
                     onClick = {
-                        onConfirm(selectedHour * MINUTES_PER_HOUR + selectedMinute)
+                        if (!wheelSettling) {
+                            onConfirm(selectedHour * MINUTES_PER_HOUR + selectedMinute)
+                        }
                     },
                     modifier = Modifier.weight(1f),
+                    enabled = !wheelSettling,
                     accent = colors.primary,
                 )
             }
@@ -186,6 +197,7 @@ private fun TimeWheelColumn(
     rowHeight: androidx.compose.ui.unit.Dp,
     surfaceTestTag: String,
     onValueChanged: (Int) -> Unit,
+    onSettlingChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var selectedValue by remember(resetKey, valueCount) {
@@ -197,6 +209,7 @@ private fun TimeWheelColumn(
     val settleAnimation = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     var animationJob by remember { mutableStateOf<Job?>(null) }
+    var animationGeneration by remember { mutableIntStateOf(0) }
     val rowHeightPx = with(LocalDensity.current) { rowHeight.toPx() }
     val minimumFlingVelocity = with(LocalDensity.current) {
         MINIMUM_FLING_VELOCITY_DP_PER_SECOND.dp.toPx()
@@ -225,8 +238,10 @@ private fun TimeWheelColumn(
     }
 
     fun cancelAnimation() {
+        animationGeneration += 1
         animationJob?.cancel()
         animationJob = null
+        onSettlingChanged(false)
     }
 
     fun snapToNearestValue() {
@@ -240,7 +255,10 @@ private fun TimeWheelColumn(
     }
 
     fun settleWheel(velocity: Float) {
-        animationJob?.cancel()
+        cancelAnimation()
+        val generation = animationGeneration + 1
+        animationGeneration = generation
+        onSettlingChanged(true)
         animationJob = coroutineScope.launch {
             try {
                 if (kotlin.math.abs(velocity) >= minimumFlingVelocity) {
@@ -268,6 +286,11 @@ private fun TimeWheelColumn(
                 dragOffsetPx = 0f
             } catch (_: CancellationException) {
                 // A new gesture or option tap takes ownership of the wheel.
+            } finally {
+                if (generation == animationGeneration) {
+                    animationJob = null
+                    onSettlingChanged(false)
+                }
             }
         }
     }
