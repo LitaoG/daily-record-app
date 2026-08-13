@@ -46,6 +46,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import kotlin.math.abs
 import kotlin.math.cos
@@ -108,11 +109,27 @@ internal fun weekRingPositiveDayCount(details: List<StatisticsDetail>): Int =
 internal fun weekRingColorForBand(
     band: WeekRingCountBand,
     colors: RecordModuleColorTokens,
-): Color = when (band) {
-    WeekRingCountBand.One -> colors.soft
-    WeekRingCountBand.Two -> colors.medium
-    WeekRingCountBand.Three -> colors.primary.copy(alpha = .78f)
-    WeekRingCountBand.FourPlus -> colors.strong
+): Color = colors.colorsFor(
+    when (band) {
+        WeekRingCountBand.One -> RecordVisualState.One
+        WeekRingCountBand.Two -> RecordVisualState.Two
+        WeekRingCountBand.Three -> RecordVisualState.Three
+        WeekRingCountBand.FourPlus -> RecordVisualState.FourPlus
+    },
+).background
+
+internal fun weekRingStrokeWidthDp(state: WeekRingState): Float = when (state) {
+    WeekRingState.Future -> 10f
+    WeekRingState.Unrecorded -> 4f
+    WeekRingState.ExplicitZero -> 12f
+    WeekRingState.Positive -> 16f
+}
+
+internal fun weekRingLabelColor(state: WeekRingState): Color = when (state) {
+    WeekRingState.Future,
+    WeekRingState.Unrecorded,
+    WeekRingState.ExplicitZero -> DailyRecordTextMuted
+    WeekRingState.Positive -> DailyRecordText
 }
 
 private fun weekSegmentSizeDegrees(): Float = 360f / WEEK_SEGMENT_COUNT
@@ -226,7 +243,9 @@ internal fun weekRingSegmentColor(
     intensity: Float,
     colors: RecordModuleColorTokens,
 ): Color = when (state) {
-    WeekRingState.Future -> colors.soft.copy(alpha = .78f)
+    // Future days reuse the calendar's Disabled background token so the ring
+    // and homepage blocks stay aligned. Date labels remain muted separately.
+    WeekRingState.Future -> colors.colorsFor(RecordVisualState.Disabled).background
     WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
     WeekRingState.ExplicitZero -> colors.primary
     WeekRingState.Positive ->
@@ -274,7 +293,7 @@ private fun WeekRingChart(
         val labelHeight = 44.dp
         val radius = minOf(maxWidth * .28f, 84.dp)
         val centerX = maxWidth / 2
-        val positiveStroke = 16.dp
+        val positiveStroke = weekRingStrokeWidthDp(WeekRingState.Positive).dp
         val ringOuterRadius = radius + positiveStroke / 2
         // Wednesday and Saturday are the tightest labels on narrow screens.
         // Reuse their resolved clearance for every weekday so the labels sit
@@ -323,7 +342,10 @@ private fun WeekRingChart(
                             useCenter = false,
                             topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
                             size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
-                            style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round),
+                            style = Stroke(
+                                width = weekRingStrokeWidthDp(WeekRingState.ExplicitZero).dp.toPx(),
+                                cap = StrokeCap.Round,
+                            ),
                         )
                         drawArc(
                             color = DailyRecordSurface,
@@ -336,14 +358,14 @@ private fun WeekRingChart(
                         )
                     }
                     WeekRingState.Future -> drawArc(
-                        color = colors.soft.copy(alpha = .78f),
+                        color = weekRingSegmentColor(WeekRingState.Future, 0f, colors),
                         startAngle = startAngle,
                         sweepAngle = segmentSweep,
                         useCenter = false,
                         topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
                         size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
                         style = Stroke(
-                            width = 10.dp.toPx(),
+                            width = weekRingStrokeWidthDp(WeekRingState.Future).dp.toPx(),
                             cap = StrokeCap.Round,
                             pathEffect = PathEffect.dashPathEffect(
                                 intervals = floatArrayOf(7.dp.toPx(), 6.dp.toPx()),
@@ -357,7 +379,10 @@ private fun WeekRingChart(
                         useCenter = false,
                         topLeft = Offset(center.x - radiusPx, center.y - radiusPx),
                         size = androidx.compose.ui.geometry.Size(radiusPx * 2f, radiusPx * 2f),
-                        style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
+                        style = Stroke(
+                            width = weekRingStrokeWidthDp(WeekRingState.Unrecorded).dp.toPx(),
+                            cap = StrokeCap.Round,
+                        ),
                     )
                 }
             }
@@ -394,12 +419,7 @@ private fun WeekRingChart(
             val labelRadius = minOf(desiredRadius, horizontalLimit, verticalLimit)
             val labelX = centerX - labelWidth / 2 + labelRadius * sin(angle).toFloat()
             val labelY = centerY - labelHeight / 2 - labelRadius * cos(angle).toFloat()
-            val labelColor = when (weekRingState(detail)) {
-                WeekRingState.Future -> colors.primary.copy(alpha = .45f)
-                WeekRingState.Unrecorded -> DailyRecordTextMuted
-                WeekRingState.ExplicitZero -> DailyRecordTextMuted
-                WeekRingState.Positive -> DailyRecordText
-            }
+            val labelColor = weekRingLabelColor(weekRingState(detail))
             Column(
                 modifier = Modifier
                     .offset(x = labelX, y = labelY)

@@ -4,7 +4,7 @@
 
 状态：`Historical — superseded`
 
-> 本文和对应 Figma 文件记录 2026-07-17 的仅手冲设计阶段，只用于历史审计。当前双模块 UI v2 的唯一视觉入口是[紫色手冲＋深红做爱设计基线](design/quiet-private-journal-v2/README.md)，实现顺序以[分阶段 Goal](QUIET_PRIVATE_JOURNAL_GOALS.md)为准。旧陶土色、旧组件和旧画板不得覆盖当前目标、Compose 事实或已验证交互。
+> 本文和对应 Figma 文件记录 2026-07-17 的仅自慰设计阶段，只用于历史审计。当前双模块 UI v2 的唯一视觉入口是[紫色自慰＋深红做爱设计基线](design/quiet-private-journal-v2/README.md)，实现顺序以[分阶段 Goal](QUIET_PRIVATE_JOURNAL_GOALS.md)为准。旧陶土色、旧组件和旧画板不得覆盖当前目标、Compose 事实或已验证交互。
 
 ## Foundations
 
@@ -18,7 +18,7 @@
 - `CalendarDay`：未填写、0、1、2、9+、今天、选中、未来禁用。
 - `BrewCountControl`：减一、数值、加一。
 - `PeriodTabs`：周、月、年、全部历史。
-- `MetricCard`：总次数、手冲天数、记录日均。
+- `MetricCard`：总次数、自慰天数、记录日均。
 - `StatisticsRow`：周期标签、次数、天数。
 - `BottomNavigation`：日历、统计。
 

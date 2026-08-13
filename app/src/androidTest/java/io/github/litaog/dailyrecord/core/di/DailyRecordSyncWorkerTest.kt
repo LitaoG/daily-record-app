@@ -110,6 +110,9 @@ class DailyRecordSyncWorkerTest {
             DeletionBarrier.isDeletionBlocked("different-account"),
         )
 
+        DeletionBarrier.markCloudDeletionComplete(persistentOwner)
+        DeletionBarrier.markAuthDeletionStarted(persistentOwner)
+        DeletionBarrier.markAuthDeletionComplete(persistentOwner)
         DeletionBarrier.endDeletionBlock(
             persistentOwner,
             AccountDeletionOutcome.CleanupPending,

@@ -3,7 +3,11 @@ package io.github.litaog.dailyrecord.ui.statistics
 import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import java.time.LocalDate
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -224,12 +228,53 @@ class StatisticsPeriodCardsTest {
 
     @Test
     fun `count bands keep four visible colors independent`() {
-        val colors = WeekRingCountBand.entries.map { weekRingColorForBand(it, HandBrewColorTokens) }
+        listOf(HandBrewColorTokens, SexColorTokens).forEach { moduleColors ->
+            val ringColors = WeekRingCountBand.entries.map {
+                weekRingColorForBand(it, moduleColors)
+            }
 
-        assertEquals(4, colors.distinct().size)
-        assertNotEquals(colors[0], colors[1])
-        assertNotEquals(colors[1], colors[2])
-        assertNotEquals(colors[2], colors[3])
+            assertEquals(4, ringColors.distinct().size)
+            assertEquals(moduleColors.colorsFor(RecordVisualState.One).background, ringColors[0])
+            assertEquals(moduleColors.colorsFor(RecordVisualState.Two).background, ringColors[1])
+            assertEquals(moduleColors.colorsFor(RecordVisualState.Three).background, ringColors[2])
+            assertEquals(moduleColors.colorsFor(RecordVisualState.FourPlus).background, ringColors[3])
+            assertNotEquals(ringColors[0], ringColors[1])
+            assertNotEquals(ringColors[1], ringColors[2])
+            assertNotEquals(ringColors[2], ringColors[3])
+        }
+    }
+
+    @Test
+    fun `future and one count use distinct colors and future is thinner`() {
+        listOf(HandBrewColorTokens, SexColorTokens).forEach { colors ->
+            assertNotEquals(
+                weekRingColorForBand(WeekRingCountBand.One, colors),
+                weekRingSegmentColor(WeekRingState.Future, 0f, colors),
+            )
+            assertEquals(
+                DailyRecordSurfaceDisabled,
+                weekRingSegmentColor(WeekRingState.Future, 0f, colors),
+            )
+            assertEquals(
+                colors.colorsFor(RecordVisualState.Disabled).background,
+                weekRingSegmentColor(WeekRingState.Future, 0f, colors),
+            )
+        }
+
+        assertTrue(
+            weekRingStrokeWidthDp(WeekRingState.Future) <
+                weekRingStrokeWidthDp(WeekRingState.Positive),
+        )
+        assertEquals(10f, weekRingStrokeWidthDp(WeekRingState.Future), 0f)
+        assertEquals(16f, weekRingStrokeWidthDp(WeekRingState.Positive), 0f)
+    }
+
+    @Test
+    fun `future labels retain the muted homepage future text color`() {
+        assertEquals(DailyRecordTextMuted, weekRingLabelColor(WeekRingState.Future))
+        assertEquals(DailyRecordTextMuted, weekRingLabelColor(WeekRingState.Unrecorded))
+        assertEquals(DailyRecordTextMuted, weekRingLabelColor(WeekRingState.ExplicitZero))
+        assertEquals(DailyRecordText, weekRingLabelColor(WeekRingState.Positive))
     }
 
     @Test
@@ -261,11 +306,16 @@ class StatisticsPeriodCardsTest {
             val zero = weekRingSegmentColor(WeekRingState.ExplicitZero, 0f, colors)
             val positive = weekRingSegmentColor(WeekRingState.Positive, 1f, colors)
             val future = weekRingSegmentColor(WeekRingState.Future, 0f, colors)
+            val oneCount = weekRingColorForBand(WeekRingCountBand.One, colors)
 
             // Explicit zero must not be shown with the unrecorded color.
             assertNotEquals(unrecorded, zero)
             // Zero keeps the module primary identity, distinct from positive fills.
             assertNotEquals(zero, positive)
+            // Future and one-count arcs must remain visually distinct in color;
+            // stroke width and visible copy provide additional state cues.
+            assertNotEquals(oneCount, future)
+            assertEquals(DailyRecordSurfaceDisabled, future)
             assertNotEquals(future, unrecorded)
             assertNotEquals(future, zero)
             // Unrecorded stays a neutral divider tone for both palettes.

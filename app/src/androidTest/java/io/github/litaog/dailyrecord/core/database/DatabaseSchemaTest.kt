@@ -31,7 +31,7 @@ class DatabaseSchemaTest {
                 INSERT INTO activities (
                     id, owner_id, name, icon_key, color_argb, measurement_type,
                     unit, sort_order, is_archived, created_at, updated_at, revision
-                ) VALUES ('hand-brew', 'local-owner', '本地化手冲', 'flight', 1, 'COUNT',
+                ) VALUES ('hand-brew', 'local-owner', '本地化自慰', 'flight', 1, 'COUNT',
                           '次', 0, 0, 1000, 1000, 0)
                 """.trimIndent(),
             )
@@ -40,7 +40,7 @@ class DatabaseSchemaTest {
                 INSERT INTO activities (
                     id, owner_id, name, icon_key, color_argb, measurement_type,
                     unit, sort_order, is_archived, created_at, updated_at, revision
-                ) VALUES ('legacy-other', 'local-owner', '手冲', 'legacy', 2, 'BOOLEAN',
+                ) VALUES ('legacy-other', 'local-owner', '自慰', 'legacy', 2, 'BOOLEAN',
                           NULL, 1, 0, 1000, 1000, 0)
                 """.trimIndent(),
             )

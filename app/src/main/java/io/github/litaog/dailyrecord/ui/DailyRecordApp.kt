@@ -220,11 +220,13 @@ fun DailyRecordApp(
                     if (accountEmail != null) {
                         AccountTopBar(
                             status = syncStatus,
+                            colors = moduleSpec.colors,
                             onClick = { showAccountDialog = true },
                             onSettings = { showSettings = true },
                         )
                     } else {
                         LocalAccountTopBar(
+                            colors = moduleSpec.colors,
                             onSignIn = onSignIn,
                             onSettings = { showSettings = true },
                         )

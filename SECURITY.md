@@ -20,7 +20,7 @@ Android Firebase 客户端配置本身不是管理员凭据，但仍不进入此
 ## 应用安全基线
 
 - 只启用 Firebase 邮箱密码登录和 Cloud Firestore；不启用短信登录、广告或业务分析 SDK。
-- 手冲与做爱记录只通过各自 Repository 访问 Room；UI 不直接读取 Firestore。
+- 自慰与做爱记录只通过各自 Repository 访问 Room；UI 不直接读取 Firestore。
 - Firestore 路径按 Firebase UID 隔离，规则校验所有权、字段白名单、修订递增和禁止物理删除。
 - 系统云备份与设备迁移关闭，避免个人记录被隐式复制。
 - Release Manifest 禁止明文网络；仅 Debug 构建为本机 Firebase 模拟器允许 HTTP，Debug APK 不对外分发。
