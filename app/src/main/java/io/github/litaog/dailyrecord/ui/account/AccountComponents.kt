@@ -151,7 +151,7 @@ internal fun AccountTopBar(
                         onClick = onClick,
                         modifier = Modifier.weight(1f),
                     )
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         } else {
@@ -173,7 +173,7 @@ internal fun AccountTopBar(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     SyncStatusChip(status = status, onClick = onClick)
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         }
@@ -213,7 +213,7 @@ internal fun LocalAccountTopBar(
                             accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                         )
                     }
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         } else {
@@ -241,7 +241,7 @@ internal fun LocalAccountTopBar(
                             accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                         )
                     }
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         }
@@ -251,17 +251,17 @@ internal fun LocalAccountTopBar(
 @Composable
 private fun SettingsButton(
     onClick: () -> Unit,
-    heartTint: Color,
+    moduleTint: Color,
 ) {
     IconButton(
         onClick = onClick,
         modifier = Modifier
-            .size(DailyRecordSizes.MinimumTouchTarget)
+            .size(DailyRecordSizes.SettingsButton)
             .testTag("home_settings_button"),
     ) {
         PrivateSettingsIcon(
             contentDescription = AppCopy.Settings.open,
-            heartTint = heartTint,
+            moduleTint = moduleTint,
         )
     }
 }

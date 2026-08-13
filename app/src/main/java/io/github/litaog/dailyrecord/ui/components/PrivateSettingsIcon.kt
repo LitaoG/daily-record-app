@@ -3,121 +3,101 @@ package io.github.litaog.dailyrecord.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.toPath
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
- * Custom settings glyph for the quiet private journal: a soft eight-tooth
- * gear with a heart cut out of its center. The gear keeps the top-bar
- * graphite tone while the heart follows the selected module accent,
- * replacing the generic Material settings gear.
+ * A restrained calendar-and-cog glyph for the Daily Record settings entry.
+ *
+ * The geometry is adapted from Lucide's `calendar-cog` SVG. The calendar stays
+ * in the app's quiet graphite tone while the small cog uses the active record
+ * module color, making the entry feel native to the current module without
+ * mixing unrelated symbols.
+ *
+ * Source: https://github.com/lucide-icons/lucide/blob/main/icons/calendar-cog.svg
+ * Copyright (c) 2026 Lucide Icons and Contributors. Licensed under the ISC License.
  */
 @Composable
 fun PrivateSettingsIcon(
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    gearTint: Color = DailyRecordTextSecondary,
-    heartTint: Color = DailyRecordDefaultAccent,
+    calendarTint: Color = DailyRecordTextSecondary,
+    moduleTint: Color = DailyRecordDefaultAccent,
 ) {
+    val paths = remember { LucideCalendarCogPaths() }
     val semanticsModifier = if (contentDescription != null) {
         Modifier.semantics { this.contentDescription = contentDescription }
     } else {
         Modifier
     }
-    Canvas(modifier.then(semanticsModifier).size(24.dp)) {
-        val unit = size.width / ViewportSize
-        drawPath(path = privateSettingsGearPath(unit), color = gearTint)
-        drawPath(path = privateSettingsHeartPath(unit), color = heartTint)
+
+    Canvas(modifier.then(semanticsModifier).size(DailyRecordSizes.SettingsIcon)) {
+        val scale = minOf(size.width, size.height) / ViewportSize
+        withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
+            paths.calendar.forEach { path ->
+                drawPath(path, color = calendarTint, style = CalendarStroke)
+            }
+            paths.cog.forEach { path ->
+                drawPath(path, color = moduleTint, style = CogStroke)
+            }
+            drawCircle(
+                color = moduleTint,
+                center = CogCenter,
+                radius = CogRadius,
+                style = CogStroke,
+            )
+        }
     }
 }
 
 private const val ViewportSize = 24f
-private const val GearCenter = 12f
-private const val GearTeeth = 8
-private const val GearRootRadius = 6.55f
-private const val GearTipRadius = 9.45f
+private val CogCenter = Offset(18f, 18f)
+private const val CogRadius = 3f
+private val CalendarStroke = Stroke(
+    width = 1.85f,
+    cap = StrokeCap.Round,
+    join = StrokeJoin.Round,
+)
+private val CogStroke = Stroke(
+    width = 1.9f,
+    cap = StrokeCap.Round,
+    join = StrokeJoin.Round,
+)
 
-/** Within one 45° pitch: root flat, smoothstep rise, tip flat, smoothstep fall. */
-private const val RiseStart = 9f
-private const val RiseEnd = 16f
-private const val FallStart = 27f
-private const val FallEnd = 34f
+private class LucideCalendarCogPaths {
+    val calendar = listOf(
+        parsePath("M16 2v3"),
+        parsePath("M21 10.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5.5"),
+        parsePath("M3 9h18"),
+        parsePath("M8 2v3"),
+    )
 
-/** Tip flats are centered 21.5° into each pitch; shift so tips sit on the axes. */
-private const val ToothPhaseShift = -21.5f
-private const val SampleStepDegrees = 0.75f
-
-/** Material "favorite" heart geometry, scaled to fit inside the gear root circle. */
-private const val HeartSourceCenterY = 12.175f
-private const val HeartCenterY = 12.2f
-private const val HeartScale = 0.38f
-
-/** Slightly larger so the overlay heart bleeds cleanly into the gear cutout. */
-private const val HeartOverlayScale = 0.4f
-
-private fun privateSettingsGearPath(unit: Float): Path {
-    val path = Path()
-    path.fillType = PathFillType.EvenOdd
-    val pitch = 360f / GearTeeth
-    var degree = 0f
-    while (degree < 360f) {
-        val theta = Math.toRadians((degree + ToothPhaseShift).toDouble())
-        val radius = gearRadiusAt(degree % pitch)
-        val x = (GearCenter + (radius * cos(theta)).toFloat()) * unit
-        val y = (GearCenter + (radius * sin(theta)).toFloat()) * unit
-        if (degree == 0f) {
-            path.moveTo(x, y)
-        } else {
-            path.lineTo(x, y)
-        }
-        degree += SampleStepDegrees
-    }
-    path.close()
-    path.addHeart(unit, HeartScale)
-    return path
+    val cog = listOf(
+        parsePath("m15.228 16.852-.923-.383"),
+        parsePath("m15.228 19.148-.923.383"),
+        parsePath("m16.47 14.305.382.923"),
+        parsePath("m16.852 20.772-.383.924"),
+        parsePath("m19.148 15.228.383-.923"),
+        parsePath("m19.53 21.696-.382-.924"),
+        parsePath("m20.773 16.852.924-.383"),
+        parsePath("m20.773 19.148.924.383"),
+    )
 }
 
-private fun privateSettingsHeartPath(unit: Float): Path {
-    val path = Path()
-    path.addHeart(unit, HeartOverlayScale)
-    return path
-}
-
-private fun gearRadiusAt(pitchAngle: Float): Float = when {
-    pitchAngle < RiseStart -> GearRootRadius
-    pitchAngle < RiseEnd -> {
-        val t = (pitchAngle - RiseStart) / (RiseEnd - RiseStart)
-        GearRootRadius + (GearTipRadius - GearRootRadius) * smoothStep(t)
-    }
-    pitchAngle < FallStart -> GearTipRadius
-    pitchAngle < FallEnd -> {
-        val t = (pitchAngle - FallStart) / (FallEnd - FallStart)
-        GearTipRadius - (GearTipRadius - GearRootRadius) * smoothStep(t)
-    }
-    else -> GearRootRadius
-}
-
-private fun smoothStep(t: Float): Float = t * t * (3f - 2f * t)
-
-private fun Path.addHeart(unit: Float, scale: Float) {
-    fun px(x: Float) = (GearCenter + (x - GearCenter) * scale) * unit
-    fun py(y: Float) = (HeartCenterY + (y - HeartSourceCenterY) * scale) * unit
-    moveTo(px(12f), py(21.35f))
-    lineTo(px(10.55f), py(20.03f))
-    cubicTo(px(5.4f), py(15.36f), px(2f), py(12.28f), px(2f), py(8.5f))
-    cubicTo(px(2f), py(5.42f), px(4.42f), py(3f), px(7.5f), py(3f))
-    cubicTo(px(9.24f), py(3f), px(10.91f), py(3.81f), px(12f), py(5.09f))
-    cubicTo(px(13.09f), py(3.81f), px(14.76f), py(3f), px(16.5f), py(3f))
-    cubicTo(px(19.58f), py(3f), px(22f), py(5.42f), px(22f), py(8.5f))
-    cubicTo(px(22f), py(12.28f), px(18.6f), py(15.36f), px(13.45f), py(20.04f))
-    close()
-}
+private fun parsePath(pathData: String) = PathParser()
+    .parsePathString(pathData)
+    .toNodes()
+    .toPath()
