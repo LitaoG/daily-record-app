@@ -3,7 +3,6 @@ package io.github.litaog.dailyrecord.ui.statistics
 import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import java.time.LocalDate
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -252,10 +251,10 @@ class StatisticsPeriodCardsTest {
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
             assertEquals(
-                DailyRecordSurfaceDisabled,
+                colors.colorsFor(RecordVisualState.Unset).background,
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
-            assertEquals(
+            assertNotEquals(
                 colors.colorsFor(RecordVisualState.Disabled).background,
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
@@ -275,6 +274,57 @@ class StatisticsPeriodCardsTest {
         assertEquals(DailyRecordTextMuted, weekRingLabelColor(WeekRingState.Unrecorded))
         assertEquals(DailyRecordTextMuted, weekRingLabelColor(WeekRingState.ExplicitZero))
         assertEquals(DailyRecordText, weekRingLabelColor(WeekRingState.Positive))
+    }
+
+    @Test
+    fun `wednesday and saturday labels get a little extra radial clearance`() {
+        assertEquals(18f, weekRingLabelGapDp(segmentIndex = 2, sharedGap = 12f), 0f)
+        assertEquals(18f, weekRingLabelGapDp(segmentIndex = 5, sharedGap = 12f), 0f)
+        assertEquals(12f, weekRingLabelGapDp(segmentIndex = 0, sharedGap = 12f), 0f)
+        assertEquals(12f, weekRingLabelGapDp(segmentIndex = 6, sharedGap = 12f), 0f)
+        assertEquals(6f, weekRingSideLabelExtraGapDp(segmentIndex = 2), 0f)
+        assertEquals(6f, weekRingSideLabelExtraGapDp(segmentIndex = 5), 0f)
+        assertEquals(0f, weekRingSideLabelExtraGapDp(segmentIndex = 0), 0f)
+    }
+
+    @Test
+    fun `side label boundary allowance keeps the added radial gap from being clamped`() {
+        val ringOuterRadius = 92f
+        val labelHalfWidth = 34f
+        val labelHalfHeight = 22f
+        val availableHalfWidth = 130f
+        val availableHalfHeight = 130f
+        val sharedGap = weekRingSharedLabelGapDp(
+            ringOuterRadius = ringOuterRadius,
+            labelHalfWidth = labelHalfWidth,
+            labelHalfHeight = labelHalfHeight,
+            availableHalfWidth = availableHalfWidth,
+            availableHalfHeight = availableHalfHeight,
+            preferredGap = 12f,
+        )
+        val sideAngle = weekRingLabelAngleDegrees(2)
+        val baseRadius = weekRingLabelRadialDistance(
+            angleDegrees = sideAngle,
+            ringOuterRadius = ringOuterRadius,
+            labelHalfWidth = labelHalfWidth,
+            labelHalfHeight = labelHalfHeight,
+            gap = sharedGap,
+        )
+        val sideRadius = weekRingLabelRadialDistance(
+            angleDegrees = sideAngle,
+            ringOuterRadius = ringOuterRadius,
+            labelHalfWidth = labelHalfWidth,
+            labelHalfHeight = labelHalfHeight,
+            gap = weekRingLabelGapDp(2, sharedGap),
+        )
+        val sideLimit = weekRingLabelHorizontalLimitDp(
+            angleDegrees = sideAngle,
+            availableHalfWidth = availableHalfWidth,
+            boundaryAllowance = weekRingSideLabelExtraGapDp(2),
+        )
+
+        assertTrue(sideRadius > baseRadius)
+        assertTrue(sideLimit >= sideRadius)
     }
 
     @Test
@@ -315,7 +365,7 @@ class StatisticsPeriodCardsTest {
             // Future and one-count arcs must remain visually distinct in color;
             // stroke width and visible copy provide additional state cues.
             assertNotEquals(oneCount, future)
-            assertEquals(DailyRecordSurfaceDisabled, future)
+            assertEquals(colors.colorsFor(RecordVisualState.Unset).background, future)
             assertNotEquals(future, unrecorded)
             assertNotEquals(future, zero)
             // Unrecorded stays a neutral divider tone for both palettes.
