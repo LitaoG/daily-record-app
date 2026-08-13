@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.record
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -60,6 +61,7 @@ import kotlinx.coroutines.launch
 private const val HOURS_PER_DAY = 24
 private const val MINUTES_PER_HOUR = 60
 private const val MINUTES_PER_DAY = HOURS_PER_DAY * MINUTES_PER_HOUR
+private const val MINIMUM_FLING_VELOCITY_DP_PER_SECOND = 90f
 
 @Composable
 internal fun RecordTimePickerDialog(
@@ -93,7 +95,8 @@ internal fun RecordTimePickerDialog(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TimeWheelColumn(
-                value = selectedHour,
+                initialValue = selectedHour,
+                resetKey = boundedInitialMinutes,
                 valueCount = HOURS_PER_DAY,
                 unit = AppCopy.Record.detailTimePickerHour,
                 colors = colors,
@@ -110,7 +113,8 @@ internal fun RecordTimePickerDialog(
                 modifier = Modifier.padding(top = 22.dp),
             )
             TimeWheelColumn(
-                value = selectedMinute,
+                initialValue = selectedMinute,
+                resetKey = boundedInitialMinutes,
                 valueCount = MINUTES_PER_HOUR,
                 unit = AppCopy.Record.detailTimePickerMinute,
                 colors = colors,
@@ -174,7 +178,8 @@ internal fun RecordTimePickerDialog(
 
 @Composable
 private fun TimeWheelColumn(
-    value: Int,
+    initialValue: Int,
+    resetKey: Int,
     valueCount: Int,
     unit: String,
     colors: RecordModuleColorTokens,
@@ -183,15 +188,20 @@ private fun TimeWheelColumn(
     onValueChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedValue by remember(value, valueCount) {
-        mutableIntStateOf(wrapTimeWheelValue(value, valueCount))
+    var selectedValue by remember(resetKey, valueCount) {
+        mutableIntStateOf(wrapTimeWheelValue(initialValue, valueCount))
     }
-    var dragOffsetPx by remember(valueCount) { mutableFloatStateOf(0f) }
+    var dragOffsetPx by remember(resetKey, valueCount) { mutableFloatStateOf(0f) }
     val latestOnValueChanged = rememberUpdatedState(onValueChanged)
+    val flingAnimation = remember { Animatable(0f) }
     val settleAnimation = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
-    var settleJob by remember { mutableStateOf<Job?>(null) }
+    var animationJob by remember { mutableStateOf<Job?>(null) }
     val rowHeightPx = with(LocalDensity.current) { rowHeight.toPx() }
+    val minimumFlingVelocity = with(LocalDensity.current) {
+        MINIMUM_FLING_VELOCITY_DP_PER_SECOND.dp.toPx()
+    }
+    val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val wheelHeight = rowHeight * 3
     val shape = RoundedCornerShape(16.dp)
 
@@ -200,13 +210,26 @@ private fun TimeWheelColumn(
         latestOnValueChanged.value(selectedValue)
     }
 
-    fun cancelSettle() {
-        settleJob?.cancel()
-        settleJob = null
-        coroutineScope.launch { settleAnimation.stop() }
+    fun applyOffsetDelta(delta: Float) {
+        val nextState = advanceTimeWheelOffset(
+            state = TimeWheelOffsetState(selectedValue, dragOffsetPx),
+            deltaPx = delta,
+            rowHeightPx = rowHeightPx,
+            valueCount = valueCount,
+        )
+        if (nextState.value != selectedValue) {
+            selectedValue = nextState.value
+            latestOnValueChanged.value(nextState.value)
+        }
+        dragOffsetPx = nextState.offsetPx
     }
 
-    fun settleWheel() {
+    fun cancelAnimation() {
+        animationJob?.cancel()
+        animationJob = null
+    }
+
+    fun snapToNearestValue() {
         if (dragOffsetPx <= -rowHeightPx / 2f) {
             commitDelta(1)
             dragOffsetPx += rowHeightPx
@@ -214,15 +237,31 @@ private fun TimeWheelColumn(
             commitDelta(-1)
             dragOffsetPx -= rowHeightPx
         }
+    }
 
-        val startOffset = dragOffsetPx
-        settleJob?.cancel()
-        settleJob = coroutineScope.launch {
+    fun settleWheel(velocity: Float) {
+        animationJob?.cancel()
+        animationJob = coroutineScope.launch {
             try {
-                settleAnimation.snapTo(startOffset)
+                if (kotlin.math.abs(velocity) >= minimumFlingVelocity) {
+                    var previous = 0f
+                    flingAnimation.snapTo(0f)
+                    flingAnimation.animateDecay(
+                        initialVelocity = velocity,
+                        animationSpec = decayAnimationSpec,
+                    ) {
+                        val current = this.value
+                        val delta = current - previous
+                        previous = current
+                        applyOffsetDelta(delta)
+                    }
+                }
+
+                snapToNearestValue()
+                settleAnimation.snapTo(dragOffsetPx)
                 settleAnimation.animateTo(
                     targetValue = 0f,
-                    animationSpec = spring(dampingRatio = 0.92f, stiffness = 500f),
+                    animationSpec = spring(dampingRatio = 1f, stiffness = 700f),
                 ) {
                     dragOffsetPx = this.value
                 }
@@ -234,16 +273,7 @@ private fun TimeWheelColumn(
     }
 
     val draggableState = rememberDraggableState { dragAmount ->
-        var nextOffset = dragOffsetPx + dragAmount
-        while (nextOffset <= -rowHeightPx) {
-            commitDelta(1)
-            nextOffset += rowHeightPx
-        }
-        while (nextOffset >= rowHeightPx) {
-            commitDelta(-1)
-            nextOffset -= rowHeightPx
-        }
-        dragOffsetPx = nextOffset
+        applyOffsetDelta(dragAmount)
     }
 
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -264,10 +294,8 @@ private fun TimeWheelColumn(
                 .draggable(
                     state = draggableState,
                     orientation = Orientation.Vertical,
-                    onDragStarted = {
-                        cancelSettle()
-                    },
-                    onDragStopped = { settleWheel() },
+                    onDragStarted = { cancelAnimation() },
+                    onDragStopped = { velocity -> settleWheel(velocity) },
                 ),
         ) {
             Canvas(Modifier.fillMaxWidth().height(wheelHeight)) {
@@ -304,7 +332,7 @@ private fun TimeWheelColumn(
                             translationY = distance * rowHeightPx + dragOffsetPx
                         },
                     onClick = {
-                        cancelSettle()
+                        cancelAnimation()
                         if (distance != 0) commitDelta(distance)
                         dragOffsetPx = 0f
                     },
@@ -368,3 +396,29 @@ internal fun wrapTimeWheelValue(value: Int, valueCount: Int): Int {
 
 internal fun formatTimeWheelValue(value: Int): String =
     String.format(Locale.ROOT, "%02d", value)
+
+internal data class TimeWheelOffsetState(
+    val value: Int,
+    val offsetPx: Float,
+)
+
+internal fun advanceTimeWheelOffset(
+    state: TimeWheelOffsetState,
+    deltaPx: Float,
+    rowHeightPx: Float,
+    valueCount: Int,
+): TimeWheelOffsetState {
+    require(rowHeightPx > 0f) { "Time wheel row height must be positive." }
+
+    var nextValue = wrapTimeWheelValue(state.value, valueCount)
+    var nextOffset = state.offsetPx + deltaPx
+    while (nextOffset <= -rowHeightPx) {
+        nextValue = wrapTimeWheelValue(nextValue + 1, valueCount)
+        nextOffset += rowHeightPx
+    }
+    while (nextOffset >= rowHeightPx) {
+        nextValue = wrapTimeWheelValue(nextValue - 1, valueCount)
+        nextOffset -= rowHeightPx
+    }
+    return TimeWheelOffsetState(nextValue, nextOffset)
+}

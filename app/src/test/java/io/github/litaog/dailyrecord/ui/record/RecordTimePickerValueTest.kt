@@ -22,6 +22,36 @@ class RecordTimePickerValueTest {
     }
 
     @Test
+    fun fastDragAdvancesAcrossMultipleRowsAndKeepsResidualOffset() {
+        val rowHeightPx = 56f
+
+        val moved = advanceTimeWheelOffset(
+            state = TimeWheelOffsetState(value = 22, offsetPx = 0f),
+            deltaPx = -rowHeightPx * 3.25f,
+            rowHeightPx = rowHeightPx,
+            valueCount = 24,
+        )
+
+        assertEquals(1, moved.value)
+        assertEquals(-rowHeightPx * .25f, moved.offsetPx, .001f)
+    }
+
+    @Test
+    fun fastDragWrapsBackwardAcrossZero() {
+        val rowHeightPx = 56f
+
+        val moved = advanceTimeWheelOffset(
+            state = TimeWheelOffsetState(value = 1, offsetPx = 0f),
+            deltaPx = rowHeightPx * 2.5f,
+            rowHeightPx = rowHeightPx,
+            valueCount = 24,
+        )
+
+        assertEquals(23, moved.value)
+        assertEquals(rowHeightPx * .5f, moved.offsetPx, .001f)
+    }
+
+    @Test
     fun emptyTimeUsesCurrentLocalMinuteWhileExistingTimeWins() {
         val now = LocalTime.of(17, 42, 59)
 
