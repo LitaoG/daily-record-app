@@ -374,7 +374,9 @@ internal fun DailyCountRecordScreen(
                         .background(DailyRecordDivider),
                 )
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("record_month_summary"),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
                 ) {
@@ -390,53 +392,53 @@ internal fun DailyCountRecordScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-            }
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted)
-                    .testTag("record_actions"),
-                color = Color.Transparent,
-            ) {
-                Column(
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            horizontal = DailyRecordSpacing.ScreenHorizontal,
-                            vertical = DailyRecordSpacing.Content,
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
+                        .navigationBarsPadding()
+                        .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted)
+                        .testTag("record_actions"),
+                    color = Color.Transparent,
                 ) {
-                    PrimaryActionButton(
-                        label = when {
-                            !dataReady -> AppCopy.Record.loading
-                            saving -> AppCopy.Record.saving
-                            !canSave && record != null -> AppCopy.Record.saved
-                            else -> AppCopy.Record.save
-                        },
-                        enabled = editable && canSave && !saving,
-                        onClick = {
-                            if (!editable || !canSave || saving) return@PrimaryActionButton
-                            val currentDraftCount = countDraft.count
-                            val currentDetails = if (currentDraftCount == 0) {
-                                emptyList()
-                            } else {
-                                detailsDraft.asEntries().take(currentDraftCount)
-                            }
-                            launchMutation(AppCopy.Record.saveFailure) {
-                                controller.saveRecord(date, currentDraftCount, currentDetails)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
-                        accent = moduleSpec.colors.primary,
-                    )
-                    RecordTextAction(
-                        label = AppCopy.Record.clear,
-                        enabled = editable && dataReady && record != null && !saving,
-                        accent = moduleSpec.colors.primary,
-                        onClick = { showClearDialog = true },
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = DailyRecordSpacing.ScreenHorizontal,
+                                vertical = DailyRecordSpacing.Content,
+                            ),
+                        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
+                    ) {
+                        PrimaryActionButton(
+                            label = when {
+                                !dataReady -> AppCopy.Record.loading
+                                saving -> AppCopy.Record.saving
+                                !canSave && record != null -> AppCopy.Record.saved
+                                else -> AppCopy.Record.save
+                            },
+                            enabled = editable && canSave && !saving,
+                            onClick = {
+                                if (!editable || !canSave || saving) return@PrimaryActionButton
+                                val currentDraftCount = countDraft.count
+                                val currentDetails = if (currentDraftCount == 0) {
+                                    emptyList()
+                                } else {
+                                    detailsDraft.asEntries().take(currentDraftCount)
+                                }
+                                launchMutation(AppCopy.Record.saveFailure) {
+                                    controller.saveRecord(date, currentDraftCount, currentDetails)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
+                            accent = moduleSpec.colors.primary,
+                        )
+                        RecordTextAction(
+                            label = AppCopy.Record.clear,
+                            enabled = editable && dataReady && record != null && !saving,
+                            accent = moduleSpec.colors.primary,
+                            onClick = { showClearDialog = true },
+                        )
+                    }
                 }
             }
         }
