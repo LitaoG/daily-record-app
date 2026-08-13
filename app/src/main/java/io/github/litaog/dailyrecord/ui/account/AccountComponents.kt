@@ -293,7 +293,7 @@ private fun SyncStatusChip(
             .background(DailyRecordDefaultAccentSoft)
             .border(1.dp, DailyRecordDivider, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 9.dp)
+            .padding(horizontal = 12.dp)
             .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
             .semantics {
                 role = Role.Button

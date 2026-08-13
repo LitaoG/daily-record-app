@@ -24,13 +24,24 @@ class AccountTopBarTest {
 
     @Test
     fun pendingChipStaysCompactAt200PercentText() {
+        assertCompactChipAt200PercentText(SyncStatus.Pending(1))
+    }
+
+    @Test
+    fun failedChipStaysFlatAt200PercentText() {
+        assertCompactChipAt200PercentText(
+            SyncStatus.Failed(message = "network unavailable"),
+        )
+    }
+
+    private fun assertCompactChipAt200PercentText(status: SyncStatus) {
         composeRule.setContent {
             val density = LocalDensity.current.density
             CompositionLocalProvider(LocalDensity provides Density(density, fontScale = 2f)) {
                 DailyRecordTheme {
                     Box(modifier = androidx.compose.ui.Modifier.width(360.dp)) {
                         AccountTopBar(
-                            status = SyncStatus.Pending(1),
+                            status = status,
                             colors = HandBrewColorTokens,
                             onClick = {},
                             onSettings = {},
@@ -41,7 +52,7 @@ class AccountTopBarTest {
         }
 
         val chip = composeRule.onNodeWithContentDescription(
-            AppCopy.Account.syncChipDescription(AppCopy.Account.pending(1)),
+            AppCopy.Account.syncChipDescription(status.label()),
         )
         chip.assertIsDisplayed()
 
@@ -49,7 +60,8 @@ class AccountTopBarTest {
         val bounds = chip.fetchSemanticsNode().boundsInRoot
         val widthDp = bounds.width / density
         val heightDp = bounds.height / density
-        assertTrue("Pending chip was stretched to $widthDp dp", widthDp < 240f)
-        assertTrue("Pending chip was too short at $heightDp dp", heightDp >= 48f)
+        assertTrue("${status.label()} chip was stretched to $widthDp dp", widthDp < 240f)
+        assertTrue("${status.label()} chip was too short at $heightDp dp", heightDp >= 48f)
+        assertTrue("${status.label()} chip was too tall at $heightDp dp", heightDp <= 80f)
     }
 }
