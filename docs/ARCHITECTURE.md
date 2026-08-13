@@ -1,6 +1,6 @@
 # 系统架构
 
-最后复核：2026-08-09
+最后复核：2026-08-13
 
 ## 目标
 
@@ -48,7 +48,7 @@ app
    ├─ core:cloud       Firebase bootstrap
    ├─ core:common      shared invariants and user-facing copy
    ├─ core:di          Firebase bootstrap / composition root / WorkManager adapters
-   ├─ core:sync        remote source / coordinator / deletion barrier
+   ├─ core:sync        remote source / coordinator / deletion journal / recovery coordinator
    └─ ui
       ├─ calendar      CalendarScreen
       ├─ record        RecordScreen
@@ -102,6 +102,7 @@ Room 当前版本为 5。v1→v2 只提取旧 `flight` 机器图标标识的记�
 - 实时监听负责跨设备更新，WorkManager 与网络恢复负责补偿重试；本地变化使用 `APPEND_OR_REPLACE` 保留运行中任务之后的新同步请求。
 - 后台同步当前使用稳定的 `daily-record-cloud-sync` 唯一工作名；升级时会一次性取消旧的 `hand-brew-cloud-sync` 工作，避免历史单模块任务继续运行。
 - 永久删除账号会先写入按账号持久化的删除阻断标记，再等待已经取得云写入闸门的同步完成，之后取消内存任务和 WorkManager；新的 Worker、实时补偿和本地变更调度在闸门期间不能写回该账号。云端物理删除、Auth 删除请求开始、本机恢复副本准备和 Auth 明确完成分别记录为独立阶段；Auth 响应丢失时保留本机恢复副本并继续阻断同步，启动时只有 `reload()` 明确返回 `USER_NOT_FOUND` 才进入本地清理，否则先确认账号仍在，再重新标记待同步。进程在更早阶段中断时，启动会先重新排队本机行，完成恢复后才解除阻断；未决恢复副本使用按账号隔离的 `__recovery__:<ownerId>` 空间，只有 Auth 明确删除后才 promote 到 `__local__`，且 promote 前会检测已有本机记录，绝不覆盖。
+- 删除恢复状态由 `core/sync/DeletionJournal.kt` 的一个版本化 SharedPreferences journal 持有：每个 owner 只有一条 entry，阶段只能按 `InProgress → CloudDeleted → AuthDeletionPending → AuthDeletedCleanupPending` 前进，恢复副本的 `None/Pending/Ready` 是同一 entry 的受约束字段。旧版 owner-set marker 和旧 cleanup preference 只在首次读取时迁移，迁移成功后清除；运行时不再把多个并行集合或 UI preference 当作第二事实源。`AccountDeletionRecoveryCoordinator` 负责 Auth 查询、Room 恢复/重排队、冲突和指数退避，Compose root 只消费 snapshot 并渲染恢复入口。
 - Firestore 快照逐文档解析，格式异常的单条记录不会关闭整个实时流或阻断其他日期；账号状态会显示数据类错误。
 - 实时监听发生瞬时错误后使用最高 30 秒的指数退避重新订阅；离线时先等待有效网络，取消页面作用域会同时取消等待与重试。
 - Android 仍可能把网络判定为有效但 Firebase 被阻断；实时监听收到新的服务器快照时会把它视为服务恢复信号，并主动冲刷 Room 中的待同步记录。

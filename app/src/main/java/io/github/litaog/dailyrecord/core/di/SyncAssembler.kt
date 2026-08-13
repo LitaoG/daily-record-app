@@ -1,10 +1,13 @@
 package io.github.litaog.dailyrecord.core.di
 
 import androidx.room.withTransaction
+import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
+import io.github.litaog.dailyrecord.core.sync.AccountDeletionRecoveryCoordinator
 import io.github.litaog.dailyrecord.core.account.CombinedAccountDeletionLocalStore
 import io.github.litaog.dailyrecord.core.account.CombinedAccountRemoteDataStore
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.CombinedSyncCoordinator
+import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
 import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
 import io.github.litaog.dailyrecord.core.sync.moduleSyncCoordinator
@@ -34,6 +37,26 @@ internal fun buildCombinedAccountDeletionLocalStore(
         RoomSexSyncStore(database),
     ),
     transactionRunner = { operation -> database.withTransaction { operation() } },
+)
+
+internal fun buildAccountDeletionRecoveryCoordinator(
+    database: DailyRecordDatabase,
+): AccountDeletionRecoveryCoordinator = AccountDeletionRecoveryCoordinator(
+    localStore = buildCombinedAccountDeletionLocalStore(database),
+)
+
+internal fun buildAccountDeletionCoordinator(
+    database: DailyRecordDatabase,
+    services: FirebaseServices,
+): AccountDeletionCoordinator = AccountDeletionCoordinator(
+    authRepository = services.authRepository,
+    remoteDataSource = buildCombinedAccountRemoteDataStore(services),
+    localStore = buildCombinedAccountDeletionLocalStore(database),
+    markCloudDeletionComplete = DeletionBarrier::markCloudDeletionComplete,
+    markAuthDeletionStarted = DeletionBarrier::markAuthDeletionStarted,
+    markLocalRecoveryCopyPending = DeletionBarrier::markLocalRecoveryCopyPending,
+    markLocalRecoveryCopyReady = DeletionBarrier::markLocalRecoveryCopyReady,
+    markAuthDeletionComplete = DeletionBarrier::markAuthDeletionComplete,
 )
 
 internal fun buildCombinedAccountRemoteDataStore(

@@ -24,16 +24,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.core.auth.AuthAccountPresence
 import io.github.litaog.dailyrecord.core.auth.AuthState
-import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
-import io.github.litaog.dailyrecord.core.di.buildCombinedAccountDeletionLocalStore
-import io.github.litaog.dailyrecord.core.di.buildCombinedAccountRemoteDataStore
+import io.github.litaog.dailyrecord.core.di.buildAccountDeletionCoordinator
+import io.github.litaog.dailyrecord.core.di.buildAccountDeletionRecoveryCoordinator
 import io.github.litaog.dailyrecord.core.di.buildCombinedSyncCoordinator
+import io.github.litaog.dailyrecord.core.sync.AccountDeletionRecoveryCoordinator
+import io.github.litaog.dailyrecord.core.sync.AccountDeletionRecoverySnapshot
 import io.github.litaog.dailyrecord.core.common.runInteractiveCloudOperation
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
@@ -52,10 +52,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-private const val DELETION_RECOVERY_RETRY_DELAY_MILLIS = 5_000L
 
 @Composable
 internal fun DailyRecordRoot(
@@ -65,7 +62,12 @@ internal fun DailyRecordRoot(
     val context = LocalContext.current
     val rootScope = rememberCoroutineScope()
     val localModePreference = remember(context) { LocalModePreference(context) }
-    val pendingCleanupPreference = remember(context) { PendingLocalCleanupPreference(context) }
+    val recoveryCoordinator = remember(database) {
+        buildAccountDeletionRecoveryCoordinator(database)
+    }
+    var recoverySnapshot by remember(database) {
+        mutableStateOf<AccountDeletionRecoverySnapshot>(recoveryCoordinator.snapshot())
+    }
     var deletionRecoveryRevision by remember(database) { mutableIntStateOf(0) }
     var recoveryRestartRevision by remember(database) { mutableIntStateOf(0) }
     var recoveryRetryRevision by remember(database) { mutableIntStateOf(0) }
@@ -75,36 +77,19 @@ internal fun DailyRecordRoot(
         mutableStateOf(localModePreference.isEnabled)
     }
     var authOpenedFromLocal by rememberSaveable { mutableStateOf(false) }
-    // A recovery copy is owner-scoped and remains hidden from the normal local
-    // repository until Auth resolution and promotion complete.
-    val localRecoveryReadyOwners = DeletionBarrier.localRecoveryCopyReadyOwnerIds()
-    val confirmedCleanupOwners = DeletionBarrier.pendingCleanupOwnerIds()
-    val localRecoveryBlocked = remember(
-        database,
-        deletionRecoveryRevision,
-        localRecoveryReadyOwners,
-        confirmedCleanupOwners,
-        recoveryConflictOwners,
-    ) {
-        DeletionBarrier.authDeletionStartedOwnerIds().isNotEmpty() ||
-            DeletionBarrier.localRecoveryCopyPendingOwnerIds().isNotEmpty() ||
-            localRecoveryReadyOwners.isNotEmpty() ||
-            confirmedCleanupOwners.isNotEmpty() ||
-            recoveryConflictOwners.isNotEmpty()
-    }
+    val localRecoveryBlocked = recoverySnapshot.blocksLocalMode
     if (continueOffline) {
         // Keep Firebase lazy in persistent local mode. Pre-Auth recovery only
         // touches Room and the deletion journal; an unresolved Auth request
         // is intentionally revisited after the user enters the cloud path.
         LaunchedEffect(database, recoveryRetryRevision) {
-            var retryAttempt = 0
-            while (true) {
-                recoveryConflictOwners = retryPendingOwnerCleanup(database, pendingCleanupPreference)
-                resolvePreAuthDeletionMarkers(database)
-                deletionRecoveryRevision += 1
-                if (!hasPreAuthDeletionRecovery()) break
-                delay(deletionRecoveryRetryDelayMillis(retryAttempt++))
-            }
+            recoveryCoordinator.resolvePreAuthUntilSettled(
+                onAttemptCompleted = { snapshot ->
+                    recoverySnapshot = snapshot
+                    recoveryConflictOwners = snapshot.conflictOwnerIds
+                    deletionRecoveryRevision += 1
+                },
+            )
         }
         if (localRecoveryBlocked) {
             DeletionRecoveryRoot(
@@ -118,9 +103,10 @@ internal fun DailyRecordRoot(
                     val ownerId = recoveryConflictOwners.firstOrNull() ?: return@DeletionRecoveryRoot
                     rootScope.launch {
                         runCatchingPreservingCancellation {
-                            resolveDeletionRecoveryConflict(database, ownerId, pendingCleanupPreference)
+                            recoveryCoordinator.resolveRecoveryConflict(ownerId)
                         }.onSuccess {
                             recoveryConflictOwners -= ownerId
+                            recoverySnapshot = recoveryCoordinator.snapshot(recoveryConflictOwners)
                             recoveryRetryRevision += 1
                         }
                     }
@@ -147,29 +133,27 @@ internal fun DailyRecordRoot(
     val recoveryResolved = remember(database) { mutableStateOf(false) }
     LaunchedEffect(database, authState, recoveryRetryRevision) {
         if (authState !is AuthState.Loading) {
-            var retryAttempt = 0
-            do {
-                // A previous account deletion may have left an owner cache
-                // that could not be cleared. Resolve pre-Auth markers and
-                // retry the cloud-confirmed local cleanup before exposing
-                // this account. A temporary network failure must not leave
-                // the process waiting forever for an auth-state emission.
-                val cleanupConflicts = retryPendingOwnerCleanup(database, pendingCleanupPreference)
-                val authConflicts = resolvePendingAuthDeletions(database, servicesProvider, pendingCleanupPreference)
-                recoveryConflictOwners = cleanupConflicts + authConflicts
-                recoveryResolved.value = true
-                deletionRecoveryRevision += 1
-                recoveryRestartRevision += 1
-                if (authState !is AuthState.SignedIn || !hasDeletionRecoveryPending()) break
-                delay(deletionRecoveryRetryDelayMillis(retryAttempt++))
-            } while (true)
+            // A previous account deletion may have left an owner cache that
+            // could not be cleared. Resolve all durable recovery work before
+            // exposing the account or restarting its sync producers.
+            recoveryCoordinator.resolveUntilSettled(
+                authRepository = services.authRepository,
+                shouldContinue = { authState is AuthState.SignedIn },
+                onAttemptCompleted = { snapshot ->
+                    recoverySnapshot = snapshot
+                    recoveryConflictOwners = snapshot.conflictOwnerIds
+                    recoveryResolved.value = true
+                    deletionRecoveryRevision += 1
+                    recoveryRestartRevision += 1
+                },
+            )
         }
     }
 
     when (val state = authState) {
         AuthState.Loading -> LoadingRoot()
         AuthState.SignedOut -> {
-            if ((recoveryConflictOwners.isNotEmpty() || hasDeletionRecoveryPending()) && !recoveryAuthOpen) {
+            if ((recoveryConflictOwners.isNotEmpty() || recoverySnapshot.hasPendingRecovery) && !recoveryAuthOpen) {
                 DeletionRecoveryRoot(
                     onSignIn = { recoveryAuthOpen = true },
                     onRetry = { recoveryRetryRevision += 1 },
@@ -178,9 +162,10 @@ internal fun DailyRecordRoot(
                         val ownerId = recoveryConflictOwners.firstOrNull() ?: return@DeletionRecoveryRoot
                         rootScope.launch {
                             runCatchingPreservingCancellation {
-                                resolveDeletionRecoveryConflict(database, ownerId, pendingCleanupPreference)
+                                recoveryCoordinator.resolveRecoveryConflict(ownerId)
                             }.onSuccess {
                                 recoveryConflictOwners -= ownerId
+                                recoverySnapshot = recoveryCoordinator.snapshot(recoveryConflictOwners)
                                 recoveryRetryRevision += 1
                             }
                         }
@@ -232,7 +217,7 @@ internal fun DailyRecordRoot(
                 services = services,
                 state = state,
                 accountDeletionScope = rootScope,
-                pendingCleanupPreference = pendingCleanupPreference,
+                recoveryCoordinator = recoveryCoordinator,
                 deletionRecoveryRevision = deletionRecoveryRevision,
                 recoveryResolved = recoveryResolved.value,
                 recoveryRestartRevision = recoveryRestartRevision,
@@ -242,9 +227,10 @@ internal fun DailyRecordRoot(
                     val ownerId = recoveryConflictOwners.firstOrNull() ?: return@SignedInRoot
                     rootScope.launch {
                         runCatchingPreservingCancellation {
-                            resolveDeletionRecoveryConflict(database, ownerId, pendingCleanupPreference)
+                            recoveryCoordinator.resolveRecoveryConflict(ownerId)
                         }.onSuccess {
                             recoveryConflictOwners -= ownerId
+                            recoverySnapshot = recoveryCoordinator.snapshot(recoveryConflictOwners)
                             recoveryRetryRevision += 1
                         }
                     }
@@ -256,41 +242,6 @@ internal fun DailyRecordRoot(
             )
         }
     }
-}
-
-private suspend fun retryPendingOwnerCleanup(
-    database: DailyRecordDatabase,
-    pendingCleanupPreference: PendingLocalCleanupPreference,
-): Set<String> {
-    val conflicts = mutableSetOf<String>()
-    val cleanupStore = buildCombinedAccountDeletionLocalStore(database)
-    val durablePendingOwners = DeletionBarrier.pendingCleanupOwnerIds()
-    (pendingCleanupPreference.ownerIds + durablePendingOwners).forEach { pendingOwnerId ->
-        runCatchingPreservingCancellation {
-            // If the process stopped after Auth was confirmed but before the
-            // final local transition, promote the owner-scoped recovery copy
-            // before clearing the account cache or its marker. A ready copy
-            // must never disappear merely because cleanup is retried.
-            if (pendingOwnerId in DeletionBarrier.localRecoveryCopyReadyOwnerIds()) {
-                cleanupStore.promoteLocalRecoveryCopy(pendingOwnerId)
-            }
-            cleanupStore.deleteOwnerCache(pendingOwnerId)
-        }.onSuccess {
-            pendingCleanupPreference.remove(pendingOwnerId)
-            // Keep startup resilient if the durable marker cannot be
-            // committed; the next launch will retry from the marker.
-            runCatching {
-                DeletionBarrier.completeDeletionCleanup(pendingOwnerId)
-            }.onFailure {
-                pendingCleanupPreference.add(pendingOwnerId)
-            }
-        }.onFailure { error ->
-            if (error is io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryConflictException) {
-                conflicts += pendingOwnerId
-            }
-        }
-    }
-    return conflicts
 }
 
 @Composable
@@ -314,7 +265,7 @@ private fun SignedInRoot(
     services: FirebaseServices,
     state: AuthState.SignedIn,
     accountDeletionScope: kotlinx.coroutines.CoroutineScope,
-    pendingCleanupPreference: PendingLocalCleanupPreference,
+    recoveryCoordinator: AccountDeletionRecoveryCoordinator,
     deletionRecoveryRevision: Int,
     recoveryResolved: Boolean,
     recoveryRestartRevision: Int,
@@ -335,7 +286,7 @@ private fun SignedInRoot(
         deletionRecoveryRefresh,
         deletionInProgress,
     ) {
-        DeletionBarrier.isDeletionBlocked(ownerId)
+        recoveryCoordinator.isDeletionBlocked(ownerId)
     }
     // Keep the account surface mounted for the deletion attempt itself so an
     // Auth-unknown result can reach AccountDeletionDialog. On a fresh process
@@ -347,11 +298,7 @@ private fun SignedInRoot(
     LaunchedEffect(ownerId, deletionInProgress, deletionAttempted) {
         if (!deletionInProgress && deletionAttempted) {
             runCatchingPreservingCancellation {
-                resolvePendingAuthDeletions(
-                    database = database,
-                    servicesProvider = { services },
-                    pendingCleanupPreference = pendingCleanupPreference,
-                )
+                recoveryCoordinator.resolvePendingAuthDeletions(services.authRepository)
             }
             deletionRecoveryRefresh += 1
             // The resolver may have cleared an Auth-pending marker. This is a
@@ -408,16 +355,7 @@ private fun SignedInRoot(
         )
     }
     val deletionCoordinator = remember(ownerId, database, services) {
-        AccountDeletionCoordinator(
-            authRepository = services.authRepository,
-            remoteDataSource = buildCombinedAccountRemoteDataStore(services),
-            localStore = buildCombinedAccountDeletionLocalStore(database),
-            markCloudDeletionComplete = DeletionBarrier::markCloudDeletionComplete,
-            markAuthDeletionStarted = DeletionBarrier::markAuthDeletionStarted,
-            markLocalRecoveryCopyPending = DeletionBarrier::markLocalRecoveryCopyPending,
-            markLocalRecoveryCopyReady = DeletionBarrier::markLocalRecoveryCopyReady,
-            markAuthDeletionComplete = DeletionBarrier::markAuthDeletionComplete,
-        )
+        buildAccountDeletionCoordinator(database, services)
     }
     val scope = rememberCoroutineScope()
     val syncStatus by syncManager.status.collectAsState()
@@ -432,7 +370,6 @@ private fun SignedInRoot(
             DailyRecordSyncScheduler.cancelAndAwait(context)
         },
         performDeletion = deletionCoordinator::deleteAccount,
-        markCleanupPending = pendingCleanupPreference::add,
         onLocalRecordsKept = onAccountDeletedWithLocalRecords,
         onScheduleSync = { ownerId -> DailyRecordSyncScheduler.schedule(context, ownerId) },
     )
@@ -446,7 +383,7 @@ private fun SignedInRoot(
         syncRestartRevision,
         recoveryRestartRevision,
     ) {
-        if (DeletionBarrier.isDeletionBlocked(ownerId)) {
+        if (recoveryCoordinator.isDeletionBlocked(ownerId)) {
             activeSyncJobs = emptyList()
             onDispose { }
         } else {
@@ -459,7 +396,7 @@ private fun SignedInRoot(
         }
     }
     LaunchedEffect(ownerId) {
-        if (!DeletionBarrier.isDeletionBlocked(ownerId)) {
+        if (!recoveryCoordinator.isDeletionBlocked(ownerId)) {
             DailyRecordSyncScheduler.schedule(context, ownerId)
         }
     }
@@ -491,157 +428,6 @@ private fun SignedInRoot(
         },
     )
 }
-
-private suspend fun resolvePendingAuthDeletions(
-    database: DailyRecordDatabase,
-    servicesProvider: () -> FirebaseServices,
-    pendingCleanupPreference: PendingLocalCleanupPreference,
-): Set<String> {
-    val conflicts = mutableSetOf<String>()
-    resolvePreAuthDeletionMarkers(database)
-    val authPendingOwners = DeletionBarrier.authDeletionStartedOwnerIds()
-    if (authPendingOwners.isNotEmpty()) {
-        val services = runCatching { servicesProvider() }.getOrNull() ?: return conflicts
-        val localStore = buildCombinedAccountDeletionLocalStore(database)
-        authPendingOwners.forEach { ownerId ->
-            val hasPendingCopy = ownerId in DeletionBarrier.localRecoveryCopyPendingOwnerIds()
-            val hasReadyCopy = ownerId in DeletionBarrier.localRecoveryCopyReadyOwnerIds()
-            when (val presence = services.authRepository.inspectAccountPresence(ownerId)) {
-                AuthAccountPresence.Absent -> {
-                    val recoveryCopyReady = if (hasPendingCopy && !hasReadyCopy) {
-                        runCatchingPreservingCancellation {
-                            localStore.stageLocalRecoveryCopy(ownerId)
-                            DeletionBarrier.markLocalRecoveryCopyReady(ownerId)
-                        }.isSuccess
-                    } else {
-                        true
-                    }
-                    if (recoveryCopyReady) {
-                        // Auth is definitively gone; only now may the startup
-                        // cleanup path remove the account cache. Promotion is
-                        // owner-scoped and refuses to overwrite existing local data.
-                        runCatchingPreservingCancellation {
-                            localStore.promoteLocalRecoveryCopy(ownerId)
-                            DeletionBarrier.promoteAuthDeletionCleanup(ownerId)
-                        }.onFailure { error ->
-                            if (error is io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryConflictException) {
-                                conflicts += ownerId
-                            }
-                        }
-                    }
-                }
-                AuthAccountPresence.SignedOut -> Unit
-                AuthAccountPresence.Exists -> {
-                    // The account survived. Discard only the staged recovery
-                    // copy, re-queue the account rows, then release the block.
-                    runCatchingPreservingCancellation {
-                        if (hasPendingCopy && !hasReadyCopy) {
-                            localStore.stageLocalRecoveryCopy(ownerId)
-                            DeletionBarrier.markLocalRecoveryCopyReady(ownerId)
-                        }
-                        if (hasPendingCopy || hasReadyCopy) {
-                            localStore.discardLocalRecoveryCopy(ownerId)
-                        }
-                        localStore.markOwnerPendingForResync(ownerId)
-                        DeletionBarrier.clearLocalRecoveryCopyPending(ownerId)
-                        DeletionBarrier.resolveAuthDeletionAccountStillExists(ownerId)
-                    }
-                }
-                is AuthAccountPresence.Unknown -> Unit
-            }
-        }
-    }
-    conflicts += retryPendingOwnerCleanup(database, pendingCleanupPreference)
-    return conflicts
-}
-
-private suspend fun resolveDeletionRecoveryConflict(
-    database: DailyRecordDatabase,
-    ownerId: String,
-    pendingCleanupPreference: PendingLocalCleanupPreference,
-) {
-    val localStore = buildCombinedAccountDeletionLocalStore(database)
-    localStore.deleteOwnerCache(LOCAL_OWNER_ID)
-    localStore.promoteLocalRecoveryCopy(ownerId)
-    DeletionBarrier.completeDeletionCleanup(ownerId)
-    pendingCleanupPreference.remove(ownerId)
-}
-
-/**
- * Resolves only deletion phases before Firebase Auth was invoked. This helper
- * deliberately has no Firebase dependency so persistent local mode can remain
- * fully offline and lazy.
- */
-private suspend fun resolvePreAuthDeletionMarkers(database: DailyRecordDatabase) {
-    val authPendingOwners = DeletionBarrier.authDeletionStartedOwnerIds()
-    val cloudPendingOwners = DeletionBarrier.cloudDeletionPendingOwnerIds() - authPendingOwners
-    val cleanupPendingOwners = DeletionBarrier.pendingCleanupOwnerIds()
-    val recoveryCopyOwners = DeletionBarrier.localRecoveryCopyPendingOwnerIds() +
-        DeletionBarrier.localRecoveryCopyReadyOwnerIds()
-    val interruptedOwners = (
-        DeletionBarrier.inProgressOwnerIds() + recoveryCopyOwners
-        ) - authPendingOwners - cloudPendingOwners - cleanupPendingOwners
-    if (cloudPendingOwners.isEmpty() && interruptedOwners.isEmpty()) return
-
-    val localStore = buildCombinedAccountDeletionLocalStore(database)
-    // If Auth was not even invoked, the account definitely still exists.
-    // Re-queue its now-cloudless local rows before releasing the barrier.
-    cloudPendingOwners.forEach { ownerId ->
-        runCatchingPreservingCancellation {
-            if (ownerId in DeletionBarrier.localRecoveryCopyPendingOwnerIds() ||
-                ownerId in DeletionBarrier.localRecoveryCopyReadyOwnerIds()
-            ) {
-                localStore.discardLocalRecoveryCopy(ownerId)
-            }
-            localStore.markOwnerPendingForResync(ownerId)
-            DeletionBarrier.clearLocalRecoveryCopyPending(ownerId)
-            DeletionBarrier.resolveAuthDeletionAccountStillExists(ownerId)
-        }
-    }
-
-    interruptedOwners.forEach { ownerId ->
-        runCatchingPreservingCancellation {
-            if (ownerId in DeletionBarrier.localRecoveryCopyPendingOwnerIds() ||
-                ownerId in DeletionBarrier.localRecoveryCopyReadyOwnerIds()
-            ) {
-                localStore.discardLocalRecoveryCopy(ownerId)
-                DeletionBarrier.clearLocalRecoveryCopyPending(ownerId)
-            }
-            localStore.markOwnerPendingForResync(ownerId)
-            DeletionBarrier.resolveInterruptedDeletion(ownerId)
-        }
-    }
-
-}
-
-private fun hasPreAuthDeletionRecovery(): Boolean {
-    val authPendingOwners = DeletionBarrier.authDeletionStartedOwnerIds()
-    val cloudPendingOwners = DeletionBarrier.cloudDeletionPendingOwnerIds() - authPendingOwners
-    val cleanupPendingOwners = DeletionBarrier.pendingCleanupOwnerIds()
-    val recoveryCopyOwners = DeletionBarrier.localRecoveryCopyPendingOwnerIds() +
-        DeletionBarrier.localRecoveryCopyReadyOwnerIds()
-    val interruptedOwners = (
-        DeletionBarrier.inProgressOwnerIds() + recoveryCopyOwners
-        ) - authPendingOwners - cloudPendingOwners - cleanupPendingOwners
-    return cloudPendingOwners.isNotEmpty() ||
-        cleanupPendingOwners.isNotEmpty() ||
-        interruptedOwners.isNotEmpty()
-}
-
-private fun hasDeletionRecoveryPending(): Boolean {
-    val cleanupPendingOwners = DeletionBarrier.pendingCleanupOwnerIds()
-    val recoveryCopyReadyOwners = DeletionBarrier.localRecoveryCopyReadyOwnerIds()
-    return DeletionBarrier.inProgressOwnerIds().isNotEmpty() ||
-        DeletionBarrier.cloudDeletionPendingOwnerIds().isNotEmpty() ||
-        DeletionBarrier.authDeletionStartedOwnerIds().isNotEmpty() ||
-        DeletionBarrier.localRecoveryCopyPendingOwnerIds().isNotEmpty() ||
-        (recoveryCopyReadyOwners - cleanupPendingOwners).isNotEmpty() ||
-        cleanupPendingOwners.isNotEmpty()
-}
-
-private fun deletionRecoveryRetryDelayMillis(attempt: Int): Long =
-    (DELETION_RECOVERY_RETRY_DELAY_MILLIS * (1L shl attempt.coerceIn(0, 4)))
-        .coerceAtMost(60_000L)
 
 @Composable
 private fun LoadingRoot() {

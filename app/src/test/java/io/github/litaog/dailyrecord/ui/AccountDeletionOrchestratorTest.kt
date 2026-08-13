@@ -6,6 +6,7 @@ import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryPen
 import io.github.litaog.dailyrecord.core.account.AccountDeletionResult
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
+import io.github.litaog.dailyrecord.core.sync.DeletionJournalPhase
 import io.github.litaog.dailyrecord.core.sync.DeletionStateStore
 import io.github.litaog.dailyrecord.core.sync.InMemoryDeletionStateStore
 import kotlinx.coroutines.CancellationException
@@ -23,7 +24,6 @@ class AccountDeletionOrchestratorTest {
     private val store = InMemoryDeletionStateStore()
         private val ownerId = "owner-a"
     private var deletionInvoked = false
-    private var cleanupMarked: String? = null
     private var localRecordsKept = false
     private var syncRescheduled: String? = null
     private var cancelAndAwait: suspend () -> Unit = {}
@@ -37,12 +37,10 @@ class AccountDeletionOrchestratorTest {
             deletionInvoked = true
             AccountDeletionResult.Completed
         },
-        markCleanupPending: (String) -> Unit = { cleanupMarked = it },
         onLocalRecordsKept: () -> Unit = { localRecordsKept = true },
     ) = AccountDeletionOrchestrator(
         cancelAndAwait = { cancelAndAwait() },
         performDeletion = deleteAccount,
-        markCleanupPending = markCleanupPending,
         onLocalRecordsKept = onLocalRecordsKept,
         onScheduleSync = { syncRescheduled = it },
     )
@@ -71,10 +69,9 @@ class AccountDeletionOrchestratorTest {
 
         assertTrue(deletionInvoked)
         assertTrue(localRecordsKept)
-        assertNull(cleanupMarked)
         assertNull(syncRescheduled)
         assertFalse(DeletionBarrier.isDeletionBlocked(ownerId))
-        assertTrue(store.readOwners("in_progress_owner_ids").isEmpty())
+        assertTrue(store.readJournal().isEmpty())
     }
 
     @Test
@@ -95,6 +92,7 @@ class AccountDeletionOrchestratorTest {
     fun cleanupPendingMarksCleanupAndTreatsResultAsSuccess() = runBlocking {
         val result = orchestrator(
             deleteAccount = { _, _, _ ->
+                moveToAuthDeleted(ownerId)
                 throw AccountDeletionLocalCleanupPendingException(ownerId = ownerId, cause = RuntimeException("cleanup pending"))
             },
         ).deleteAccount(
@@ -104,18 +102,23 @@ class AccountDeletionOrchestratorTest {
         )
 
         assertTrue(result.isSuccess)
-        assertEquals(ownerId, cleanupMarked)
         assertFalse(localRecordsKept)
         // A cleanup-pending owner stays blocked until the cleanup completes.
         assertTrue(DeletionBarrier.isDeletionBlocked(ownerId))
-        assertTrue(store.readOwners("cleanup_pending_owner_ids").contains(ownerId))
+        assertEquals(
+            DeletionJournalPhase.AuthDeletedCleanupPending,
+            store.readJournal()[ownerId]?.phase,
+        )
     }
 
     @Test
     fun authPendingKeepsBarrierAndDoesNotScheduleSync() = runBlocking {
         val cause = IllegalStateException("response lost")
         val result = orchestrator(
-            deleteAccount = { _, _, _ -> AccountDeletionResult.AuthDeletionPending(cause) },
+            deleteAccount = { _, _, _ ->
+                moveToAuthPending(ownerId)
+                AccountDeletionResult.AuthDeletionPending(cause)
+            },
         ).deleteAccount(
             ownerId = ownerId,
             password = "pw",
@@ -125,7 +128,10 @@ class AccountDeletionOrchestratorTest {
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull() is AccountDeletionAuthPendingException)
         assertTrue(DeletionBarrier.isDeletionBlocked(ownerId))
-        assertTrue(store.readOwners("auth_deletion_started_owner_ids").contains(ownerId))
+        assertEquals(
+            DeletionJournalPhase.AuthDeletionPending,
+            store.readJournal()[ownerId]?.phase,
+        )
         assertNull(syncRescheduled)
         assertFalse(localRecordsKept)
     }
@@ -134,6 +140,7 @@ class AccountDeletionOrchestratorTest {
     fun localRecoveryPendingKeepsGlobalRecoveryBarrier() = runBlocking {
         val result = orchestrator(
             deleteAccount = { _, _, _ ->
+                DeletionBarrier.markCloudDeletionComplete(ownerId)
                 throw AccountDeletionLocalRecoveryPendingException(
                     ownerId = ownerId,
                     cause = IllegalStateException("local copy cleanup pending"),
@@ -147,7 +154,10 @@ class AccountDeletionOrchestratorTest {
 
         assertTrue(result.isFailure)
         assertTrue(DeletionBarrier.isDeletionBlocked(ownerId))
-        assertTrue(DeletionBarrier.cloudDeletionPendingOwnerIds().contains(ownerId))
+        assertEquals(
+            DeletionJournalPhase.CloudDeleted,
+            store.readJournal()[ownerId]?.phase,
+        )
         assertNull(syncRescheduled)
     }
 
@@ -155,12 +165,12 @@ class AccountDeletionOrchestratorTest {
     fun cleanupMarkerFailureDoesNotUnlockDurableCleanup() = runBlocking {
         val result = orchestrator(
             deleteAccount = { _, _, _ ->
+                moveToAuthDeleted(ownerId)
                 throw AccountDeletionLocalCleanupPendingException(
                     ownerId = ownerId,
                     cause = RuntimeException("cleanup pending"),
                 )
             },
-            markCleanupPending = { error("legacy preference unavailable") },
         ).deleteAccount(
             ownerId = ownerId,
             password = "pw",
@@ -169,7 +179,10 @@ class AccountDeletionOrchestratorTest {
 
         assertTrue(result.isSuccess)
         assertTrue(DeletionBarrier.isDeletionBlocked(ownerId))
-        assertTrue(store.readOwners("cleanup_pending_owner_ids").contains(ownerId))
+        assertEquals(
+            DeletionJournalPhase.AuthDeletedCleanupPending,
+            store.readJournal()[ownerId]?.phase,
+        )
         assertNull(syncRescheduled)
     }
 
@@ -218,7 +231,10 @@ class AccountDeletionOrchestratorTest {
             // Expected.
         }
 
-        assertTrue(store.readOwners("in_progress_owner_ids").contains(ownerId))
+        assertEquals(
+            DeletionJournalPhase.InProgress,
+            store.readJournal()[ownerId]?.phase,
+        )
         assertFalse(DeletionBarrier.isLegacyDeletionBlocked)
         assertNull(syncRescheduled)
     }
@@ -239,25 +255,26 @@ class AccountDeletionOrchestratorTest {
 
         assertTrue(result.isFailure)
     }
+
+    private fun moveToAuthPending(ownerId: String) {
+        DeletionBarrier.markCloudDeletionComplete(ownerId)
+        DeletionBarrier.markAuthDeletionStarted(ownerId)
+    }
+
+    private fun moveToAuthDeleted(ownerId: String) {
+        moveToAuthPending(ownerId)
+        DeletionBarrier.markAuthDeletionComplete(ownerId)
+    }
 }
 
 private class FailingDeletionStateStore : DeletionStateStore {
     private val delegate = InMemoryDeletionStateStore()
 
-    override fun readOwners(key: String): Set<String> = delegate.readOwners(key)
+    override fun readJournal(): Map<String, io.github.litaog.dailyrecord.core.sync.DeletionJournalEntry> =
+        delegate.readJournal()
 
-    override fun writeOwners(key: String, owners: Set<String>) {
-        error("disk full")
-    }
-
-    override fun writeMarkers(
-        inProgress: Set<String>,
-        cleanupPending: Set<String>,
-        cloudDeletionPending: Set<String>,
-        authDeletionStarted: Set<String>,
-        authDeletionComplete: Set<String>,
-        localRecoveryCopyPending: Set<String>,
-        localRecoveryCopyReady: Set<String>,
+    override fun writeJournal(
+        entries: Map<String, io.github.litaog.dailyrecord.core.sync.DeletionJournalEntry>,
     ) {
         error("disk full")
     }

@@ -28,7 +28,6 @@ internal class AccountDeletionOrchestrator(
         password: String,
         localData: LocalDataAfterAccountDeletion,
     ) -> AccountDeletionResult,
-    private val markCleanupPending: (ownerId: String) -> Unit,
     private val onLocalRecordsKept: () -> Unit,
     private val onScheduleSync: (ownerId: String) -> Unit,
 ) {
@@ -68,21 +67,6 @@ internal class AccountDeletionOrchestrator(
                 authPending != null -> AccountDeletionOutcome.AuthDeletionPending
                 deletionResult.isSuccess -> AccountDeletionOutcome.Completed
                 else -> AccountDeletionOutcome.RetryableFailure
-            }
-            if (cleanupPending) {
-                // Keep both the legacy marker and the durable marker;
-                // either one can recover local cleanup after a restart.
-                try {
-                    markCleanupPending(ownerId)
-                } catch (error: CancellationException) {
-                    throw error
-                } catch (error: Exception) {
-                    // The durable barrier is the source of truth. A failure in
-                    // the legacy compatibility preference must not turn a
-                    // confirmed Auth deletion into a retryable account
-                    // deletion, which could never re-authenticate.
-                    deletionResult.exceptionOrNull()?.addSuppressed(error)
-                }
             }
             if (((deletionResult.isSuccess && authPending == null && !localRecoveryPending) ||
                 (cleanupPending && !recoveryConflict)) &&
