@@ -5,10 +5,14 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.github.litaog.dailyrecord.core.di.FIREBASE_EMULATOR_APP_NAME
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
+import io.github.litaog.dailyrecord.core.common.awaitResult
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
 import io.github.litaog.dailyrecord.core.database.SexRecordEntity
-import io.github.litaog.dailyrecord.core.sync.CombinedAccountRemoteDataStore
+import io.github.litaog.dailyrecord.core.account.CombinedAccountRemoteDataStore
+import io.github.litaog.dailyrecord.core.auth.AuthDeletionResult
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
@@ -21,6 +25,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.json.JSONObject
+import io.github.litaog.dailyrecord.core.sync.RemoteHandBrewRecord
+import io.github.litaog.dailyrecord.core.sync.RemoteSexRecord
 
 @RunWith(AndroidJUnit4::class)
 class FirebaseEmulatorIntegrationTest {
@@ -74,11 +80,12 @@ class FirebaseEmulatorIntegrationTest {
             confirmPasswordReset(oobCode, resetPassword)
             val restoredAccount = services.authRepository.signIn(firstEmail, resetPassword)
             assertEquals(first.uid, restoredAccount.uid)
-            val restored = services.remoteDataSource.fetch(first.uid).records.single()
+            val restored = services.remoteDataSource.fetch(first.uid).records
+                .filterIsInstance<RemoteHandBrewRecord>().single()
             assertEquals(3, restored.brewCount)
             assertEquals(
                 1,
-                services.sexRemoteDataSource.fetch(first.uid).sexRecords.single().sexCount,
+                services.sexRemoteDataSource.fetch(first.uid).records.filterIsInstance<RemoteSexRecord>().single().sexCount,
             )
 
             val newer = local.copy(
@@ -95,7 +102,7 @@ class FirebaseEmulatorIntegrationTest {
             val rejectedStaleCommit = services.remoteDataSource.commit(first.uid, stale)
             assertEquals(5, rejectedStaleCommit.brewCount)
             assertEquals(2L, rejectedStaleCommit.revision)
-            assertEquals(5, services.remoteDataSource.fetch(first.uid).records.single().brewCount)
+            assertEquals(5, services.remoteDataSource.fetch(first.uid).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
 
             services.authRepository.signOut()
             services.authRepository.register(secondEmail, password)
@@ -152,12 +159,11 @@ class FirebaseEmulatorIntegrationTest {
 
             services.authRepository.reauthenticate(password)
             CombinedAccountRemoteDataStore(
-                services.remoteDataSource,
-                services.sexRemoteDataSource,
+                listOf(services.remoteDataSource, services.sexRemoteDataSource),
             ).deleteAll(account.uid)
             assertTrue(services.remoteDataSource.fetch(account.uid).records.isEmpty())
-            assertTrue(services.sexRemoteDataSource.fetch(account.uid).sexRecords.isEmpty())
-            services.authRepository.deleteCurrentAccount()
+            assertTrue(services.sexRemoteDataSource.fetch(account.uid).records.filterIsInstance<RemoteSexRecord>().isEmpty())
+            assertTrue(services.authRepository.deleteCurrentAccount() is AuthDeletionResult.Completed)
 
             assertTrue(
                 "Deleted Firebase account must not accept the old credentials",
@@ -238,8 +244,8 @@ class FirebaseEmulatorIntegrationTest {
             assertNotEquals(initialSex.id, recreatedSex.id)
             assertEquals(1L, recreatedHand.revision)
             assertEquals(1L, recreatedSex.revision)
-            assertEquals(4, services.remoteDataSource.fetch(account.uid).records.single().brewCount)
-            assertEquals(3, services.sexRemoteDataSource.fetch(account.uid).sexRecords.single().sexCount)
+            assertEquals(4, services.remoteDataSource.fetch(account.uid).records.filterIsInstance<RemoteHandBrewRecord>().single().brewCount)
+            assertEquals(3, services.sexRemoteDataSource.fetch(account.uid).records.filterIsInstance<RemoteSexRecord>().single().sexCount)
         } finally {
             services.authRepository.signOut()
         }

@@ -1,7 +1,7 @@
 package io.github.litaog.dailyrecord.core.account
 
+import io.github.litaog.dailyrecord.core.auth.AuthDeletionResult
 import io.github.litaog.dailyrecord.core.auth.AuthRepository
-import io.github.litaog.dailyrecord.core.sync.AccountRemoteDataStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -11,6 +11,17 @@ enum class LocalDataAfterAccountDeletion {
     Delete,
 }
 
+sealed interface AccountDeletionResult {
+    data object Completed : AccountDeletionResult
+
+    /**
+     * Auth accepted the delete request, but the client did not receive a
+     * definitive result. Local recovery data and the deletion barrier must be
+     * retained until the account's state is explicitly resolved.
+     */
+    data class AuthDeletionPending(val cause: Throwable) : AccountDeletionResult
+}
+
 /**
  * Thrown when the Firebase account and cloud data were already deleted but the
  * owner cache could not be cleared. This is not a retryable account
@@ -18,15 +29,38 @@ enum class LocalDataAfterAccountDeletion {
  * longer exists. The owner id is kept so a later startup can retry the local
  * cleanup.
  */
-internal class AccountDeletionLocalCleanupPendingException(
+internal open class AccountDeletionLocalCleanupPendingException(
     val ownerId: String,
     cause: Throwable,
 ) : IllegalStateException("Account deleted but local owner cache cleanup is pending", cause)
 
+internal class AccountDeletionAuthPendingException(
+    val ownerId: String,
+    cause: Throwable,
+) : IllegalStateException("Account deletion result is unknown; synchronization remains blocked", cause)
+
+internal class AccountDeletionLocalRecoveryPendingException(
+    val ownerId: String,
+    cause: Throwable,
+) : IllegalStateException("Local recovery copy cleanup is pending", cause)
+
+internal class AccountDeletionLocalRecoveryConflictException(
+    ownerId: String,
+    cause: Throwable,
+) : AccountDeletionLocalCleanupPendingException(
+    ownerId,
+    IllegalStateException("Local records already exist; recovery promotion is blocked", cause),
+)
+
 internal interface AccountDeletionLocalStore {
     suspend fun stageLocalRecoveryCopy(ownerId: String)
 
-    suspend fun discardLocalRecoveryCopy()
+    suspend fun discardLocalRecoveryCopy(ownerId: String)
+
+    /** Promotes a completed recovery copy into the local/offline namespace. */
+    suspend fun promoteLocalRecoveryCopy(ownerId: String)
+
+    suspend fun hasLocalRecoveryConflict(ownerId: String): Boolean
 
     suspend fun deleteOwnerCache(ownerId: String)
 
@@ -43,12 +77,22 @@ internal class AccountDeletionCoordinator(
     private val authRepository: AuthRepository,
     private val remoteDataSource: AccountRemoteDataStore,
     private val localStore: AccountDeletionLocalStore,
+    /** Persist the post-cloud phase before local cache cleanup starts. */
+    private val markCloudDeletionComplete: (ownerId: String) -> Unit = {},
+    /** Persist auth-delete intent immediately before invoking Firebase Auth. */
+    private val markAuthDeletionStarted: (ownerId: String) -> Unit = {},
+    /** Persist the optional local recovery-copy intent before touching Room. */
+    private val markLocalRecoveryCopyPending: (ownerId: String) -> Unit = {},
+    /** Persist that the optional local recovery copy is complete. */
+    private val markLocalRecoveryCopyReady: (ownerId: String) -> Unit = {},
+    /** Persist definitive Auth completion before local owner cleanup. */
+    private val markAuthDeletionComplete: (ownerId: String) -> Unit = {},
 ) {
     suspend fun deleteAccount(
         ownerId: String,
         password: String,
         localData: LocalDataAfterAccountDeletion,
-    ) {
+    ): AccountDeletionResult {
         require(ownerId.isNotBlank()) { "ownerId must not be blank" }
         require(password.isNotBlank()) { "password must not be blank" }
 
@@ -69,22 +113,111 @@ internal class AccountDeletionCoordinator(
             throw error
         }
 
-        var stagedLocalCopy = false
+        try {
+            // Cross-system deletion has no transaction. Persist the cloud phase
+            // before starting Auth so an unknown Auth response cannot be
+            // mistaken for a safe pre-deletion failure after a process death.
+            markCloudDeletionComplete(ownerId)
+        } catch (error: CancellationException) {
+            localStore.markOwnerPendingForResyncSafely(ownerId, error)
+            throw error
+        } catch (error: Exception) {
+            localStore.markOwnerPendingForResyncSafely(ownerId, error)
+            throw error
+        }
+
+        var localRecoveryCopyIntent = false
+        var localRecoveryCopyCleanupConfirmed = false
+        var authDeletionStarted = false
+        var authDeleted = false
+        var authDeletionDefinitivelyFailed = false
         try {
             if (localData == LocalDataAfterAccountDeletion.Keep) {
-                localStore.stageLocalRecoveryCopy(ownerId)
-                stagedLocalCopy = true
+                try {
+                    markLocalRecoveryCopyPending(ownerId)
+                    localRecoveryCopyIntent = true
+                    localStore.stageLocalRecoveryCopy(ownerId)
+                    markLocalRecoveryCopyReady(ownerId)
+                } catch (error: CancellationException) {
+                    if (!localRecoveryCopyIntent || localStore.discardLocalRecoveryCopySafely(ownerId, error)) {
+                        localRecoveryCopyCleanupConfirmed = true
+                    } else {
+                        throw AccountDeletionLocalRecoveryPendingException(ownerId, error)
+                    }
+                    throw error
+                } catch (error: Exception) {
+                    if (!localRecoveryCopyIntent || localStore.discardLocalRecoveryCopySafely(ownerId, error)) {
+                        localRecoveryCopyCleanupConfirmed = true
+                    } else {
+                        throw AccountDeletionLocalRecoveryPendingException(ownerId, error)
+                    }
+                    throw error
+                }
             }
-            authRepository.deleteCurrentAccount()
+            markAuthDeletionStarted(ownerId)
+            authDeletionStarted = true
+            when (val authResult = authRepository.deleteCurrentAccount()) {
+                AuthDeletionResult.Completed -> {
+                    authDeleted = true
+                    // This marker is the durable proof that the Auth account is
+                    // gone. If the process dies after this point, startup can
+                    // clean local data without guessing from a signed-out SDK.
+                    markAuthDeletionComplete(ownerId)
+                }
+                is AuthDeletionResult.Failed -> {
+                    authDeletionDefinitivelyFailed = true
+                    throw authResult.cause
+                }
+                is AuthDeletionResult.Unknown -> {
+                    // Do not discard the staged copy or mark rows pending. The
+                    // Firebase Task may have completed remotely after its
+                    // response was lost, so resyncing here could resurrect
+                    // data under an account that was already deleted.
+                    return AccountDeletionResult.AuthDeletionPending(authResult.cause)
+                }
+            }
         } catch (error: CancellationException) {
-            if (stagedLocalCopy) localStore.discardLocalRecoveryCopySafely(error)
+            if (authDeleted) {
+                // Auth is gone; do not re-mark cloud data for resync or discard
+                // the recovery copy. Startup must finish local cleanup.
+                throw AccountDeletionLocalCleanupPendingException(ownerId, error)
+            }
+            if (authDeletionStarted) {
+                // Cancellation after the Auth request was launched is an
+                // unknown remote outcome, not proof that the account remains.
+                // Keep both the recovery copy and the owner block.
+                return AccountDeletionResult.AuthDeletionPending(error)
+            }
+            if (localRecoveryCopyIntent && !localRecoveryCopyCleanupConfirmed) {
+                if (localStore.discardLocalRecoveryCopySafely(ownerId, error)) {
+                    localRecoveryCopyCleanupConfirmed = true
+                } else {
+                    throw AccountDeletionLocalRecoveryPendingException(ownerId, error)
+                }
+            }
             // Cloud deletion has already completed, but cancellation means the auth
             // deletion may not have reached Firebase. Preserve the recovery path for
             // a still-existing account even though the coroutine is being cancelled.
             localStore.markOwnerPendingForResyncSafely(ownerId, error)
             throw error
         } catch (error: Exception) {
-            if (stagedLocalCopy) localStore.discardLocalRecoveryCopySafely(error)
+            if (authDeleted) {
+                throw AccountDeletionLocalCleanupPendingException(ownerId, error)
+            }
+            if (authDeletionStarted &&
+                !authDeletionDefinitivelyFailed &&
+                error !is AccountDeletionAuthPendingException
+            ) {
+                return AccountDeletionResult.AuthDeletionPending(error)
+            }
+            if (error is AccountDeletionLocalRecoveryPendingException) throw error
+            if (localRecoveryCopyIntent && !localRecoveryCopyCleanupConfirmed) {
+                if (localStore.discardLocalRecoveryCopySafely(ownerId, error)) {
+                    localRecoveryCopyCleanupConfirmed = true
+                } else {
+                    throw AccountDeletionLocalRecoveryPendingException(ownerId, error)
+                }
+            }
             // The account still exists but its cloud data is already cleared.
             // Re-mark the owner rows pending so the next successful sync
             // rebuilds the cloud instead of leaving the account permanently
@@ -99,24 +232,36 @@ internal class AccountDeletionCoordinator(
         }
         try {
             localStore.deleteOwnerCache(ownerId)
+            if (localData == LocalDataAfterAccountDeletion.Keep) {
+                localStore.promoteLocalRecoveryCopy(ownerId)
+            }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
+            if (error is AccountDeletionLocalRecoveryConflictException) throw error
             // The account and cloud data are already gone. Report a dedicated
             // recoverable cleanup state instead of a retryable deletion failure,
             // because re-authentication is impossible once the account is deleted.
             throw AccountDeletionLocalCleanupPendingException(ownerId, error)
         }
+        return AccountDeletionResult.Completed
     }
 }
 
-private suspend fun AccountDeletionLocalStore.discardLocalRecoveryCopySafely(primary: Throwable) {
-    try {
+private suspend fun AccountDeletionLocalStore.discardLocalRecoveryCopySafely(
+    ownerId: String,
+    primary: Throwable,
+): Boolean {
+    return try {
         withContext(NonCancellable) {
-            discardLocalRecoveryCopy()
+            discardLocalRecoveryCopy(ownerId)
         }
+        true
+    } catch (error: CancellationException) {
+        throw error
     } catch (cleanupError: Exception) {
         primary.addSuppressed(cleanupError)
+        false
     }
 }
 

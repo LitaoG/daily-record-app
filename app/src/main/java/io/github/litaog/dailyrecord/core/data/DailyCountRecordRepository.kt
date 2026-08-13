@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.core.data
 
 import io.github.litaog.dailyrecord.core.model.DailyCountRecord
+import io.github.litaog.dailyrecord.core.model.nextRecordTimestamp
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
@@ -14,6 +15,13 @@ import kotlinx.coroutines.flow.Flow
  */
 interface DailyCountRecordRepository<T : DailyCountRecord> {
     fun observeRecord(localDate: LocalDate): Flow<T?>
+
+    /**
+     * One-shot read used by save paths that already know which date they
+     * touch; observing through [observeRecord] would run the flow machinery
+     * for a value that is read again inside the save transaction.
+     */
+    suspend fun getRecord(localDate: LocalDate): T?
 
     fun observeRecords(
         startDate: LocalDate,
@@ -31,10 +39,6 @@ internal fun requireValidRecordRange(startDate: LocalDate, endExclusive: LocalDa
         "Date range must be non-empty and use [start, endExclusive)."
     }
 }
-
-/** Keeps edits strictly monotonic when multiple writes share the same clock tick. */
-internal fun Instant.nextRecordTimestamp(): Instant =
-    if (this == Instant.MAX) this else plusMillis(1)
 
 /** Local persistence stays successful even when best-effort cloud scheduling fails. */
 internal fun notifyLocalChangeSafely(onLocalChange: () -> Unit) {

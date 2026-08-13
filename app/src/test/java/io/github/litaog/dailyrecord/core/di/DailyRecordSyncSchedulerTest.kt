@@ -1,6 +1,7 @@
-package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.di
 
 import androidx.work.ExistingWorkPolicy
+import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -22,15 +23,15 @@ class DailyRecordSyncSchedulerTest {
 
     @Test
     fun deletionBlockStartsBlockedAndEndsUnblocked() {
-        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked)
+        assertFalse(DeletionBarrier.isDeletionBlocked)
         try {
-            DailyRecordSyncScheduler.beginDeletionBlock()
-            assertTrue(DailyRecordSyncScheduler.isDeletionBlocked)
-            DailyRecordSyncScheduler.beginDeletionBlock()
-            assertTrue(DailyRecordSyncScheduler.isDeletionBlocked)
+            DeletionBarrier.beginDeletionBlock()
+            assertTrue(DeletionBarrier.isDeletionBlocked)
+            DeletionBarrier.beginDeletionBlock()
+            assertTrue(DeletionBarrier.isDeletionBlocked)
         } finally {
-            DailyRecordSyncScheduler.endDeletionBlock()
+            DeletionBarrier.endDeletionBlock()
         }
-        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked)
+        assertFalse(DeletionBarrier.isDeletionBlocked)
     }
 }

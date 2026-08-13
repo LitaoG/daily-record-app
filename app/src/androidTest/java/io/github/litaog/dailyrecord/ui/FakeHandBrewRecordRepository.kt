@@ -29,6 +29,9 @@ internal class FakeHandBrewRecordRepository(
     override fun observeRecord(localDate: LocalDate): Flow<HandBrewRecord?> =
         recordFlowOverride ?: records.map { values -> values.firstOrNull { it.localDate == localDate } }
 
+    override suspend fun getRecord(localDate: LocalDate): HandBrewRecord? =
+        records.value.firstOrNull { it.localDate == localDate }
+
     override fun observeRecords(
         startDate: LocalDate,
         endExclusive: LocalDate,

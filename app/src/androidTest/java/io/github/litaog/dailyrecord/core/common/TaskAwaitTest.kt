@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.cloud
+package io.github.litaog.dailyrecord.core.common
 
 import android.app.Activity
 import androidx.test.ext.junit.runners.AndroidJUnit4

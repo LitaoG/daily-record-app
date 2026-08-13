@@ -90,7 +90,7 @@ Stage 5 的测试日志只写入仓库 `build/tmp/stage5/` 临时目录，解析
 | 统计纯函数、日期范围 | 对应 JVM 测试类；固定数据集和边界用例 | 账号、Firebase、无关 UI 页面 | 全部 JVM 测试一次 |
 | Repository 或共享领域模型 | 编译；对应 Repository/模型单测；受影响设备流程 | 未改动的发布签名和文档截图 | JVM、Lint、设备套件 |
 | Room Entity、DAO、schema、migration | 迁移测试；DAO/Repository 测试；安装或升级设备测试 | 未改动的 Firestore Rules，除非云模型也变 | 完整套件并核对 schema |
-| 登录、密码重置、账号删除 | 对应账号单测与 Auth 模拟器设备测试；超时和错误分级 | 无关统计截图 | 完整账号/设备回归 |
+| 登录、密码重置、账号删除 | 对应账号单测与 Auth 模拟器设备测试；超时、Auth 结果未知、启动恢复和错误分级 | 无关统计截图 | 完整账号/设备回归 |
 | 同步、Worker、冲突合并、远端映射 | 对应同步单测；隔离 Auth/Firestore 设备测试；离线/恢复 | 无关纯 UI 截图 | JVM、规则、设备套件 |
 | `firestore.rules`、云端字段或路径 | `pnpm test:firestore-rules`；对应远端解析/设备测试 | 无关日历纯 UI 测试 | 完整规则与设备回归 |
 | Manifest、网络安全、权限 | Manifest 处理；Lint；相关构建；必要的运行检查 | 无关业务测试 | 检查最终合并 Manifest |

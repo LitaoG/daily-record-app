@@ -1,16 +1,7 @@
-package io.github.litaog.dailyrecord.ui.navigation
+package io.github.litaog.dailyrecord.core.statistics
 
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
-import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.ZoneOffset
-
-internal fun LocalDate.toUtcDateMillis(): Long =
-    atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-
-internal fun utcDateMillisToLocalDate(value: Long): LocalDate =
-    Instant.ofEpochMilli(value).atZone(ZoneOffset.UTC).toLocalDate()
 
 internal fun shiftMonthAnchor(
     anchorDate: LocalDate,
@@ -31,10 +22,13 @@ internal fun previousPeriodAnchor(
     return when (period) {
         StatisticsPeriod.Week -> anchorDate.minusWeeks(1).let { candidate ->
             // The first supported week may be a clipped partial week. Once the
-            // anchor is already at the supported lower bound there is no earlier
-            // period to navigate to; returning the same date would leave an
-            // enabled arrow that appears to do nothing.
-            if (anchorDate <= earliestDate && candidate < earliestDate) null
+            // displayed week is already that clipped partial week, there is no
+            // earlier period to navigate to.  Comparing only the selected day
+            // with the lower bound is insufficient: Jan 2-4, 1970 still belong
+            // to the clipped Dec 29-Jan 4 week, so returning `earliestDate`
+            // would enable an arrow that appears to do nothing.
+            val currentWeekStart = anchorDate.minusDays((anchorDate.dayOfWeek.value - 1).toLong())
+            if (currentWeekStart <= earliestDate && candidate < earliestDate) null
             else candidate.coerceAtLeast(earliestDate)
         }
         StatisticsPeriod.Month -> {

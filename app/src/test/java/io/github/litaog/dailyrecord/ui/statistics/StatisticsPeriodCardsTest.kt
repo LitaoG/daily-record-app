@@ -1,5 +1,7 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
+import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
+import java.time.LocalDate
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
@@ -12,6 +14,23 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class StatisticsPeriodCardsTest {
+
+    @Test
+    fun weekRingUsesStructuredDateForLocalizedLabelParts() {
+        val detail = StatisticsDetail(
+            // Deliberately contains no space: a localized label must never be
+            // parsed to recover the weekday and day text.
+            label = "周三/22",
+            count = 1L,
+            days = 1,
+            date = LocalDate.of(2026, 7, 22),
+        )
+
+        assertEquals(
+            WeekRingLabelParts("周三", "22日"),
+            weekRingLabelParts(detail),
+        )
+    }
     @Test
     fun `ring state keeps zero, unfilled and future distinct`() {
         assertEquals(

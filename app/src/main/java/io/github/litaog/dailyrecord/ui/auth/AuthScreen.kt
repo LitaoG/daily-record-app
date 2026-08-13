@@ -48,7 +48,7 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.core.cloud.isNetworkReachabilityFailure
+import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary

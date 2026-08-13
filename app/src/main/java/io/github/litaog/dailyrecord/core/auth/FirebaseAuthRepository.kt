@@ -4,8 +4,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.EmailAuthProvider
-import io.github.litaog.dailyrecord.core.cloud.awaitResult
+import io.github.litaog.dailyrecord.core.common.awaitResult
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
@@ -52,10 +53,52 @@ internal class FirebaseAuthRepository(
         ).awaitResult()
     }
 
-    override suspend fun deleteCurrentAccount() {
-        requireNotNull(auth.currentUser) { "No signed-in account" }
-            .delete()
-            .awaitResult()
+    override suspend fun deleteCurrentAccount(): AuthDeletionResult {
+        val user = auth.currentUser
+            ?: return AuthDeletionResult.Unknown(IllegalStateException("No signed-in account"))
+        return try {
+            user.delete().awaitResult()
+            AuthDeletionResult.Completed
+        } catch (error: CancellationException) {
+            // The Firebase Task may still complete after the coroutine is
+            // cancelled. The coordinator records this as an unknown outcome.
+            throw error
+        } catch (error: FirebaseAuthException) {
+            if (error.errorCode in DEFINITIVE_DELETE_FAILURE_CODES) {
+                AuthDeletionResult.Failed(error)
+            } else {
+                AuthDeletionResult.Unknown(error)
+            }
+        } catch (error: Exception) {
+            AuthDeletionResult.Unknown(error)
+        }
+    }
+
+    override suspend fun inspectAccountPresence(ownerId: String): AuthAccountPresence {
+        val user = auth.currentUser ?: return AuthAccountPresence.SignedOut
+        if (user.uid != ownerId) {
+            return AuthAccountPresence.Unknown(
+                IllegalStateException("The signed-in account does not match the pending owner"),
+            )
+        }
+        return try {
+            user.reload().awaitResult()
+            if (auth.currentUser?.uid == ownerId) {
+                AuthAccountPresence.Exists
+            } else {
+                AuthAccountPresence.Absent
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: FirebaseAuthException) {
+            if (error.errorCode == "ERROR_USER_NOT_FOUND") {
+                AuthAccountPresence.Absent
+            } else {
+                AuthAccountPresence.Unknown(error)
+            }
+        } catch (error: Exception) {
+            AuthAccountPresence.Unknown(error)
+        }
     }
 
     override fun signOut() {
@@ -64,6 +107,14 @@ internal class FirebaseAuthRepository(
 }
 
 private fun String.normalizedEmail(): String = trim().lowercase()
+
+private val DEFINITIVE_DELETE_FAILURE_CODES = setOf(
+    "ERROR_INVALID_CREDENTIAL",
+    "ERROR_OPERATION_NOT_ALLOWED",
+    "ERROR_REQUIRES_RECENT_LOGIN",
+    "ERROR_TOO_MANY_REQUESTS",
+    "ERROR_USER_MISMATCH",
+)
 
 private fun FirebaseUser.toAccount(): AuthAccount = AuthAccount(
     uid = uid,

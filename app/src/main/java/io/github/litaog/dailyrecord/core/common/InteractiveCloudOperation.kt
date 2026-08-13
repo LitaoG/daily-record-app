@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.cloud
+package io.github.litaog.dailyrecord.core.common
 
 import com.google.firebase.FirebaseNetworkException
 import java.io.IOException

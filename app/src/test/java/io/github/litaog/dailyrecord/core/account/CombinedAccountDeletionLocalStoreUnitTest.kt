@@ -18,7 +18,8 @@ class CombinedAccountDeletionLocalStoreUnitTest {
 
         store.stageLocalRecoveryCopy("owner")
         store.deleteOwnerCache("owner")
-        store.discardLocalRecoveryCopy()
+        store.discardLocalRecoveryCopy("owner")
+        store.promoteLocalRecoveryCopy("owner")
         store.markOwnerPendingForResync("owner")
 
         assertEquals(
@@ -32,6 +33,9 @@ class CombinedAccountDeletionLocalStoreUnitTest {
                 "discard:hand-brew",
                 "discard:sex",
                 "discard:future-module",
+                "promote:hand-brew",
+                "promote:sex",
+                "promote:future-module",
                 "mark-pending:hand-brew",
                 "mark-pending:sex",
                 "mark-pending:future-module",
@@ -81,9 +85,16 @@ private class RecordingLocalStore(
         stageFailure?.let { throw it }
     }
 
-    override suspend fun discardLocalRecoveryCopy() {
+    override suspend fun discardLocalRecoveryCopy(ownerId: String) {
         calls += "discard:$name"
     }
+
+    override suspend fun promoteLocalRecoveryCopy(ownerId: String) {
+        calls += "promote:$name"
+    }
+
+    override suspend fun hasLocalRecoveryConflict(ownerId: String): Boolean = false
+
 
     override suspend fun deleteOwnerCache(ownerId: String) {
         calls += "delete:$name"

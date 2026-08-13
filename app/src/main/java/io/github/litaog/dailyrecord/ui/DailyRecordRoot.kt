@@ -2,8 +2,13 @@ package io.github.litaog.dailyrecord.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -12,35 +17,37 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.auth.AuthState
-import io.github.litaog.dailyrecord.core.account.AccountDeletionCoordinator
-import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
-import io.github.litaog.dailyrecord.core.account.CombinedAccountDeletionLocalStore
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
-import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
-import io.github.litaog.dailyrecord.core.cloud.runInteractiveCloudOperation
+import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
+import io.github.litaog.dailyrecord.core.di.buildAccountDeletionCoordinator
+import io.github.litaog.dailyrecord.core.di.buildAccountDeletionRecoveryCoordinator
+import io.github.litaog.dailyrecord.core.di.buildCombinedSyncCoordinator
+import io.github.litaog.dailyrecord.core.sync.AccountDeletionRecoveryCoordinator
+import io.github.litaog.dailyrecord.core.sync.AccountDeletionRecoverySnapshot
+import io.github.litaog.dailyrecord.core.common.runInteractiveCloudOperation
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.data.RoomHandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.RoomSexRecordRepository
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.AccountSyncManager
 import io.github.litaog.dailyrecord.core.sync.AndroidNetworkMonitor
-import io.github.litaog.dailyrecord.core.sync.CombinedAccountRemoteDataStore
-import io.github.litaog.dailyrecord.core.sync.CombinedSyncCoordinator
-import io.github.litaog.dailyrecord.core.sync.HandBrewSyncCoordinator
-import io.github.litaog.dailyrecord.core.sync.DailyRecordSyncScheduler
-import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
-import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
-import io.github.litaog.dailyrecord.core.sync.SexSyncCoordinator
+import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.ui.auth.AuthScreen
+import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -55,44 +62,65 @@ internal fun DailyRecordRoot(
     val context = LocalContext.current
     val rootScope = rememberCoroutineScope()
     val localModePreference = remember(context) { LocalModePreference(context) }
-    val pendingCleanupPreference = remember(context) { PendingLocalCleanupPreference(context) }
-
-    // A previous account deletion may have left an owner cache that could not
-    // be cleared. Retry the local cleanup once on startup.
-    LaunchedEffect(database) {
-        val cleanupStore = CombinedAccountDeletionLocalStore(
-            handBrew = RoomHandBrewSyncStore(database),
-            sex = RoomSexSyncStore(database),
-        )
-        val durablePendingOwners = DailyRecordSyncScheduler.pendingCleanupOwnerIds(context)
-        (pendingCleanupPreference.ownerIds + durablePendingOwners).forEach { pendingOwnerId ->
-            runCatchingPreservingCancellation {
-                cleanupStore.deleteOwnerCache(pendingOwnerId)
-            }.onSuccess {
-                pendingCleanupPreference.remove(pendingOwnerId)
-                // Keep startup resilient if the durable marker cannot be
-                // committed; the next launch will retry from the marker.
-                runCatching {
-                    DailyRecordSyncScheduler.completeDeletionCleanup(context, pendingOwnerId)
-                }.onFailure {
-                    pendingCleanupPreference.add(pendingOwnerId)
-                }
-            }
-        }
+    val recoveryCoordinator = remember(database) {
+        buildAccountDeletionRecoveryCoordinator(database)
     }
-
+    var recoverySnapshot by remember(database) {
+        mutableStateOf<AccountDeletionRecoverySnapshot>(recoveryCoordinator.snapshot())
+    }
+    var deletionRecoveryRevision by remember(database) { mutableIntStateOf(0) }
+    var recoveryRestartRevision by remember(database) { mutableIntStateOf(0) }
+    var recoveryRetryRevision by remember(database) { mutableIntStateOf(0) }
+    var recoveryConflictOwners by remember(database) { mutableStateOf<Set<String>>(emptySet()) }
+    var recoveryAuthOpen by rememberSaveable { mutableStateOf(false) }
     var continueOffline by rememberSaveable {
         mutableStateOf(localModePreference.isEnabled)
     }
     var authOpenedFromLocal by rememberSaveable { mutableStateOf(false) }
+    val localRecoveryBlocked = recoverySnapshot.blocksLocalMode
     if (continueOffline) {
-        LocalRoot(
-            database = database,
-            onSignIn = {
-                authOpenedFromLocal = true
-                continueOffline = false
-            },
-        )
+        // Keep Firebase lazy in persistent local mode. Pre-Auth recovery only
+        // touches Room and the deletion journal; an unresolved Auth request
+        // is intentionally revisited after the user enters the cloud path.
+        LaunchedEffect(database, recoveryRetryRevision) {
+            recoveryCoordinator.resolvePreAuthUntilSettled(
+                onAttemptCompleted = { snapshot ->
+                    recoverySnapshot = snapshot
+                    recoveryConflictOwners = snapshot.conflictOwnerIds
+                    deletionRecoveryRevision += 1
+                },
+            )
+        }
+        if (localRecoveryBlocked) {
+            DeletionRecoveryRoot(
+                onSignIn = {
+                    authOpenedFromLocal = true
+                    continueOffline = false
+                },
+                onRetry = { recoveryRetryRevision += 1 },
+                hasRecoveryConflict = recoveryConflictOwners.isNotEmpty(),
+                onReplaceExistingLocal = {
+                    val ownerId = recoveryConflictOwners.firstOrNull() ?: return@DeletionRecoveryRoot
+                    rootScope.launch {
+                        runCatchingPreservingCancellation {
+                            recoveryCoordinator.resolveRecoveryConflict(ownerId)
+                        }.onSuccess {
+                            recoveryConflictOwners -= ownerId
+                            recoverySnapshot = recoveryCoordinator.snapshot(recoveryConflictOwners)
+                            recoveryRetryRevision += 1
+                        }
+                    }
+                },
+            )
+        } else {
+            LocalRoot(
+                database = database,
+                onSignIn = {
+                    authOpenedFromLocal = true
+                    continueOffline = false
+                },
+            )
+        }
         return
     }
 
@@ -102,10 +130,48 @@ internal fun DailyRecordRoot(
     // Firebase for the first time (local-only startup never reaches it).
     val services = servicesProvider()
     val authState by services.authRepository.state.collectAsState(initial = AuthState.Loading)
+    val recoveryResolved = remember(database) { mutableStateOf(false) }
+    LaunchedEffect(database, authState, recoveryRetryRevision) {
+        if (authState !is AuthState.Loading) {
+            // A previous account deletion may have left an owner cache that
+            // could not be cleared. Resolve all durable recovery work before
+            // exposing the account or restarting its sync producers.
+            recoveryCoordinator.resolveUntilSettled(
+                authRepository = services.authRepository,
+                shouldContinue = { authState is AuthState.SignedIn },
+                onAttemptCompleted = { snapshot ->
+                    recoverySnapshot = snapshot
+                    recoveryConflictOwners = snapshot.conflictOwnerIds
+                    recoveryResolved.value = true
+                    deletionRecoveryRevision += 1
+                    recoveryRestartRevision += 1
+                },
+            )
+        }
+    }
+
     when (val state = authState) {
         AuthState.Loading -> LoadingRoot()
         AuthState.SignedOut -> {
-            AuthScreen(
+            if ((recoveryConflictOwners.isNotEmpty() || recoverySnapshot.hasPendingRecovery) && !recoveryAuthOpen) {
+                DeletionRecoveryRoot(
+                    onSignIn = { recoveryAuthOpen = true },
+                    onRetry = { recoveryRetryRevision += 1 },
+                    hasRecoveryConflict = recoveryConflictOwners.isNotEmpty(),
+                    onReplaceExistingLocal = {
+                        val ownerId = recoveryConflictOwners.firstOrNull() ?: return@DeletionRecoveryRoot
+                        rootScope.launch {
+                            runCatchingPreservingCancellation {
+                                recoveryCoordinator.resolveRecoveryConflict(ownerId)
+                            }.onSuccess {
+                                recoveryConflictOwners -= ownerId
+                                recoverySnapshot = recoveryCoordinator.snapshot(recoveryConflictOwners)
+                                recoveryRetryRevision += 1
+                            }
+                        }
+                    },
+                )
+            } else AuthScreen(
                 productionConfigured = services.productionConfigured,
                 onSignIn = { email, password ->
                     runInteractiveCloudOperation {
@@ -122,14 +188,16 @@ internal fun DailyRecordRoot(
                         services.authRepository.sendPasswordResetEmail(email)
                     }.map { Unit }
                 },
-                onBack = if (authOpenedFromLocal) {
-                    {
-                        localModePreference.setEnabled(true)
-                        authOpenedFromLocal = false
-                        continueOffline = true
+                onBack = when {
+                    recoveryAuthOpen -> ({ recoveryAuthOpen = false })
+                    authOpenedFromLocal -> {
+                        {
+                            localModePreference.setEnabled(true)
+                            authOpenedFromLocal = false
+                            continueOffline = true
+                        }
                     }
-                } else {
-                    null
+                    else -> null
                 },
                 onContinueOffline = {
                     localModePreference.setEnabled(true)
@@ -142,13 +210,31 @@ internal fun DailyRecordRoot(
             LaunchedEffect(state.account.uid) {
                 localModePreference.setEnabled(false)
                 authOpenedFromLocal = false
+                recoveryAuthOpen = false
             }
             SignedInRoot(
                 database = database,
                 services = services,
                 state = state,
                 accountDeletionScope = rootScope,
-                pendingCleanupPreference = pendingCleanupPreference,
+                recoveryCoordinator = recoveryCoordinator,
+                deletionRecoveryRevision = deletionRecoveryRevision,
+                recoveryResolved = recoveryResolved.value,
+                recoveryRestartRevision = recoveryRestartRevision,
+                onRetryDeletionRecovery = { recoveryRetryRevision += 1 },
+                hasRecoveryConflict = recoveryConflictOwners.isNotEmpty(),
+                onReplaceExistingLocal = {
+                    val ownerId = recoveryConflictOwners.firstOrNull() ?: return@SignedInRoot
+                    rootScope.launch {
+                        runCatchingPreservingCancellation {
+                            recoveryCoordinator.resolveRecoveryConflict(ownerId)
+                        }.onSuccess {
+                            recoveryConflictOwners -= ownerId
+                            recoverySnapshot = recoveryCoordinator.snapshot(recoveryConflictOwners)
+                            recoveryRetryRevision += 1
+                        }
+                    }
+                },
                 onAccountDeletedWithLocalRecords = {
                     localModePreference.setEnabled(true)
                     continueOffline = true
@@ -179,31 +265,61 @@ private fun SignedInRoot(
     services: FirebaseServices,
     state: AuthState.SignedIn,
     accountDeletionScope: kotlinx.coroutines.CoroutineScope,
-    pendingCleanupPreference: PendingLocalCleanupPreference,
+    recoveryCoordinator: AccountDeletionRecoveryCoordinator,
+    deletionRecoveryRevision: Int,
+    recoveryResolved: Boolean,
+    recoveryRestartRevision: Int,
+    onRetryDeletionRecovery: () -> Unit,
+    hasRecoveryConflict: Boolean,
+    onReplaceExistingLocal: () -> Unit,
     onAccountDeletedWithLocalRecords: () -> Unit,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val ownerId = state.account.uid
-    val networkMonitor = remember(ownerId, context) { AndroidNetworkMonitor(context) }
-    val handBrewSyncStore = remember(database) { RoomHandBrewSyncStore(database) }
-    val sexSyncStore = remember(database) { RoomSexSyncStore(database) }
-    val coordinator = remember(
+    var deletionInProgress by remember(ownerId) { mutableStateOf(false) }
+    var deletionAttempted by remember(ownerId) { mutableStateOf(false) }
+    var deletionRecoveryRefresh by remember(ownerId) { mutableIntStateOf(0) }
+    var syncRestartRevision by remember(ownerId) { mutableIntStateOf(0) }
+    val deletionBarrierBlocked = remember(
         ownerId,
-        handBrewSyncStore,
-        sexSyncStore,
-        services.remoteDataSource,
-        services.sexRemoteDataSource,
+        deletionRecoveryRevision,
+        deletionRecoveryRefresh,
+        deletionInProgress,
     ) {
-        CombinedSyncCoordinator(
-            handBrew = HandBrewSyncCoordinator(
-                store = handBrewSyncStore,
-                remote = services.remoteDataSource,
-            ),
-            sex = SexSyncCoordinator(
-                store = sexSyncStore,
-                remote = services.sexRemoteDataSource,
-            ),
+        recoveryCoordinator.isDeletionBlocked(ownerId)
+    }
+    // Keep the account surface mounted for the deletion attempt itself so an
+    // Auth-unknown result can reach AccountDeletionDialog. On a fresh process
+    // (where deletionAttempted is false), unresolved durable markers still
+    // gate the account before any sync or local-account preparation starts.
+    val deletionRecoveryPending = !recoveryResolved ||
+        (deletionBarrierBlocked && !deletionAttempted)
+
+    LaunchedEffect(ownerId, deletionInProgress, deletionAttempted) {
+        if (!deletionInProgress && deletionAttempted) {
+            runCatchingPreservingCancellation {
+                recoveryCoordinator.resolvePendingAuthDeletions(services.authRepository)
+            }
+            deletionRecoveryRefresh += 1
+            // The resolver may have cleared an Auth-pending marker. This is a
+            // separate restart signal from the deletion callback: the latter
+            // deliberately restarts nothing while the durable barrier remains.
+            syncRestartRevision += 1
+        }
+    }
+
+    if (deletionRecoveryPending) {
+        DeletionRecoveryRoot(
+            onRetry = onRetryDeletionRecovery,
+            hasRecoveryConflict = hasRecoveryConflict,
+            onReplaceExistingLocal = onReplaceExistingLocal,
         )
+        return
+    }
+
+    val networkMonitor = remember(ownerId, context) { AndroidNetworkMonitor(context) }
+    val coordinator = remember(ownerId, database, services) {
+        buildCombinedSyncCoordinator(database, services)
     }
     var accountPrepared by remember(ownerId) { mutableStateOf(false) }
     LaunchedEffect(ownerId, coordinator) {
@@ -220,7 +336,7 @@ private fun SignedInRoot(
             coordinator,
             services.productionConfigured,
             networkMonitor.availability,
-            cloudWriteGate = DailyRecordSyncScheduler.cloudWriteGate(context),
+            cloudWriteGate = DeletionBarrier.cloudWriteGate(),
             sessionActive = { services.currentUserId() == ownerId },
         )
     }
@@ -238,43 +354,51 @@ private fun SignedInRoot(
             onLocalChange = { DailyRecordSyncScheduler.schedule(context, ownerId) },
         )
     }
-    val deletionCoordinator = remember(
-        ownerId,
-        handBrewSyncStore,
-        sexSyncStore,
-        services.remoteDataSource,
-        services.sexRemoteDataSource,
-    ) {
-        AccountDeletionCoordinator(
-            authRepository = services.authRepository,
-            remoteDataSource = CombinedAccountRemoteDataStore(
-                handBrew = services.remoteDataSource,
-                sex = services.sexRemoteDataSource,
-            ),
-            localStore = CombinedAccountDeletionLocalStore(
-                handBrew = handBrewSyncStore,
-                sex = sexSyncStore,
-            ),
-        )
+    val deletionCoordinator = remember(ownerId, database, services) {
+        buildAccountDeletionCoordinator(database, services)
     }
     val scope = rememberCoroutineScope()
     val syncStatus by syncManager.status.collectAsState()
-    var deletionInProgress by remember(ownerId) { mutableStateOf(false) }
     var activeSyncJobs by remember(ownerId) { mutableStateOf<List<Job>>(emptyList()) }
+    val deletionOrchestrator = AccountDeletionOrchestrator(
+        cancelAndAwait = {
+            // AccountDeletionOrchestrator has already persisted the
+            // owner barrier and waited for the current cloud writer. Only
+            // now cancel in-memory producers and WorkManager, so no
+            // cancellation window exists before the durable barrier.
+            activeSyncJobs.toList().forEach { it.cancelAndJoin() }
+            DailyRecordSyncScheduler.cancelAndAwait(context)
+        },
+        performDeletion = deletionCoordinator::deleteAccount,
+        onLocalRecordsKept = onAccountDeletedWithLocalRecords,
+        onScheduleSync = { ownerId -> DailyRecordSyncScheduler.schedule(context, ownerId) },
+    )
 
     DisposableEffect(networkMonitor) {
         onDispose { networkMonitor.close() }
     }
-    DisposableEffect(syncManager, scope, deletionInProgress) {
-        val jobs = if (deletionInProgress) emptyList() else syncManager.start(scope)
-        activeSyncJobs = jobs
-        onDispose {
-            jobs.forEach { it.cancel() }
-            if (activeSyncJobs === jobs) activeSyncJobs = emptyList()
+    DisposableEffect(
+        syncManager,
+        scope,
+        syncRestartRevision,
+        recoveryRestartRevision,
+    ) {
+        if (recoveryCoordinator.isDeletionBlocked(ownerId)) {
+            activeSyncJobs = emptyList()
+            onDispose { }
+        } else {
+            val jobs = syncManager.start(scope)
+            activeSyncJobs = jobs
+            onDispose {
+                jobs.forEach { it.cancel() }
+                if (activeSyncJobs === jobs) activeSyncJobs = emptyList()
+            }
         }
     }
     LaunchedEffect(ownerId) {
-        DailyRecordSyncScheduler.schedule(context, ownerId)
+        if (!recoveryCoordinator.isDeletionBlocked(ownerId)) {
+            DailyRecordSyncScheduler.schedule(context, ownerId)
+        }
     }
 
     DailyRecordApp(
@@ -287,81 +411,17 @@ private fun SignedInRoot(
         onDeleteAccount = { password, localData ->
             val completion = CompletableDeferred<Result<Unit>>()
             accountDeletionScope.launch {
-                var began = false
-                var outcome = io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.Interrupted
-                var result: Result<Unit>? = null
-                var cancellation: CancellationException? = null
-                var barrierFailure: Exception? = null
                 try {
-                // Persist the deletion marker before cancelling any producer.
-                // This closes the schedule-vs-delete race and survives process
-                // death.
-                    DailyRecordSyncScheduler.beginDeletionBlock(context, ownerId)
-                    began = true
                     deletionInProgress = true
-                    activeSyncJobs.forEach { it.cancelAndJoin() }
-                    DailyRecordSyncScheduler.awaitDeletionWriters()
-                    val deletionResult = runCatchingPreservingCancellation {
-                        DailyRecordSyncScheduler.cancelAndAwait(context)
-                        deletionCoordinator.deleteAccount(
-                            ownerId = ownerId,
-                            password = password,
-                            localData = localData,
-                        )
-                    }
-                    val cleanupPending = deletionResult.exceptionOrNull() is
-                        AccountDeletionLocalCleanupPendingException
-                    outcome = when {
-                        cleanupPending -> io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.CleanupPending
-                        deletionResult.isSuccess -> io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.Completed
-                        else -> io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure
-                    }
-                    if (cleanupPending) {
-                        // Keep both the legacy marker and the durable marker;
-                        // either one can recover local cleanup after a restart.
-                        pendingCleanupPreference.add(ownerId)
-                    }
-                    if ((deletionResult.isSuccess || cleanupPending) &&
-                        localData == LocalDataAfterAccountDeletion.Keep
-                    ) {
-                        onAccountDeletedWithLocalRecords()
-                    }
-                    result = if (cleanupPending) Result.success(Unit) else deletionResult
+                    deletionAttempted = true
+                    completion.complete(
+                        deletionOrchestrator.deleteAccount(ownerId, password, localData),
+                    )
                 } catch (error: CancellationException) {
-                    // Do not clear an interrupted marker: a future sync must
-                    // stay blocked until the user retries or finishes deletion.
-                    cancellation = error
-                } catch (error: Exception) {
-                    outcome = io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure
-                    result = Result.failure(error)
+                    completion.completeExceptionally(error)
                 } finally {
-                    if (began) {
-                        try {
-                            DailyRecordSyncScheduler.endDeletionBlock(context, ownerId, outcome)
-                        } catch (error: Exception) {
-                            // Do not resume scheduling when the durable marker
-                            // could not be committed. The scheduler keeps a
-                            // conservative in-process block until restart.
-                            barrierFailure = error
-                        }
-                    }
-                    if (barrierFailure != null) {
-                        deletionInProgress = false
-                        result = Result.failure(barrierFailure!!)
-                    } else if (
-                        outcome == io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure ||
-                        outcome == io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.Interrupted
-                    ) {
-                        deletionInProgress = false
-                        if (outcome == io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome.RetryableFailure) {
-                            // A failed deletion must not leave pending local
-                            // records stuck: re-enable the normal background
-                            // sync path.
-                            DailyRecordSyncScheduler.schedule(context, ownerId)
-                        }
-                    }
-                    cancellation?.let(completion::completeExceptionally)
-                        ?: completion.complete(requireNotNull(result))
+                    deletionInProgress = false
+                    syncRestartRevision += 1
                 }
             }
             completion.await()
@@ -376,5 +436,74 @@ private fun LoadingRoot() {
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator(color = DailyRecordDefaultAccent)
+    }
+}
+
+@Composable
+private fun DeletionRecoveryRoot(
+    onSignIn: (() -> Unit)? = null,
+    onRetry: (() -> Unit)? = null,
+    hasRecoveryConflict: Boolean = false,
+    onReplaceExistingLocal: (() -> Unit)? = null,
+) {
+    var confirmReplace by rememberSaveable { mutableStateOf(false) }
+    Box(
+        modifier = Modifier.fillMaxSize().background(DailyRecordCanvas),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = if (hasRecoveryConflict) {
+                    AppCopy.Deletion.recoveryConflict
+                } else {
+                    AppCopy.Deletion.recoveryRetryGuidance
+                },
+                color = DailyRecordTextSecondary,
+            )
+            onRetry?.let {
+                PrimaryActionButton(
+                    label = AppCopy.Deletion.retryRecovery,
+                    onClick = it,
+                    modifier = Modifier.padding(top = 20.dp),
+                )
+            }
+            onSignIn?.let {
+                PrimaryActionButton(
+                    label = AppCopy.Account.signInSync,
+                    onClick = it,
+                    modifier = Modifier.padding(top = if (onRetry == null) 20.dp else 12.dp),
+                )
+            }
+            if (hasRecoveryConflict && onReplaceExistingLocal != null) {
+                PrimaryActionButton(
+                    label = AppCopy.Deletion.replaceLocalAndRestore,
+                    onClick = { confirmReplace = true },
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            }
+        }
+    }
+    if (confirmReplace && onReplaceExistingLocal != null) {
+        AlertDialog(
+            onDismissRequest = { confirmReplace = false },
+            title = { Text(AppCopy.Deletion.replaceLocalAndRestoreTitle) },
+            text = { Text(AppCopy.Deletion.replaceLocalAndRestoreMessage) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmReplace = false
+                        onReplaceExistingLocal()
+                    },
+                ) { Text(AppCopy.Deletion.replaceLocalAndRestore) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmReplace = false }) {
+                    Text(AppCopy.Deletion.cancelRecoveryReplacement)
+                }
+            },
+        )
     }
 }

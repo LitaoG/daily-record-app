@@ -50,12 +50,15 @@ class CombinedAccountDeletionLocalStoreTest {
         handBrew.saveRecord(HandBrewRecord("brew", date, 2, now, now))
         sex.saveRecord(SexRecord("sex", date, 1, now, now))
         val store = CombinedAccountDeletionLocalStore(
-            RoomHandBrewSyncStore(database),
-            RoomSexSyncStore(database),
+            listOf(
+                RoomHandBrewSyncStore(database),
+                RoomSexSyncStore(database),
+            ),
         )
 
         store.stageLocalRecoveryCopy(ownerId)
         store.deleteOwnerCache(ownerId)
+        store.promoteLocalRecoveryCopy(ownerId)
 
         assertEquals(
             2,
@@ -82,8 +85,10 @@ class CombinedAccountDeletionLocalStoreTest {
         handBrew.saveRecord(HandBrewRecord("brew", date, 2, now, now))
         sex.saveRecord(SexRecord("sex", date, 1, now, now))
         val store = CombinedAccountDeletionLocalStore(
-            RoomHandBrewSyncStore(database),
-            RoomSexSyncStore(database),
+            listOf(
+                RoomHandBrewSyncStore(database),
+                RoomSexSyncStore(database),
+            ),
         )
 
         // First interrupted attempt: a recovery copy is staged, then the
@@ -91,6 +96,7 @@ class CombinedAccountDeletionLocalStoreTest {
         store.stageLocalRecoveryCopy(ownerId)
         store.stageLocalRecoveryCopy(ownerId)
         store.deleteOwnerCache(ownerId)
+        store.promoteLocalRecoveryCopy(ownerId)
 
         assertEquals(
             2,

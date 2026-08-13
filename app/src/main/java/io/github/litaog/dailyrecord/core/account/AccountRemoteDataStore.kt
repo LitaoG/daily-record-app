@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.account
 
 import kotlinx.coroutines.CancellationException
 
@@ -9,11 +9,6 @@ internal interface AccountRemoteDataStore {
 internal class CombinedAccountRemoteDataStore(
     private val stores: List<AccountRemoteDataStore>,
 ) : AccountRemoteDataStore {
-    constructor(
-        handBrew: HandBrewRemoteDataSource,
-        sex: SexRemoteDataSource,
-    ) : this(listOf(handBrew, sex))
-
     init {
         require(stores.isNotEmpty()) { "At least one remote account store is required." }
     }

@@ -3,12 +3,11 @@ package io.github.litaog.dailyrecord.core.sync
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestoreException
-import io.github.litaog.dailyrecord.core.cloud.BACKGROUND_CLOUD_TIMEOUT_MILLIS
-import io.github.litaog.dailyrecord.core.cloud.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
-import io.github.litaog.dailyrecord.core.cloud.InteractiveCloudTimeoutException
+import io.github.litaog.dailyrecord.core.common.BACKGROUND_CLOUD_TIMEOUT_MILLIS
+import io.github.litaog.dailyrecord.core.common.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
+import io.github.litaog.dailyrecord.core.common.InteractiveCloudTimeoutException
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -38,7 +37,9 @@ internal class AccountSyncManager(
     private val sessionActive: () -> Boolean = { true },
 ) {
     private val mutex = Mutex()
-    private val followUpSyncRequested = AtomicBoolean(false)
+    /** Serializes the follow-up flag with the mutex hand-off. */
+    private val syncHandoffMonitor = Any()
+    private var followUpSyncRequested = false
     private val mutableStatus = MutableStateFlow<SyncStatus>(
         if (productionConfigured) SyncStatus.Syncing else SyncStatus.NotConfigured,
     )
@@ -141,16 +142,23 @@ internal class AccountSyncManager(
             publishStatus(SyncStatus.Offline)
             return
         }
-        if (!mutex.tryLock()) {
-            // A manual request must never vanish silently when a background
-            // sync holds the mutex: queue it so the in-flight attempt's loop
-            // runs one more sync after the current one finishes.
-            followUpSyncRequested.set(true)
+        val acquired = synchronized(syncHandoffMonitor) {
+            if (mutex.tryLock()) {
+                true
+            } else {
+                // A manual request must never vanish silently while a
+                // background sync holds the mutex. The flag and the unlock
+                // are guarded by the same monitor, closing the hand-off race.
+                followUpSyncRequested = true
+                false
+            }
+        }
+        if (!acquired) {
             return
         }
+        var mutexReleased = false
         try {
-            do {
-                followUpSyncRequested.set(false)
+            while (true) {
                 performSyncAttempt(
                     timeoutMillis = if (queueIfBusy) {
                         backgroundSyncTimeoutMillis
@@ -158,23 +166,26 @@ internal class AccountSyncManager(
                         syncAttemptTimeoutMillis
                     },
                 )
-            } while (
-                productionConfigured &&
-                networkAvailable.value &&
-                followUpSyncRequested.getAndSet(false)
-            )
-        } finally {
-            mutex.unlock()
-            // A request can arrive after the do/while condition has consumed the
-            // flag but before the lock is released. Re-checking only inside the
-            // loop would leave that request stranded forever because the caller
-            // that observed a busy mutex has already returned. Consume it after
-            // unlocking; a caller that acquires the mutex in the same window will
-            // simply perform its own attempt, while a queued request is drained
-            // here.
-            if (followUpSyncRequested.compareAndSet(true, false)) {
-                syncNow(queueIfBusy)
+                val continueForQueuedRequest = synchronized(syncHandoffMonitor) {
+                    if (followUpSyncRequested) {
+                        followUpSyncRequested = false
+                        true
+                    } else {
+                        // The decision and unlock are one atomic hand-off.
+                        // A new caller can either acquire the now-free mutex,
+                        // or (if it arrived before this block) set the flag
+                        // that was consumed above; neither request is lost.
+                        mutex.unlock()
+                        mutexReleased = true
+                        false
+                    }
+                }
+                if (!productionConfigured || !networkAvailable.value || !continueForQueuedRequest) {
+                    return
+                }
             }
+        } finally {
+            if (!mutexReleased) synchronized(syncHandoffMonitor) { mutex.unlock() }
         }
     }
 

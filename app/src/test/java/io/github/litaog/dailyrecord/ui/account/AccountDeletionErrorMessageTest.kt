@@ -1,6 +1,10 @@
 package io.github.litaog.dailyrecord.ui.account
 
+import io.github.litaog.dailyrecord.core.account.AccountDeletionAuthPendingException
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalCleanupPendingException
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryPendingException
+import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryConflictException
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import java.io.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -9,15 +13,15 @@ class AccountDeletionErrorMessageTest {
     @Test
     fun knownFailuresHaveActionableMessages() {
         assertEquals(
-            "密码不正确，请重新输入",
+            AppCopy.Deletion.wrongPassword,
             accountDeletionErrorMessageForCode("ERROR_WRONG_PASSWORD"),
         )
         assertEquals(
-            "网络不可用，请打开 VPN（梯子）后重试。",
+            AppCopy.Deletion.networkAuthError,
             accountDeletionErrorMessageForCode("ERROR_NETWORK_REQUEST_FAILED"),
         )
         assertEquals(
-            "登录状态已失效，请重新登录后再删除。",
+            AppCopy.Deletion.authError,
             accountDeletionErrorMessageForCode("ERROR_REQUIRES_RECENT_LOGIN"),
         )
     }
@@ -25,7 +29,7 @@ class AccountDeletionErrorMessageTest {
     @Test
     fun unknownFailureDoesNotClaimThatDeletionSucceeded() {
         assertEquals(
-            "删除未完成，本机记录仍保留。部分云端记录可能已删除，请重试。",
+            AppCopy.Deletion.unknownError,
             accountDeletionErrorMessageForCode("UNKNOWN"),
         )
     }
@@ -33,7 +37,7 @@ class AccountDeletionErrorMessageTest {
     @Test
     fun networkFailureExplainsThatLocalRecordsRemainSafe() {
         assertEquals(
-            "网络中断，删除未完成。本机记录仍保留，请打开 VPN（梯子）后重试。",
+            AppCopy.Deletion.networkError,
             accountDeletionErrorMessage(IOException("offline")),
         )
     }
@@ -41,9 +45,50 @@ class AccountDeletionErrorMessageTest {
     @Test
     fun localCleanupPendingExplainsThatAccountIsAlreadyDeleted() {
         assertEquals(
-            "账号和云端数据已删除，但本机记录清理未完成，将在下次启动时自动完成。",
+            AppCopy.Deletion.localCleanupPending,
             accountDeletionErrorMessage(
                 AccountDeletionLocalCleanupPendingException("owner", IOException("db")),
+            ),
+        )
+    }
+
+    @Test
+    fun authDeletionPendingExplainsThatSyncIsPausedUntilResolution() {
+        assertEquals(
+            AppCopy.Deletion.authDeletionPending,
+            accountDeletionErrorMessage(
+                AccountDeletionAuthPendingException("owner", IOException("response lost")),
+            ),
+        )
+    }
+
+    @Test
+    fun definitiveAuthFailureDoesNotUseTheUnknownOutcomeMessage() {
+        assertEquals(
+            AppCopy.Deletion.unknownError,
+            accountDeletionErrorMessage(IllegalStateException("recent login required")),
+        )
+    }
+
+    @Test
+    fun localRecoveryPendingExplainsThatSyncIsPausedUntilCleanup() {
+        assertEquals(
+            AppCopy.Deletion.localRecoveryPending,
+            accountDeletionErrorMessage(
+                AccountDeletionLocalRecoveryPendingException("owner", IOException("local copy unavailable")),
+            ),
+        )
+    }
+
+    @Test
+    fun localRecoveryConflictExplainsThatExistingLocalDataWasProtected() {
+        assertEquals(
+            AppCopy.Deletion.recoveryConflict,
+            accountDeletionErrorMessage(
+                AccountDeletionLocalRecoveryConflictException(
+                    "owner",
+                    IllegalStateException("local data exists"),
+                ),
             ),
         )
     }

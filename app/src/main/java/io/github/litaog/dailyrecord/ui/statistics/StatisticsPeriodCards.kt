@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
@@ -188,6 +189,28 @@ internal fun weekRingSharedLabelGapDp(
  */
 internal fun weekRingSegmentIndex(detail: StatisticsDetail, fallbackIndex: Int): Int =
     detail.calendarIndex ?: fallbackIndex
+
+internal data class WeekRingLabelParts(
+    val weekday: String,
+    val day: String,
+)
+
+/**
+ * Derive the two visual labels from the source date rather than splitting the
+ * localized summary label.  A localized weekday may contain spaces or use a
+ * different ordering, so string parsing would silently corrupt the ring
+ * labels as soon as another locale is added.
+ */
+internal fun weekRingLabelParts(detail: StatisticsDetail): WeekRingLabelParts =
+    detail.date?.let { date ->
+        WeekRingLabelParts(
+            weekday = AppCopy.weekdayName(date.dayOfWeek.value),
+            day = AppCopy.Statistics.dayLabel(date.dayOfMonth),
+        )
+    } ?: WeekRingLabelParts(
+        weekday = detail.label,
+        day = "",
+    )
 
 /**
  * Single source of truth for the non-positive ring segment colors (future,
@@ -388,6 +411,7 @@ private fun WeekRingChart(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
+                val labelParts = weekRingLabelParts(detail)
                 // The day label must carry a visible status word so the state
                 // is not encoded by the ring style alone: unrecorded days show
                 // the unset word, explicit zero its count text, future days the
@@ -404,7 +428,7 @@ private fun WeekRingChart(
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     Text(
-                        text = detail.label.substringBefore(" "),
+                        text = labelParts.weekday,
                         color = labelColor,
                         style = MaterialTheme.typography.labelMedium,
                         textAlign = TextAlign.Center,
@@ -425,7 +449,7 @@ private fun WeekRingChart(
                     }
                 }
                 Text(
-                    text = detail.label.substringAfter(" ", detail.label),
+                    text = labelParts.day,
                     color = labelColor.copy(alpha = .72f),
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                     textAlign = TextAlign.Center,

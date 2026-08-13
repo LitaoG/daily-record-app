@@ -1,17 +1,13 @@
 package io.github.litaog.dailyrecord.core.account
 
-import io.github.litaog.dailyrecord.core.sync.RoomHandBrewSyncStore
-import io.github.litaog.dailyrecord.core.sync.RoomSexSyncStore
 import kotlinx.coroutines.CancellationException
 
 internal class CombinedAccountDeletionLocalStore(
     private val stores: List<AccountDeletionLocalStore>,
+    private val transactionRunner: suspend (suspend () -> Unit) -> Unit = { operation ->
+        operation()
+    },
 ) : AccountDeletionLocalStore {
-    constructor(
-        handBrew: RoomHandBrewSyncStore,
-        sex: RoomSexSyncStore,
-    ) : this(listOf(handBrew, sex))
-
     init {
         require(stores.isNotEmpty()) { "At least one local account store is required." }
     }
@@ -20,17 +16,32 @@ internal class CombinedAccountDeletionLocalStore(
         try {
             stores.forEach { it.stageLocalRecoveryCopy(ownerId) }
         } catch (error: CancellationException) {
-            discardAllSafely(error)
+            discardAllSafely(ownerId, error)
             throw error
         } catch (error: Exception) {
-            discardAllSafely(error)
+            discardAllSafely(ownerId, error)
             throw error
         }
     }
 
-    override suspend fun discardLocalRecoveryCopy() {
-        runForAll { it.discardLocalRecoveryCopy() }
+    override suspend fun discardLocalRecoveryCopy(ownerId: String) {
+        runForAll { it.discardLocalRecoveryCopy(ownerId) }
     }
+
+    override suspend fun promoteLocalRecoveryCopy(ownerId: String) {
+        if (stores.any { it.hasLocalRecoveryConflict(ownerId) }) {
+            throw AccountDeletionLocalRecoveryConflictException(
+                ownerId,
+                IllegalStateException("Local records already exist; recovery promotion requires explicit resolution"),
+            )
+        }
+        transactionRunner {
+            runForAll { it.promoteLocalRecoveryCopy(ownerId) }
+        }
+    }
+
+    override suspend fun hasLocalRecoveryConflict(ownerId: String): Boolean =
+        stores.any { it.hasLocalRecoveryConflict(ownerId) }
 
     override suspend fun deleteOwnerCache(ownerId: String) {
         runForAll { it.deleteOwnerCache(ownerId) }
@@ -40,10 +51,10 @@ internal class CombinedAccountDeletionLocalStore(
         runForAll { it.markOwnerPendingForResync(ownerId) }
     }
 
-    private suspend fun discardAllSafely(primary: Throwable) {
+    private suspend fun discardAllSafely(ownerId: String, primary: Throwable) {
         stores.forEach { store ->
             try {
-                store.discardLocalRecoveryCopy()
+                store.discardLocalRecoveryCopy(ownerId)
             } catch (error: CancellationException) {
                 // Cancellation must remain cooperative; otherwise a cancelled
                 // deletion can report completion while cleanup is incomplete.

@@ -1,5 +1,7 @@
 package io.github.litaog.dailyrecord.core.cloud
 
+import io.github.litaog.dailyrecord.core.common.awaitResult
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -11,6 +13,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import io.github.litaog.dailyrecord.core.sync.RemoteSexRecord
 
 /**
  * Explicit, non-default production smoke test.
@@ -40,7 +43,7 @@ class ProductionFirebaseSmokeTest {
             try {
                 val account = services.authRepository.register(email, password)
                 assertTrue(services.remoteDataSource.fetch(account.uid).records.isEmpty())
-                assertTrue(services.sexRemoteDataSource.fetch(account.uid).sexRecords.isEmpty())
+                assertTrue(services.sexRemoteDataSource.fetch(account.uid).records.filterIsInstance<RemoteSexRecord>().isEmpty())
                 assertTrue(
                     "A signed-in user must not list another owner's records",
                     runCatching { services.remoteDataSource.fetch("not-${account.uid}") }.isFailure,

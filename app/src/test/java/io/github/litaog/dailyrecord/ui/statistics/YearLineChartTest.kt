@@ -1,5 +1,7 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
+import io.github.litaog.dailyrecord.core.statistics.YearMonthStatistics
+import io.github.litaog.dailyrecord.core.statistics.YearStatistics
 import java.time.YearMonth
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

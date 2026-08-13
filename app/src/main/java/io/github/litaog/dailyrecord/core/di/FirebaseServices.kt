@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.cloud
+package io.github.litaog.dailyrecord.core.di
 
 import android.content.Context
 import com.google.firebase.FirebaseApp

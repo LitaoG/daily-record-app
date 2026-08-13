@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.di
 
 import android.content.Context
 import com.google.firebase.FirebaseApp
@@ -11,12 +11,17 @@ import androidx.work.WorkerParameters
 import androidx.work.WorkManager
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.testing.WorkManagerTestInitHelper
-import io.github.litaog.dailyrecord.core.cloud.FIREBASE_EMULATOR_APP_NAME
-import io.github.litaog.dailyrecord.core.cloud.FirebaseServices
-import io.github.litaog.dailyrecord.core.cloud.awaitResult
+import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
+import io.github.litaog.dailyrecord.core.di.DailyRecordSyncServicesProvider
+import io.github.litaog.dailyrecord.core.di.DailyRecordSyncWorker
+import io.github.litaog.dailyrecord.core.di.FIREBASE_EMULATOR_APP_NAME
+import io.github.litaog.dailyrecord.core.di.FirebaseServices
+import io.github.litaog.dailyrecord.core.common.awaitResult
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
+import io.github.litaog.dailyrecord.core.sync.AccountDeletionOutcome
+import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
@@ -44,25 +49,25 @@ class DailyRecordSyncWorkerTest {
 
     @After
     fun tearDown() {
-        DailyRecordSyncScheduler.endDeletionBlock()
-        DailyRecordSyncScheduler.completeDeletionCleanup(context, persistentOwner)
+        DeletionBarrier.endDeletionBlock()
+        DeletionBarrier.completeDeletionCleanup(persistentOwner)
     }
 
     @Test
     fun workerExitsBeforeRemoteWorkWhileDeletionBlocked() = runBlocking {
-        DailyRecordSyncScheduler.beginDeletionBlock()
+        DeletionBarrier.beginDeletionBlock()
         val worker = TestListenableWorkerBuilder<DailyRecordSyncWorker>(context).build()
 
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        assertTrue(DailyRecordSyncScheduler.isDeletionBlocked)
+        assertTrue(DeletionBarrier.isDeletionBlocked)
     }
 
     @Test
     fun scheduleDoesNotEnqueueWhileDeletionBlocked() {
         val workManager = WorkManager.getInstance(context)
-        DailyRecordSyncScheduler.beginDeletionBlock()
+        DeletionBarrier.beginDeletionBlock()
 
         DailyRecordSyncScheduler.schedule(context)
 
@@ -76,7 +81,7 @@ class DailyRecordSyncWorkerTest {
     fun scheduleEnqueuesAfterDeletionBlockEnds() {
         val workManager = WorkManager.getInstance(context)
         try {
-            DailyRecordSyncScheduler.beginDeletionBlock()
+            DeletionBarrier.beginDeletionBlock()
             DailyRecordSyncScheduler.schedule(context)
             assertTrue(
                 workManager.getWorkInfosForUniqueWork(
@@ -84,7 +89,7 @@ class DailyRecordSyncWorkerTest {
                 ).get().isEmpty(),
             )
         } finally {
-            DailyRecordSyncScheduler.endDeletionBlock()
+            DeletionBarrier.endDeletionBlock()
         }
 
         DailyRecordSyncScheduler.schedule(context)
@@ -93,54 +98,48 @@ class DailyRecordSyncWorkerTest {
             DailyRecordSyncScheduler.workName,
         ).get()
         assertTrue(workInfos.isNotEmpty())
-        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked)
+        assertFalse(DeletionBarrier.isDeletionBlocked)
     }
 
     @Test
     fun persistentDeletionMarkerBlocksOnlyTheAccountBeingDeleted() = runBlocking {
-        DailyRecordSyncScheduler.beginDeletionBlock(context, persistentOwner)
+        DeletionBarrier.beginDeletionBlock(persistentOwner)
 
-        assertTrue(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
+        assertTrue(DeletionBarrier.isDeletionBlocked(persistentOwner))
         assertFalse(
-            DailyRecordSyncScheduler.isDeletionBlocked(
-                context,
-                ownerId = "different-account",
-            ),
+            DeletionBarrier.isDeletionBlocked("different-account"),
         )
 
-        DailyRecordSyncScheduler.endDeletionBlock(
-            context,
+        DeletionBarrier.endDeletionBlock(
             persistentOwner,
             AccountDeletionOutcome.CleanupPending,
         )
-        assertTrue(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
+        assertTrue(DeletionBarrier.isDeletionBlocked(persistentOwner))
 
-        DailyRecordSyncScheduler.completeDeletionCleanup(context, persistentOwner)
-        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
+        DeletionBarrier.completeDeletionCleanup(persistentOwner)
+        assertFalse(DeletionBarrier.isDeletionBlocked(persistentOwner))
     }
 
     @Test
     fun interruptedDeletionKeepsDurableMarkerButReleasesProcessLock() = runBlocking {
-        DailyRecordSyncScheduler.beginDeletionBlock(context, persistentOwner)
+        DeletionBarrier.beginDeletionBlock(persistentOwner)
 
-        DailyRecordSyncScheduler.endDeletionBlock(
-            context,
+        DeletionBarrier.endDeletionBlock(
             persistentOwner,
             AccountDeletionOutcome.Interrupted,
         )
 
-        assertTrue(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
-        assertFalse(DailyRecordSyncScheduler.isLegacyDeletionBlocked)
+        assertTrue(DeletionBarrier.isDeletionBlocked(persistentOwner))
+        assertFalse(DeletionBarrier.isLegacyDeletionBlocked)
 
         // A retry in the same process must be possible; the durable marker is
         // replaced rather than treated as a second concurrent deletion.
-        DailyRecordSyncScheduler.beginDeletionBlock(context, persistentOwner)
-        DailyRecordSyncScheduler.endDeletionBlock(
-            context,
+        DeletionBarrier.beginDeletionBlock(persistentOwner)
+        DeletionBarrier.endDeletionBlock(
             persistentOwner,
             AccountDeletionOutcome.Completed,
         )
-        assertFalse(DailyRecordSyncScheduler.isDeletionBlocked(context, persistentOwner))
+        assertFalse(DeletionBarrier.isDeletionBlocked(persistentOwner))
     }
 
     @Test

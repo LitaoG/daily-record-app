@@ -17,11 +17,6 @@ import kotlinx.coroutines.flow.merge
 internal class CombinedSyncCoordinator(
     private val modules: List<ModuleSyncCoordinator>,
 ) : AccountSyncOperations {
-    constructor(
-        handBrew: HandBrewSyncCoordinator,
-        sex: SexSyncCoordinator,
-    ) : this(listOf(handBrew, sex))
-
     init {
         require(modules.isNotEmpty()) { "At least one sync module is required." }
     }

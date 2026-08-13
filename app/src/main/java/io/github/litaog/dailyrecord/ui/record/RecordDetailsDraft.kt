@@ -2,6 +2,8 @@ package io.github.litaog.dailyrecord.ui.record
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
+import io.github.litaog.dailyrecord.core.common.toLocalTime
+import io.github.litaog.dailyrecord.core.common.toMinutesOfDay
 import io.github.litaog.dailyrecord.core.model.MAX_RECORD_DETAIL_FEELING_CHARACTERS
 import io.github.litaog.dailyrecord.core.model.truncateVisibleCharacters
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
@@ -159,7 +161,3 @@ private fun List<RecordDetailDraft>.resize(count: Int): List<RecordDetailDraft> 
 
 private fun List<RecordDetailDraft>.contentWithoutExpansion(): List<RecordDetailDraft> =
     map(RecordDetailDraft::withoutExpansion)
-
-private fun LocalTime.toMinutesOfDay(): Int = hour * 60 + minute
-
-private fun Int.toLocalTime(): LocalTime = LocalTime.of(this / 60, this % 60)

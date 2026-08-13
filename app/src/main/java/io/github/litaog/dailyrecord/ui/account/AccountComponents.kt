@@ -62,9 +62,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordWarning
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 
-internal const val VPN_SYNC_DIALOG_MESSAGE =
-    AppCopy.Account.syncDialogMessage
-
 internal enum class SyncFailureAction {
     Retry,
     Reauthenticate,
@@ -80,7 +77,7 @@ internal data class SyncFailurePresentation(
 internal fun SyncFailureKind.presentation(): SyncFailurePresentation = when (this) {
     SyncFailureKind.Network -> SyncFailurePresentation(
         title = AppCopy.Account.networkFailureTitle,
-        guidance = VPN_SYNC_DIALOG_MESSAGE,
+        guidance = AppCopy.Account.syncDialogMessage,
         actionLabel = AppCopy.Account.syncNow,
         action = SyncFailureAction.Retry,
     )

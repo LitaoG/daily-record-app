@@ -1,7 +1,6 @@
-package io.github.litaog.dailyrecord.ui.statistics
+package io.github.litaog.dailyrecord.core.statistics
 
-import io.github.litaog.dailyrecord.ui.DailyCountEntry
-import io.github.litaog.dailyrecord.ui.components.StatisticsPeriod
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
