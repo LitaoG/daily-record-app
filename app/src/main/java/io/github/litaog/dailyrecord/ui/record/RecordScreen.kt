@@ -209,21 +209,24 @@ internal fun DailyCountRecordScreen(
             if (nextCount == 0) it.copy(expanded = false) else it
         }
     }
-    val launchMutation = { failureMessage: String, operation: suspend () -> Unit ->
+    val launchMutation = {
+        failureMessage: String,
+        onSuccess: () -> Unit,
+        operation: suspend () -> Unit,
+    ->
         if (!saving) {
             saving = true
             scope.launch {
                 val result = runCatchingPreservingCancellation(operation)
                 saving = false
                 if (result.isSuccess) {
-                    // Keep the current draft visible after saving. The record
-                    // flow below reconciles its baseline with the persisted
-                    // values, while preserving the expanded detail section and
-                    // showing the saved feeling without an open editor.
+                    // Close the feeling editor after a successful mutation. The
+                    // caller decides whether to keep this page (save) or leave
+                    // it (clear), while the saved draft remains visible here.
                     detailsDraft = detailsDraft.copy(
                         entries = detailsDraft.entries.map { it.copy(feelingExpanded = false) },
                     )
-                    onSaved()
+                    onSuccess()
                 } else {
                     errorMessage = failureMessage
                 }
@@ -424,7 +427,7 @@ internal fun DailyCountRecordScreen(
                             } else {
                                 detailsDraft.asEntries().take(currentDraftCount)
                             }
-                            launchMutation(AppCopy.Record.saveFailure) {
+                            launchMutation(AppCopy.Record.saveFailure, onSaved) {
                                 controller.saveRecord(date, currentDraftCount, currentDetails)
                             }
                         },
@@ -480,7 +483,7 @@ internal fun DailyCountRecordScreen(
             onConfirm = {
                 if (!saving) {
                     showClearDialog = false
-                    launchMutation(AppCopy.Record.clearFailure) {
+                    launchMutation(AppCopy.Record.clearFailure, onBack) {
                         controller.clearRecord(date)
                     }
                 }

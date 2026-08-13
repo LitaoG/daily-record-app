@@ -110,7 +110,8 @@ class RecordScreenTest {
     @Test
     fun clearRequiresExplicitConfirmation() {
         val repository = FakeHandBrewRecordRepository(listOf(record(today, 2)))
-        setRecordContent(repository)
+        var backCalls = 0
+        setRecordContent(repository, onBack = { backCalls += 1 })
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("清除记录").performClick()
@@ -124,6 +125,7 @@ class RecordScreenTest {
         composeRule.onNodeWithText("确认清除").performClick()
         composeRule.waitUntil(5_000) { repository.clearCalls == 1 }
         assertEquals(1, repository.clearCalls)
+        assertEquals(1, backCalls)
     }
 
     @Test
