@@ -161,4 +161,3 @@ private fun List<RecordDetailDraft>.resize(count: Int): List<RecordDetailDraft> 
 
 private fun List<RecordDetailDraft>.contentWithoutExpansion(): List<RecordDetailDraft> =
     map(RecordDetailDraft::withoutExpansion)
-
