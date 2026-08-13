@@ -77,14 +77,20 @@ class RecordModuleIntegrationTest {
         setDualModuleContent()
 
         composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
-        assertMinimumSize("home_settings_button", 56f)
-        assertSettingsIconContains(HandBrewColorTokens.primary)
+        assertMinimumSize("home_settings_button", 60f)
+        assertSettingsIconContains(
+            expected = HandBrewColorTokens.primary,
+            unexpected = SexColorTokens.primary,
+        )
 
         composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
-        assertSettingsIconContains(SexColorTokens.primary)
+        assertSettingsIconContains(
+            expected = SexColorTokens.primary,
+            unexpected = HandBrewColorTokens.primary,
+        )
     }
 
     @Test
@@ -311,7 +317,7 @@ class RecordModuleIntegrationTest {
         assertEquals(expected.toArgb(), pixels[sampleX, sampleY].toArgb())
     }
 
-    private fun assertSettingsIconContains(expected: Color) {
+    private fun assertSettingsIconContains(expected: Color, unexpected: Color) {
         var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
         composeRule.waitUntil(timeoutMillis = 10_000) {
             runCatching {
@@ -329,6 +335,19 @@ class RecordModuleIntegrationTest {
             }
         }
         assertTrue("Expected settings icon to contain $expected, found $exactMatches pixels", exactMatches > 0)
+        val unexpectedArgb = unexpected.toArgb()
+        var unexpectedMatches = 0
+        for (x in 0 until pixels.width) {
+            for (y in 0 until pixels.height) {
+                if (pixels[x, y].toArgb() == unexpectedArgb) {
+                    unexpectedMatches++
+                }
+            }
+        }
+        assertTrue(
+            "Settings icon unexpectedly contained $unexpected in $unexpectedMatches pixels",
+            unexpectedMatches == 0,
+        )
     }
 
     private fun assertMinimumHeight(tag: String, minimumDp: Float) {

@@ -150,7 +150,7 @@ internal fun AccountTopBar(
                         status = status,
                         onClick = onClick,
                     )
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         } else {
@@ -172,7 +172,7 @@ internal fun AccountTopBar(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     SyncStatusChip(status = status, onClick = onClick)
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         }
@@ -212,7 +212,7 @@ internal fun LocalAccountTopBar(
                             accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                         )
                     }
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         } else {
@@ -240,7 +240,7 @@ internal fun LocalAccountTopBar(
                             accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                         )
                     }
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         }
@@ -250,7 +250,7 @@ internal fun LocalAccountTopBar(
 @Composable
 private fun SettingsButton(
     onClick: () -> Unit,
-    heartTint: Color,
+    moduleTint: Color,
 ) {
     IconButton(
         onClick = onClick,
@@ -260,7 +260,7 @@ private fun SettingsButton(
     ) {
         PrivateSettingsIcon(
             contentDescription = AppCopy.Settings.open,
-            heartTint = heartTint,
+            moduleTint = moduleTint,
         )
     }
 }
