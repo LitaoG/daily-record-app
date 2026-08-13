@@ -77,6 +77,7 @@ class RecordModuleIntegrationTest {
         setDualModuleContent()
 
         composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
+        assertMinimumSize("home_settings_button", 56f)
         assertSettingsIconContains(HandBrewColorTokens.primary)
 
         composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
@@ -334,6 +335,16 @@ class RecordModuleIntegrationTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val heightPx = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.height
         val heightDp = heightPx / context.resources.displayMetrics.density
+        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
+    }
+
+    private fun assertMinimumSize(tag: String, minimumDp: Float) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val bounds = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+        val density = context.resources.displayMetrics.density
+        val widthDp = bounds.width / density
+        val heightDp = bounds.height / density
+        assertTrue("$tag width was $widthDp dp", widthDp >= minimumDp)
         assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
     }
 
