@@ -4,7 +4,7 @@
 
 ## 两个独立领域实体
 
-`HandBrewRecord` 表示一个本地日期的聚合手冲次数；`SexRecord` 表示一个本地日期的聚合做爱次数。二者不共享业务表，也没有活动类型字段。
+`HandBrewRecord` 表示一个本地日期的聚合自慰次数；`SexRecord` 表示一个本地日期的聚合做爱次数。二者不共享业务表，也没有活动类型字段。
 
 | 字段 | 含义 |
 |---|---|
@@ -49,7 +49,7 @@ moduleCount > 0 -> OCCURRED（已发生）
 2. 从旧记录中只筛选冻结的旧 `flight` 机器图标标识，不依赖用户可见活动名称或本地化文案。
 3. 同日记录按次数求和，保留最早创建时间与最后更新时间。
 4. 将旧表改名为 `legacy_activities_v1` 和 `legacy_daily_records_v1`。
-5. 自动化测试验证手冲数据、schema 版本和 legacy 表存在。
+5. 自动化测试验证自慰数据、schema 版本和 legacy 表存在。
 
 ## v2 → v3 迁移
 
@@ -64,7 +64,7 @@ moduleCount > 0 -> OCCURRED（已发生）
 1. 原样保留 `hand_brew_records` 和 legacy 表。
 2. 创建空的 `sex_records`，字段包含 `sex_count` 与完整同步元数据。
 3. 建立 `owner_id + local_date` 唯一索引和 `owner_id + sync_state` 待同步索引。
-4. 不推断或复制任何历史手冲行为为做爱记录。
+4. 不推断或复制任何历史自慰行为为做爱记录。
 5. 自动化测试覆盖 v1→v4、v2→v4、v3→v4，禁止 destructive migration。
 
 ## v4 → v5 迁移：逐次详情
@@ -76,4 +76,4 @@ moduleCount > 0 -> OCCURRED（已发生）
 
 ## Firestore 文档
 
-两个集合的文档 ID 都与 `localDate` 相同。手冲文档使用 `brewCount`，做爱文档使用 `sexCount`；其余字段为 `id`、`localDate`、`createdAtMillis`、`clientUpdatedAtMillis`、`deleted`、`revision`、`schemaVersion`、`details` 和服务器时间。`id` 在一个云端记录代际内不可变；物理文档被删除后，pending 编辑重建时生成新的 `id`，而 `revision` 从 1 开始。`details` 是当前模块专用的逐次数数组，包含 `id`、`occurrenceIndex`、可空的 `startTime`/`endTime` 与 `feeling`，不会混入另一个模块。规则分别强制所有权、字段白名单、非负次数、时间范围、不可变身份、100 个可见字符上限和修订号逐次加一。普通记录清除必须写墓碑并清除本地详情；永久删除账号时，已登录本人可以物理删除自己路径下的全部文档。
+两个集合的文档 ID 都与 `localDate` 相同。自慰文档使用 `brewCount`，做爱文档使用 `sexCount`；其余字段为 `id`、`localDate`、`createdAtMillis`、`clientUpdatedAtMillis`、`deleted`、`revision`、`schemaVersion`、`details` 和服务器时间。`id` 在一个云端记录代际内不可变；物理文档被删除后，pending 编辑重建时生成新的 `id`，而 `revision` 从 1 开始。`details` 是当前模块专用的逐次数数组，包含 `id`、`occurrenceIndex`、可空的 `startTime`/`endTime` 与 `feeling`，不会混入另一个模块。规则分别强制所有权、字段白名单、非负次数、时间范围、不可变身份、100 个可见字符上限和修订号逐次加一。普通记录清除必须写墓碑并清除本地详情；永久删除账号时，已登录本人可以物理删除自己路径下的全部文档。

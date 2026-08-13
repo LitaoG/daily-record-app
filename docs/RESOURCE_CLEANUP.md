@@ -29,12 +29,12 @@ Android 只从 `app/src/main/res` 读取资源。当前自适应图标使用
 ### 历史证据
 
 `docs/product/audit/` 仍保留审计报告及其必要截图，因为它们记录了测试输入、设备和
-结论。旧的 `docs/product/assets/hand-brew-v2/` 仅手冲截图包与当前双模块产品不再
+结论。旧的 `docs/product/assets/hand-brew-v2/` 仅自慰截图包与当前双模块产品不再
 一致，已从工作树移除；对应文件可以从删除前的 Git 提交恢复。
 
 ## 本次删除
 
-- 19 张仅手冲 v2 Figma、Canva 和 API 34 截图。
+- 19 张仅自慰 v2 Figma、Canva 和 API 34 截图。
 - 图标 `background.png`、`foreground.png`、`monochrome.png` 三层 PNG 副本。
 - `adaptive-preview-1024.png`、`figma-handoff-preview.png` 两张本地预览图。
 - `daily-record-icon-1024.png` 重复备份图。

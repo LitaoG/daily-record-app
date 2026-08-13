@@ -20,6 +20,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.click
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
@@ -198,6 +199,182 @@ class RecordScreenTest {
         composeRule.onNodeWithContentDescription("第 1 次，开始，09:15").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("第 1 次，结束，09:45").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("第 1 次，编辑感受").assertIsDisplayed()
+        assertTrue(composeRule.onAllNodesWithText("开始").fetchSemanticsNodes().isEmpty())
+        assertTrue(composeRule.onAllNodesWithText("结束").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun detailActionsAlignAndDoNotReserveATimelineColumn() {
+        val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 2)))
+        setRecordContent(repository, width = 390.dp)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+
+        val section = composeRule.onNodeWithTag("record_details_section").fetchSemanticsNode().boundsInRoot
+        val firstStart = composeRule.onNodeWithTag("record_detail_1_start_time").fetchSemanticsNode().boundsInRoot
+        val firstEnd = composeRule.onNodeWithTag("record_detail_1_end_time").fetchSemanticsNode().boundsInRoot
+        val firstFeeling = composeRule.onNodeWithTag("record_detail_1_feeling").fetchSemanticsNode().boundsInRoot
+        val secondStart = composeRule.onNodeWithTag("record_detail_2_start_time").fetchSemanticsNode().boundsInRoot
+
+        assertEquals(section.left, firstStart.left, 0.5f)
+        assertEquals(firstStart.top, firstEnd.top, 0.5f)
+        assertEquals(firstStart.top, firstFeeling.top, 0.5f)
+        assertEquals(firstStart.height, firstEnd.height, 0.5f)
+        assertEquals(firstStart.height, firstFeeling.height, 0.5f)
+        assertEquals(firstStart.left, secondStart.left, 0.5f)
+    }
+
+    @Test
+    fun unsetTimeLabelsAreSpecificAndCenteredInsideTheirFields() {
+        val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 1)))
+        setRecordContent(repository, width = 390.dp)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+
+        val startField = composeRule.onNodeWithTag("record_detail_1_start_time").fetchSemanticsNode().boundsInRoot
+        val endField = composeRule.onNodeWithTag("record_detail_1_end_time").fetchSemanticsNode().boundsInRoot
+        val startText = composeRule.onNodeWithText("开始时间", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val endText = composeRule.onNodeWithText("结束时间", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+
+        composeRule.onNodeWithText("开始时间", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("结束时间", useUnmergedTree = true).assertIsDisplayed()
+        assertTrue(composeRule.onAllNodesWithText("选择时间", useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        assertEquals(startField.center.x, startText.center.x, 0.5f)
+        assertEquals(startField.center.y, startText.center.y, 0.5f)
+        assertEquals(endField.center.x, endText.center.x, 0.5f)
+        assertEquals(endField.center.y, endText.center.y, 0.5f)
+    }
+
+    @Test
+    fun selectedTimeLabelsRemainCenteredInsideTheirFields() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 1)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(9, 15),
+                    endTime = LocalTime.of(9, 45),
+                    feeling = "",
+                ),
+            ),
+        )
+        setRecordContent(repository, width = 390.dp)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+
+        val startField = composeRule.onNodeWithTag("record_detail_1_start_time").fetchSemanticsNode().boundsInRoot
+        val endField = composeRule.onNodeWithTag("record_detail_1_end_time").fetchSemanticsNode().boundsInRoot
+        val startText = composeRule.onNodeWithText("09:15", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val endText = composeRule.onNodeWithText("09:45", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+
+        assertEquals(startField.center.x, startText.center.x, 0.5f)
+        assertEquals(startField.center.y, startText.center.y, 0.5f)
+        assertEquals(endField.center.x, endText.center.x, 0.5f)
+        assertEquals(endField.center.y, endText.center.y, 0.5f)
+    }
+
+    @Test
+    fun feelingActionOpensTheRequestedOccurrenceEditor() {
+        val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 2)))
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 2 次，写感受").performClick()
+
+        composeRule.onNodeWithTag("record_detail_2_feeling_editor").assertIsDisplayed()
+        assertTrue(composeRule.onAllNodesWithTag("record_detail_1_feeling_editor").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun timeFieldUsesWheelDialogAndCancelKeepsOriginalValue() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 1)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(23, 59),
+                    endTime = null,
+                    feeling = "",
+                ),
+            ),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 1 次，开始，23:59").performClick()
+
+        composeRule.onNodeWithTag("time_picker_dialog").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("小时，当前 23").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("分钟，当前 59").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("取消").performClick()
+
+        assertTrue(composeRule.onAllNodesWithTag("time_picker_dialog").fetchSemanticsNodes().isEmpty())
+        composeRule.onNodeWithContentDescription("第 1 次，开始，23:59").assertIsDisplayed()
+    }
+
+    @Test
+    fun confirmingWheelSelectionUpdatesOnlyTheRequestedTime() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 1)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(9, 15),
+                    endTime = LocalTime.of(12, 45),
+                    feeling = "",
+                ),
+            ),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 1 次，开始，09:15").performClick()
+        composeRule.onNodeWithContentDescription("选择小时 10").performClick()
+        composeRule.onNodeWithContentDescription("选择分钟 16").performClick()
+        composeRule.onNodeWithContentDescription("确定").performClick()
+
+        composeRule.onNodeWithContentDescription("第 1 次，开始，10:16").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，结束，12:45").assertIsDisplayed()
+    }
+
+    @Test
+    fun confirmingEndWheelSelectionLeavesStartTimeUntouched() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 1)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(9, 15),
+                    endTime = LocalTime.of(12, 45),
+                    feeling = "",
+                ),
+            ),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 1 次，结束，12:45").performClick()
+        composeRule.onNodeWithContentDescription("选择小时 13").performClick()
+        composeRule.onNodeWithContentDescription("选择分钟 46").performClick()
+        composeRule.onNodeWithContentDescription("确定").performClick()
+
+        composeRule.onNodeWithContentDescription("第 1 次，开始，09:15").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，结束，13:46").assertIsDisplayed()
     }
 
     @Test
@@ -211,7 +388,12 @@ class RecordScreenTest {
         val screen = composeRule.onNodeWithTag("record_screen").fetchSemanticsNode().boundsInRoot
         assertTrue(details.left >= screen.left)
         assertTrue(details.right <= screen.right)
+        val start = composeRule.onNodeWithTag("record_detail_1_start_time").fetchSemanticsNode().boundsInRoot
+        val end = composeRule.onNodeWithTag("record_detail_1_end_time").fetchSemanticsNode().boundsInRoot
+        val feeling = composeRule.onNodeWithTag("record_detail_1_feeling").fetchSemanticsNode().boundsInRoot
         composeRule.onNodeWithContentDescription("第 1 次，写感受").assertIsDisplayed()
+        assertTrue(start.right <= end.left)
+        assertTrue(feeling.top >= maxOf(start.bottom, end.bottom))
     }
 
     @Test
@@ -221,8 +403,74 @@ class RecordScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
-        composeRule.onNodeWithTag("record_detail_1").assertIsDisplayed()
+        val details = composeRule.onNodeWithTag("record_detail_1").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val start = composeRule.onNodeWithTag("record_detail_1_start_time").fetchSemanticsNode().boundsInRoot
+        val end = composeRule.onNodeWithTag("record_detail_1_end_time").fetchSemanticsNode().boundsInRoot
+        val feeling = composeRule.onNodeWithTag("record_detail_1_feeling").fetchSemanticsNode().boundsInRoot
         composeRule.onNodeWithContentDescription("第 1 次，写感受").assertIsDisplayed()
+        assertTrue(start.left >= details.left)
+        assertTrue(end.right <= details.right)
+        assertTrue(start.right <= end.left)
+        assertTrue(feeling.top >= maxOf(start.bottom, end.bottom))
+    }
+
+    @Test
+    fun recordActionsStayOutsideScrollableContent() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 12)),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithTag("record_actions").assertIsDisplayed()
+
+        repeat(12) {
+            composeRule.onNodeWithTag("record_scroll_content")
+                .performTouchInput { swipeUp() }
+        }
+        composeRule.waitForIdle()
+
+        val scrollBounds = composeRule.onNodeWithTag("record_scroll_content")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val actionBounds = composeRule.onNodeWithTag("record_actions")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val lastDetailBounds = composeRule.onNodeWithTag("record_detail_12")
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertTrue(actionBounds.top >= scrollBounds.bottom)
+        assertTrue(lastDetailBounds.bottom <= actionBounds.top)
+        composeRule.onNodeWithTag("record_detail_12").assertIsDisplayed()
+        composeRule.onNodeWithTag("save_record_button").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("清除记录").assertIsDisplayed()
+    }
+
+    @Test
+    fun longDetailsStayAboveActionsOnNarrowLargeTextViewport() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 12)),
+        )
+        setRecordContent(repository, width = 260.dp, fontScale = 2f)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        repeat(24) {
+            composeRule.onNodeWithTag("record_scroll_content")
+                .performTouchInput { swipeUp() }
+        }
+        composeRule.waitForIdle()
+
+        val scrollBounds = composeRule.onNodeWithTag("record_scroll_content").fetchSemanticsNode().boundsInRoot
+        val actionBounds = composeRule.onNodeWithTag("record_actions").fetchSemanticsNode().boundsInRoot
+        val lastDetailBounds = composeRule.onNodeWithTag("record_detail_12").fetchSemanticsNode().boundsInRoot
+
+        assertTrue(actionBounds.top >= scrollBounds.bottom)
+        assertTrue(lastDetailBounds.bottom <= actionBounds.top)
+        composeRule.onNodeWithTag("record_detail_12").assertIsDisplayed()
+        composeRule.onNodeWithTag("save_record_button").assertIsDisplayed()
     }
 
     @Test

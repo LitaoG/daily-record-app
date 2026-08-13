@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui.record
 
-import android.app.TimePickerDialog
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -11,8 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,7 +33,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,7 +50,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -259,11 +254,149 @@ internal fun DailyCountRecordScreen(
                 colors = moduleSpec.colors,
             )
         },
-        bottomBar = {
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .padding(contentPadding),
+        ) {
+            val recordScrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(recordScrollState)
+                    .testTag("record_scroll_content")
+                    .padding(
+                        horizontal = DailyRecordSpacing.ScreenHorizontal,
+                        vertical = DailyRecordSpacing.ScreenVertical,
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
+            ) {
+                RecordHeader(date = date, today = today, moduleSpec = moduleSpec, onBack = requestBack)
+                Text(
+                    text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
+                    color = DailyRecordText,
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = when {
+                        detailsDraft.expanded && countDraft.count > 0 -> AppCopy.Record.countAndDetails
+                        countDraft.count > 0 -> AppCopy.Record.countFirst
+                        else -> AppCopy.Record.countOnly
+                    },
+                    color = DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                DailyCountControl(
+                    count = countDraft.count,
+                    enabled = editable && dataReady && countDraft.initialized && !saving,
+                    onDecrease = {
+                        val last = detailsDraft.entries.lastOrNull()
+                        if (countDraft.count > 0 && last?.hasContent == true) {
+                            showRemoveDetailDialog = true
+                        } else {
+                            applyCount((countDraft.count - 1).coerceAtLeast(0))
+                        }
+                    },
+                    onIncrease = {
+                        if (countDraft.count < Int.MAX_VALUE) {
+                            applyCount(countDraft.count + 1)
+                        }
+                    },
+                    colors = moduleSpec.colors,
+                    compact = detailsDraft.expanded,
+                )
+                Text(
+                    text = when {
+                        !dataReady -> AppCopy.Record.loadingRecords
+                        !editable -> AppCopy.Record.futureUnavailable
+                        hasUnsavedChanges -> AppCopy.Record.savedStatus(countDraft.count)
+                        record == null -> AppCopy.Record.notSaved
+                        record.count == 0 -> AppCopy.Record.zeroRecorded
+                        else -> AppCopy.Record.recordedStatus(record.count)
+                    },
+                    color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                if (!detailsDraft.expanded) {
+                    Text(
+                        AppCopy.Record.explicitZeroHint(moduleSpec.explicitZeroText),
+                        color = DailyRecordTextMuted,
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                if (countDraft.count > 0) {
+                    if (detailsDraft.expanded) {
+                        RecordDetailsSection(
+                            entries = detailsDraft.entries,
+                            accent = moduleSpec.colors.primary,
+                            onCollapse = { detailsDraft = detailsDraft.copy(expanded = false) },
+                            onTimeClick = { index, target ->
+                                val current = detailsDraft.entries.getOrNull(index)
+                                val minutes = when (target) {
+                                    DetailTimeTarget.Start -> current?.startMinutes
+                                    DetailTimeTarget.End -> current?.endMinutes
+                                }
+                                val initialMinutes = initialTimePickerMinutes(minutes, LocalTime.now())
+                                timePickerRequest = TimePickerRequest(index, target, initialMinutes)
+                            },
+                            onFeelingToggle = { index ->
+                                detailsDraft = detailsDraft.update(index) {
+                                    it.copy(feelingExpanded = !it.feelingExpanded)
+                                }
+                            },
+                            onFeelingChange = { index, value ->
+                                detailsDraft = detailsDraft.update(index) { it.withFeeling(value) }
+                            },
+                        )
+                    } else {
+                        DetailEntryButton(
+                            count = countDraft.count,
+                            accent = moduleSpec.colors.primary,
+                            colors = moduleSpec.colors,
+                            onClick = {
+                                detailsDraft = detailsDraft.resize(countDraft.count)
+                                    .copy(expanded = true)
+                            },
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = DailyRecordSpacing.Inline)
+                        .height(1.dp)
+                        .background(DailyRecordDivider),
+                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
+                ) {
+                    Text(
+                        text = AppCopy.Record.monthSaved(YearMonth.from(date).monthValue),
+                        color = DailyRecordTextSecondary,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    Text(
+                        AppCopy.Record.monthSummary(storedMonthCount, storedMonthDays),
+                        color = DailyRecordText,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
             Surface(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .navigationBarsPadding()
-                    .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted),
+                    .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted)
+                    .testTag("record_actions"),
                 color = Color.Transparent,
             ) {
                 Column(
@@ -306,141 +439,12 @@ internal fun DailyCountRecordScreen(
                     )
                 }
             }
-        },
-    ) { contentPadding ->
-        val recordScrollState = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .imePadding()
-                .verticalScroll(recordScrollState)
-                .padding(contentPadding)
-                .padding(
-                    horizontal = DailyRecordSpacing.ScreenHorizontal,
-                    vertical = DailyRecordSpacing.ScreenVertical,
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
-        ) {
-            RecordHeader(date = date, today = today, moduleSpec = moduleSpec, onBack = requestBack)
-            Text(
-                text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
-                color = DailyRecordText,
-                style = MaterialTheme.typography.headlineLarge,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = when {
-                    detailsDraft.expanded && countDraft.count > 0 -> AppCopy.Record.countAndDetails
-                    countDraft.count > 0 -> AppCopy.Record.countFirst
-                    else -> AppCopy.Record.countOnly
-                },
-                color = DailyRecordTextSecondary,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            DailyCountControl(
-                count = countDraft.count,
-                enabled = editable && dataReady && countDraft.initialized && !saving,
-                onDecrease = {
-                    val last = detailsDraft.entries.lastOrNull()
-                    if (countDraft.count > 0 && last?.hasContent == true) {
-                        showRemoveDetailDialog = true
-                    } else {
-                        applyCount((countDraft.count - 1).coerceAtLeast(0))
-                    }
-                },
-                onIncrease = {
-                    if (countDraft.count < Int.MAX_VALUE) {
-                        applyCount(countDraft.count + 1)
-                    }
-                },
-                colors = moduleSpec.colors,
-                compact = detailsDraft.expanded,
-            )
-            Text(
-                text = when {
-                    !dataReady -> AppCopy.Record.loadingRecords
-                    !editable -> AppCopy.Record.futureUnavailable
-                    hasUnsavedChanges -> AppCopy.Record.savedStatus(countDraft.count)
-                    record == null -> AppCopy.Record.notSaved
-                    record.count == 0 -> AppCopy.Record.zeroRecorded
-                    else -> AppCopy.Record.recordedStatus(record.count)
-                },
-                color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            if (!detailsDraft.expanded) {
-                Text(
-                    AppCopy.Record.explicitZeroHint(moduleSpec.explicitZeroText),
-                    color = DailyRecordTextMuted,
-                    style = MaterialTheme.typography.labelSmall,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            if (countDraft.count > 0) {
-                if (detailsDraft.expanded) {
-                    RecordDetailsSection(
-                        entries = detailsDraft.entries,
-                        accent = moduleSpec.colors.primary,
-                        onCollapse = { detailsDraft = detailsDraft.copy(expanded = false) },
-                        onTimeClick = { index, target ->
-                            val current = detailsDraft.entries.getOrNull(index)
-                            val minutes = when (target) {
-                                DetailTimeTarget.Start -> current?.startMinutes
-                                DetailTimeTarget.End -> current?.endMinutes
-                            } ?: LocalTime.now().toMinutesOfDay()
-                            timePickerRequest = TimePickerRequest(index, target, minutes)
-                        },
-                        onFeelingToggle = { index ->
-                            detailsDraft = detailsDraft.update(index) {
-                                it.copy(feelingExpanded = !it.feelingExpanded)
-                            }
-                        },
-                        onFeelingChange = { index, value ->
-                            detailsDraft = detailsDraft.update(index) { it.withFeeling(value) }
-                        },
-                    )
-                } else {
-                    DetailEntryButton(
-                        count = countDraft.count,
-                        accent = moduleSpec.colors.primary,
-                        colors = moduleSpec.colors,
-                        onClick = {
-                            detailsDraft = detailsDraft.resize(countDraft.count)
-                                .copy(expanded = true)
-                        },
-                    )
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = DailyRecordSpacing.Inline)
-                    .height(1.dp)
-                    .background(DailyRecordDivider),
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
-            ) {
-                Text(
-                    text = AppCopy.Record.monthSaved(YearMonth.from(date).monthValue),
-                    color = DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                Text(
-                    AppCopy.Record.monthSummary(storedMonthCount, storedMonthDays),
-                    color = DailyRecordText,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
         }
     }
 
     TimePickerHost(
         request = timePickerRequest,
+        colors = moduleSpec.colors,
         onSelected = { request, minutes ->
             val current = detailsDraft.entries.getOrNull(request.index) ?: return@TimePickerHost
             if (
@@ -521,6 +525,9 @@ internal fun DailyCountRecordScreen(
     }
 }
 
+internal fun initialTimePickerMinutes(existingMinutes: Int?, now: LocalTime): Int =
+    existingMinutes ?: now.toMinutesOfDay()
+
 @Composable
 private fun RecordDetailsSection(
     entries: List<RecordDetailDraft>,
@@ -597,31 +604,31 @@ private fun RecordDetailRow(
     onFeelingToggle: (Int) -> Unit,
     onFeelingChange: (Int, String) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("record_detail_${index + 1}"),
+        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
     ) {
-        TimelineNode(
-            number = index + 1,
-            accent = accent,
-            modifier = Modifier.width(36.dp).fillMaxHeight(),
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+        ) {
+            OccurrenceBadge(number = index + 1, accent = accent)
+            Text(
+                text = AppCopy.Record.detailOccurrence(index + 1),
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
         BoxWithConstraints(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = DailyRecordSpacing.Inline),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             val compactLayout = maxWidth < 340.dp || LocalDensity.current.fontScale >= 1.5f
             Column(
-                modifier = Modifier.testTag("record_detail_${index + 1}"),
                 verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
             ) {
-                Text(
-                    text = AppCopy.Record.detailOccurrence(index + 1),
-                    color = DailyRecordText,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
                 if (compactLayout) {
                     DetailTimeFields(
                         occurrence = index + 1,
@@ -699,6 +706,7 @@ private fun DetailTimeFields(
             occurrence = occurrence,
             target = DetailTimeTarget.Start,
             label = AppCopy.Record.detailStartTime,
+            placeholder = AppCopy.Record.detailStartTimeUnset,
             minutes = entry.startMinutes,
             accent = accent,
             modifier = Modifier.weight(1f),
@@ -712,6 +720,7 @@ private fun DetailTimeFields(
             occurrence = occurrence,
             target = DetailTimeTarget.End,
             label = AppCopy.Record.detailEndTime,
+            placeholder = AppCopy.Record.detailEndTimeUnset,
             minutes = entry.endMinutes,
             accent = accent,
             modifier = Modifier.weight(1f),
@@ -721,37 +730,24 @@ private fun DetailTimeFields(
 }
 
 @Composable
-private fun TimelineNode(
+private fun OccurrenceBadge(
     number: Int,
     accent: Color,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier) {
-        Canvas(Modifier.fillMaxSize()) {
-            val centerX = size.width / 2f
-            val nodeRadius = 16.dp.toPx()
-            drawLine(
-                color = accent.copy(alpha = .28f),
-                start = androidx.compose.ui.geometry.Offset(centerX, nodeRadius * 2f),
-                end = androidx.compose.ui.geometry.Offset(centerX, size.height),
-                strokeWidth = 1.5.dp.toPx(),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(accent),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = number.toString(),
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
+    Box(
+        modifier = modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(accent),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = number.toString(),
+            color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
@@ -760,54 +756,42 @@ private fun DetailTimeField(
     occurrence: Int,
     target: DetailTimeTarget,
     label: String,
+    placeholder: String,
     minutes: Int?,
     accent: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            color = DailyRecordTextMuted,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = DailyRecordSpacing.Compact),
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
-                .clip(DailyRecordShapes.Control)
-                .background(DailyRecordSurface)
-                .border(
-                    DailyRecordBorders.Standard,
-                    accent.copy(alpha = .20f),
-                    DailyRecordShapes.Control,
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+            .clip(DailyRecordShapes.Control)
+            .background(DailyRecordSurface)
+            .border(
+                DailyRecordBorders.Standard,
+                accent.copy(alpha = .20f),
+                DailyRecordShapes.Control,
+            )
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics {
+                role = Role.Button
+                contentDescription = AppCopy.Record.detailTimeDescription(
+                    occurrence = occurrence,
+                    label = label,
+                    value = minutes?.let(::formatMinutesOfDay) ?: placeholder,
                 )
-                .clickable(role = Role.Button, onClick = onClick)
-                .semantics {
-                    role = Role.Button
-                    contentDescription = AppCopy.Record.detailTimeDescription(
-                        occurrence = occurrence,
-                        label = label,
-                        value = minutes?.let(::formatMinutesOfDay) ?: AppCopy.Record.detailTimeUnset,
-                    )
-                }
-                .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
-                .padding(horizontal = DailyRecordSpacing.Inline),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = minutes?.let(::formatMinutesOfDay) ?: AppCopy.Record.detailTimeUnset,
-                color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Spacer(Modifier.weight(1f))
-            ChevronIcon(
-                forward = true,
-                modifier = Modifier.size(18.dp),
-                color = DailyRecordTextMuted,
-            )
-        }
+            }
+            .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
+            .padding(horizontal = DailyRecordSpacing.Inline),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = minutes?.let(::formatMinutesOfDay) ?: placeholder,
+            color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
+            style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -1009,31 +993,17 @@ private fun DetailEntryButton(
 @Composable
 private fun TimePickerHost(
     request: TimePickerRequest?,
+    colors: RecordModuleColorTokens,
     onSelected: (TimePickerRequest, Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val context = LocalContext.current
-    // The effect keys on the request only: later Room emissions must not
-    // dismiss and re-show the dialog while the user is picking. The wheel
-    // values are snapshotted into the request when it is created.
-    DisposableEffect(request, context) {
-        if (request == null) {
-            onDispose { }
-        } else {
-            val dialog = TimePickerDialog(
-                context,
-                { _, hour, minute -> onSelected(request, LocalTime.of(hour, minute).toMinutesOfDay()) },
-                request.initialMinutes / 60,
-                request.initialMinutes % 60,
-                true,
-            )
-            dialog.setOnDismissListener { onDismiss() }
-            dialog.show()
-            onDispose {
-                dialog.setOnDismissListener(null)
-                dialog.dismiss()
-            }
-        }
+    if (request != null) {
+        RecordTimePickerDialog(
+            initialMinutes = request.initialMinutes,
+            colors = colors,
+            onDismiss = onDismiss,
+            onConfirm = { minutes -> onSelected(request, minutes) },
+        )
     }
 }
 

@@ -4,7 +4,7 @@
 
 1. 阅读 `README.md`、`docs/PRODUCT.md`、`docs/ARCHITECTURE.md`、`docs/DATA_MODEL.md` 和 `docs/DECISIONS.md`。
 2. 检查当前分支与工作区，保护用户已有改动。
-3. 当前版本只记录手冲和做爱两个固定、独立模块；不得引入活动表、活动类型、健身或自定义活动抽象。未来记录类型必须通过新 ADR 作为独立垂直模块加入。
+3. 当前版本只记录自慰和做爱两个固定、独立模块；不得引入活动表、活动类型、健身或自定义活动抽象。未来记录类型必须通过新 ADR 作为独立垂直模块加入。
 4. 统计口径以 `docs/STATISTICS.md` 为唯一事实来源。
 5. Room schema 变化必须提供显式迁移和设备测试。
 6. UI v2 Stage 0–6 已完成。涉及后续视觉或产品工作时，必须先读 `docs/product/QUIET_PRIVATE_JOURNAL_GOALS.md` 和 `docs/product/design/quiet-private-journal-v2/README.md`，在新的 Issue/Goal 中明确范围；不得把已关闭阶段重新当作 `status:in-progress` 执行。

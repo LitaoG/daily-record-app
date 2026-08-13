@@ -3,7 +3,7 @@
 ## 范围
 
 - API 34 `emulator-5554`，同一 Debug 应用、同一 1080×2280 视口。
-- 月历当前月份、周统计、月统计、真实 UI 保存的 4 次手冲数据和系统字体 200%。
+- 月历当前月份、周统计、月统计、真实 UI 保存的 4 次自慰数据和系统字体 200%。
 - 统计口径未改动；云同步、Room schema、年统计和全部历史不在本轮重构范围。
 
 ## 审计结论
@@ -26,7 +26,7 @@
 
 | 真实记录分布 | 200% 字体 |
 |---|---|
-| ![4 次手冲的周分布](after/statistics-week-data.png) | ![200% 字体周统计](after/statistics-week-font200.png) |
+| ![4 次自慰的周分布](after/statistics-week-data.png) | ![200% 字体周统计](after/statistics-week-font200.png) |
 
 ## 自动化门禁
 

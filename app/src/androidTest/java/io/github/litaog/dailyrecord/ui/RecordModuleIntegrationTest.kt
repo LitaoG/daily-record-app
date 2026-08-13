@@ -27,6 +27,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
@@ -72,6 +73,20 @@ class RecordModuleIntegrationTest {
     }
 
     @Test
+    fun settingsIconFollowsActiveModuleAccentAndKeepsTalkBackLabel() {
+        setDualModuleContent()
+
+        composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
+        assertSettingsIconContains(HandBrewColorTokens.primary)
+
+        composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
+        assertSettingsIconContains(SexColorTokens.primary)
+    }
+
+    @Test
     fun statisticsAndRecordEditorUseSelectedModuleLanguage() {
         setDualModuleContent()
 
@@ -92,7 +107,7 @@ class RecordModuleIntegrationTest {
     fun handBrewDraftNeverLeaksIntoSexModuleForTheSameDate() {
         setDualModuleContent()
 
-        composeRule.onNodeWithContentDescription("2026年7月17日，手冲，2 次，今天，已选择").performClick()
+        composeRule.onNodeWithContentDescription("2026年7月17日，自慰，2 次，今天，已选择").performClick()
         composeRule.onNodeWithContentDescription("增加一次").performClick()
         composeRule.onNodeWithText("待保存 · 3 次").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("返回日历").performClick()
@@ -163,7 +178,7 @@ class RecordModuleIntegrationTest {
         assertMinimumHeight("record_module_Sex", 52f)
         assertMinimumHeight("bottom_destination_日历", 48f)
         assertMinimumHeight("bottom_destination_统计", 48f)
-        composeRule.onNodeWithText("手冲").assertIsDisplayed()
+        composeRule.onNodeWithText("自慰").assertIsDisplayed()
         composeRule.onNodeWithText("做爱").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("统计，未选择").performClick()
@@ -293,6 +308,26 @@ class RecordModuleIntegrationTest {
         val sampleX = (pixels.width - 8).coerceAtLeast(0)
         val sampleY = pixels.height / 2
         assertEquals(expected.toArgb(), pixels[sampleX, sampleY].toArgb())
+    }
+
+    private fun assertSettingsIconContains(expected: Color) {
+        var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            runCatching {
+                bitmap = composeRule.onNodeWithTag("home_settings_button").captureToImage()
+            }.isSuccess
+        }
+        val pixels = requireNotNull(bitmap).toPixelMap()
+        val expectedArgb = expected.toArgb()
+        var exactMatches = 0
+        for (x in 0 until pixels.width) {
+            for (y in 0 until pixels.height) {
+                if (pixels[x, y].toArgb() == expectedArgb) {
+                    exactMatches++
+                }
+            }
+        }
+        assertTrue("Expected settings icon to contain $expected, found $exactMatches pixels", exactMatches > 0)
     }
 
     private fun assertMinimumHeight(tag: String, minimumDp: Float) {

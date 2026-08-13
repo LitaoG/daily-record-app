@@ -142,10 +142,10 @@ internal object AppCopy {
     }
 
     object RecordModule {
-        const val handBrewLabel = "手冲"
-        const val handBrewQuestionToday = "今天手冲了几次？"
-        const val handBrewQuestionPast = "当天手冲了几次？"
-        const val handBrewZero = "当天没有手冲"
+        const val handBrewLabel = "自慰"
+        const val handBrewQuestionToday = "今天自慰了几次？"
+        const val handBrewQuestionPast = "当天自慰了几次？"
+        const val handBrewZero = "当天没有自慰"
         const val sexLabel = "做爱"
         const val sexQuestionToday = "今天做爱了几次？"
         const val sexQuestionPast = "当天做爱了几次？"
@@ -309,7 +309,15 @@ internal object AppCopy {
         const val detailOccurrenceFormat = "第 %d 次"
         const val detailStartTime = "开始"
         const val detailEndTime = "结束"
+        const val detailStartTimeUnset = "开始时间"
+        const val detailEndTimeUnset = "结束时间"
         const val detailTimeUnset = "选择时间"
+        const val detailTimePickerTitle = "选择时间"
+        const val detailTimePickerSubtitle = "上下滑动选择小时和分钟"
+        const val detailTimePickerHour = "小时"
+        const val detailTimePickerMinute = "分钟"
+        const val detailTimePickerHint = "滚动停止后会自动对齐"
+        const val detailTimePickerConfirm = "确定"
         const val detailWriteFeeling = "写感受"
         const val detailEditFeeling = "编辑感受"
         const val detailCollapseFeeling = "收起"
@@ -325,6 +333,12 @@ internal object AppCopy {
 
         fun detailTimeDescription(occurrence: Int, label: String, value: String): String =
             "${detailOccurrence(occurrence)}，$label，$value"
+
+        fun detailTimeWheelCurrent(unit: String, value: String): String =
+            "$unit，当前 $value"
+
+        fun detailTimeWheelOption(unit: String, value: String): String =
+            "选择$unit $value"
 
         fun detailFeelingActionDescription(occurrence: Int, action: String): String =
             "${detailOccurrence(occurrence)}，$action"
