@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -419,10 +420,11 @@ class RecordScreenTest {
         val repository = FakeHandBrewRecordRepository(
             initialRecords = listOf(record(today, 12)),
         )
-        setRecordContent(repository)
+        setRecordContent(repository, viewportHeight = 720.dp)
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.waitForIdle()
         val initialSummaryBounds = composeRule.onNodeWithTag("record_month_summary")
             .fetchSemanticsNode()
             .boundsInRoot
@@ -434,6 +436,7 @@ class RecordScreenTest {
         repeat(24) {
             composeRule.onNodeWithTag("record_scroll_content")
                 .performTouchInput { swipeUp() }
+            composeRule.waitForIdle()
         }
         composeRule.waitForIdle()
 
@@ -466,13 +469,15 @@ class RecordScreenTest {
         val repository = FakeHandBrewRecordRepository(
             initialRecords = listOf(record(today, 12)),
         )
-        setRecordContent(repository, width = 260.dp, fontScale = 2f)
+        setRecordContent(repository, width = 260.dp, viewportHeight = 720.dp, fontScale = 2f)
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.waitForIdle()
         repeat(30) {
             composeRule.onNodeWithTag("record_scroll_content")
                 .performTouchInput { swipeUp() }
+            composeRule.waitForIdle()
         }
         composeRule.waitForIdle()
 
@@ -551,6 +556,7 @@ class RecordScreenTest {
         repository: FakeHandBrewRecordRepository,
         onBack: () -> Unit = {},
         width: Dp? = null,
+        viewportHeight: Dp? = null,
         fontScale: Float = 1f,
     ) {
         composeRule.setContent {
@@ -560,7 +566,7 @@ class RecordScreenTest {
                 ) {
                     Box(
                         modifier = (width?.let(Modifier::width) ?: Modifier.fillMaxWidth())
-                            .fillMaxHeight(),
+                            .then(viewportHeight?.let(Modifier::height) ?: Modifier.fillMaxHeight()),
                     ) {
                         RecordScreen(
                             date = today,
