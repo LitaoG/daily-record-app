@@ -429,6 +429,7 @@ class RecordScreenTest {
         val initialActionBounds = composeRule.onNodeWithTag("record_actions")
             .fetchSemanticsNode()
             .boundsInRoot
+        assertTrue(initialActionBounds.top >= initialSummaryBounds.bottom)
 
         repeat(24) {
             composeRule.onNodeWithTag("record_scroll_content")
@@ -451,6 +452,7 @@ class RecordScreenTest {
 
         assertTrue(summaryBounds.top < initialSummaryBounds.top)
         assertTrue(actionBounds.top < initialActionBounds.top)
+        assertTrue(actionBounds.top - initialActionBounds.top == summaryBounds.top - initialSummaryBounds.top)
         assertTrue(actionBounds.top >= summaryBounds.bottom)
         assertTrue(actionBounds.bottom <= scrollBounds.bottom)
         assertTrue(lastDetailBounds.bottom <= actionBounds.top)
