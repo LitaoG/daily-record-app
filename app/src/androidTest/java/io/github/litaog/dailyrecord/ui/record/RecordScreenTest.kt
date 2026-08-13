@@ -415,7 +415,7 @@ class RecordScreenTest {
     }
 
     @Test
-    fun recordActionsStayOutsideScrollableContent() {
+    fun recordActionsFollowMonthSummaryAndScrollWithContent() {
         val repository = FakeHandBrewRecordRepository(
             initialRecords = listOf(record(today, 12)),
         )
@@ -423,15 +423,23 @@ class RecordScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
-        composeRule.onNodeWithTag("record_actions").assertIsDisplayed()
+        val initialSummaryBounds = composeRule.onNodeWithTag("record_month_summary")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val initialActionBounds = composeRule.onNodeWithTag("record_actions")
+            .fetchSemanticsNode()
+            .boundsInRoot
 
-        repeat(12) {
+        repeat(24) {
             composeRule.onNodeWithTag("record_scroll_content")
                 .performTouchInput { swipeUp() }
         }
         composeRule.waitForIdle()
 
         val scrollBounds = composeRule.onNodeWithTag("record_scroll_content")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val summaryBounds = composeRule.onNodeWithTag("record_month_summary")
             .fetchSemanticsNode()
             .boundsInRoot
         val actionBounds = composeRule.onNodeWithTag("record_actions")
@@ -441,7 +449,10 @@ class RecordScreenTest {
             .fetchSemanticsNode()
             .boundsInRoot
 
-        assertTrue(actionBounds.top >= scrollBounds.bottom)
+        assertTrue(summaryBounds.top < initialSummaryBounds.top)
+        assertTrue(actionBounds.top < initialActionBounds.top)
+        assertTrue(actionBounds.top >= summaryBounds.bottom)
+        assertTrue(actionBounds.bottom <= scrollBounds.bottom)
         assertTrue(lastDetailBounds.bottom <= actionBounds.top)
         composeRule.onNodeWithTag("record_detail_12").assertIsDisplayed()
         composeRule.onNodeWithTag("save_record_button").assertIsDisplayed()
@@ -449,7 +460,7 @@ class RecordScreenTest {
     }
 
     @Test
-    fun longDetailsStayAboveActionsOnNarrowLargeTextViewport() {
+    fun recordActionsFollowContentFlowOnNarrowLargeTextViewport() {
         val repository = FakeHandBrewRecordRepository(
             initialRecords = listOf(record(today, 12)),
         )
@@ -457,20 +468,31 @@ class RecordScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
-        repeat(24) {
+        repeat(30) {
             composeRule.onNodeWithTag("record_scroll_content")
                 .performTouchInput { swipeUp() }
         }
         composeRule.waitForIdle()
 
-        val scrollBounds = composeRule.onNodeWithTag("record_scroll_content").fetchSemanticsNode().boundsInRoot
-        val actionBounds = composeRule.onNodeWithTag("record_actions").fetchSemanticsNode().boundsInRoot
-        val lastDetailBounds = composeRule.onNodeWithTag("record_detail_12").fetchSemanticsNode().boundsInRoot
+        val scrollBounds = composeRule.onNodeWithTag("record_scroll_content")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val summaryBounds = composeRule.onNodeWithTag("record_month_summary")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val actionBounds = composeRule.onNodeWithTag("record_actions")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val lastDetailBounds = composeRule.onNodeWithTag("record_detail_12")
+            .fetchSemanticsNode()
+            .boundsInRoot
 
-        assertTrue(actionBounds.top >= scrollBounds.bottom)
+        assertTrue(actionBounds.top >= summaryBounds.bottom)
+        assertTrue(actionBounds.bottom <= scrollBounds.bottom)
         assertTrue(lastDetailBounds.bottom <= actionBounds.top)
         composeRule.onNodeWithTag("record_detail_12").assertIsDisplayed()
         composeRule.onNodeWithTag("save_record_button").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("清除记录").assertIsDisplayed()
     }
 
     @Test
