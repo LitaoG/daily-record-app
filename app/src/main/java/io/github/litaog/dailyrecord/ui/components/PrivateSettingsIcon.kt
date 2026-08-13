@@ -3,23 +3,34 @@ package io.github.litaog.dailyrecord.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.toPath
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
- * Custom settings glyph for the quiet private journal: a soft eight-tooth
- * gear with a heart cut out of its center. The gear keeps the top-bar
- * graphite tone while the heart follows the selected module accent,
- * replacing the generic Material settings gear.
+ * A quiet, two-tone settings glyph for the private journal.
+ *
+ * The geometry is adapted from Tabler Icons' `settings-heart` SVG. The source
+ * paths are kept as vectors and split into gear and heart so the heart can
+ * follow the active record module. The small heart is filled for mobile
+ * legibility; the source's original outline is too light at 28dp.
+ *
+ * Source: https://github.com/tabler/tabler-icons/blob/main/icons/outline/settings-heart.svg
+ * Copyright (c) 2020-2026 Paweł Kuna. Licensed under the MIT License.
  */
 @Composable
 fun PrivateSettingsIcon(
@@ -28,96 +39,52 @@ fun PrivateSettingsIcon(
     gearTint: Color = DailyRecordTextSecondary,
     heartTint: Color = DailyRecordDefaultAccent,
 ) {
+    val paths = remember { TablerSettingsHeartPaths() }
     val semanticsModifier = if (contentDescription != null) {
         Modifier.semantics { this.contentDescription = contentDescription }
     } else {
         Modifier
     }
-    Canvas(modifier.then(semanticsModifier).size(24.dp)) {
-        val unit = size.width / ViewportSize
-        drawPath(path = privateSettingsGearPath(unit), color = gearTint)
-        drawPath(path = privateSettingsHeartPath(unit), color = heartTint)
+
+    Canvas(modifier.then(semanticsModifier).size(DailyRecordSizes.SettingsIcon)) {
+        val scale = minOf(size.width, size.height) / ViewportSize
+        withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
+            paths.gear.forEach { path ->
+                drawPath(path, color = gearTint, style = TablerStroke)
+            }
+            drawPath(paths.heart, color = heartTint)
+        }
     }
 }
 
 private const val ViewportSize = 24f
-private const val GearCenter = 12f
-private const val GearTeeth = 8
-private const val GearRootRadius = 6.55f
-private const val GearTipRadius = 9.45f
+private val TablerStroke = Stroke(
+    width = 1.85f,
+    cap = StrokeCap.Round,
+    join = StrokeJoin.Round,
+)
 
-/** Within one 45° pitch: root flat, smoothstep rise, tip flat, smoothstep fall. */
-private const val RiseStart = 9f
-private const val RiseEnd = 16f
-private const val FallStart = 27f
-private const val FallEnd = 34f
-
-/** Tip flats are centered 21.5° into each pitch; shift so tips sit on the axes. */
-private const val ToothPhaseShift = -21.5f
-private const val SampleStepDegrees = 0.75f
-
-/** Material "favorite" heart geometry, scaled to fit inside the gear root circle. */
-private const val HeartSourceCenterY = 12.175f
-private const val HeartCenterY = 12.2f
-private const val HeartScale = 0.38f
-
-/** Slightly larger so the overlay heart bleeds cleanly into the gear cutout. */
-private const val HeartOverlayScale = 0.4f
-
-private fun privateSettingsGearPath(unit: Float): Path {
-    val path = Path()
-    path.fillType = PathFillType.EvenOdd
-    val pitch = 360f / GearTeeth
-    var degree = 0f
-    while (degree < 360f) {
-        val theta = Math.toRadians((degree + ToothPhaseShift).toDouble())
-        val radius = gearRadiusAt(degree % pitch)
-        val x = (GearCenter + (radius * cos(theta)).toFloat()) * unit
-        val y = (GearCenter + (radius * sin(theta)).toFloat()) * unit
-        if (degree == 0f) {
-            path.moveTo(x, y)
-        } else {
-            path.lineTo(x, y)
-        }
-        degree += SampleStepDegrees
+private class TablerSettingsHeartPaths {
+    val gear = listOf(
+        parsePath(
+            "M11.231 20.828a1.668 1.668 0 0 1 -.906 -1.145a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c.509 .123 .87 .421 1.084 .792",
+        ),
+        parsePath("M14.882 11.165a3.001 3.001 0 1 0 -4.31 3.474"),
+    )
+    val heart = Path().apply {
+        fillType = PathFillType.NonZero
+        moveTo(18f, 20.75f)
+        cubicTo(17.6f, 20.4f, 13.05f, 16.85f, 12.25f, 15.85f)
+        cubicTo(11.45f, 14.85f, 11.35f, 13.3f, 12.45f, 12.2f)
+        cubicTo(13.6f, 11.05f, 15.5f, 11.35f, 16.5f, 12.55f)
+        cubicTo(17.5f, 11.35f, 19.4f, 11.05f, 20.55f, 12.2f)
+        cubicTo(21.65f, 13.3f, 21.55f, 14.85f, 20.75f, 15.85f)
+        cubicTo(19.95f, 16.85f, 18.4f, 18.25f, 18f, 20.75f)
+        close()
     }
-    path.close()
-    path.addHeart(unit, HeartScale)
-    return path
 }
 
-private fun privateSettingsHeartPath(unit: Float): Path {
-    val path = Path()
-    path.addHeart(unit, HeartOverlayScale)
-    return path
-}
-
-private fun gearRadiusAt(pitchAngle: Float): Float = when {
-    pitchAngle < RiseStart -> GearRootRadius
-    pitchAngle < RiseEnd -> {
-        val t = (pitchAngle - RiseStart) / (RiseEnd - RiseStart)
-        GearRootRadius + (GearTipRadius - GearRootRadius) * smoothStep(t)
-    }
-    pitchAngle < FallStart -> GearTipRadius
-    pitchAngle < FallEnd -> {
-        val t = (pitchAngle - FallStart) / (FallEnd - FallStart)
-        GearTipRadius - (GearTipRadius - GearRootRadius) * smoothStep(t)
-    }
-    else -> GearRootRadius
-}
-
-private fun smoothStep(t: Float): Float = t * t * (3f - 2f * t)
-
-private fun Path.addHeart(unit: Float, scale: Float) {
-    fun px(x: Float) = (GearCenter + (x - GearCenter) * scale) * unit
-    fun py(y: Float) = (HeartCenterY + (y - HeartSourceCenterY) * scale) * unit
-    moveTo(px(12f), py(21.35f))
-    lineTo(px(10.55f), py(20.03f))
-    cubicTo(px(5.4f), py(15.36f), px(2f), py(12.28f), px(2f), py(8.5f))
-    cubicTo(px(2f), py(5.42f), px(4.42f), py(3f), px(7.5f), py(3f))
-    cubicTo(px(9.24f), py(3f), px(10.91f), py(3.81f), px(12f), py(5.09f))
-    cubicTo(px(13.09f), py(3.81f), px(14.76f), py(3f), px(16.5f), py(3f))
-    cubicTo(px(19.58f), py(3f), px(22f), py(5.42f), px(22f), py(8.5f))
-    cubicTo(px(22f), py(12.28f), px(18.6f), py(15.36f), px(13.45f), py(20.04f))
-    close()
-}
+private fun parsePath(pathData: String) = PathParser()
+    .parsePathString(pathData)
+    .toNodes()
+    .toPath()

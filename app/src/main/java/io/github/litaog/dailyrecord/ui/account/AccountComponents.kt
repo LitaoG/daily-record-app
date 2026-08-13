@@ -255,7 +255,7 @@ private fun SettingsButton(
     IconButton(
         onClick = onClick,
         modifier = Modifier
-            .size(DailyRecordSizes.MinimumTouchTarget)
+            .size(DailyRecordSizes.SettingsButton)
             .testTag("home_settings_button"),
     ) {
         PrivateSettingsIcon(
