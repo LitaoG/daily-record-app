@@ -83,6 +83,27 @@ class AccountDeletionRecoveryCoordinatorTest {
     }
 
     @Test
+    fun resolvingRecoveryConflictCleansOldOwnerCache() = runBlocking {
+        moveToAuthPending(recoveryCopyReady = true)
+        localStore.promoteFailure = AccountDeletionLocalRecoveryConflictException(
+            OWNER,
+            IllegalStateException("local data exists"),
+        )
+        assertEquals(
+            setOf(OWNER),
+            coordinator.resolvePendingAuthDeletions(
+                FakeAuthRepository(AuthAccountPresence.Absent),
+            ),
+        )
+        localStore.promoteFailure = null
+
+        coordinator.resolveRecoveryConflict(OWNER)
+
+        assertTrue(localStore.ownerCacheDeleted)
+        assertTrue(stateStore.readJournal().isEmpty())
+    }
+
+    @Test
     fun cloudDeletedBeforeAuthIsRequeuedAndReleased() = runBlocking {
         DeletionBarrier.beginDeletionBlock(OWNER)
         DeletionBarrier.markCloudDeletionComplete(OWNER)

@@ -168,6 +168,7 @@ internal class AccountDeletionRecoveryCoordinator(
     suspend fun resolveRecoveryConflict(ownerId: String) {
         localStore.deleteOwnerCache(LOCAL_OWNER_ID)
         localStore.promoteLocalRecoveryCopy(ownerId)
+        localStore.deleteOwnerCache(ownerId)
         DeletionBarrier.completeDeletionCleanup(ownerId)
     }
 
