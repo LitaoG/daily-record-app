@@ -56,6 +56,7 @@ private const val WEEK_SEGMENT_COUNT = 7
 private const val WEEK_SEGMENT_GAP_DEGREES = 11f
 private const val WEEK_LABEL_START_DEGREES = 0f
 private const val WEEK_LABEL_GAP_DP = 12f
+private const val WEEK_SIDE_LABEL_EXTRA_GAP_DP = 6f
 // Canvas.drawArc uses 0° at 3 o'clock, so its equivalent is 90° clockwise.
 private const val WEEK_CANVAS_ANGLE_OFFSET_DEGREES = -90f
 
@@ -163,6 +164,12 @@ internal fun weekRingLabelRadialDistance(
         gap
 }
 
+internal fun weekRingLabelGapDp(
+    segmentIndex: Int,
+    sharedGap: Float,
+): Float = sharedGap +
+    if (segmentIndex == 2 || segmentIndex == 5) WEEK_SIDE_LABEL_EXTRA_GAP_DP else 0f
+
 internal fun weekRingSharedLabelGapDp(
     ringOuterRadius: Float,
     labelHalfWidth: Float,
@@ -243,9 +250,9 @@ internal fun weekRingSegmentColor(
     intensity: Float,
     colors: RecordModuleColorTokens,
 ): Color = when (state) {
-    // Future days reuse the calendar's Disabled background token so the ring
-    // and homepage blocks stay aligned. Date labels remain muted separately.
-    WeekRingState.Future -> colors.colorsFor(RecordVisualState.Disabled).background
+    // Future ring segments use the same module-specific pale fill as the
+    // homepage's unset cells. The weekday/date copy stays muted separately.
+    WeekRingState.Future -> colors.colorsFor(RecordVisualState.Unset).background
     WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
     WeekRingState.ExplicitZero -> colors.primary
     WeekRingState.Positive ->
@@ -399,7 +406,7 @@ private fun WeekRingChart(
                 ringOuterRadius = ringOuterRadius.value,
                 labelHalfWidth = (labelWidth / 2).value,
                 labelHalfHeight = (labelHeight / 2).value,
-                gap = sharedLabelGap,
+                gap = weekRingLabelGapDp(segmentIndex, sharedLabelGap),
             ).dp
             val horizontalLimit = if (angleSin > .001f) {
                 ((maxWidth / 2 - labelWidth / 2).value / angleSin).dp

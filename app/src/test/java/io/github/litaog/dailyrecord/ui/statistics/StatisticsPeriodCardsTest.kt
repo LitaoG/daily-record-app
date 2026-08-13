@@ -3,7 +3,6 @@ package io.github.litaog.dailyrecord.ui.statistics
 import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import java.time.LocalDate
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -252,10 +251,10 @@ class StatisticsPeriodCardsTest {
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
             assertEquals(
-                DailyRecordSurfaceDisabled,
+                colors.colorsFor(RecordVisualState.Unset).background,
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
-            assertEquals(
+            assertNotEquals(
                 colors.colorsFor(RecordVisualState.Disabled).background,
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
@@ -275,6 +274,14 @@ class StatisticsPeriodCardsTest {
         assertEquals(DailyRecordTextMuted, weekRingLabelColor(WeekRingState.Unrecorded))
         assertEquals(DailyRecordTextMuted, weekRingLabelColor(WeekRingState.ExplicitZero))
         assertEquals(DailyRecordText, weekRingLabelColor(WeekRingState.Positive))
+    }
+
+    @Test
+    fun `wednesday and saturday labels get a little extra radial clearance`() {
+        assertEquals(18f, weekRingLabelGapDp(segmentIndex = 2, sharedGap = 12f), 0f)
+        assertEquals(18f, weekRingLabelGapDp(segmentIndex = 5, sharedGap = 12f), 0f)
+        assertEquals(12f, weekRingLabelGapDp(segmentIndex = 0, sharedGap = 12f), 0f)
+        assertEquals(12f, weekRingLabelGapDp(segmentIndex = 6, sharedGap = 12f), 0f)
     }
 
     @Test
@@ -315,7 +322,7 @@ class StatisticsPeriodCardsTest {
             // Future and one-count arcs must remain visually distinct in color;
             // stroke width and visible copy provide additional state cues.
             assertNotEquals(oneCount, future)
-            assertEquals(DailyRecordSurfaceDisabled, future)
+            assertEquals(colors.colorsFor(RecordVisualState.Unset).background, future)
             assertNotEquals(future, unrecorded)
             assertNotEquals(future, zero)
             // Unrecorded stays a neutral divider tone for both palettes.
