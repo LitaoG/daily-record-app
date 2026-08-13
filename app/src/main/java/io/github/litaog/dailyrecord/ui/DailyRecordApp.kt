@@ -183,7 +183,10 @@ fun DailyRecordApp(
                 moduleSpec = moduleSpec,
                 monthRecords = monthRecords,
                 onBack = { selectedDateText = null },
-                onSaved = { selectedDateText = null },
+                // Saving is an in-place action. Keep the record page mounted so
+                // the user can see the saved feeling and continue editing this
+                // date; leaving the page remains an explicit back action.
+                onSaved = {},
             )
         }
         return

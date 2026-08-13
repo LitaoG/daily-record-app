@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performScrollTo
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
@@ -170,6 +171,40 @@ class DailyRecordAppTest {
         composeRule.onNodeWithContentDescription("2026年7月17日，未填写，今天，已选择").performClick()
         composeRule.onAllNodesWithText("待保存 · 1 次").assertCountEquals(0)
         composeRule.onNodeWithText("尚未填写").assertIsDisplayed()
+    }
+
+    @Test
+    fun savingFeelingKeepsTheCurrentRecordPageOpen() {
+        val repository = FakeHandBrewRecordRepository()
+        val today = LocalDate.of(2026, 7, 17)
+        composeRule.setContent {
+            DailyRecordTheme {
+                DailyRecordApp(
+                    repository = repository,
+                    today = today,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule
+            .onNodeWithContentDescription("2026年7月17日，未填写，今天，已选择")
+            .performClick()
+        composeRule.onNodeWithContentDescription("增加一次").performClick()
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 1 次，写感受").performClick()
+        composeRule
+            .onNodeWithTag("record_detail_1_feeling_editor")
+            .performTextInput("今天感觉很好")
+        composeRule.onNodeWithTag("save_record_button").performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("已记录 · 1 次").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("record_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("record_details_section").assertIsDisplayed()
+        composeRule.onNodeWithText("今天感觉很好").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("record_detail_1_feeling_editor").assertCountEquals(0)
     }
 
     @Test

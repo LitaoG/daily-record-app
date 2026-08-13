@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,7 +48,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -210,19 +208,24 @@ internal fun DailyCountRecordScreen(
             if (nextCount == 0) it.copy(expanded = false) else it
         }
     }
-    val launchMutation = { failureMessage: String, operation: suspend () -> Unit ->
+    val launchMutation = {
+        failureMessage: String,
+        onSuccess: () -> Unit,
+        operation: suspend () -> Unit,
+    ->
         if (!saving) {
             saving = true
             scope.launch {
                 val result = runCatchingPreservingCancellation(operation)
                 saving = false
                 if (result.isSuccess) {
-                    // Saved and cleared drafts must not be restored when the
-                    // day is opened again; rememberSaveable would otherwise
-                    // keep them alive across navigation.
-                    countDraft = CountDraft()
-                    detailsDraft = RecordDetailsDraft()
-                    onSaved()
+                    // Close the feeling editor after a successful mutation. The
+                    // caller decides whether to keep this page (save) or leave
+                    // it (clear), while the saved draft remains visible here.
+                    detailsDraft = detailsDraft.copy(
+                        entries = detailsDraft.entries.map { it.copy(feelingExpanded = false) },
+                    )
+                    onSuccess()
                 } else {
                     errorMessage = failureMessage
                 }
@@ -423,7 +426,7 @@ internal fun DailyCountRecordScreen(
                                 } else {
                                     detailsDraft.asEntries().take(currentDraftCount)
                                 }
-                                launchMutation(AppCopy.Record.saveFailure) {
+                                launchMutation(AppCopy.Record.saveFailure, onSaved) {
                                     controller.saveRecord(date, currentDraftCount, currentDetails)
                                 }
                             },
@@ -480,7 +483,7 @@ internal fun DailyCountRecordScreen(
             onConfirm = {
                 if (!saving) {
                     showClearDialog = false
-                    launchMutation(AppCopy.Record.clearFailure) {
+                    launchMutation(AppCopy.Record.clearFailure, onBack) {
                         controller.clearRecord(date)
                     }
                 }
@@ -622,67 +625,42 @@ private fun RecordDetailRow(
                 fontWeight = FontWeight.SemiBold,
             )
         }
-        BoxWithConstraints(
+        Column(
             modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
         ) {
-            val compactLayout = maxWidth < 340.dp || LocalDensity.current.fontScale >= 1.5f
-            Column(
-                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
-            ) {
-                if (compactLayout) {
-                    DetailTimeFields(
-                        occurrence = index + 1,
-                        entry = entry,
-                        accent = accent,
-                        onTimeClick = onTimeClick,
-                        index = index,
-                    )
-                    FeelingAction(
-                        occurrence = index + 1,
-                        hasFeeling = entry.feeling.isNotEmpty(),
-                        expanded = entry.feelingExpanded,
-                        accent = accent,
-                        modifier = Modifier.align(Alignment.End),
-                        onClick = { onFeelingToggle(index) },
-                    )
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
-                    ) {
-                        DetailTimeFields(
-                            occurrence = index + 1,
-                            entry = entry,
-                            accent = accent,
-                            onTimeClick = onTimeClick,
-                            index = index,
-                            modifier = Modifier.weight(1f),
-                        )
-                        FeelingAction(
-                            occurrence = index + 1,
-                            hasFeeling = entry.feeling.isNotEmpty(),
-                            expanded = entry.feelingExpanded,
-                            accent = accent,
-                            onClick = { onFeelingToggle(index) },
-                        )
-                    }
-                }
-                if (entry.feelingExpanded) {
-                    FeelingEditor(
-                        occurrence = index + 1,
-                        value = entry.feeling,
-                        accent = accent,
-                        onValueChange = { onFeelingChange(index, it) },
-                    )
-                } else if (entry.feeling.isNotEmpty()) {
-                    Text(
-                        text = entry.feeling,
-                        color = DailyRecordTextSecondary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+            // Match the reference layout: the two time fields and range arrow
+            // share the first row, while the feeling action gets its own row
+            // and stays aligned to the trailing edge.
+            DetailTimeFields(
+                occurrence = index + 1,
+                entry = entry,
+                accent = accent,
+                onTimeClick = onTimeClick,
+                index = index,
+            )
+            FeelingAction(
+                occurrence = index + 1,
+                hasFeeling = entry.feeling.isNotEmpty(),
+                expanded = entry.feelingExpanded,
+                accent = accent,
+                modifier = Modifier.align(Alignment.End),
+                onClick = { onFeelingToggle(index) },
+            )
+            if (entry.feelingExpanded) {
+                FeelingEditor(
+                    occurrence = index + 1,
+                    value = entry.feeling,
+                    accent = accent,
+                    onValueChange = { onFeelingChange(index, it) },
+                )
+            } else if (entry.feeling.isNotEmpty()) {
+                Text(
+                    text = entry.feeling,
+                    color = DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
