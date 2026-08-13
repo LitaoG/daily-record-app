@@ -144,12 +144,11 @@ internal fun AccountTopBar(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                 ) {
                     SyncStatusChip(
                         status = status,
                         onClick = onClick,
-                        modifier = Modifier.weight(1f),
                     )
                     SettingsButton(onClick = onSettings, heartTint = colors.primary)
                 }
