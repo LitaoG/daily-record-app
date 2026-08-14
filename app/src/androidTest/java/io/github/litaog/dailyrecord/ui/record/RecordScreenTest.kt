@@ -251,7 +251,7 @@ class RecordScreenTest {
         composeRule.onNodeWithTag("record_detail_1").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("第 1 次，开始，09:15").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("第 1 次，结束，09:45").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("第 1 次，编辑感受").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，写感受").assertIsDisplayed()
         assertTrue(composeRule.onAllNodesWithText("开始").fetchSemanticsNodes().isEmpty())
         assertTrue(composeRule.onAllNodesWithText("结束").fetchSemanticsNodes().isEmpty())
     }
@@ -300,6 +300,7 @@ class RecordScreenTest {
         composeRule.onNodeWithTag("record_details_section").assertIsDisplayed()
         composeRule.onNodeWithText("今天感觉很好").assertIsDisplayed()
         composeRule.onAllNodesWithTag("record_detail_1_feeling_editor").assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("第 1 次，写感受").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("返回日历").assertIsDisplayed()
     }
 

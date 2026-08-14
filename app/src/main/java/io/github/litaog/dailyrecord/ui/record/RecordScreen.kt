@@ -670,7 +670,6 @@ private fun RecordDetailRow(
                     )
                     FeelingAction(
                         occurrence = index + 1,
-                        hasFeeling = entry.feeling.isNotEmpty(),
                         expanded = entry.feelingExpanded,
                         accent = accent,
                         modifier = Modifier.align(Alignment.End),
@@ -692,7 +691,6 @@ private fun RecordDetailRow(
                         )
                         FeelingAction(
                             occurrence = index + 1,
-                            hasFeeling = entry.feeling.isNotEmpty(),
                             expanded = entry.feelingExpanded,
                             accent = accent,
                             onClick = { onFeelingToggle(index) },
@@ -860,7 +858,6 @@ private fun TimeRangeArrow(color: Color, modifier: Modifier = Modifier) {
 @Composable
 private fun FeelingAction(
     occurrence: Int,
-    hasFeeling: Boolean,
     expanded: Boolean,
     accent: Color,
     modifier: Modifier = Modifier,
@@ -868,7 +865,6 @@ private fun FeelingAction(
 ) {
     val label = when {
         expanded -> AppCopy.Record.detailCollapseFeeling
-        hasFeeling -> AppCopy.Record.detailEditFeeling
         else -> AppCopy.Record.detailWriteFeeling
     }
     Row(

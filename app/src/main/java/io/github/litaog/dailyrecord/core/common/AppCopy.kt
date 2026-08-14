@@ -319,7 +319,6 @@ internal object AppCopy {
         const val detailTimePickerHint = "滚动停止后会自动对齐"
         const val detailTimePickerConfirm = "确定"
         const val detailWriteFeeling = "写感受"
-        const val detailEditFeeling = "编辑感受"
         const val detailCollapseFeeling = "收起"
         const val detailFeelingLabel = "感受（可选）"
         const val detailFeelingHint = "写下这一刻的感受"
