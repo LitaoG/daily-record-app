@@ -14,6 +14,7 @@ import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -61,7 +62,6 @@ class AccountTopBarTest {
         val widthDp = bounds.width / density
         val heightDp = bounds.height / density
         assertTrue("${status.label()} chip was stretched to $widthDp dp", widthDp < 240f)
-        assertTrue("${status.label()} chip was too short at $heightDp dp", heightDp >= 48f)
-        assertTrue("${status.label()} chip was too tall at $heightDp dp", heightDp <= 80f)
+        assertEquals("${status.label()} chip height", 38f, heightDp, 0.5f)
     }
 }

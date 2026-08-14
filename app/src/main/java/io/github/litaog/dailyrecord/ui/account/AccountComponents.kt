@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -294,7 +295,7 @@ private fun SyncStatusChip(
             .border(1.dp, DailyRecordDivider, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp)
-            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+            .height(DailyRecordSizes.SyncChipHeight)
             .semantics {
                 role = Role.Button
                 contentDescription = AppCopy.Account.syncChipDescription(status.label())

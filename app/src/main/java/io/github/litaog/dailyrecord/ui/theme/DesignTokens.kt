@@ -13,6 +13,7 @@ object DailyRecordSpacing {
 
 object DailyRecordSizes {
     val MinimumTouchTarget = 48.dp
+    val SyncChipHeight = 38.dp
     val SettingsButton = 60.dp
     val SettingsIcon = 30.dp
     val ModuleSelectorMinHeight = 52.dp
