@@ -1,6 +1,7 @@
 ﻿package io.github.litaog.dailyrecord.ui.navigation
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -73,12 +74,15 @@ import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
 internal enum class DateNavigationSelection { Date, Month, Year }
+
+private const val MINIMUM_FLING_VELOCITY_DP_PER_SECOND = 90f
 
 @Composable
 internal fun DateNavigationDialog(
@@ -371,13 +375,19 @@ private fun DateWheelColumn(
     val initialIndex = values.indexOf(selectedValue).coerceAtLeast(0)
     var selectedIndex by remember(values) { mutableIntStateOf(initialIndex) }
     var dragOffsetPx by remember(values) { mutableFloatStateOf(0f) }
-    var isDragging by remember { mutableStateOf(false) }
+    var isGestureActive by remember { mutableStateOf(false) }
     val latestOnValueSelected = rememberUpdatedState(onValueSelected)
     val latestOptionEnabled = rememberUpdatedState(optionEnabled)
+    val flingAnimation = remember { Animatable(0f) }
     val settleAnimation = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
-    var settleJob by remember { mutableStateOf<Job?>(null) }
+    var animationJob by remember { mutableStateOf<Job?>(null) }
+    var animationGeneration by remember { mutableIntStateOf(0) }
     val rowHeightPx = with(LocalDensity.current) { DailyRecordSizes.MinimumTouchTarget.toPx() }
+    val minimumFlingVelocity = with(LocalDensity.current) {
+        MINIMUM_FLING_VELOCITY_DP_PER_SECOND.dp.toPx()
+    }
+    val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val shape = RoundedCornerShape(14.dp)
 
     /**
@@ -386,13 +396,18 @@ private fun DateWheelColumn(
      * local position is authoritative so recomposition cannot snap the content
      * back under the user's finger.
      */
-    LaunchedEffect(selectedValue, values) {
-        // A running settle animation belongs to the previous values window;
-        // cancel it so it cannot keep writing dragOffsetPx into the orphaned
-        // state after the wheel rebases (which would cause a visual jump).
-        settleJob?.cancel()
-        settleJob = null
-        if (!isDragging) {
+    fun cancelAnimation() {
+        animationGeneration += 1
+        animationJob?.cancel()
+        animationJob = null
+    }
+
+    LaunchedEffect(selectedValue, values, isGestureActive) {
+        // A value emitted by this wheel already has the matching local index.
+        // Only rebase when another wheel changed the valid values window (for
+        // example, changing the year can clamp the day wheel).
+        if (!isGestureActive && values.getOrNull(selectedIndex) != selectedValue) {
+            cancelAnimation()
             selectedIndex = values.indexOf(selectedValue).coerceAtLeast(0)
             dragOffsetPx = 0f
         }
@@ -406,53 +421,12 @@ private fun DateWheelColumn(
         return true
     }
 
-    fun cancelSettle() {
-        settleJob?.cancel()
-        settleJob = null
-        coroutineScope.launch { settleAnimation.stop() }
-        isDragging = false
-    }
-
-    fun settleWheel() {
-        val currentIndex = selectedIndex.coerceIn(0, values.lastIndex.coerceAtLeast(0))
-        var targetIndex = currentIndex
-        if (dragOffsetPx <= -rowHeightPx / 2f && currentIndex < values.lastIndex) {
-            targetIndex += 1
-        } else if (dragOffsetPx >= rowHeightPx / 2f && currentIndex > 0) {
-            targetIndex -= 1
-        }
-
-        if (targetIndex != currentIndex && commitIndex(targetIndex)) {
-            // Rebasing the three rendered rows keeps the visual position
-            // continuous when the centered item changes at the end of a drag.
-            dragOffsetPx += if (targetIndex > currentIndex) rowHeightPx else -rowHeightPx
-        }
-
-        val startOffset = dragOffsetPx
-        settleJob?.cancel()
-        settleJob = coroutineScope.launch {
-            try {
-                settleAnimation.snapTo(startOffset)
-                settleAnimation.animateTo(
-                    targetValue = 0f,
-                    animationSpec = spring(dampingRatio = 0.92f, stiffness = 500f),
-                ) {
-                    dragOffsetPx = value
-                }
-                dragOffsetPx = 0f
-                isDragging = false
-            } catch (_: CancellationException) {
-                // A new drag or a row tap takes ownership of the wheel.
-            }
-        }
-    }
-
-    val draggableState = rememberDraggableState { dragAmount ->
-        var nextOffset = dragOffsetPx + dragAmount
+    fun applyOffsetDelta(delta: Float) {
+        var nextOffset = dragOffsetPx + delta
 
         // Rebase the rendered three-row window whenever a full row passes the
-        // center. The content therefore follows the finger instead of waiting
-        // for a threshold before visibly changing.
+        // center. This is used by both the finger drag and the inertial decay,
+        // so a quick swipe can travel across multiple date values smoothly.
         while (nextOffset <= -rowHeightPx && selectedIndex < values.lastIndex) {
             if (!commitIndex(selectedIndex + 1)) break
             nextOffset += rowHeightPx
@@ -466,13 +440,65 @@ private fun DateWheelColumn(
         // the wheel is already at its first or last value.
         dragOffsetPx = when {
             selectedIndex == 0 && nextOffset > 0f ->
-                (nextOffset - dragAmount + dragAmount * 0.24f)
+                (nextOffset - delta + delta * 0.24f)
                     .coerceAtMost(rowHeightPx * 0.65f)
             selectedIndex == values.lastIndex && nextOffset < 0f ->
-                (nextOffset - dragAmount + dragAmount * 0.24f)
+                (nextOffset - delta + delta * 0.24f)
                     .coerceAtLeast(-rowHeightPx * 0.65f)
             else -> nextOffset
         }
+    }
+
+    fun snapToNearestValue() {
+        if (dragOffsetPx <= -rowHeightPx / 2f && selectedIndex < values.lastIndex) {
+            if (commitIndex(selectedIndex + 1)) dragOffsetPx += rowHeightPx
+        } else if (dragOffsetPx >= rowHeightPx / 2f && selectedIndex > 0) {
+            if (commitIndex(selectedIndex - 1)) dragOffsetPx -= rowHeightPx
+        }
+    }
+
+    fun settleWheel(velocity: Float) {
+        cancelAnimation()
+        val generation = animationGeneration + 1
+        animationGeneration = generation
+        animationJob = coroutineScope.launch {
+            try {
+                if (abs(velocity) >= minimumFlingVelocity) {
+                    var previous = 0f
+                    flingAnimation.snapTo(0f)
+                    flingAnimation.animateDecay(
+                        initialVelocity = velocity,
+                        animationSpec = decayAnimationSpec,
+                    ) {
+                        val current = this.value
+                        val delta = current - previous
+                        previous = current
+                        applyOffsetDelta(delta)
+                    }
+                }
+
+                snapToNearestValue()
+                settleAnimation.snapTo(dragOffsetPx)
+                settleAnimation.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(dampingRatio = 1f, stiffness = 700f),
+                ) {
+                    dragOffsetPx = value
+                }
+                dragOffsetPx = 0f
+            } catch (_: CancellationException) {
+                // A new gesture or option tap takes ownership of the wheel.
+            } finally {
+                if (generation == animationGeneration) {
+                    animationJob = null
+                    isGestureActive = false
+                }
+            }
+        }
+    }
+
+    val draggableState = rememberDraggableState { dragAmount ->
+        applyOffsetDelta(dragAmount)
     }
 
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -493,10 +519,10 @@ private fun DateWheelColumn(
                     state = draggableState,
                     orientation = Orientation.Vertical,
                     onDragStarted = {
-                        cancelSettle()
-                        isDragging = true
+                        cancelAnimation()
+                        isGestureActive = true
                     },
-                    onDragStopped = { settleWheel() },
+                    onDragStopped = { velocity -> settleWheel(velocity) },
                 ),
         ) {
             Canvas(Modifier.fillMaxWidth().height(160.dp)) {
@@ -534,7 +560,8 @@ private fun DateWheelColumn(
                         ?.let(latestOptionEnabled.value)
                         ?: false,
                     onClick = {
-                        cancelSettle()
+                        cancelAnimation()
+                        isGestureActive = false
                         if (commitIndex(selectedIndex - 1)) {
                             dragOffsetPx = 0f
                         }
@@ -548,7 +575,8 @@ private fun DateWheelColumn(
                         ?.let(latestOptionEnabled.value)
                         ?: false,
                     onClick = {
-                        cancelSettle()
+                        cancelAnimation()
+                        isGestureActive = false
                         if (commitIndex(selectedIndex)) {
                             dragOffsetPx = 0f
                         }
@@ -562,7 +590,8 @@ private fun DateWheelColumn(
                         ?.let(latestOptionEnabled.value)
                         ?: false,
                     onClick = {
-                        cancelSettle()
+                        cancelAnimation()
+                        isGestureActive = false
                         if (commitIndex(selectedIndex + 1)) {
                             dragOffsetPx = 0f
                         }
