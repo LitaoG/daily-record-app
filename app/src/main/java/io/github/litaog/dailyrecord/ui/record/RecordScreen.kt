@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,6 +49,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -625,42 +627,67 @@ private fun RecordDetailRow(
                 fontWeight = FontWeight.SemiBold,
             )
         }
-        Column(
+        BoxWithConstraints(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
         ) {
-            // Match the reference layout: the two time fields and range arrow
-            // share the first row, while the feeling action gets its own row
-            // and stays aligned to the trailing edge.
-            DetailTimeFields(
-                occurrence = index + 1,
-                entry = entry,
-                accent = accent,
-                onTimeClick = onTimeClick,
-                index = index,
-            )
-            FeelingAction(
-                occurrence = index + 1,
-                hasFeeling = entry.feeling.isNotEmpty(),
-                expanded = entry.feelingExpanded,
-                accent = accent,
-                modifier = Modifier.align(Alignment.End),
-                onClick = { onFeelingToggle(index) },
-            )
-            if (entry.feelingExpanded) {
-                FeelingEditor(
-                    occurrence = index + 1,
-                    value = entry.feeling,
-                    accent = accent,
-                    onValueChange = { onFeelingChange(index, it) },
-                )
-            } else if (entry.feeling.isNotEmpty()) {
-                Text(
-                    text = entry.feeling,
-                    color = DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            val compactLayout = maxWidth < 300.dp || LocalDensity.current.fontScale >= 1.5f
+            Column(
+                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+            ) {
+                if (compactLayout) {
+                    DetailTimeFields(
+                        occurrence = index + 1,
+                        entry = entry,
+                        accent = accent,
+                        onTimeClick = onTimeClick,
+                        index = index,
+                    )
+                    FeelingAction(
+                        occurrence = index + 1,
+                        hasFeeling = entry.feeling.isNotEmpty(),
+                        expanded = entry.feelingExpanded,
+                        accent = accent,
+                        modifier = Modifier.align(Alignment.End),
+                        onClick = { onFeelingToggle(index) },
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
+                    ) {
+                        DetailTimeFields(
+                            occurrence = index + 1,
+                            entry = entry,
+                            accent = accent,
+                            onTimeClick = onTimeClick,
+                            index = index,
+                            modifier = Modifier.weight(1f),
+                        )
+                        FeelingAction(
+                            occurrence = index + 1,
+                            hasFeeling = entry.feeling.isNotEmpty(),
+                            expanded = entry.feelingExpanded,
+                            accent = accent,
+                            onClick = { onFeelingToggle(index) },
+                        )
+                    }
+                }
+                if (entry.feelingExpanded) {
+                    FeelingEditor(
+                        occurrence = index + 1,
+                        value = entry.feeling,
+                        accent = accent,
+                        onValueChange = { onFeelingChange(index, it) },
+                    )
+                } else if (entry.feeling.isNotEmpty()) {
+                    Text(
+                        text = entry.feeling,
+                        color = DailyRecordTextSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }
@@ -678,7 +705,7 @@ private fun DetailTimeFields(
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         DetailTimeField(
             occurrence = occurrence,
@@ -692,7 +719,7 @@ private fun DetailTimeFields(
         )
         TimeRangeArrow(
             color = DailyRecordTextMuted,
-            modifier = Modifier.size(width = 28.dp, height = 24.dp),
+            modifier = Modifier.size(width = 24.dp, height = 24.dp),
         )
         DetailTimeField(
             occurrence = occurrence,
@@ -761,7 +788,7 @@ private fun DetailTimeField(
                 )
             }
             .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
-            .padding(horizontal = DailyRecordSpacing.Inline),
+            .padding(horizontal = DailyRecordSpacing.Compact),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -834,7 +861,7 @@ private fun FeelingAction(
                 contentDescription = AppCopy.Record.detailFeelingActionDescription(occurrence, label)
             }
             .testTag("record_detail_${occurrence}_feeling")
-            .padding(horizontal = DailyRecordSpacing.Inline),
+            .padding(horizontal = DailyRecordSpacing.Compact),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
     ) {

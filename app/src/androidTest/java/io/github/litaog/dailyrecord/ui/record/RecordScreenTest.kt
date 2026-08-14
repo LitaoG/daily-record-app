@@ -209,9 +209,9 @@ class RecordScreenTest {
     }
 
     @Test
-    fun detailActionsMatchReferenceRowsAndDoNotReserveATimelineColumn() {
+    fun detailActionsKeepAllThreeControlsOnOneRowAtStandardPhoneWidth() {
         val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 2)))
-        setRecordContent(repository, width = 390.dp)
+        setRecordContent(repository, width = 360.dp)
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
@@ -224,8 +224,11 @@ class RecordScreenTest {
 
         assertEquals(section.left, firstStart.left, 0.5f)
         assertEquals(firstStart.top, firstEnd.top, 0.5f)
-        assertTrue(firstFeeling.top >= maxOf(firstStart.bottom, firstEnd.bottom))
+        assertEquals(firstStart.top, firstFeeling.top, 0.5f)
         assertEquals(firstStart.height, firstEnd.height, 0.5f)
+        assertEquals(firstStart.height, firstFeeling.height, 0.5f)
+        assertTrue(firstStart.right <= firstEnd.left)
+        assertTrue(firstEnd.right <= firstFeeling.left)
         assertEquals(section.right, firstFeeling.right, 0.5f)
         assertEquals(firstStart.left, secondStart.left, 0.5f)
     }
