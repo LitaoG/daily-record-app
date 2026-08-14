@@ -222,8 +222,7 @@ internal fun DailyCountRecordScreen(
                 saving = false
                 if (result.isSuccess) {
                     // Close the feeling editor after a successful mutation. The
-                    // caller decides whether to keep this page (save) or leave
-                    // it (clear), while the saved draft remains visible here.
+                    // caller decides whether to keep this page or leave it.
                     detailsDraft = detailsDraft.copy(
                         entries = detailsDraft.entries.map { it.copy(feelingExpanded = false) },
                     )
@@ -473,20 +472,47 @@ internal fun DailyCountRecordScreen(
     )
 
     if (showClearDialog) {
+        val clearDetailsOnly = detailsDraft.expanded
         DailyRecordConfirmationDialog(
-            title = AppCopy.Record.clearTitle,
-            subtitle = AppCopy.Record.clearSubtitle,
-            message = AppCopy.Record.clearMessage,
+            title = if (clearDetailsOnly) {
+                AppCopy.Record.clearDetailsTitle
+            } else {
+                AppCopy.Record.clearTitle
+            },
+            subtitle = if (clearDetailsOnly) {
+                AppCopy.Record.clearDetailsSubtitle
+            } else {
+                AppCopy.Record.clearSubtitle
+            },
+            message = if (clearDetailsOnly) {
+                AppCopy.Record.clearDetailsMessage
+            } else {
+                AppCopy.Record.clearMessage
+            },
             cancelLabel = AppCopy.Auth.cancel,
-            confirmLabel = AppCopy.Record.confirmClear,
+            confirmLabel = if (clearDetailsOnly) {
+                AppCopy.Record.confirmClearDetails
+            } else {
+                AppCopy.Record.confirmClear
+            },
             testTag = "clear_record_dialog",
             confirmEnabled = !saving,
             onDismiss = { if (!saving) showClearDialog = false },
             onConfirm = {
                 if (!saving) {
                     showClearDialog = false
-                    launchMutation(AppCopy.Record.clearFailure, onBack) {
-                        controller.clearRecord(date)
+                    if (clearDetailsOnly) {
+                        val currentDraftCount = countDraft.count
+                        launchMutation(
+                            AppCopy.Record.clearDetailsFailure,
+                            { detailsDraft = detailsDraft.clearContent() },
+                        ) {
+                            controller.clearDetails(date, currentDraftCount)
+                        }
+                    } else {
+                        launchMutation(AppCopy.Record.clearFailure, onBack) {
+                            controller.clearRecord(date)
+                        }
                     }
                 }
             },

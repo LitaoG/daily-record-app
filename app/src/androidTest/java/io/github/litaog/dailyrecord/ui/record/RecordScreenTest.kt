@@ -130,6 +130,54 @@ class RecordScreenTest {
     }
 
     @Test
+    fun clearDetailsKeepsCountAndStaysOnRecordPage() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 2)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    startTime = LocalTime.of(9, 15),
+                    endTime = LocalTime.of(9, 45),
+                    feeling = "第一次感受",
+                ),
+                HandBrewRecordDetail(
+                    id = "detail-${today}-2",
+                    localDate = today,
+                    occurrenceIndex = 2,
+                    startTime = LocalTime.of(10, 15),
+                    endTime = LocalTime.of(10, 45),
+                    feeling = "第二次感受",
+                ),
+            ),
+        )
+        var backCalls = 0
+        setRecordContent(repository, onBack = { backCalls += 1 })
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("第 1 次，开始，09:15").assertIsDisplayed()
+        composeRule.onNodeWithText("第一次感受").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("清除记录").performClick()
+        composeRule.onNodeWithText("清除本次详情？").assertIsDisplayed()
+        composeRule.onNodeWithText("只清除时间和感受").assertIsDisplayed()
+        composeRule.onNodeWithText("确认清除详情").performClick()
+
+        composeRule.waitUntil(5_000) { repository.saveCalls == 1 }
+        composeRule.onNodeWithTag("record_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("record_details_section").assertIsDisplayed()
+        composeRule.onNodeWithText("已记录 · 2 次").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，开始，开始时间").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 次，结束，结束时间").assertIsDisplayed()
+        assertTrue(composeRule.onAllNodesWithText("第一次感受").fetchSemanticsNodes().isEmpty())
+        assertTrue(composeRule.onAllNodesWithText("第二次感受").fetchSemanticsNodes().isEmpty())
+        assertEquals(0, repository.clearCalls)
+        assertEquals(0, backCalls)
+    }
+
+    @Test
     fun backWithDraftAsksBeforeDiscarding() {
         val repository = FakeHandBrewRecordRepository()
         var backCalls = 0

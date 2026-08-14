@@ -98,6 +98,8 @@ internal interface RecordModuleController {
         details: List<RecordDetailEntry>,
     )
 
+    suspend fun clearDetails(localDate: LocalDate, count: Int)
+
     suspend fun clearRecord(localDate: LocalDate): Boolean
 }
 
@@ -129,6 +131,10 @@ internal abstract class RepositoryRecordModuleController<T : DailyCountRecord>(
         details: List<RecordDetailEntry>,
     ) {
         saveRecordInternal(localDate, count, details)
+    }
+
+    final override suspend fun clearDetails(localDate: LocalDate, count: Int) {
+        saveRecordInternal(localDate, count, details = emptyList())
     }
 
     private suspend fun saveRecordInternal(
