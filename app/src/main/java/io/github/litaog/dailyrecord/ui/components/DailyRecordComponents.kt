@@ -2,6 +2,7 @@ package io.github.litaog.dailyrecord.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,11 +47,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -59,6 +61,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.R
 import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
@@ -238,61 +241,31 @@ fun BackChevronIcon(modifier: Modifier = Modifier, color: Color = DailyRecordTex
 }
 
 @Composable
-fun PlaneIcon(modifier: Modifier = Modifier, color: Color = DailyRecordDefaultAccent) {
-    Canvas(modifier.size(36.dp)) {
-        val path = Path().apply {
-            moveTo(size.width * .50f, size.height * .06f)
-            lineTo(size.width * .58f, size.height * .42f)
-            lineTo(size.width * .90f, size.height * .62f)
-            lineTo(size.width * .90f, size.height * .72f)
-            lineTo(size.width * .58f, size.height * .62f)
-            lineTo(size.width * .58f, size.height * .86f)
-            lineTo(size.width * .70f, size.height * .94f)
-            lineTo(size.width * .70f, size.height)
-            lineTo(size.width * .50f, size.height * .94f)
-            lineTo(size.width * .30f, size.height)
-            lineTo(size.width * .30f, size.height * .94f)
-            lineTo(size.width * .42f, size.height * .86f)
-            lineTo(size.width * .42f, size.height * .62f)
-            lineTo(size.width * .10f, size.height * .72f)
-            lineTo(size.width * .10f, size.height * .62f)
-            lineTo(size.width * .42f, size.height * .42f)
-            close()
-        }
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(
-                width = 2.4.dp.toPx(),
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round,
-            ),
-        )
-    }
+fun HandBrewIcon(
+    modifier: Modifier = Modifier.size(36.dp),
+    tint: Color? = null,
+) {
+    Image(
+        painter = painterResource(R.drawable.ic_module_hand_brew),
+        contentDescription = null,
+        modifier = modifier,
+        contentScale = ContentScale.Fit,
+        colorFilter = tint?.let(ColorFilter::tint),
+    )
 }
 
-/**
- * A neutral, non-explicit intimacy mark: two interlocking rings.
- * Text always accompanies this icon, so module identity never depends on shape or color alone.
- */
 @Composable
-fun IntimacyIcon(modifier: Modifier = Modifier, color: Color = DailyRecordDefaultAccent) {
-    Canvas(modifier.size(36.dp)) {
-        val stroke = 2.6.dp.toPx()
-        val radius = size.minDimension * .23f
-        drawCircle(
-            color = color,
-            radius = radius,
-            center = Offset(size.width * .39f, size.height * .50f),
-            style = Stroke(stroke),
-        )
-        drawCircle(
-            color = color,
-            radius = radius,
-            center = Offset(size.width * .61f, size.height * .50f),
-            style = Stroke(stroke),
-        )
-    }
+fun SexIcon(
+    modifier: Modifier = Modifier.size(36.dp),
+    tint: Color? = null,
+) {
+    Image(
+        painter = painterResource(R.drawable.ic_module_sex),
+        contentDescription = null,
+        modifier = modifier,
+        contentScale = ContentScale.Fit,
+        colorFilter = tint?.let(ColorFilter::tint),
+    )
 }
 
 @Composable
