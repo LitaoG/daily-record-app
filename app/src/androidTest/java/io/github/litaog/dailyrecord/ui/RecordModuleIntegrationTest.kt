@@ -39,6 +39,7 @@ import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -325,21 +326,33 @@ class RecordModuleIntegrationTest {
             }.isSuccess
         }
         val pixels = requireNotNull(bitmap).toPixelMap()
-        val expectedArgb = expected.toArgb()
+        val expectedRed = expected.red
+        val expectedGreen = expected.green
+        val expectedBlue = expected.blue
         var exactMatches = 0
         for (x in 0 until pixels.width) {
             for (y in 0 until pixels.height) {
-                if (pixels[x, y].toArgb() == expectedArgb) {
+                val pixel = pixels[x, y]
+                if (abs(pixel.red - expectedRed) <= .08f &&
+                    abs(pixel.green - expectedGreen) <= .08f &&
+                    abs(pixel.blue - expectedBlue) <= .08f
+                ) {
                     exactMatches++
                 }
             }
         }
         assertTrue("Expected settings icon to contain $expected, found $exactMatches pixels", exactMatches > 0)
-        val unexpectedArgb = unexpected.toArgb()
+        val unexpectedRed = unexpected.red
+        val unexpectedGreen = unexpected.green
+        val unexpectedBlue = unexpected.blue
         var unexpectedMatches = 0
         for (x in 0 until pixels.width) {
             for (y in 0 until pixels.height) {
-                if (pixels[x, y].toArgb() == unexpectedArgb) {
+                val pixel = pixels[x, y]
+                if (abs(pixel.red - unexpectedRed) <= .08f &&
+                    abs(pixel.green - unexpectedGreen) <= .08f &&
+                    abs(pixel.blue - unexpectedBlue) <= .08f
+                ) {
                     unexpectedMatches++
                 }
             }

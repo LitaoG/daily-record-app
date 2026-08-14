@@ -1,7 +1,6 @@
 package io.github.litaog.dailyrecord.ui.record
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,10 +44,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -74,11 +69,14 @@ import io.github.litaog.dailyrecord.ui.RecordModuleController
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.BackChevronIcon
+import io.github.litaog.dailyrecord.ui.components.BrandIcon
+import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.DailyCountControl
 import io.github.litaog.dailyrecord.ui.components.DailyRecordConfirmationDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordBorders
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
@@ -338,6 +336,7 @@ internal fun DailyCountRecordScreen(
                         RecordDetailsSection(
                             entries = detailsDraft.entries,
                             accent = moduleSpec.colors.primary,
+                            theme = moduleSpec.colors.brandIconTheme,
                             onCollapse = { detailsDraft = detailsDraft.copy(expanded = false) },
                             onTimeClick = { index, target ->
                                 val current = detailsDraft.entries.getOrNull(index)
@@ -563,6 +562,7 @@ internal fun initialTimePickerMinutes(existingMinutes: Int?, now: LocalTime): In
 private fun RecordDetailsSection(
     entries: List<RecordDetailDraft>,
     accent: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     onCollapse: () -> Unit,
     onTimeClick: (Int, DetailTimeTarget) -> Unit,
     onFeelingToggle: (Int) -> Unit,
@@ -609,6 +609,7 @@ private fun RecordDetailsSection(
                 index = index,
                 entry = entry,
                 accent = accent,
+                theme = theme,
                 onTimeClick = onTimeClick,
                 onFeelingToggle = onFeelingToggle,
                 onFeelingChange = onFeelingChange,
@@ -631,6 +632,7 @@ private fun RecordDetailRow(
     index: Int,
     entry: RecordDetailDraft,
     accent: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     onTimeClick: (Int, DetailTimeTarget) -> Unit,
     onFeelingToggle: (Int) -> Unit,
     onFeelingChange: (Int, String) -> Unit,
@@ -665,6 +667,7 @@ private fun RecordDetailRow(
                         occurrence = index + 1,
                         entry = entry,
                         accent = accent,
+                        theme = theme,
                         onTimeClick = onTimeClick,
                         index = index,
                     )
@@ -672,6 +675,7 @@ private fun RecordDetailRow(
                         occurrence = index + 1,
                         expanded = entry.feelingExpanded,
                         accent = accent,
+                        theme = theme,
                         modifier = Modifier.align(Alignment.End),
                         onClick = { onFeelingToggle(index) },
                     )
@@ -685,6 +689,7 @@ private fun RecordDetailRow(
                             occurrence = index + 1,
                             entry = entry,
                             accent = accent,
+                            theme = theme,
                             onTimeClick = onTimeClick,
                             index = index,
                             modifier = Modifier.weight(1f),
@@ -693,6 +698,7 @@ private fun RecordDetailRow(
                             occurrence = index + 1,
                             expanded = entry.feelingExpanded,
                             accent = accent,
+                            theme = theme,
                             onClick = { onFeelingToggle(index) },
                         )
                     }
@@ -722,6 +728,7 @@ private fun DetailTimeFields(
     occurrence: Int,
     entry: RecordDetailDraft,
     accent: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     onTimeClick: (Int, DetailTimeTarget) -> Unit,
     index: Int,
     modifier: Modifier = Modifier,
@@ -743,6 +750,7 @@ private fun DetailTimeFields(
         )
         TimeRangeArrow(
             color = DailyRecordTextMuted,
+            theme = theme,
             modifier = Modifier.size(width = 24.dp, height = 24.dp),
         )
         DetailTimeField(
@@ -825,34 +833,16 @@ private fun DetailTimeField(
 }
 
 @Composable
-private fun TimeRangeArrow(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val stroke = 1.8.dp.toPx()
-        val centerY = size.height / 2f
-        val startX = size.width * .12f
-        val endX = size.width * .78f
-        drawLine(
-            color = color,
-            start = androidx.compose.ui.geometry.Offset(startX, centerY),
-            end = androidx.compose.ui.geometry.Offset(endX, centerY),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color = color,
-            start = androidx.compose.ui.geometry.Offset(endX - 5.dp.toPx(), centerY - 5.dp.toPx()),
-            end = androidx.compose.ui.geometry.Offset(endX, centerY),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color = color,
-            start = androidx.compose.ui.geometry.Offset(endX - 5.dp.toPx(), centerY + 5.dp.toPx()),
-            end = androidx.compose.ui.geometry.Offset(endX, centerY),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-    }
+private fun TimeRangeArrow(
+    color: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    modifier: Modifier = Modifier,
+) {
+    BrandIcon(
+        asset = BrandIconAsset.Next,
+        theme = theme,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -860,6 +850,7 @@ private fun FeelingAction(
     occurrence: Int,
     expanded: Boolean,
     accent: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -887,7 +878,11 @@ private fun FeelingAction(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
     ) {
-        PencilGlyph(color = accent, modifier = Modifier.size(18.dp))
+        BrandIcon(
+            asset = BrandIconAsset.Edit,
+            theme = theme,
+            modifier = Modifier.size(20.dp),
+        )
         Text(
             text = label,
             color = accent,
@@ -987,17 +982,19 @@ private fun DetailEntryButton(
         horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
     ) {
         Box(modifier = Modifier.size(38.dp)) {
-            ClockGlyph(
-                color = accent,
+            BrandIcon(
+                asset = BrandIconAsset.Clock,
+                theme = colors.brandIconTheme,
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .size(26.dp),
+                    .size(24.dp),
             )
-            SpeechGlyph(
-                color = accent,
+            BrandIcon(
+                asset = BrandIconAsset.Note,
+                theme = colors.brandIconTheme,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .size(19.dp),
+                    .size(20.dp),
             )
         }
         Column(modifier = Modifier.weight(1f)) {
@@ -1013,7 +1010,12 @@ private fun DetailEntryButton(
                 style = MaterialTheme.typography.labelSmall,
             )
         }
-        ChevronIcon(forward = true, modifier = Modifier.size(20.dp), color = accent)
+        ChevronIcon(
+            forward = true,
+            modifier = Modifier.size(20.dp),
+            color = accent,
+            theme = colors.brandIconTheme,
+        )
     }
 }
 
@@ -1030,87 +1032,6 @@ private fun TimePickerHost(
             colors = colors,
             onDismiss = onDismiss,
             onConfirm = { minutes -> onSelected(request, minutes) },
-        )
-    }
-}
-
-@Composable
-private fun ClockGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val stroke = 1.8.dp.toPx()
-        drawCircle(color = color, radius = size.minDimension * .38f, style = Stroke(stroke))
-        drawLine(
-            color,
-            start = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height * .22f),
-            end = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height * .50f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color,
-            start = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f),
-            end = androidx.compose.ui.geometry.Offset(size.width * .70f, size.height * .62f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-    }
-}
-
-@Composable
-private fun SpeechGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val stroke = 1.8.dp.toPx()
-        val bubble = androidx.compose.ui.geometry.Rect(
-            left = size.width * .12f,
-            top = size.height * .14f,
-            right = size.width * .88f,
-            bottom = size.height * .72f,
-        )
-        drawRoundRect(
-            color = color,
-            topLeft = bubble.topLeft,
-            size = bubble.size,
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()),
-            style = Stroke(stroke),
-        )
-        val tail = Path().apply {
-            moveTo(size.width * .34f, size.height * .71f)
-            lineTo(size.width * .28f, size.height * .90f)
-            lineTo(size.width * .50f, size.height * .72f)
-        }
-        drawPath(tail, color = color, style = Stroke(stroke, join = StrokeJoin.Round))
-    }
-}
-
-@Composable
-private fun PencilGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val stroke = 1.7.dp.toPx()
-        val shaft = Path().apply {
-            moveTo(size.width * .28f, size.height * .70f)
-            lineTo(size.width * .67f, size.height * .31f)
-            lineTo(size.width * .82f, size.height * .46f)
-            lineTo(size.width * .43f, size.height * .85f)
-            close()
-        }
-        drawPath(
-            path = shaft,
-            color = color,
-            style = Stroke(width = stroke, join = StrokeJoin.Round),
-        )
-        drawLine(
-            color = color,
-            start = androidx.compose.ui.geometry.Offset(size.width * .24f, size.height * .76f),
-            end = androidx.compose.ui.geometry.Offset(size.width * .17f, size.height * .90f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color = color,
-            start = androidx.compose.ui.geometry.Offset(size.width * .17f, size.height * .90f),
-            end = androidx.compose.ui.geometry.Offset(size.width * .31f, size.height * .83f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
         )
     }
 }
@@ -1141,7 +1062,10 @@ private fun RecordHeader(
                     .semantics { role = Role.Button; contentDescription = AppCopy.Record.backToCalendar },
                 contentAlignment = Alignment.Center,
             ) {
-                BackChevronIcon(color = DailyRecordText)
+                BackChevronIcon(
+                    color = DailyRecordText,
+                    theme = moduleSpec.colors.brandIconTheme,
+                )
             }
             Column(
                 modifier = Modifier.align(Alignment.Center),

@@ -130,7 +130,7 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Calendar) },
-                icon = { color -> CalendarGlyph(color) },
+                icon = { color -> CalendarGlyph(color, theme = colors.brandIconTheme) },
             )
             BottomDestination(
                 label = AppCopy.NavigationBar.statistics,
@@ -138,7 +138,7 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Statistics) },
-                icon = { color -> StatisticsGlyph(color) },
+                icon = { color -> StatisticsGlyph(color, theme = colors.brandIconTheme) },
             )
         }
     }
@@ -182,62 +182,52 @@ private fun BottomDestination(
 }
 
 @Composable
-fun CalendarGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(24.dp)) {
-        val stroke = 2.dp.toPx()
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(size.width * .18f, size.height * .22f),
-            size = Size(size.width * .64f, size.height * .62f),
-            cornerRadius = CornerRadius(2.dp.toPx()),
-            style = Stroke(stroke),
-        )
-        drawLine(color, Offset(size.width * .18f, size.height * .40f), Offset(size.width * .82f, size.height * .40f), stroke)
-        drawLine(color, Offset(size.width * .34f, size.height * .12f), Offset(size.width * .34f, size.height * .30f), stroke, StrokeCap.Round)
-        drawLine(color, Offset(size.width * .66f, size.height * .12f), Offset(size.width * .66f, size.height * .30f), stroke, StrokeCap.Round)
-    }
-}
-
-@Composable
-fun StatisticsGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(24.dp)) {
-        val barWidth = size.width * .16f
-        drawRoundRect(color, Offset(size.width * .18f, size.height * .48f), Size(barWidth, size.height * .34f))
-        drawRoundRect(color, Offset(size.width * .42f, size.height * .25f), Size(barWidth, size.height * .57f))
-        drawRoundRect(color, Offset(size.width * .66f, size.height * .58f), Size(barWidth, size.height * .24f))
-    }
-}
-
-@Composable
-fun ChevronIcon(
-    forward: Boolean,
-    modifier: Modifier = Modifier,
-    color: Color = DailyRecordText,
+internal fun CalendarGlyph(
+    color: Color,
+    modifier: Modifier = Modifier.size(24.dp),
+    theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
-    Canvas(modifier.size(20.dp)) {
-        val stroke = 2.4.dp.toPx()
-        val startX = if (forward) size.width * .38f else size.width * .62f
-        val middleX = if (forward) size.width * .64f else size.width * .36f
-        drawLine(
-            color,
-            Offset(startX, size.height * .18f),
-            Offset(middleX, size.height * .50f),
-            stroke,
-            StrokeCap.Round,
-        )
-        drawLine(
-            color,
-            Offset(middleX, size.height * .50f),
-            Offset(startX, size.height * .82f),
-            stroke,
-            StrokeCap.Round,
-        )
-    }
+    BrandIcon(
+        asset = BrandIconAsset.Calendar,
+        theme = theme,
+        modifier = modifier,
+    )
 }
 
 @Composable
-fun BackChevronIcon(modifier: Modifier = Modifier, color: Color = DailyRecordText) {
-    ChevronIcon(forward = false, modifier = modifier, color = color)
+internal fun StatisticsGlyph(
+    color: Color,
+    modifier: Modifier = Modifier.size(24.dp),
+    theme: BrandIconTheme = BrandIconTheme.Purple,
+) {
+    BrandIcon(
+        asset = BrandIconAsset.Statistics,
+        theme = theme,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun ChevronIcon(
+    forward: Boolean,
+    modifier: Modifier = Modifier.size(20.dp),
+    color: Color = DailyRecordText,
+    theme: BrandIconTheme = BrandIconTheme.Purple,
+) {
+    BrandIcon(
+        asset = if (forward) BrandIconAsset.Next else BrandIconAsset.Previous,
+        theme = theme,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun BackChevronIcon(
+    modifier: Modifier = Modifier.size(20.dp),
+    color: Color = DailyRecordText,
+    theme: BrandIconTheme = BrandIconTheme.Purple,
+) {
+    ChevronIcon(forward = false, modifier = modifier, color = color, theme = theme)
 }
 
 @Composable

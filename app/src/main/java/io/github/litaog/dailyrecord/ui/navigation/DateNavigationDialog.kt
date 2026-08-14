@@ -57,10 +57,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.ui.components.BrandIcon
+import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
@@ -790,7 +793,7 @@ private fun MonthSelectionPicker(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
-                    DownChevronIcon(color = DailyRecordTextSecondary)
+                    DownChevronIcon(theme = colors.brandIconTheme)
                 }
             }
             YearArrow(
@@ -873,27 +876,23 @@ private fun YearArrow(
             },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronIcon(forward = forward, color = if (enabled) colors.primary else DailyRecordDivider)
+        ChevronIcon(
+            forward = forward,
+            color = if (enabled) colors.primary else DailyRecordDivider,
+            theme = colors.brandIconTheme,
+        )
     }
 }
 
 @Composable
-private fun DownChevronIcon(color: Color) {
-    Canvas(modifier = Modifier.size(20.dp)) {
-        val stroke = 2.dp.toPx()
-        drawLine(
-            color = color,
-            start = androidx.compose.ui.geometry.Offset(size.width * .18f, size.height * .35f),
-            end = androidx.compose.ui.geometry.Offset(size.width * .50f, size.height * .68f),
-            strokeWidth = stroke,
-        )
-        drawLine(
-            color = color,
-            start = androidx.compose.ui.geometry.Offset(size.width * .50f, size.height * .68f),
-            end = androidx.compose.ui.geometry.Offset(size.width * .82f, size.height * .35f),
-            strokeWidth = stroke,
-        )
-    }
+private fun DownChevronIcon(
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+) {
+    BrandIcon(
+        asset = BrandIconAsset.Down,
+        theme = theme,
+        modifier = Modifier.size(20.dp),
+    )
 }
 
 

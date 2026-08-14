@@ -52,6 +52,7 @@ import io.github.litaog.dailyrecord.ui.components.PeriodTabs
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.components.StatisticRow
+import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -290,6 +291,7 @@ private fun PeriodNavigator(
                 forward = false,
                 description = AppCopy.Statistics.periodAction(periodLabel, previous = true),
                 enabled = previous != null,
+                theme = colors.brandIconTheme,
                 onClick = { previous?.let(onAnchorDateChanged) },
             )
             Box(
@@ -315,6 +317,7 @@ private fun PeriodNavigator(
                 forward = true,
                 description = AppCopy.Statistics.periodAction(periodLabel, previous = false),
                 enabled = next != null,
+                theme = colors.brandIconTheme,
                 onClick = { next?.let(onAnchorDateChanged) },
             )
         }
@@ -327,6 +330,7 @@ private fun PeriodArrow(
     forward: Boolean,
     description: String,
     enabled: Boolean,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     onClick: () -> Unit,
 ) {
     Box(
@@ -341,7 +345,7 @@ private fun PeriodArrow(
             },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronIcon(forward = forward, color = DailyRecordText)
+        ChevronIcon(forward = forward, color = DailyRecordText, theme = theme)
     }
 }
 

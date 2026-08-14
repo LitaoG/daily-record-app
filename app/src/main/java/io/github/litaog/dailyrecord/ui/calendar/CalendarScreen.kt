@@ -50,6 +50,7 @@ import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
+import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
@@ -423,7 +424,13 @@ private fun MonthHeader(
             .heightIn(min = if (largeText) 108.dp else DailyRecordSizes.MinimumTouchTarget),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MonthArrow(forward = false, description = AppCopy.Calendar.previousMonth, enabled = canGoPrevious, onClick = onPreviousMonth)
+        MonthArrow(
+            forward = false,
+            description = AppCopy.Calendar.previousMonth,
+            enabled = canGoPrevious,
+            theme = colors.brandIconTheme,
+            onClick = onPreviousMonth,
+        )
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -449,7 +456,13 @@ private fun MonthHeader(
                 maxLines = if (largeText) 2 else 1,
             )
         }
-        MonthArrow(forward = true, description = AppCopy.Calendar.nextMonth, enabled = canGoNext, onClick = onNextMonth)
+        MonthArrow(
+            forward = true,
+            description = AppCopy.Calendar.nextMonth,
+            enabled = canGoNext,
+            theme = colors.brandIconTheme,
+            onClick = onNextMonth,
+        )
         Box(
             modifier = Modifier
                 .padding(start = 6.dp)
@@ -469,6 +482,7 @@ private fun MonthArrow(
     forward: Boolean,
     description: String,
     enabled: Boolean,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     onClick: () -> Unit,
 ) {
     Box(
@@ -480,7 +494,7 @@ private fun MonthArrow(
             .semantics { role = Role.Button; contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronIcon(forward = forward, color = DailyRecordText)
+        ChevronIcon(forward = forward, color = DailyRecordText, theme = theme)
     }
 }
 
