@@ -617,9 +617,9 @@ private fun RecordDetailsSection(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 28.dp)
                         .height(DailyRecordBorders.Standard)
-                        .background(DailyRecordDivider),
+                        .background(DailyRecordDivider)
+                        .testTag("record_detail_divider_${index + 1}"),
                 )
             }
         }

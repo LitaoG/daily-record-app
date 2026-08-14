@@ -305,6 +305,40 @@ class RecordScreenTest {
     }
 
     @Test
+    fun detailDividerKeepsFullWidthWhenPreviousFeelingHasText() {
+        val repository = FakeHandBrewRecordRepository(
+            initialRecords = listOf(record(today, 2)),
+            initialDetails = listOf(
+                HandBrewRecordDetail(
+                    id = "detail-${today}-1",
+                    localDate = today,
+                    occurrenceIndex = 1,
+                    feeling = "今天感觉很好",
+                ),
+                HandBrewRecordDetail(
+                    id = "detail-${today}-2",
+                    localDate = today,
+                    occurrenceIndex = 2,
+                ),
+            ),
+        )
+        setRecordContent(repository)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+
+        val section = composeRule.onNodeWithTag("record_details_section")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val divider = composeRule.onNodeWithTag("record_detail_divider_1")
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertEquals(section.left, divider.left, 0.5f)
+        assertEquals(section.right, divider.right, 0.5f)
+    }
+
+    @Test
     fun unsetTimeLabelsAreSpecificAndCenteredInsideTheirFields() {
         val repository = FakeHandBrewRecordRepository(initialRecords = listOf(record(today, 1)))
         setRecordContent(repository, width = 390.dp)
