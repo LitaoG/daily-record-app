@@ -184,7 +184,9 @@ private fun BottomDestination(
 @Composable
 internal fun CalendarGlyph(
     color: Color,
-    modifier: Modifier = Modifier.size(24.dp),
+    modifier: Modifier = Modifier
+        .size(24.dp)
+        .offset(y = 2.dp),
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
     BrandIcon(

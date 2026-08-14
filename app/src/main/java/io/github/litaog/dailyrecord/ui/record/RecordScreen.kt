@@ -881,7 +881,7 @@ private fun FeelingAction(
         BrandIcon(
             asset = BrandIconAsset.Edit,
             theme = theme,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(32.dp),
         )
         Text(
             text = label,
@@ -981,20 +981,30 @@ private fun DetailEntryButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
     ) {
-        Box(modifier = Modifier.size(38.dp)) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(DailyRecordShapes.Compact)
+                .background(accent.copy(alpha = .10f))
+                .border(
+                    DailyRecordBorders.Standard,
+                    accent.copy(alpha = .55f),
+                    DailyRecordShapes.Compact,
+                ),
+        ) {
             BrandIcon(
                 asset = BrandIconAsset.Clock,
                 theme = colors.brandIconTheme,
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .size(24.dp),
+                    .size(30.dp),
             )
             BrandIcon(
                 asset = BrandIconAsset.Note,
                 theme = colors.brandIconTheme,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .size(20.dp),
+                    .size(26.dp),
             )
         }
         Column(modifier = Modifier.weight(1f)) {
