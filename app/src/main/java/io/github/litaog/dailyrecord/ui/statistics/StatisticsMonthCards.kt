@@ -240,14 +240,14 @@ internal fun MonthDailyCountCard(
     val scale = remember(month) { monthDailyChartScale(month) }
     val description = remember(month) {
         AppCopy.Statistics.monthDailyChartAccessibility(
-            month.days.joinToString("，") { day ->
+            AppCopy.Components.joinSemantics(month.days.map { day ->
                 AppCopy.Statistics.dayChartValue(
                     day = day.date.dayOfMonth,
                     count = day.count,
                     future = day.future,
                     recorded = day.recorded,
                 )
-            },
+            }),
         )
     }
     StatisticsSurface(

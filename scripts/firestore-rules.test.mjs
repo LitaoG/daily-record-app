@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import assert from "node:assert/strict";
 import {
   assertFails,
   assertSucceeds,
@@ -31,6 +32,7 @@ const validRecord = {
   revision: 1,
   schemaVersion: 1,
   serverUpdatedAt: serverTimestamp(),
+  details: [],
 };
 const sexRecordPath = "users/user-a/sexRecords/2026-07-16";
 const validSexRecord = {
@@ -43,7 +45,17 @@ const validSexRecord = {
   revision: 1,
   schemaVersion: 1,
   serverUpdatedAt: serverTimestamp(),
+  details: [],
 };
+
+async function waitForDocumentToDisappear(reference) {
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    if (!(await getDoc(reference)).exists()) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  assert.fail(`Malformed document was not removed: ${reference.path}`);
+}
 
 try {
   const userA = testEnv.authenticatedContext("user-a").firestore();
@@ -52,6 +64,39 @@ try {
   const record = doc(userA, recordPath);
 
   await assertSucceeds(setDoc(record, validRecord));
+  const { details: _ignoredDetails, ...recordWithoutDetails } = validRecord;
+  await assertSucceeds(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-15"), {
+      ...recordWithoutDetails,
+      localDate: "2026-07-15",
+    }),
+  );
+  await assertSucceeds(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-15"), {
+      ...recordWithoutDetails,
+      localDate: "2026-07-15",
+      deleted: true,
+      revision: 2,
+      clientUpdatedAtMillis: 1784160001000,
+      serverUpdatedAt: serverTimestamp(),
+    }),
+  );
+  await assertFails(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-14"), {
+      ...validRecord,
+      localDate: "2026-07-14",
+      deleted: true,
+      details: [
+        {
+          id: "detail-1",
+          occurrenceIndex: 1,
+          startTime: null,
+          endTime: null,
+          feeling: "",
+        },
+      ],
+    }),
+  );
   await assertSucceeds(getDoc(record));
   await assertFails(getDoc(doc(userB, recordPath)));
   await assertFails(getDoc(doc(anonymous, recordPath)));
@@ -91,12 +136,30 @@ try {
     }),
   );
   await assertFails(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-00-20"), {
+      ...validRecord,
+      localDate: "2026-00-20",
+    }),
+  );
+  await assertFails(
     setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-20"), {
       ...validRecord,
       localDate: "2026-07-20",
       unexpectedField: true,
     }),
   );
+  const malformedDetailRecord = doc(
+    userA,
+    "users/user-a/handBrewRecords/2026-07-22",
+  );
+  await assertSucceeds(
+    setDoc(malformedDetailRecord, {
+      ...validRecord,
+      localDate: "2026-07-22",
+      details: [{ id: "missing-fields", occurrenceIndex: 1 }],
+    }),
+  );
+  await waitForDocumentToDisappear(malformedDetailRecord);
   await assertFails(
     setDoc(record, {
       ...validRecord,
@@ -143,7 +206,8 @@ try {
       serverUpdatedAt: serverTimestamp(),
     }),
   );
-  await assertSucceeds(deleteDoc(record));
+  await assertFails(deleteDoc(record));
+  await assertSucceeds(getDoc(record));
 
   const sexRecord = doc(userA, sexRecordPath);
   await assertSucceeds(setDoc(sexRecord, validSexRecord));
@@ -196,8 +260,9 @@ try {
       serverUpdatedAt: serverTimestamp(),
     }),
   );
-  await assertSucceeds(deleteDoc(sexRecord));
-  console.log("Firestore security rules: both module collections passed ownership, shape, revision, and deletion checks.");
+  await assertFails(deleteDoc(sexRecord));
+  await assertSucceeds(getDoc(sexRecord));
+  console.log("Firestore security rules and Functions validation: ownership, shape, revision, server detail validation, and delete restrictions passed.");
 } finally {
   await testEnv.cleanup();
 }

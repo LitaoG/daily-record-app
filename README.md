@@ -62,7 +62,7 @@
 
 - Kotlin、Jetpack Compose、Material 3
 - Coroutines、Flow、单向数据流
-- Room v5、WorkManager
+- Room v5（schema version）、WorkManager
 - Firebase Authentication、Cloud Firestore
 - `minSdk 26`、`targetSdk 36`
 - Apache License 2.0
@@ -75,6 +75,7 @@
 
 ```powershell
 pnpm install --frozen-lockfile
+pnpm --dir functions --ignore-workspace install --frozen-lockfile
 pnpm test:docs
 pnpm test:copy
 pnpm test:release-metadata

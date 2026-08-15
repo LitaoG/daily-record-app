@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,8 +46,11 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.components.dailyRecordFieldColors
+import io.github.litaog.dailyrecord.core.auth.FirebaseAuthErrorCodes
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
+import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -77,42 +79,33 @@ internal fun AuthScreen(
 ) {
     var modeName by rememberSaveable { mutableStateOf(AuthMode.SignIn.name) }
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var confirmPassword by rememberSaveable { mutableStateOf("") }
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
-    var busy by rememberSaveable { mutableStateOf(false) }
-    var errorText by rememberSaveable { mutableStateOf<String?>(null) }
+    // Passwords and operation state must not be serialized into SavedState.
+    // The coroutine is cancelled when this composition leaves the screen, so
+    // restoring `busy = true` after process death would also strand the form.
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    var errorText by remember { mutableStateOf<String?>(null) }
     var showPasswordReset by rememberSaveable { mutableStateOf(false) }
     val mode = AuthMode.entries.firstOrNull { it.name == modeName } ?: AuthMode.SignIn
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val validationError = remember(mode, email, password, confirmPassword) {
         validateCredentials(mode, email, password, confirmPassword)
     }
-    val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = DailyRecordText,
-        unfocusedTextColor = DailyRecordText,
-        disabledTextColor = DailyRecordTextMuted,
-        focusedBorderColor = DailyRecordDefaultAccent,
-        unfocusedBorderColor = DailyRecordDivider,
-        disabledBorderColor = DailyRecordDivider,
-        focusedLabelColor = DailyRecordDefaultAccent,
-        unfocusedLabelColor = DailyRecordTextMuted,
-        disabledLabelColor = DailyRecordTextMuted,
-        cursorColor = DailyRecordDefaultAccent,
-        focusedContainerColor = DailyRecordSurface,
-        unfocusedContainerColor = DailyRecordSurface,
-        disabledContainerColor = DailyRecordSurface,
-    )
+    val fieldColors = dailyRecordFieldColors()
     val submit: () -> Unit = submit@{
         if (!productionConfigured || busy || validationError != null) return@submit
         busy = true
         errorText = null
         scope.launch {
-            val result = if (mode == AuthMode.SignIn) {
-                onSignIn(email.trim(), password)
-            } else {
-                onRegister(email.trim(), password)
-            }
+            val result: Result<Unit> = runCatchingPreservingCancellation {
+                if (mode == AuthMode.SignIn) {
+                    onSignIn(email.trim(), password)
+                } else {
+                    onRegister(email.trim(), password)
+                }
+            }.getOrElse { error -> Result.failure(error) }
             result.exceptionOrNull()?.let { errorText = authErrorMessage(it, mode) }
             busy = false
         }
@@ -122,10 +115,12 @@ internal fun AuthScreen(
         onBack?.invoke()
     }
 
+    val backdropBrush = remember { dailyRecordBackdropBrush(HandBrewColorTokens) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(HandBrewColorTokens))
+            .background(backdropBrush)
             .verticalScroll(rememberScrollState())
             .imePadding()
             .padding(horizontal = 24.dp, vertical = 24.dp)
@@ -356,17 +351,19 @@ internal fun authErrorMessage(error: Throwable, mode: AuthMode): String {
         .firstOrNull()
         ?.errorCode
         .orEmpty()
-    if (error.isNetworkReachabilityFailure() || code == "ERROR_NETWORK_REQUEST_FAILED") {
+    if (error.isNetworkReachabilityFailure() ||
+        code == FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED
+    ) {
         return AppCopy.Auth.network
     }
     return when (code) {
-        "ERROR_EMAIL_ALREADY_IN_USE" -> AppCopy.Auth.emailAlreadyRegistered
-        "ERROR_WEAK_PASSWORD" -> AppCopy.Auth.weakPassword
-        "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Auth.tooManyRequests
-        "ERROR_INVALID_CREDENTIAL",
-        "ERROR_INVALID_LOGIN_CREDENTIALS",
-        "ERROR_WRONG_PASSWORD",
-        "ERROR_USER_NOT_FOUND",
+        FirebaseAuthErrorCodes.EMAIL_ALREADY_IN_USE -> AppCopy.Auth.emailAlreadyRegistered
+        FirebaseAuthErrorCodes.WEAK_PASSWORD -> AppCopy.Auth.weakPassword
+        FirebaseAuthErrorCodes.TOO_MANY_REQUESTS -> AppCopy.Auth.tooManyRequests
+        FirebaseAuthErrorCodes.INVALID_CREDENTIAL,
+        FirebaseAuthErrorCodes.INVALID_LOGIN_CREDENTIALS,
+        FirebaseAuthErrorCodes.WRONG_PASSWORD,
+        FirebaseAuthErrorCodes.USER_NOT_FOUND,
         -> AppCopy.Auth.invalidCredentials
         else -> when (mode) {
             AuthMode.SignIn -> AppCopy.Auth.signInUnavailable

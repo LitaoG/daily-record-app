@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,10 +76,11 @@ internal fun SettingsScreen(
 ) {
     BackHandler(onBack = onBack)
 
+    val backdropBrush = remember(moduleColors) { dailyRecordBackdropBrush(moduleColors) }
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(moduleColors)),
+            .background(backdropBrush),
     ) {
         Scaffold(
             modifier = Modifier
@@ -411,7 +413,7 @@ private fun AboutRow(
             .heightIn(min = 52.dp)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
             .semantics(mergeDescendants = true) {
-                contentDescription = "$label，$value"
+                contentDescription = AppCopy.Components.joinSemantics(label, value)
             }
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

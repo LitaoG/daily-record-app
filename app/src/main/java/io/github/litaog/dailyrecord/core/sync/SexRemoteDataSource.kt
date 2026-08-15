@@ -17,5 +17,4 @@ internal interface SexRemoteDataSource :
             remote.clientUpdatedAt == local.updatedAt &&
             remote.deleted == local.isDeleted
 
-    override suspend fun deleteAll(ownerId: String)
 }

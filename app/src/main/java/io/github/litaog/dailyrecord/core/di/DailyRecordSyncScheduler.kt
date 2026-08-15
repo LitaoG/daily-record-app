@@ -6,6 +6,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,8 +22,9 @@ internal object DailyRecordSyncScheduler {
     // request enqueued before the scheduler became module-agnostic can
     // never run concurrently (cancelling an absent work is a no-op).
     private const val LEGACY_UNIQUE_WORK_NAME = "hand-brew-cloud-sync"
+    internal const val SYNC_DEBOUNCE_MILLIS = 750L
     internal val workName = UNIQUE_WORK_NAME
-    internal val workPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE
+    internal val workPolicy = ExistingWorkPolicy.REPLACE
 
     /** Schedules only when the account is not blocked for deletion (durable or in-process). */
     fun schedule(context: Context, ownerId: String? = null) {
@@ -35,6 +37,7 @@ internal object DailyRecordSyncScheduler {
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build(),
             )
+            .setInitialDelay(SYNC_DEBOUNCE_MILLIS, TimeUnit.MILLISECONDS)
             .build()
         workManager.enqueueUniqueWork(
             UNIQUE_WORK_NAME,

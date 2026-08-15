@@ -355,12 +355,14 @@ private fun straightYearLinePath(points: List<Offset>): Path = Path().apply {
 
 private fun yearLineChartDescription(year: YearStatistics): String =
     AppCopy.Statistics.annualChartAccessibility(
-        year.months.joinToString("，") { month ->
-            AppCopy.Statistics.monthChartLabel(
-                month = month.month.monthValue,
-                isFuture = month.future,
-                recorded = month.recorded,
-                count = month.count,
-            )
-        },
+        AppCopy.Components.joinSemantics(
+            year.months.map { month ->
+                AppCopy.Statistics.monthChartLabel(
+                    month = month.month.monthValue,
+                    isFuture = month.future,
+                    recorded = month.recorded,
+                    count = month.count,
+                )
+            },
+        ),
     )

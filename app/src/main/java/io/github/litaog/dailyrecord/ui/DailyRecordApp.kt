@@ -52,7 +52,7 @@ import java.time.YearMonth
 internal const val VPN_SYNC_FAILURE_MESSAGE =
     AppCopy.vpnSyncFailure
 
-private val EarliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
+private val earliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
 
 internal enum class TopDestination {
     Calendar,
@@ -252,11 +252,11 @@ fun DailyRecordApp(
                         moduleSpec = moduleSpec,
                         selectedModule = selectedModule,
                         availableModules = availableModuleSpecs,
-                        earliestMonth = EarliestSupportedMonth,
+                        earliestMonth = earliestSupportedMonth,
                         modifier = Modifier.padding(contentPadding),
                         onPreviousMonth = {
                             val previous = displayedMonth.minusMonths(1)
-                            if (!previous.isBefore(EarliestSupportedMonth)) {
+                            if (!previous.isBefore(earliestSupportedMonth)) {
                                 browseDateText = shiftMonthAnchor(
                                     browseDate,
                                     months = -1,
