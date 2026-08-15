@@ -12,8 +12,9 @@ import io.github.litaog.dailyrecord.core.model.DailyCountRecord
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.RecordFactory
 import io.github.litaog.dailyrecord.core.model.SexRecord
-import io.github.litaog.dailyrecord.ui.components.IntimacyIcon
-import io.github.litaog.dailyrecord.ui.components.PlaneIcon
+import io.github.litaog.dailyrecord.ui.components.HandBrewIcon
+import io.github.litaog.dailyrecord.ui.components.SexIcon
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
@@ -48,7 +49,12 @@ internal val HandBrewModuleSpec = RecordModuleUiSpec(
     explicitZeroText = AppCopy.RecordModule.handBrewZero,
     semanticCountLabel = AppCopy.RecordModule.handBrewLabel,
     colors = HandBrewColorTokens,
-    icon = { modifier, color -> PlaneIcon(modifier = modifier, color = color) },
+    icon = { modifier, color ->
+        HandBrewIcon(
+            modifier = modifier,
+            tint = color.takeIf { it == DailyRecordOnAccent },
+        )
+    },
 )
 
 internal val SexModuleSpec = RecordModuleUiSpec(
@@ -59,7 +65,12 @@ internal val SexModuleSpec = RecordModuleUiSpec(
     explicitZeroText = AppCopy.RecordModule.sexZero,
     semanticCountLabel = AppCopy.RecordModule.sexLabel,
     colors = SexColorTokens,
-    icon = { modifier, color -> IntimacyIcon(modifier = modifier, color = color) },
+    icon = { modifier, color ->
+        SexIcon(
+            modifier = modifier,
+            tint = color.takeIf { it == DailyRecordOnAccent },
+        )
+    },
 )
 
 internal fun RecordModule.uiSpec(): RecordModuleUiSpec = when (this) {
@@ -98,6 +109,8 @@ internal interface RecordModuleController {
         details: List<RecordDetailEntry>,
     )
 
+    suspend fun clearDetails(localDate: LocalDate, count: Int)
+
     suspend fun clearRecord(localDate: LocalDate): Boolean
 }
 
@@ -129,6 +142,10 @@ internal abstract class RepositoryRecordModuleController<T : DailyCountRecord>(
         details: List<RecordDetailEntry>,
     ) {
         saveRecordInternal(localDate, count, details)
+    }
+
+    final override suspend fun clearDetails(localDate: LocalDate, count: Int) {
+        saveRecordInternal(localDate, count, details = emptyList())
     }
 
     private suspend fun saveRecordInternal(

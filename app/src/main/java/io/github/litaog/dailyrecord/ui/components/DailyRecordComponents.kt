@@ -2,6 +2,7 @@ package io.github.litaog.dailyrecord.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,11 +47,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -59,6 +61,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.litaog.dailyrecord.R
 import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
@@ -127,7 +130,7 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Calendar) },
-                icon = { color -> CalendarGlyph(color) },
+                icon = { color -> CalendarGlyph(color, theme = colors.brandIconTheme) },
             )
             BottomDestination(
                 label = AppCopy.NavigationBar.statistics,
@@ -135,7 +138,7 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Statistics) },
-                icon = { color -> StatisticsGlyph(color) },
+                icon = { color -> StatisticsGlyph(color, theme = colors.brandIconTheme) },
             )
         }
     }
@@ -179,120 +182,82 @@ private fun BottomDestination(
 }
 
 @Composable
-fun CalendarGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(24.dp)) {
-        val stroke = 2.dp.toPx()
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(size.width * .18f, size.height * .22f),
-            size = Size(size.width * .64f, size.height * .62f),
-            cornerRadius = CornerRadius(2.dp.toPx()),
-            style = Stroke(stroke),
-        )
-        drawLine(color, Offset(size.width * .18f, size.height * .40f), Offset(size.width * .82f, size.height * .40f), stroke)
-        drawLine(color, Offset(size.width * .34f, size.height * .12f), Offset(size.width * .34f, size.height * .30f), stroke, StrokeCap.Round)
-        drawLine(color, Offset(size.width * .66f, size.height * .12f), Offset(size.width * .66f, size.height * .30f), stroke, StrokeCap.Round)
-    }
-}
-
-@Composable
-fun StatisticsGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(24.dp)) {
-        val barWidth = size.width * .16f
-        drawRoundRect(color, Offset(size.width * .18f, size.height * .48f), Size(barWidth, size.height * .34f))
-        drawRoundRect(color, Offset(size.width * .42f, size.height * .25f), Size(barWidth, size.height * .57f))
-        drawRoundRect(color, Offset(size.width * .66f, size.height * .58f), Size(barWidth, size.height * .24f))
-    }
-}
-
-@Composable
-fun ChevronIcon(
-    forward: Boolean,
-    modifier: Modifier = Modifier,
-    color: Color = DailyRecordText,
+internal fun CalendarGlyph(
+    color: Color,
+    modifier: Modifier = Modifier
+        .size(24.dp)
+        .offset(y = 2.dp),
+    theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
-    Canvas(modifier.size(20.dp)) {
-        val stroke = 2.4.dp.toPx()
-        val startX = if (forward) size.width * .38f else size.width * .62f
-        val middleX = if (forward) size.width * .64f else size.width * .36f
-        drawLine(
-            color,
-            Offset(startX, size.height * .18f),
-            Offset(middleX, size.height * .50f),
-            stroke,
-            StrokeCap.Round,
-        )
-        drawLine(
-            color,
-            Offset(middleX, size.height * .50f),
-            Offset(startX, size.height * .82f),
-            stroke,
-            StrokeCap.Round,
-        )
-    }
+    BrandIcon(
+        asset = BrandIconAsset.Calendar,
+        theme = theme,
+        modifier = modifier,
+    )
 }
 
 @Composable
-fun BackChevronIcon(modifier: Modifier = Modifier, color: Color = DailyRecordText) {
-    ChevronIcon(forward = false, modifier = modifier, color = color)
+internal fun StatisticsGlyph(
+    color: Color,
+    modifier: Modifier = Modifier.size(24.dp),
+    theme: BrandIconTheme = BrandIconTheme.Purple,
+) {
+    BrandIcon(
+        asset = BrandIconAsset.Statistics,
+        theme = theme,
+        modifier = modifier,
+    )
 }
 
 @Composable
-fun PlaneIcon(modifier: Modifier = Modifier, color: Color = DailyRecordDefaultAccent) {
-    Canvas(modifier.size(36.dp)) {
-        val path = Path().apply {
-            moveTo(size.width * .50f, size.height * .06f)
-            lineTo(size.width * .58f, size.height * .42f)
-            lineTo(size.width * .90f, size.height * .62f)
-            lineTo(size.width * .90f, size.height * .72f)
-            lineTo(size.width * .58f, size.height * .62f)
-            lineTo(size.width * .58f, size.height * .86f)
-            lineTo(size.width * .70f, size.height * .94f)
-            lineTo(size.width * .70f, size.height)
-            lineTo(size.width * .50f, size.height * .94f)
-            lineTo(size.width * .30f, size.height)
-            lineTo(size.width * .30f, size.height * .94f)
-            lineTo(size.width * .42f, size.height * .86f)
-            lineTo(size.width * .42f, size.height * .62f)
-            lineTo(size.width * .10f, size.height * .72f)
-            lineTo(size.width * .10f, size.height * .62f)
-            lineTo(size.width * .42f, size.height * .42f)
-            close()
-        }
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(
-                width = 2.4.dp.toPx(),
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round,
-            ),
-        )
-    }
+internal fun ChevronIcon(
+    forward: Boolean,
+    modifier: Modifier = Modifier.size(20.dp),
+    color: Color = DailyRecordText,
+    theme: BrandIconTheme = BrandIconTheme.Purple,
+) {
+    BrandIcon(
+        asset = if (forward) BrandIconAsset.Next else BrandIconAsset.Previous,
+        theme = theme,
+        modifier = modifier,
+    )
 }
 
-/**
- * A neutral, non-explicit intimacy mark: two interlocking rings.
- * Text always accompanies this icon, so module identity never depends on shape or color alone.
- */
 @Composable
-fun IntimacyIcon(modifier: Modifier = Modifier, color: Color = DailyRecordDefaultAccent) {
-    Canvas(modifier.size(36.dp)) {
-        val stroke = 2.6.dp.toPx()
-        val radius = size.minDimension * .23f
-        drawCircle(
-            color = color,
-            radius = radius,
-            center = Offset(size.width * .39f, size.height * .50f),
-            style = Stroke(stroke),
-        )
-        drawCircle(
-            color = color,
-            radius = radius,
-            center = Offset(size.width * .61f, size.height * .50f),
-            style = Stroke(stroke),
-        )
-    }
+internal fun BackChevronIcon(
+    modifier: Modifier = Modifier.size(20.dp),
+    color: Color = DailyRecordText,
+    theme: BrandIconTheme = BrandIconTheme.Purple,
+) {
+    ChevronIcon(forward = false, modifier = modifier, color = color, theme = theme)
+}
+
+@Composable
+fun HandBrewIcon(
+    modifier: Modifier = Modifier.size(36.dp),
+    tint: Color? = null,
+) {
+    Image(
+        painter = painterResource(R.drawable.ic_module_hand_brew),
+        contentDescription = null,
+        modifier = modifier,
+        contentScale = ContentScale.Fit,
+        colorFilter = tint?.let(ColorFilter::tint),
+    )
+}
+
+@Composable
+fun SexIcon(
+    modifier: Modifier = Modifier.size(36.dp),
+    tint: Color? = null,
+) {
+    Image(
+        painter = painterResource(R.drawable.ic_module_sex),
+        contentDescription = null,
+        modifier = modifier,
+        contentScale = ContentScale.Fit,
+        colorFilter = tint?.let(ColorFilter::tint),
+    )
 }
 
 @Composable

@@ -21,14 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.CloudSync
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -39,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -52,6 +44,9 @@ import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.color
 import io.github.litaog.dailyrecord.ui.account.label
+import io.github.litaog.dailyrecord.ui.components.BrandIcon
+import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
+import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
@@ -91,7 +86,10 @@ internal fun SettingsScreen(
                 .testTag("settings_screen"),
             containerColor = Color.Transparent,
             topBar = {
-                SettingsTopBar(onBack = onBack)
+                SettingsTopBar(
+                    onBack = onBack,
+                    theme = moduleColors.brandIconTheme,
+                )
             },
         ) { contentPadding ->
             LazyColumn(
@@ -126,7 +124,8 @@ internal fun SettingsScreen(
                 item {
                     SettingsCard(contentSpacing = 0.dp) {
                         SettingsInfoRow(
-                            icon = Icons.Outlined.Lock,
+                            icon = BrandIconAsset.Lock,
+                            theme = moduleColors.brandIconTheme,
                             title = AppCopy.Settings.localFirstTitle,
                             summary = AppCopy.Settings.localFirstSummary,
                             tint = moduleColors.primary,
@@ -136,7 +135,8 @@ internal fun SettingsScreen(
                             color = DailyRecordDivider,
                         )
                         SettingsInfoRow(
-                            icon = Icons.Outlined.Shield,
+                            icon = BrandIconAsset.Shield,
+                            theme = moduleColors.brandIconTheme,
                             title = AppCopy.Settings.privacyTitle,
                             summary = AppCopy.Settings.privacySummary,
                             tint = moduleColors.primary,
@@ -169,7 +169,10 @@ internal fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsTopBar(onBack: () -> Unit) {
+private fun SettingsTopBar(
+    onBack: () -> Unit,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+) {
     Surface(
         modifier = Modifier.dailyRecordGlassBackground(level = DailyRecordGlassLevel.Muted),
         color = Color.Transparent,
@@ -187,10 +190,11 @@ private fun SettingsTopBar(onBack: () -> Unit) {
                 onClick = onBack,
                 modifier = Modifier.size(DailyRecordSizes.MinimumTouchTarget),
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                BrandIcon(
+                    asset = BrandIconAsset.Return,
+                    theme = theme,
                     contentDescription = AppCopy.Settings.back,
-                    tint = DailyRecordText,
+                    modifier = Modifier.size(24.dp),
                 )
             }
             Text(
@@ -237,7 +241,8 @@ private fun AccountSettingsCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SettingsIconBadge(
-                imageVector = Icons.Outlined.CloudSync,
+                icon = BrandIconAsset.CloudSync,
+                theme = moduleColors.brandIconTheme,
                 tint = moduleColors.primary,
             )
             Spacer(Modifier.width(12.dp))
@@ -271,10 +276,11 @@ private fun AccountSettingsCard(
                 }
             }
             if (signedIn) {
-                Icon(
-                    imageVector = Icons.Outlined.ChevronRight,
+                BrandIcon(
+                    asset = BrandIconAsset.Next,
+                    theme = moduleColors.brandIconTheme,
                     contentDescription = null,
-                    tint = DailyRecordTextMuted,
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
@@ -337,7 +343,8 @@ private fun SettingsCard(
 
 @Composable
 private fun SettingsInfoRow(
-    icon: ImageVector,
+    icon: BrandIconAsset,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     title: String,
     summary: String,
     tint: Color,
@@ -349,7 +356,7 @@ private fun SettingsInfoRow(
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SettingsIconBadge(imageVector = icon, tint = tint)
+        SettingsIconBadge(icon = icon, theme = theme, tint = tint)
         Spacer(Modifier.width(12.dp))
         Column(
             modifier = Modifier.weight(1f),
@@ -372,7 +379,8 @@ private fun SettingsInfoRow(
 
 @Composable
 private fun SettingsIconBadge(
-    imageVector: ImageVector,
+    icon: BrandIconAsset,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     tint: Color,
 ) {
     Box(
@@ -382,10 +390,10 @@ private fun SettingsIconBadge(
             .background(tint.copy(alpha = .10f)),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = imageVector,
+        BrandIcon(
+            asset = icon,
+            theme = theme,
             contentDescription = null,
-            tint = tint,
             modifier = Modifier.size(22.dp),
         )
     }

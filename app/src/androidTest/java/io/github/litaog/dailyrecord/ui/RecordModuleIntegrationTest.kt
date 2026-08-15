@@ -39,6 +39,7 @@ import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -77,13 +78,20 @@ class RecordModuleIntegrationTest {
         setDualModuleContent()
 
         composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
-        assertSettingsIconContains(HandBrewColorTokens.primary)
+        assertMinimumSize("home_settings_button", 60f)
+        assertSettingsIconContains(
+            expected = HandBrewColorTokens.primary,
+            unexpected = SexColorTokens.primary,
+        )
 
         composeRule.onNodeWithContentDescription("做爱记录，未选择").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription(AppCopy.Settings.open).assertIsDisplayed()
-        assertSettingsIconContains(SexColorTokens.primary)
+        assertSettingsIconContains(
+            expected = SexColorTokens.primary,
+            unexpected = HandBrewColorTokens.primary,
+        )
     }
 
     @Test
@@ -310,7 +318,7 @@ class RecordModuleIntegrationTest {
         assertEquals(expected.toArgb(), pixels[sampleX, sampleY].toArgb())
     }
 
-    private fun assertSettingsIconContains(expected: Color) {
+    private fun assertSettingsIconContains(expected: Color, unexpected: Color) {
         var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
         composeRule.waitUntil(timeoutMillis = 10_000) {
             runCatching {
@@ -318,22 +326,57 @@ class RecordModuleIntegrationTest {
             }.isSuccess
         }
         val pixels = requireNotNull(bitmap).toPixelMap()
-        val expectedArgb = expected.toArgb()
+        val expectedRed = expected.red
+        val expectedGreen = expected.green
+        val expectedBlue = expected.blue
         var exactMatches = 0
         for (x in 0 until pixels.width) {
             for (y in 0 until pixels.height) {
-                if (pixels[x, y].toArgb() == expectedArgb) {
+                val pixel = pixels[x, y]
+                if (abs(pixel.red - expectedRed) <= .08f &&
+                    abs(pixel.green - expectedGreen) <= .08f &&
+                    abs(pixel.blue - expectedBlue) <= .08f
+                ) {
                     exactMatches++
                 }
             }
         }
         assertTrue("Expected settings icon to contain $expected, found $exactMatches pixels", exactMatches > 0)
+        val unexpectedRed = unexpected.red
+        val unexpectedGreen = unexpected.green
+        val unexpectedBlue = unexpected.blue
+        var unexpectedMatches = 0
+        for (x in 0 until pixels.width) {
+            for (y in 0 until pixels.height) {
+                val pixel = pixels[x, y]
+                if (abs(pixel.red - unexpectedRed) <= .08f &&
+                    abs(pixel.green - unexpectedGreen) <= .08f &&
+                    abs(pixel.blue - unexpectedBlue) <= .08f
+                ) {
+                    unexpectedMatches++
+                }
+            }
+        }
+        assertTrue(
+            "Settings icon unexpectedly contained $unexpected in $unexpectedMatches pixels",
+            unexpectedMatches == 0,
+        )
     }
 
     private fun assertMinimumHeight(tag: String, minimumDp: Float) {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val heightPx = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.height
         val heightDp = heightPx / context.resources.displayMetrics.density
+        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
+    }
+
+    private fun assertMinimumSize(tag: String, minimumDp: Float) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val bounds = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+        val density = context.resources.displayMetrics.density
+        val widthDp = bounds.width / density
+        val heightDp = bounds.height / density
+        assertTrue("$tag width was $widthDp dp", widthDp >= minimumDp)
         assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
     }
 

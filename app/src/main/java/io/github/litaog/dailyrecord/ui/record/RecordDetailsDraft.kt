@@ -102,6 +102,15 @@ internal data class RecordDetailsDraft(
         return copy(entries = resized)
     }
 
+    fun clearContent(): RecordDetailsDraft {
+        val cleared = entries.map { RecordDetailDraft() }
+        return copy(
+            entries = cleared,
+            baseline = cleared,
+            initialized = true,
+        )
+    }
+
     fun update(index: Int, update: (RecordDetailDraft) -> RecordDetailDraft): RecordDetailsDraft {
         if (index !in entries.indices) return this
         return copy(entries = entries.toMutableList().also { items ->

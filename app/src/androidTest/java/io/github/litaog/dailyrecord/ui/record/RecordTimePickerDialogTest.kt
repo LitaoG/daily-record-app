@@ -60,8 +60,7 @@ class RecordTimePickerDialogTest {
 
         composeRule.onNodeWithContentDescription("选择小时 00").performClick()
         composeRule.onNodeWithContentDescription("选择分钟 00").performClick()
-        composeRule.onNodeWithContentDescription("小时，当前 00").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("分钟，当前 00").assertIsDisplayed()
+        composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("确定").performClick()
 
         assertEquals(0, confirmedMinutes)
@@ -94,7 +93,7 @@ class RecordTimePickerDialogTest {
     }
 
     @Test
-    fun verticalDragSnapsTheHourWheelToTheNextValue() {
+    fun verticalDragAdvancesTheHourWithMomentum() {
         var confirmedMinutes: Int? = null
 
         composeRule.setContent {
@@ -108,21 +107,21 @@ class RecordTimePickerDialogTest {
             }
         }
 
-        composeRule.onNodeWithTag("time_picker_hour_wheel").performTouchInput {
+        composeRule.onNodeWithTag("time_picker_hour_wheel_surface").performTouchInput {
             swipe(
                 start = center,
                 end = Offset(center.x, center.y - height / 3f),
                 durationMillis = 300,
             )
         }
-        composeRule.onNodeWithContentDescription("小时，当前 18").assertIsDisplayed()
+        composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("确定").performClick()
 
-        assertEquals(18 * 60 + 30, confirmedMinutes)
+        assertTrue(requireNotNull(confirmedMinutes) > 17 * 60 + 30)
     }
 
     @Test
-    fun verticalDragSnapsTheMinuteWheelToTheNextValue() {
+    fun verticalDragAdvancesTheMinuteWithMomentum() {
         var confirmedMinutes: Int? = null
 
         composeRule.setContent {
@@ -136,17 +135,76 @@ class RecordTimePickerDialogTest {
             }
         }
 
-        composeRule.onNodeWithTag("time_picker_minute_wheel").performTouchInput {
+        composeRule.onNodeWithTag("time_picker_minute_wheel_surface").performTouchInput {
             swipe(
                 start = center,
                 end = Offset(center.x, center.y - height / 3f),
                 durationMillis = 300,
             )
         }
-        composeRule.onNodeWithContentDescription("分钟，当前 31").assertIsDisplayed()
+        composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("确定").performClick()
 
-        assertEquals(17 * 60 + 31, confirmedMinutes)
+        assertTrue(requireNotNull(confirmedMinutes) > 17 * 60 + 30)
+    }
+
+    @Test
+    fun fastFlingContinuesAcrossMultipleHourValuesBeforeSettling() {
+        var confirmedMinutes: Int? = null
+
+        composeRule.setContent {
+            DailyRecordTheme {
+                RecordTimePickerDialog(
+                    initialMinutes = 0,
+                    colors = HandBrewColorTokens,
+                    onDismiss = {},
+                    onConfirm = { confirmedMinutes = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("time_picker_hour_wheel_surface").performTouchInput {
+            swipe(
+                start = center,
+                end = Offset(center.x, center.y - height * .9f),
+                durationMillis = 80,
+            )
+        }
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("确定").performClick()
+
+        assertTrue(requireNotNull(confirmedMinutes) / 60 >= 2)
+    }
+
+    @Test
+    fun fastReverseFlingWrapsBackAcrossTheHourBoundary() {
+        var confirmedMinutes: Int? = null
+
+        composeRule.setContent {
+            DailyRecordTheme {
+                RecordTimePickerDialog(
+                    initialMinutes = 0,
+                    colors = HandBrewColorTokens,
+                    onDismiss = {},
+                    onConfirm = { confirmedMinutes = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("time_picker_hour_wheel_surface").performTouchInput {
+            swipe(
+                start = center,
+                end = Offset(center.x, center.y + height * .9f),
+                durationMillis = 80,
+            )
+        }
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("确定").performClick()
+
+        val confirmedHour = requireNotNull(confirmedMinutes) / 60
+        assertTrue("Reverse fling should wrap below 00: confirmed=$confirmedHour", confirmedHour in 1..23)
     }
 
     @Test

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -144,14 +145,13 @@ internal fun AccountTopBar(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                 ) {
                     SyncStatusChip(
                         status = status,
                         onClick = onClick,
-                        modifier = Modifier.weight(1f),
                     )
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         } else {
@@ -173,7 +173,7 @@ internal fun AccountTopBar(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     SyncStatusChip(status = status, onClick = onClick)
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         }
@@ -213,7 +213,7 @@ internal fun LocalAccountTopBar(
                             accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                         )
                     }
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         } else {
@@ -241,7 +241,7 @@ internal fun LocalAccountTopBar(
                             accessibilityLabel = AppCopy.Account.signInSyncAccessibility,
                         )
                     }
-                    SettingsButton(onClick = onSettings, heartTint = colors.primary)
+                    SettingsButton(onClick = onSettings, moduleTint = colors.primary)
                 }
             }
         }
@@ -251,17 +251,17 @@ internal fun LocalAccountTopBar(
 @Composable
 private fun SettingsButton(
     onClick: () -> Unit,
-    heartTint: Color,
+    moduleTint: Color,
 ) {
     IconButton(
         onClick = onClick,
         modifier = Modifier
-            .size(DailyRecordSizes.MinimumTouchTarget)
+            .size(DailyRecordSizes.SettingsButton)
             .testTag("home_settings_button"),
     ) {
         PrivateSettingsIcon(
             contentDescription = AppCopy.Settings.open,
-            heartTint = heartTint,
+            moduleTint = moduleTint,
         )
     }
 }
@@ -294,8 +294,8 @@ private fun SyncStatusChip(
             .background(DailyRecordDefaultAccentSoft)
             .border(1.dp, DailyRecordDivider, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 9.dp)
-            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+            .padding(horizontal = 12.dp)
+            .height(DailyRecordSizes.SyncChipHeight)
             .semantics {
                 role = Role.Button
                 contentDescription = AppCopy.Account.syncChipDescription(status.label())
