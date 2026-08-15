@@ -8,7 +8,6 @@ service cloud.firestore {
 
     function hasValidCommonRecordShape(date, allowedKeys) {
       return request.resource.data.keys().hasOnly(allowedKeys)
-        && request.resource.data.keys().hasAll(['details'])
         && request.resource.data.id is string
         && request.resource.data.id.size() > 0
         && request.resource.data.id.size() <= 160
@@ -43,7 +42,8 @@ service cloud.firestore {
 
     // Details are validated end-to-end by the client and the remote parser
     // (including minute precision and the 100 visible-character feeling cap).
-    // Rules keep the field typed and prevent more rows than the aggregate count.
+    // The field remains optional for beta.2 clients; when present, Rules keep
+    // it typed and prevent more rows than the aggregate count.
     function hasValidDetailList(count) {
       return request.resource.data.get('details', []) is list
         && request.resource.data.get('details', []).size() <= count

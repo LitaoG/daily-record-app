@@ -55,10 +55,20 @@ try {
 
   await assertSucceeds(setDoc(record, validRecord));
   const { details: _ignoredDetails, ...recordWithoutDetails } = validRecord;
-  await assertFails(
+  await assertSucceeds(
     setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-15"), {
       ...recordWithoutDetails,
       localDate: "2026-07-15",
+    }),
+  );
+  await assertSucceeds(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-15"), {
+      ...recordWithoutDetails,
+      localDate: "2026-07-15",
+      deleted: true,
+      revision: 2,
+      clientUpdatedAtMillis: 1784160001000,
+      serverUpdatedAt: serverTimestamp(),
     }),
   );
   await assertFails(

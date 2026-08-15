@@ -156,15 +156,23 @@ internal data class RecordDetailsDraft(
                 )
             },
             restore = { values ->
+                val currentFormat = values.getOrNull(2) is Int
+                val restoredEntries = restoreDetails(values.getOrNull(0))
+                val restoredBaseline = restoreDetails(values.getOrNull(1))
                 RecordDetailsDraft(
-                    entries = restoreDetails(values[0]),
-                    baseline = restoreDetails(values[1]),
-                    count = values.getOrNull(2) as? Int
-                        ?: values[0].let { restoreDetails(it).size },
-                    initialized = values.getOrNull(3) as? Boolean
-                        ?: (values[2] as Boolean),
-                    expanded = values.getOrNull(4) as? Boolean
-                        ?: (values[3] as Boolean),
+                    entries = restoredEntries,
+                    baseline = restoredBaseline,
+                    count = if (currentFormat) values[2] as Int else restoredEntries.size,
+                    initialized = if (currentFormat) {
+                        values.getOrNull(3) as? Boolean ?: false
+                    } else {
+                        values.getOrNull(2) as? Boolean ?: false
+                    },
+                    expanded = if (currentFormat) {
+                        values.getOrNull(4) as? Boolean ?: false
+                    } else {
+                        values.getOrNull(3) as? Boolean ?: false
+                    },
                 )
             },
         )

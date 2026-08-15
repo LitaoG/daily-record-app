@@ -133,4 +133,22 @@ class RecordDetailsDraftTest {
 
         assertEquals(draft, restored)
     }
+
+    @Test
+    fun saverRestoresLegacyFourCellFormatWithoutSwappingFlags() {
+        val legacySaved = listOf(
+            listOf(listOf(8 * 60, 9 * 60, "legacy entry", true)),
+            listOf(listOf(8 * 60, 9 * 60, "legacy baseline", false)),
+            false,
+            true,
+        )
+
+        val restored = requireNotNull(RecordDetailsDraft.Saver.restore(legacySaved))
+
+        assertEquals(1, restored.count)
+        assertFalse(restored.initialized)
+        assertTrue(restored.expanded)
+        assertEquals("legacy entry", restored.entries.single().feeling)
+        assertEquals("legacy baseline", restored.baseline.single().feeling)
+    }
 }
