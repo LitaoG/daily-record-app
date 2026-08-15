@@ -4,22 +4,32 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build and publish
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
     steps:
       - name: Check out tagged source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Set up Java
         uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
@@ -34,7 +44,7 @@ jobs:
         id: metadata
         run: >-
           node scripts/release-metadata.mjs
-          --tag "$GITHUB_REF_NAME"
+          --tag "$RELEASE_TAG"
           --github-output "$GITHUB_OUTPUT"
 
       - name: Validate copy and documentation
@@ -72,11 +82,13 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "release-output/$APK_NAME"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
           "$APKSIGNER" verify --verbose --print-certs "release-output/$APK_NAME"
-          EXPECTED_FINGERPRINT="AF:A5:24:1B:F1:3C:9D:AA:6F:45:AE:7C:8D:69:9D:75:40:D0:11:F0:E2:19:E5:4E:5B:97:BF:2C:99:6B:3E:61"
-          if ! "$APKSIGNER" verify --print-certs "release-output/$APK_NAME" | grep -F "$EXPECTED_FINGERPRINT" >/dev/null; then
+          EXPECTED_FINGERPRINT="afa5241bf13c9daa6f45ae7c8d699d7540d011f0e219e54e5b97bf2c996b3e61"
+          ACTUAL_FINGERPRINT="$("$APKSIGNER" verify --print-certs "release-output/$APK_NAME" | awk -F': ' '/certificate SHA-256 digest:/ {print $2; exit}' | tr -d ':[:space:]' | tr '[:upper:]' '[:lower:]')"
+          if [ -z "$ACTUAL_FINGERPRINT" ] || [ "$ACTUAL_FINGERPRINT" != "$EXPECTED_FINGERPRINT" ]; then
             echo "::error::APK certificate fingerprint does not match the stable release key. Stop and rotate the signing secrets before publishing."
             exit 1
           fi
+          echo "Verified release certificate fingerprint: $ACTUAL_FINGERPRINT"
           (
             cd release-output
             sha256sum "$APK_NAME" > "$APK_NAME.sha256"
@@ -95,7 +107,7 @@ jobs:
           APK_NAME: ${{ steps.metadata.outputs.apk_name }}
           NOTES_PATH: ${{ steps.metadata.outputs.notes_path }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
+          gh release create "$RELEASE_TAG" \
             "release-output/$APK_NAME" \
             "release-output/$APK_NAME.sha256" \
             --repo "$GITHUB_REPOSITORY" \
