@@ -21,7 +21,7 @@ Android Firebase 客户端配置本身不是管理员凭据，但仍不进入此
 
 - 只启用 Firebase 邮箱密码登录和 Cloud Firestore；不启用短信登录、广告或业务分析 SDK。
 - 自慰与做爱记录只通过各自 Repository 访问 Room；UI 不直接读取 Firestore。
-- Firestore 路径按 Firebase UID 隔离，规则校验所有权、字段白名单、修订递增；普通记录清除走墓碑。当前用户级规则为支持账号删除允许已登录本人物理删除自己路径下的文档，但规则层无法验证调用方是否真的处于账号删除流程——这是本人数据完整性风险而非跨账号读取风险，详见[2026-08-15 main 代码审计](docs/product/audit/2026-08-15-main-code-audit/README.md)。
+- Firestore 路径按 Firebase UID 隔离，规则校验所有权、字段白名单、修订递增；普通记录清除走墓碑，客户端物理删除被规则拒绝。账号数据物理删除只能通过要求最近重新认证、UID 匹配的 `deleteAccountData` trusted callable 完成；当前客户端记录写入通过 `writeDailyCountRecord` callable 做详情逐项校验，详见[2026-08-15 main 代码审计](docs/product/audit/2026-08-15-main-code-audit/README.md)。
 - 系统云备份与设备迁移关闭，避免个人记录被隐式复制。
 - Release Manifest 禁止明文网络；仅 Debug 构建为本机 Firebase 模拟器允许 HTTP，Debug APK 不对外分发。
 - Room 当前依赖 Android 应用沙箱、系统文件级加密、设备锁和关闭系统备份，不宣称应用层端到端加密。本轮不冒险加入 SQLCipher；引入数据库加密前必须先验证密钥恢复和无损迁移。

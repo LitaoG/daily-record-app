@@ -1,6 +1,7 @@
 ﻿package io.github.litaog.dailyrecord.core.sync
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import io.github.litaog.dailyrecord.core.database.SexRecordDetailEntity
 import io.github.litaog.dailyrecord.core.database.SexRecordEntity
 import java.time.Instant
@@ -8,25 +9,20 @@ import java.time.LocalDate
 
 internal class FirebaseSexRemoteDataSource(
     firestore: FirebaseFirestore,
+    functions: FirebaseFunctions,
     detailsProvider: suspend (ownerId: String, localDate: LocalDate) ->
         List<SexRecordDetailEntity> = { _, _ -> emptyList() },
 ) : FirebaseDailyCountRemoteDataSource<
         SexRecordEntity,
         SexRecordDetailEntity,
         RemoteSexRecord,
-        RemoteSexDetail,
     >(
         firestore = firestore,
+        functions = functions,
         detailsProvider = detailsProvider,
         collectionName = "sexRecords",
-        countFieldName = FIELD_SEX_COUNT,
         parseRecord = ::parseRemoteSexRecord,
         parseRecords = ::parseRemoteSexRecords,
-        toRemoteDetails = { details ->
-            details.map {
-                RemoteSexDetail(it.id, it.occurrenceIndex, it.startTime, it.endTime, it.feeling)
-            }
-        },
         entityId = { it.id },
         entityLocalDate = { it.localDate },
         entityCount = { it.sexCount },
@@ -36,18 +32,6 @@ internal class FirebaseSexRemoteDataSource(
         entityOwnerId = { it.ownerId },
         entityRemoteRevision = { it.remoteRevision },
         detailToMap = { detailToMap(it.id, it.occurrenceIndex, it.startTime, it.endTime, it.feeling) },
-        buildCommittedRecord = { local, stableId, stableCreatedAt, committedUpdatedAt, revision, details ->
-            RemoteSexRecord(
-                id = stableId,
-                localDate = local.localDate,
-                sexCount = local.sexCount,
-                createdAt = stableCreatedAt,
-                clientUpdatedAt = committedUpdatedAt,
-                deleted = local.isDeleted,
-                revision = revision,
-                details = details,
-            )
-        },
     ),
     SexRemoteDataSource
 

@@ -494,7 +494,12 @@ private fun MonthArrow(
             .semantics { role = Role.Button; contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronIcon(forward = forward, color = DailyRecordText, theme = theme)
+        ChevronIcon(
+            forward = forward,
+            modifier = Modifier.size(20.dp),
+            color = DailyRecordText,
+            theme = theme,
+        )
     }
 }
 

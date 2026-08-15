@@ -75,6 +75,7 @@
 
 ```powershell
 pnpm install --frozen-lockfile
+pnpm --dir functions --ignore-workspace install --frozen-lockfile
 pnpm test:docs
 pnpm test:copy
 pnpm test:release-metadata

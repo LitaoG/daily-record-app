@@ -59,7 +59,7 @@ Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm te
 - 本机模式跨冷启动保留；登录入口可显式退出本机模式。
 - 登录前本机记录无网络迁入、离线待同步、系统网络状态不变时的 Firebase 恢复、实时监听失败重连（含认证恢复后重新订阅）、迟到确认、多设备编辑/清除、不同账号隔离。
 - 持久化数据库关闭后重开，PENDING 待同步记录仍保留（进程重启后 WorkManager 可继续补偿上传）。
-- Firestore 规则的所有权、字段形状、非负次数、修订递增、墓碑和删除权限；应用的普通记录清除走墓碑，但当前用户级规则无法区分普通客户端物理删除与账号删除流程，详情见[2026-08-15 main 代码审计](product/audit/2026-08-15-main-code-audit/README.md)。
+- Firestore Rules/Functions 的所有权、字段形状、非负次数、修订递增、墓碑、详情逐项校验和删除权限；普通记录清除走墓碑，客户端物理删除应被 Rules 拒绝，账号删除走 `deleteAccountData` callable，详情见[2026-08-15 main 代码审计](product/audit/2026-08-15-main-code-audit/README.md)。
 
 ## Definition of Done
 

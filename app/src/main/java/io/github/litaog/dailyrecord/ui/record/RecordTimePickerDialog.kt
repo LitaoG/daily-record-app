@@ -197,8 +197,8 @@ private fun TimeWheelColumn(
     rowHeight: androidx.compose.ui.unit.Dp,
     surfaceTestTag: String,
     onValueChanged: (Int) -> Unit,
-    onSettlingChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
+    onSettlingChanged: (Boolean) -> Unit = {},
 ) {
     var selectedValue by remember(resetKey, valueCount) {
         mutableIntStateOf(wrapTimeWheelValue(initialValue, valueCount))

@@ -40,10 +40,10 @@ service cloud.firestore {
         && hasValidDetailList(request.resource.data.brewCount);
     }
 
-    // Details are validated end-to-end by the client and the remote parser
-    // (including minute precision and the 100 visible-character feeling cap).
-    // The field remains optional for beta.2 clients; when present, Rules keep
-    // it typed and prevent more rows than the aggregate count.
+    // Rules cannot iterate each array item. The trusted write callable validates
+    // every new-client item before writing, and the Functions write trigger
+    // removes malformed legacy documents. The field remains optional for beta.2
+    // clients; Rules still keep it typed and prevent more rows than the count.
     function hasValidDetailList(count) {
       return request.resource.data.get('details', []) is list
         && request.resource.data.get('details', []).size() <= count
@@ -78,7 +78,6 @@ service cloud.firestore {
       allow update: if signedInAs(userId)
         && hasValidHandBrewRecordShape(date)
         && preservesStableIdentity();
-      allow delete: if signedInAs(userId);
     }
 
     match /users/{userId}/sexRecords/{date} {
@@ -89,7 +88,6 @@ service cloud.firestore {
       allow update: if signedInAs(userId)
         && hasValidSexRecordShape(date)
         && preservesStableIdentity();
-      allow delete: if signedInAs(userId);
     }
   }
 }

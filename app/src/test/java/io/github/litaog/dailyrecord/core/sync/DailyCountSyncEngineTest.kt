@@ -253,7 +253,7 @@ private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, Remo
             remote.clientUpdatedAt == local.updatedAt &&
             remote.deleted == local.isDeleted
 
-    override suspend fun deleteAll(ownerId: String) {
+    suspend fun deleteAll(ownerId: String) {
         server.clear()
     }
 

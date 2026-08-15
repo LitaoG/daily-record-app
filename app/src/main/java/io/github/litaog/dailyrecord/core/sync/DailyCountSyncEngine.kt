@@ -1,7 +1,5 @@
 package io.github.litaog.dailyrecord.core.sync
 
-import io.github.litaog.dailyrecord.core.account.AccountRemoteDataStore
-
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -36,8 +34,7 @@ internal interface DailyCountSyncStore<LocalRecord, RemoteRecord> {
     ): Int
 }
 
-internal interface DailyCountRemoteDataSource<LocalRecord, RemoteRecord> :
-    AccountRemoteDataStore {
+internal interface DailyCountRemoteDataSource<LocalRecord, RemoteRecord> {
     fun observe(ownerId: String): Flow<RemoteSnapshot>
     suspend fun fetch(ownerId: String): RemoteSnapshot
     fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteRecord>

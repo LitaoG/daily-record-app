@@ -38,7 +38,8 @@
 定向 Android 测试：
 
 ```powershell
-pnpm exec firebase emulators:exec --project demo-daily-record-app --only auth,firestore `
+pnpm --dir functions --ignore-workspace install --frozen-lockfile
+pnpm exec firebase emulators:exec --project demo-daily-record-app --only auth,firestore,functions `
   ".\gradlew.bat connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=完整测试类名 --no-parallel"
 ```
 

@@ -14,11 +14,9 @@ class DailyRecordSyncSchedulerTest {
     }
 
     @Test
-    fun localChangeQueuesFollowUpWorkInsteadOfBeingDroppedByRunningWork() {
-        assertEquals(
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
-            DailyRecordSyncScheduler.workPolicy,
-        )
+    fun localChangeReplacesPendingWorkDuringDebounceWindow() {
+        assertEquals(ExistingWorkPolicy.REPLACE, DailyRecordSyncScheduler.workPolicy)
+        assertEquals(750L, DailyRecordSyncScheduler.SYNC_DEBOUNCE_MILLIS)
     }
 
     @Test

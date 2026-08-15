@@ -132,7 +132,13 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Calendar) },
-                icon = { color -> CalendarGlyph(color, theme = colors.brandIconTheme) },
+                icon = { color ->
+                    CalendarGlyph(
+                        color,
+                        modifier = Modifier.size(24.dp).offset(y = 2.dp),
+                        theme = colors.brandIconTheme,
+                    )
+                },
             )
             BottomDestination(
                 label = AppCopy.NavigationBar.statistics,
@@ -140,7 +146,13 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Statistics) },
-                icon = { color -> StatisticsGlyph(color, theme = colors.brandIconTheme) },
+                icon = { color ->
+                    StatisticsGlyph(
+                        color,
+                        modifier = Modifier.size(24.dp),
+                        theme = colors.brandIconTheme,
+                    )
+                },
             )
         }
     }
@@ -186,9 +198,7 @@ private fun BottomDestination(
 @Composable
 internal fun CalendarGlyph(
     color: Color,
-    modifier: Modifier = Modifier
-        .size(24.dp)
-        .offset(y = 2.dp),
+    modifier: Modifier = Modifier,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
     BrandIcon(
@@ -201,7 +211,7 @@ internal fun CalendarGlyph(
 @Composable
 internal fun StatisticsGlyph(
     color: Color,
-    modifier: Modifier = Modifier.size(24.dp),
+    modifier: Modifier = Modifier,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
     BrandIcon(
@@ -214,7 +224,7 @@ internal fun StatisticsGlyph(
 @Composable
 internal fun ChevronIcon(
     forward: Boolean,
-    modifier: Modifier = Modifier.size(20.dp),
+    modifier: Modifier = Modifier,
     color: Color = DailyRecordText,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
@@ -227,7 +237,7 @@ internal fun ChevronIcon(
 
 @Composable
 internal fun BackChevronIcon(
-    modifier: Modifier = Modifier.size(20.dp),
+    modifier: Modifier = Modifier,
     color: Color = DailyRecordText,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
@@ -236,7 +246,7 @@ internal fun BackChevronIcon(
 
 @Composable
 fun HandBrewIcon(
-    modifier: Modifier = Modifier.size(36.dp),
+    modifier: Modifier = Modifier,
     tint: Color? = null,
 ) {
     Image(
@@ -250,7 +260,7 @@ fun HandBrewIcon(
 
 @Composable
 fun SexIcon(
-    modifier: Modifier = Modifier.size(36.dp),
+    modifier: Modifier = Modifier,
     tint: Color? = null,
 ) {
     Image(

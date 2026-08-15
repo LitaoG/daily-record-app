@@ -1,4 +1,4 @@
-# 2026-08-15 `main` 代码、安全与运行时审计
+# 2026-08-15 `main` 代码、安全与运行时审计（修复复核）
 
 ## 基线与范围
 
@@ -9,13 +9,13 @@
 
 ## 结论摘要
 
-当前 `main` 可以构建、安装并在测试模拟器启动，核心本机日历与统计流程可用；没有发现已证实的跨账号读取、明文网络配置（Release）或持续性内存泄漏。仍有以下发布前应处理的风险：
+当前修复分支已把原报告中的 P1/P2 可执行项落地并完成验证：没有发现已证实的跨账号读取、Release 明文网络配置或持续性内存泄漏。剩余告警是需要单独做兼容性验证的 SDK/依赖升级建议，不是本轮新增漏洞。
 
-1. **P1：Firestore 物理删除权限无法区分“账号删除”和普通客户端删除。** `firestore.rules` 对本人路径直接 `allow delete`，而普通清除的产品约定是写墓碑。当前客户端调用路径遵守约定，但任何持有该账号有效会话的客户端也可以直接物理删除本人文档，其他设备只能通过监听/重建逻辑自愈，不能恢复被删除内容。应把账号删除迁移到可信后端/受控 callable 流程，或设计规则可验证的删除协议；不能只在客户端约束。
-2. **P1：云端 `details` 条目仍没有由规则逐项校验。** Rules 已限制日期形状，并禁止墓碑保留详情；为兼容 beta.2 旧客户端，`details` 字段在 Rules 边界保持可选，缺失时解析器按空列表处理。Firestore Rules 不能逐项遍历数组，`RemoteDetailCodec` 仍是客户端/解析器边界。持有本人会话的恶意或旧客户端仍可能写入形状错误、超大内容或非法日期文档，之后被解析器拒绝并计入 rejected。聚合次数仍允许 `Int.MAX_VALUE`，但 `RecordDetailsDraft` 现在最多物化 512 行，超大次数只保留聚合值并保持详情折叠，避免由远端数据触发 OOM。残余风险是服务端无法阻止坏详情文档落库，需后端协议或可验证的细粒度规则。
-3. **P2：同步的重复 fetch 与 Room N+1 已在本分支消除，详情写放大仍存在。** `DailyCountSyncEngine.syncOnce()` 只有在存在 pending 上传时才做第二次确认拉取；`RoomDailyCountSyncStoreBase.applyRemoteRecords()` 每个快照先一次性加载本地记录，再按日期在内存中合并。当前仍对每条变化逐条删除/写入详情，记录量增长后会放大 SQLite 往返和详情写入；可继续按变更集合批量删除/插入并做基准验证。
-4. **P2：WorkManager 调度可能形成串接队列。** 本地每次保存都会调度唯一工作，当前 `APPEND_OR_REPLACE` 能保留期间产生的变更，但高频编辑会增长任务链；应加入去抖/合并策略，并用测试覆盖“保存风暴”与进程重启。
-5. **P2：代码维护成本偏高。** `RecordScreen.kt`、`DateNavigationDialog.kt`、统计卡片和同步屏障类过大；Lint 还报告 Modifier 参数顺序/默认值、`mutableStateOf(Int)` 装箱、重复资源以及 SDK/依赖升级提示。建议按稳定边界拆分，并在独立提交中处理 Lint，不把大规模机械重构和安全修复混在一起。
+1. **P1 物理删除已修复。** `firestore.rules` 已移除客户端 `allow delete`；账号删除改为 `deleteAccountData` trusted callable，由 Admin SDK 按 UID 分批删除两个集合，并要求登录态、UID 匹配和最近 5 分钟内的重新认证。普通记录仍只能通过客户端写墓碑。Android/Firestore Emulator 已验证规则拒绝客户端物理删除，账号删除 callable 能清空两个集合。
+2. **P1 `details` 逐项校验已移到可信写入协议。** 当前 Android 远端写入统一调用 `writeDailyCountRecord` callable；服务端事务逐项校验详情键集合、ID/occurrenceIndex 唯一性、次数边界、时间格式与顺序、感受字段 100 个 Unicode code point 上限、墓碑空详情和 revision/id 并发基线。为兼容 beta.2，Rules 仍允许旧文档省略 `details`；旧客户端直接写入的坏文档由 Functions trigger 在版本不变时删除，因此存在短暂落库窗口但不会长期被应用接受。规则脚本和 connected Android 测试均覆盖该边界。
+3. **P2 详情写放大已收敛。** `RoomDailyCountRecordRepository` 只加载一次现有详情，按 occurrence 集合计算过期 ID，使用 DAO 的批量 `IN` 删除和一次 `upsertAll`；缩减次数也只删除越界详情。同步引擎的重复确认读取和远端快照 N+1 查询同时保持已修复状态。
+4. **P2 WorkManager 串接队列已改为去抖。** 唯一工作改用 `REPLACE`，并设置 750ms 初始延迟；保存风暴会合并为一个活跃工作项。测试覆盖 20 次连续调度，Android Worker suite 通过。
+5. **P2 维护性问题已完成安全清理。** 已按稳定边界拆出 `RecordDetailsComponents.kt` 与 `DateNavigationWheelComponents.kt`，并处理 Modifier 默认参数/顺序、`mutableIntStateOf` 装箱、可保留的 `UseKtx` 告警、重复品牌图标和重复 launcher 资源；没有进行大范围机械重构。同步删除状态机仍保持单一事实源，避免拆分后引入新的状态竞态。当前仍有 5 条 Lint 升级建议：compile/target SDK 37、`core-ktx` 1.19、Lifecycle 2.11、Activity Compose 1.13，需单独验证后升级。
 
 ## 本分支已处理
 
@@ -23,14 +23,16 @@
 - 找回密码和账号删除弹窗的进行中/成功/错误状态不再保存到 SavedState，避免进程恢复后显示过期状态或按钮永久锁定。
 - 登录、找回密码、账号删除回调统一通过保留取消语义的 `runCatchingPreservingCancellation` 包装；非取消异常会回到错误文案并复位 busy 状态，协程取消不会被吞掉。
 - Firestore 规则限制 `localDate` 的月日形状，并禁止 `deleted` 墓碑携带详情；`details` 对 beta.2 旧客户端保持可选，新客户端写入时仍受类型和长度规则约束，规则测试覆盖了兼容缺失字段、非法日期和墓碑数据残留。
+- Firestore 客户端物理删除已被规则拒绝；账号删除和当前客户端的记录写入分别通过 `deleteAccountData`、`writeDailyCountRecord` callable 完成。Functions trigger 会对旧客户端直写的详情文档做版本安全的坏文档清理。
 - 详情草稿保留真实 `occurrenceIndex`，修复稀疏云端详情在下一次保存时被重排的问题；对超过 512 次的聚合记录不再按次数分配 UI 行，且计数保存会保留当前次数范围内未进入编辑器的详情。
 - 详情草稿 Saver 明确区分当前五单元格式和旧四单元格式，进程恢复不会把旧版 `expanded` 标志误当成 `initialized`；512 行边界及“已有详情会保留”的用户文案已同步到产品契约。
 - 同步引擎在无 pending 工作时跳过重复的全量确认读取；Room 远端快照应用改为每个快照一次本地记录加载，去除按远端记录的 N+1 查询。
 - Firestore retry 错误码集合改为惰性初始化，保留热路径复用且避免 JVM 测试仅因加载同步类就触发 Firebase 静态初始化；远端详情解析也改为显式非空校验，去除生产解析路径的 `!!`。
+- Room 详情保存改为按变更集合批量删除/写入；WorkManager 唯一任务改为 750ms 去抖的 `REPLACE` 策略，避免保存风暴形成串接队列。
 
 ## 安全基线中已确认正常的部分
 
-- Firestore 读取、创建和更新按 UID 路径隔离，字段白名单、合法日期形状、次数非负、稳定 ID、服务器时间戳、revision 递增以及墓碑详情为空已有规则覆盖；`details` 对 beta.2 旧客户端可省略、对新客户端若存在则校验类型和长度，规则仍不能逐项遍历条目。
+- Firestore 读取、创建和更新按 UID 路径隔离，字段白名单、合法日期形状、次数非负、稳定 ID、服务器时间戳、revision 递增以及墓碑详情为空已有规则覆盖；客户端物理删除被规则拒绝。新客户端详情逐项校验由 callable 完成，旧客户端直写由版本安全的 Functions trigger 清理；Rules 仍只对兼容字段做列表/长度边界校验。
 - Release Manifest 禁止明文流量；Debug 只对本地 Firebase Emulator 覆盖 HTTP。
 - Android Manifest 关闭系统备份并排除数据库/偏好数据；仓库没有发现被 Git 跟踪的 `google-services.json`、签名配置、数据库或口令文件。
 - 找回密码对不存在邮箱使用统一成功语义，降低账号枚举风险。
@@ -47,17 +49,20 @@
 | 检查 | 结果 |
 |---|---|
 | `testDebugUnitTest` | 39 个 suite，228 tests，0 failures，0 errors |
-| `lintDebug`、`assembleDebug`、`assembleDebugAndroidTest` | 通过；0 errors、19 warnings、1 hint |
+| `lintDebug` | 通过；0 errors，仅 5 条 SDK/依赖升级建议 |
+| `assembleDebug`、`assembleDebugAndroidTest` | 通过 |
 | 文档/文案/Release metadata Node tests | 8/8 通过 |
-| Firestore rules emulator | 通过；包含所有权、字段形状、revision 和删除路径断言 |
-| 本分支 Firebase emulator connected Android | 184 tests（183 执行、1 个生产 Firebase smoke test 跳过），0 failures；通过 `test:android-connected:windows` 启动 Auth/Firestore emulator |
+| Firestore rules + Functions emulator | 通过；包含所有权、字段形状、坏详情 trigger 清理和客户端物理删除拒绝 |
+| `FirebaseEmulatorIntegrationTest` | 3/3 通过；callable 写入、账号物理删除和缺失文档重建 |
+| `DailyRecordSyncWorkerTest` | 7/7 通过；包含保存风暴单活跃工作项和云端文档消失后的重建 |
+| 本分支 Firebase emulator connected Android | 186 个测试项（185 个执行、1 个生产 Firebase smoke test 跳过），0 failures；通过 `test:android-connected:windows` 启动 Auth/Firestore/Functions emulator |
 | 本分支 `AuthScreenTest` | 13 tests，0 failures；首次尝试因模拟器掉线中止，换用稳定 API 34 AVD 后重跑通过 |
 | 手动启动 | `io.github.litaog.dailyrecord/.MainActivity` 启动成功；日历/统计 UI 树可见；无应用 Fatal Exception |
 
-## 建议执行顺序
+## 后续边界
 
-1. 先解决 Firestore 物理删除协议和 `details` 逐项服务端校验；这两项直接影响数据完整性。
-2. 再做详情变更的批量合并与 WorkManager 调度去抖，并用基准数据验证网络读取、Room 查询和内存峰值。
-3. 最后按文件边界拆分 Compose/同步大文件，逐项清理 Lint warnings；升级 compile/target SDK 和依赖时单独跑兼容性与设备回归。
+1. 单独建立 SDK/AndroidX 升级变更，完成 compile/target SDK 37、`core-ktx` 1.19、Lifecycle 2.11 和 Activity Compose 1.13 的兼容性与设备回归。
+2. 若要进一步优化统计页，应在真实长列表数据和 release/profileable 构建上补充基准；本轮只根据静态生命周期检查和模拟器烟测判断没有已证实泄漏。
+3. 若未来彻底淘汰 beta.2 客户端，可把 Rules 的 `details` 可选兼容分支收紧为必填；在此之前，Functions trigger 是旧协议的隔离网。
 
 旧的同步隐私 Goal 和历史审计目录保留为当时证据，不应再当作当前未修复结论；当前状态以本报告、代码、测试和最新公共 `main` 为准。

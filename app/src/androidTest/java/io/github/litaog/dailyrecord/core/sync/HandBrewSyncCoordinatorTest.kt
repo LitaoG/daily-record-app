@@ -799,7 +799,7 @@ private class FakeRemoteDataSource(
             committed
         }
 
-    override suspend fun deleteAll(ownerId: String) {
+    suspend fun deleteAll(ownerId: String) {
         values.value = emptyMap()
     }
 

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -345,7 +346,12 @@ private fun PeriodArrow(
             },
         contentAlignment = Alignment.Center,
     ) {
-        ChevronIcon(forward = forward, color = DailyRecordText, theme = theme)
+        ChevronIcon(
+            forward = forward,
+            modifier = Modifier.size(20.dp),
+            color = DailyRecordText,
+            theme = theme,
+        )
     }
 }
 

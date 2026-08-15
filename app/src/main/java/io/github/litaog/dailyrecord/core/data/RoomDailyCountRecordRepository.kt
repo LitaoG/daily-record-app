@@ -138,34 +138,45 @@ internal abstract class RoomDailyCountRecordRepository<T : DailyCountRecord, TD,
             "$recordLabel detail occurrence index must be within the saved count."
         }
         val existingByOccurrence = detailDao.getByDate(ownerId, saved.localDate)
-            .associateBy { it.toDetailModel().occurrenceIndexOf() }
+            .map { it.toDetailModel() }
+            .associateBy { it.occurrenceIndexOf() }
+        val incomingOccurrences = details.map { it.occurrenceIndexOf() }.toSet()
+        val staleIds = existingByOccurrence.values
+            .asSequence()
+            .filterNot { it.occurrenceIndexOf() in incomingOccurrences }
+            .map { it.idOf() }
+            .toList()
+        if (staleIds.isNotEmpty()) {
+            detailDao.deleteByOwnerDateAndIds(ownerId, saved.localDate, staleIds)
+        }
         val normalized = details.map { detail ->
             val existing = existingByOccurrence[detail.occurrenceIndexOf()]
             // createdAt is the first-creation timestamp and must never move
             // forward on later edits: keep the stored value for existing
             // details and only take the passed-in value for new ones.
-            val createdAt = existing?.toDetailModel()?.createdAtOf() ?: detail.createdAtOf()
+            val createdAt = existing?.createdAtOf() ?: detail.createdAtOf()
             val updatedAt = maxOf(
                 detail.updatedAtOf(),
                 createdAt,
-                existing?.toDetailModel()?.updatedAtOf()?.nextRecordTimestamp() ?: detail.updatedAtOf(),
+                existing?.updatedAtOf()?.nextRecordTimestamp() ?: detail.updatedAtOf(),
             )
             detail.withIdentity(
-                id = existing?.toDetailModel()?.idOf() ?: detail.idOf(),
+                id = existing?.idOf() ?: detail.idOf(),
                 createdAt = createdAt,
                 updatedAt = updatedAt,
             ).toDetailEntity(ownerId = ownerId, createdAt = createdAt, updatedAt = updatedAt)
         }
-        detailDao.deleteByOwnerDate(ownerId, saved.localDate)
         detailDao.upsertAll(normalized)
     }
 
     private suspend fun pruneDetailsToCount(localDate: LocalDate, count: Int) {
         val existing = detailDao.getByDate(ownerId, localDate)
-        val kept = existing.filter { it.toDetailModel().occurrenceIndexOf() <= count }
-        if (kept.size != existing.size) {
-            detailDao.deleteByOwnerDate(ownerId, localDate)
-            detailDao.upsertAll(kept)
+        val staleIds = existing
+            .map { it.toDetailModel() }
+            .filter { it.occurrenceIndexOf() > count }
+            .map { it.idOf() }
+        if (staleIds.isNotEmpty()) {
+            detailDao.deleteByOwnerDateAndIds(ownerId, localDate, staleIds)
         }
     }
 

@@ -1,6 +1,6 @@
 # Firebase 配置与运维
 
-最后复核：2026-08-08
+最后复核：2026-08-15
 
 ## 已建立的生产资源
 
@@ -8,7 +8,8 @@
 - Android 包名：`io.github.litaog.dailyrecord`
 - Authentication：仅启用 Email/Password
 - Cloud Firestore：Standard、Native、生产模式、`asia-east1`
-- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源；同时覆盖 `handBrewRecords` 与 `sexRecords`、并保留账号删除权限的当前规则已于 2026-07-28 部署到生产项目
+- Firestore 规则：仓库根目录 `firestore.rules` 是事实来源，同时覆盖 `handBrewRecords` 与 `sexRecords`；客户端物理删除被拒绝
+- Cloud Functions：仓库 `functions/` 是 callable 写入、账号数据删除和旧协议坏文档清理的事实来源；生产部署前必须先完成 Functions 与 Rules 的同版本发布
 
 ## 密码重置邮件
 
@@ -30,20 +31,21 @@
 
 ```powershell
 pnpm install --frozen-lockfile
+pnpm --dir functions --ignore-workspace install --frozen-lockfile
 pnpm test:firestore-rules
 ```
 
 默认 Firebase alias 故意保持 `demo-daily-record-app`，避免测试或误操作写入生产。生产 alias 是 `production`。
 
-## 生产规则发布
+## 生产 Rules 与 Functions 发布
 
 先运行规则测试并检查差异，再显式指定生产项目：
 
 ```powershell
-pnpm exec firebase deploy --only firestore:rules --project daily-record-hand-brew
+pnpm exec firebase deploy --only functions,firestore:rules --project daily-record-hand-brew
 ```
 
-不得把 `default` alias 改成生产项目。当前机器若 Firebase CLI OAuth 回调不可用，可在 Firebase 控制台 Rules 页粘贴同一文件并发布，发布后必须回读规则历史和正文。
+不得把 `default` alias 改成生产项目。Functions 发布需要已配置生产项目权限和运行时；如果只在控制台发布 Rules 而没有同步发布 Functions，新的 Android 云写入和账号删除流程不能视为完成。当前机器若 Firebase CLI OAuth 回调不可用，可在 Firebase 控制台 Rules 页粘贴同一文件并发布，但 Functions 仍需通过受控 CI/CLI 发布，发布后必须回读 Rules 历史、Functions 版本和正文。
 
 ## 显式生产烟雾测试
 

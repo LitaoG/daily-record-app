@@ -171,6 +171,7 @@ internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionS
             emptySet(),
         ).orEmpty().toSet()
 
+    @Suppress("UseKtx")
     private fun writeJournalLocked(
         entries: Map<String, DeletionJournalEntry>,
         clearLegacyKeys: Boolean = false,
