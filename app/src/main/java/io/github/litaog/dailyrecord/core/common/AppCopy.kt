@@ -3,6 +3,7 @@ package io.github.litaog.dailyrecord.core.common
 import io.github.litaog.dailyrecord.core.model.MAX_RECORD_DETAIL_FEELING_CHARACTERS
 import java.time.LocalDate
 import java.time.YearMonth
+import java.util.Locale
 
 /**
  * Single source for user-facing copy used by both the UI and sync layer.
@@ -553,5 +554,17 @@ internal object AppCopy {
     object Components {
         const val decrease = "减少一次"
         const val increase = "增加一次"
+
+        /** Joins TalkBack-visible parts with the app's fixed semantics separator. */
+        fun joinSemantics(vararg parts: String): String = parts.joinToString(SEMANTICS_SEPARATOR)
+
+        fun joinSemantics(parts: Iterable<String>): String =
+            parts.joinToString(SEMANTICS_SEPARATOR)
     }
+
+    /** Locale used for user-visible date/weekday formatting. */
+    val DISPLAY_LOCALE: Locale = Locale.SIMPLIFIED_CHINESE
+
+    /** TalkBack-visible list separator used across app semantic descriptions. */
+    const val SEMANTICS_SEPARATOR = "，"
 }

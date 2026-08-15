@@ -312,7 +312,10 @@ internal fun StatisticsSurface(
 }
 
 private fun quarterSummaryDescription(year: YearStatistics, total: Long): String =
-    AppCopy.Statistics.totalCountAccessibility(total, year.quarters.joinToString("，") { quarter ->
-        val percentage = quarter.totalCount * 100.0 / total
-        "${AppCopy.Statistics.quarterLabel(quarter.quarter)} ${AppCopy.Statistics.percentage(percentage)}"
-    })
+    AppCopy.Statistics.totalCountAccessibility(
+        total,
+        AppCopy.Components.joinSemantics(year.quarters.map { quarter ->
+            val percentage = quarter.totalCount * 100.0 / total
+            "${AppCopy.Statistics.quarterLabel(quarter.quarter)} ${AppCopy.Statistics.percentage(percentage)}"
+        }),
+    )

@@ -1,4 +1,4 @@
-﻿package io.github.litaog.dailyrecord.ui.navigation
+package io.github.litaog.dailyrecord.ui.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,7 +33,6 @@ import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
-import java.util.Locale
 
 internal enum class DateNavigationSelection { Date, Month, Year }
 
@@ -138,7 +137,7 @@ private fun SelectedDateSummary(
     date: LocalDate,
     colors: RecordModuleColorTokens,
 ) {
-    val locale = Locale.SIMPLIFIED_CHINESE
+    val locale = AppCopy.DISPLAY_LOCALE
     val weekday = date.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
     val largeText = LocalDensity.current.fontScale >= 1.4f
     Column(

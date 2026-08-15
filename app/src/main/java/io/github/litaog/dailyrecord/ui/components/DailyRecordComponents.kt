@@ -42,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -659,7 +660,7 @@ fun StatisticRow(
             )
             .padding(horizontal = 12.dp, vertical = 10.dp)
             .semantics(mergeDescendants = true) {
-                contentDescription = "$label，$countText，$daysText"
+                contentDescription = AppCopy.Components.joinSemantics(label, countText, daysText)
             },
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -702,3 +703,37 @@ internal fun dailyRecordFieldColors(): TextFieldColors = OutlinedTextFieldDefaul
     unfocusedContainerColor = DailyRecordSurface,
     disabledContainerColor = DailyRecordSurface,
 )
+
+/**
+ * Shared chevron navigation button for calendar months and statistics
+ * periods. The 48dp touch target, disabled alpha and 20dp chevron are the
+ * single source of truth for both surfaces.
+ */
+@Composable
+internal fun IconArrowButton(
+    forward: Boolean,
+    description: String,
+    enabled: Boolean,
+    theme: BrandIconTheme,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .sizeIn(
+                minWidth = DailyRecordSizes.MinimumTouchTarget,
+                minHeight = DailyRecordSizes.MinimumTouchTarget,
+            )
+            .clip(CircleShape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .alpha(if (enabled) 1f else .3f)
+            .semantics { role = Role.Button; contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        ChevronIcon(
+            forward = forward,
+            modifier = Modifier.size(20.dp),
+            color = DailyRecordText,
+            theme = theme,
+        )
+    }
+}
