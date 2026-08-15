@@ -111,7 +111,7 @@ jobs:
             "release-output/$APK_NAME" \
             "release-output/$APK_NAME.sha256" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "$GITHUB_REF_NAME" \
+            --title "$RELEASE_TAG" \
             --notes-file "$NOTES_PATH" \
             --prerelease \
             --verify-tag
