@@ -198,9 +198,9 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
                     ),
                 )
             }
-            recoveryDetails.forEach { recoveryDetail ->
-                detailDao.upsertAll(listOf(recoveryDetail.withPromotedLocalIdentity()))
-            }
+            detailDao.upsertAll(
+                recoveryDetails.map { it.withPromotedLocalIdentity() },
+            )
             dao.deleteOwnerCache(recoveryOwner)
             detailDao.deleteOwnerCache(recoveryOwner)
         }

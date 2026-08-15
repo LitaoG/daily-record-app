@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,13 +37,10 @@ import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellatio
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.components.dailyRecordFieldColors
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -141,21 +137,7 @@ internal fun PasswordResetDialog(
                     ),
                     keyboardActions = KeyboardActions(onDone = { submit() }),
                     shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = DailyRecordText,
-                        unfocusedTextColor = DailyRecordText,
-                        disabledTextColor = DailyRecordTextMuted,
-                        focusedBorderColor = DailyRecordDefaultAccent,
-                        unfocusedBorderColor = DailyRecordDivider,
-                        disabledBorderColor = DailyRecordDivider,
-                        focusedLabelColor = DailyRecordDefaultAccent,
-                        unfocusedLabelColor = DailyRecordTextMuted,
-                        disabledLabelColor = DailyRecordTextMuted,
-                        cursorColor = DailyRecordDefaultAccent,
-                        focusedContainerColor = DailyRecordSurface,
-                        unfocusedContainerColor = DailyRecordSurface,
-                        disabledContainerColor = DailyRecordSurface,
-                    ),
+                    colors = dailyRecordFieldColors(),
                 )
                 if (stackActions) {
                     Column(

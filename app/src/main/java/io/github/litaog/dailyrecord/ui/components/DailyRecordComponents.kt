@@ -33,8 +33,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -673,3 +675,20 @@ fun StatisticRow(
         )
     }
 }
+
+@Composable
+internal fun dailyRecordFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = DailyRecordText,
+    unfocusedTextColor = DailyRecordText,
+    disabledTextColor = DailyRecordTextMuted,
+    focusedBorderColor = DailyRecordDefaultAccent,
+    unfocusedBorderColor = DailyRecordDivider,
+    disabledBorderColor = DailyRecordDivider,
+    focusedLabelColor = DailyRecordDefaultAccent,
+    unfocusedLabelColor = DailyRecordTextMuted,
+    disabledLabelColor = DailyRecordTextMuted,
+    cursorColor = DailyRecordDefaultAccent,
+    focusedContainerColor = DailyRecordSurface,
+    unfocusedContainerColor = DailyRecordSurface,
+    disabledContainerColor = DailyRecordSurface,
+)

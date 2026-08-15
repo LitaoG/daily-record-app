@@ -286,7 +286,7 @@ internal fun Throwable.isRetryableRemoteObservation(): Boolean =
             )
     }
 
-internal fun isRetryableFirebaseAuthCode(code: String): Boolean = code in setOf(
+private val RETRYABLE_FIREBASE_AUTH_CODES = setOf(
     "ERROR_NETWORK_REQUEST_FAILED",
     "ERROR_TOO_MANY_REQUESTS",
     "ERROR_USER_TOKEN_EXPIRED",
@@ -294,6 +294,9 @@ internal fun isRetryableFirebaseAuthCode(code: String): Boolean = code in setOf(
     "ERROR_ID_TOKEN_REVOKED",
     "ERROR_INTERNAL_ERROR",
 )
+
+internal fun isRetryableFirebaseAuthCode(code: String): Boolean =
+    code in RETRYABLE_FIREBASE_AUTH_CODES
 
 internal fun Throwable.isNetworkRelatedSyncFailure(): Boolean =
     syncFailureKind() == SyncFailureKind.Network

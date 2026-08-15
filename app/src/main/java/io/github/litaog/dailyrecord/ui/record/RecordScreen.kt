@@ -132,7 +132,7 @@ internal fun RecordScreen(
 ) = DailyCountRecordScreen(
     date = date,
     today = today,
-    controller = HandBrewModuleController(repository),
+    controller = remember(repository) { HandBrewModuleController(repository) },
     moduleSpec = HandBrewModuleSpec,
     monthRecords = monthRecords.map(HandBrewRecord::asDailyCountEntry),
     onBack = onBack,
@@ -174,7 +174,7 @@ internal fun DailyCountRecordScreen(
     var showDiscardDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var showRemoveDetailDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var errorMessage by remember(date) { mutableStateOf<String?>(null) }
-    var timePickerRequest by remember { mutableStateOf<TimePickerRequest?>(null) }
+    var timePickerRequest by remember(date) { mutableStateOf<TimePickerRequest?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val editable = date <= today

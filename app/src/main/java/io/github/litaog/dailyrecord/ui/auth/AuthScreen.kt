@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.components.dailyRecordFieldColors
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
@@ -92,21 +92,7 @@ internal fun AuthScreen(
     val validationError = remember(mode, email, password, confirmPassword) {
         validateCredentials(mode, email, password, confirmPassword)
     }
-    val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = DailyRecordText,
-        unfocusedTextColor = DailyRecordText,
-        disabledTextColor = DailyRecordTextMuted,
-        focusedBorderColor = DailyRecordDefaultAccent,
-        unfocusedBorderColor = DailyRecordDivider,
-        disabledBorderColor = DailyRecordDivider,
-        focusedLabelColor = DailyRecordDefaultAccent,
-        unfocusedLabelColor = DailyRecordTextMuted,
-        disabledLabelColor = DailyRecordTextMuted,
-        cursorColor = DailyRecordDefaultAccent,
-        focusedContainerColor = DailyRecordSurface,
-        unfocusedContainerColor = DailyRecordSurface,
-        disabledContainerColor = DailyRecordSurface,
-    )
+    val fieldColors = dailyRecordFieldColors()
     val submit: () -> Unit = submit@{
         if (!productionConfigured || busy || validationError != null) return@submit
         busy = true
@@ -128,10 +114,12 @@ internal fun AuthScreen(
         onBack?.invoke()
     }
 
+    val backdropBrush = remember { dailyRecordBackdropBrush(HandBrewColorTokens) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(dailyRecordBackdropBrush(HandBrewColorTokens))
+            .background(backdropBrush)
             .verticalScroll(rememberScrollState())
             .imePadding()
             .padding(horizontal = 24.dp, vertical = 24.dp)

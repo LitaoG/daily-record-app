@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +47,7 @@ import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.components.dailyRecordFieldColors
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -240,21 +240,7 @@ private fun DeletionChoiceCard(
 }
 
 @Composable
-private fun deletionFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = DailyRecordText,
-    unfocusedTextColor = DailyRecordText,
-    disabledTextColor = DailyRecordTextMuted,
-    focusedBorderColor = DailyRecordDefaultAccent,
-    unfocusedBorderColor = DailyRecordDivider,
-    disabledBorderColor = DailyRecordDivider,
-    focusedLabelColor = DailyRecordDefaultAccent,
-    unfocusedLabelColor = DailyRecordTextMuted,
-    disabledLabelColor = DailyRecordTextMuted,
-    cursorColor = DailyRecordDefaultAccent,
-    focusedContainerColor = DailyRecordSurface,
-    unfocusedContainerColor = DailyRecordSurface,
-    disabledContainerColor = DailyRecordSurface,
-)
+private fun deletionFieldColors() = dailyRecordFieldColors()
 
 internal fun accountDeletionErrorMessage(error: Throwable): String {
     if (error is AccountDeletionAuthPendingException) {
