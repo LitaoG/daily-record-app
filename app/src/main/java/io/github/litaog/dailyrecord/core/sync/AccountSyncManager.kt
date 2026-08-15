@@ -274,17 +274,24 @@ internal fun Throwable.isRetryableRemoteObservation(): Boolean =
         (cause is FirebaseAuthException && isRetryableFirebaseAuthCode(cause.errorCode)) ||
             cause is FirebaseNetworkException ||
             cause is IOException ||
-            cause is FirebaseFirestoreException && cause.code in setOf(
-                FirebaseFirestoreException.Code.ABORTED,
-                FirebaseFirestoreException.Code.CANCELLED,
-                FirebaseFirestoreException.Code.DEADLINE_EXCEEDED,
-                FirebaseFirestoreException.Code.INTERNAL,
-                FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED,
-                FirebaseFirestoreException.Code.UNAVAILABLE,
-                FirebaseFirestoreException.Code.UNKNOWN,
-                FirebaseFirestoreException.Code.UNAUTHENTICATED,
-            )
+            cause is FirebaseFirestoreException && cause.code in RETRYABLE_FIRESTORE_CODES
     }
+
+private val RETRYABLE_FIRESTORE_CODES: Set<FirebaseFirestoreException.Code> by lazy {
+    // Keep Firebase enum initialization off the file class initializer. JVM
+    // tests use Firebase exceptions as optional inputs and should not load the
+    // Firestore static state merely to classify IOException failures.
+    setOf(
+        FirebaseFirestoreException.Code.ABORTED,
+        FirebaseFirestoreException.Code.CANCELLED,
+        FirebaseFirestoreException.Code.DEADLINE_EXCEEDED,
+        FirebaseFirestoreException.Code.INTERNAL,
+        FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED,
+        FirebaseFirestoreException.Code.UNAVAILABLE,
+        FirebaseFirestoreException.Code.UNKNOWN,
+        FirebaseFirestoreException.Code.UNAUTHENTICATED,
+    )
+}
 
 private val RETRYABLE_FIREBASE_AUTH_CODES = setOf(
     "ERROR_NETWORK_REQUEST_FAILED",

@@ -31,6 +31,7 @@ const validRecord = {
   revision: 1,
   schemaVersion: 1,
   serverUpdatedAt: serverTimestamp(),
+  details: [],
 };
 const sexRecordPath = "users/user-a/sexRecords/2026-07-16";
 const validSexRecord = {
@@ -43,6 +44,7 @@ const validSexRecord = {
   revision: 1,
   schemaVersion: 1,
   serverUpdatedAt: serverTimestamp(),
+  details: [],
 };
 
 try {
@@ -52,6 +54,29 @@ try {
   const record = doc(userA, recordPath);
 
   await assertSucceeds(setDoc(record, validRecord));
+  const { details: _ignoredDetails, ...recordWithoutDetails } = validRecord;
+  await assertFails(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-15"), {
+      ...recordWithoutDetails,
+      localDate: "2026-07-15",
+    }),
+  );
+  await assertFails(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-14"), {
+      ...validRecord,
+      localDate: "2026-07-14",
+      deleted: true,
+      details: [
+        {
+          id: "detail-1",
+          occurrenceIndex: 1,
+          startTime: null,
+          endTime: null,
+          feeling: "",
+        },
+      ],
+    }),
+  );
   await assertSucceeds(getDoc(record));
   await assertFails(getDoc(doc(userB, recordPath)));
   await assertFails(getDoc(doc(anonymous, recordPath)));
@@ -88,6 +113,12 @@ try {
     setDoc(doc(userA, "users/user-a/handBrewRecords/not-a-date"), {
       ...validRecord,
       localDate: "not-a-date",
+    }),
+  );
+  await assertFails(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-00-20"), {
+      ...validRecord,
+      localDate: "2026-00-20",
     }),
   );
   await assertFails(

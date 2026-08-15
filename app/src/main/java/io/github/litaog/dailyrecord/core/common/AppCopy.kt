@@ -330,6 +330,8 @@ internal object AppCopy {
         const val detailDiscardMessage = "这次已填写的时间或感受会一起移除。"
         const val detailConfirmRemove = "移除详情"
 
+        const val detailEntryUnavailable = "详情过多，当前只保留总次数"
+
         fun detailTimeDescription(occurrence: Int, label: String, value: String): String =
             "${detailOccurrence(occurrence)}，$label，$value"
 

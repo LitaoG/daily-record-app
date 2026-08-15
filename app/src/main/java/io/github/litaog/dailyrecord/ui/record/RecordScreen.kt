@@ -203,8 +203,17 @@ internal fun DailyCountRecordScreen(
     val hasUnsavedChanges = dataReady && (countDraft.hasChanges || detailsDraft.hasChanges)
     val canSave = dataReady && countDraft.initialized && (record == null || hasUnsavedChanges)
     val applyCount = { nextCount: Int ->
+        val previousCount = countDraft.count
         countDraft = countDraft.copy(count = nextCount)
-        detailsDraft = detailsDraft.resize(nextCount).let {
+        detailsDraft = if (
+            nextCount <= MAX_RECORD_DETAIL_EDITOR_ROWS &&
+            previousCount > MAX_RECORD_DETAIL_EDITOR_ROWS &&
+            !detailsDraft.hasChanges
+        ) {
+            RecordDetailsDraft().reconcile(storedDetails, nextCount)
+        } else {
+            detailsDraft.resize(nextCount)
+        }.let {
             if (nextCount == 0) it.copy(expanded = false) else it
         }
     }
@@ -297,6 +306,7 @@ internal fun DailyCountRecordScreen(
                     enabled = editable && dataReady && countDraft.initialized && !saving,
                     onDecrease = {
                         val last = detailsDraft.entries.lastOrNull()
+                            .takeIf { countDraft.count <= MAX_RECORD_DETAIL_EDITOR_ROWS }
                         if (countDraft.count > 0 && last?.hasContent == true) {
                             showRemoveDetailDialog = true
                         } else {
@@ -332,7 +342,14 @@ internal fun DailyCountRecordScreen(
                     )
                 }
                 if (countDraft.count > 0) {
-                    if (detailsDraft.expanded) {
+                    if (countDraft.count > MAX_RECORD_DETAIL_EDITOR_ROWS) {
+                        Text(
+                            text = AppCopy.Record.detailEntryUnavailable,
+                            color = DailyRecordTextMuted,
+                            style = MaterialTheme.typography.labelSmall,
+                            textAlign = TextAlign.Center,
+                        )
+                    } else if (detailsDraft.expanded) {
                         RecordDetailsSection(
                             entries = detailsDraft.entries,
                             accent = moduleSpec.colors.primary,
@@ -421,13 +438,24 @@ internal fun DailyCountRecordScreen(
                             onClick = {
                                 if (!editable || !canSave || saving) return@PrimaryActionButton
                                 val currentDraftCount = countDraft.count
-                                val currentDetails = if (currentDraftCount == 0) {
-                                    emptyList()
-                                } else {
-                                    detailsDraft.asEntries().take(currentDraftCount)
+                                val currentDetails = when {
+                                    currentDraftCount == 0 -> emptyList()
+                                    currentDraftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS ->
+                                        detailsDraft.asEntries().take(currentDraftCount)
+                                    detailsDraft.hasChanges ->
+                                        (storedDetails + detailsDraft.asEntries())
+                                            .filter { it.occurrenceIndex in 1..currentDraftCount }
+                                            .associateBy(RecordDetailEntry::occurrenceIndex)
+                                            .values
+                                            .sortedBy(RecordDetailEntry::occurrenceIndex)
+                                    else -> null
                                 }
                                 launchMutation(AppCopy.Record.saveFailure, onSaved) {
-                                    controller.saveRecord(date, currentDraftCount, currentDetails)
+                                    if (currentDetails == null) {
+                                        controller.saveRecord(date, currentDraftCount)
+                                    } else {
+                                        controller.saveRecord(date, currentDraftCount, currentDetails)
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
