@@ -43,7 +43,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Functions dependencies
-        run: pnpm --dir functions --ignore-workspace install --frozen-lockfile
+        run: pnpm --dir functions install --frozen-lockfile
 
       - name: Validate copy, documentation, and release metadata
         run: node --test scripts/copy-integrity.test.mjs scripts/docs-integrity.test.mjs scripts/release-metadata.test.mjs
@@ -53,3 +53,4 @@ jobs:
 
       - name: Validate and build
         run: ./gradlew testDebugUnitTest compileDebugAndroidTestKotlin lintDebug assembleDebug --stacktrace
+
