@@ -42,6 +42,7 @@ import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryCon
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.sync.syncFailureKind
 import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
@@ -69,8 +70,8 @@ internal fun AccountDeletionDialog(
     var stepName by rememberSaveable { mutableStateOf(AccountDeletionStep.Warning.name) }
     var localDataName by rememberSaveable { mutableStateOf(LocalDataAfterAccountDeletion.Keep.name) }
     var password by remember { mutableStateOf("") }
-    var busy by rememberSaveable { mutableStateOf(false) }
-    var errorText by rememberSaveable { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var errorText by remember { mutableStateOf<String?>(null) }
     val step = AccountDeletionStep.entries.firstOrNull { it.name == stepName }
         ?: AccountDeletionStep.Warning
     val localData = LocalDataAfterAccountDeletion.entries.firstOrNull { it.name == localDataName }
@@ -82,7 +83,9 @@ internal fun AccountDeletionDialog(
             busy = true
             errorText = null
             scope.launch {
-                val result = onDeleteAccount(password, localData)
+                val result: Result<Unit> = runCatchingPreservingCancellation {
+                    onDeleteAccount(password, localData)
+                }.getOrElse { error -> Result.failure(error) }
                 result.exceptionOrNull()?.let { errorText = accountDeletionErrorMessage(it) }
                 busy = false
             }

@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuthException
 import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
@@ -53,9 +55,9 @@ internal fun PasswordResetDialog(
     onEmailAccepted: (String) -> Unit,
 ) {
     var email by rememberSaveable { mutableStateOf(initialEmail) }
-    var busy by rememberSaveable { mutableStateOf(false) }
-    var sent by rememberSaveable { mutableStateOf(false) }
-    var errorText by rememberSaveable { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var sent by remember { mutableStateOf(false) }
+    var errorText by remember { mutableStateOf<String?>(null) }
     val normalizedEmail = email.trim().lowercase()
     val validationError = when {
         email.isBlank() -> AppCopy.Auth.emailRequired
@@ -68,7 +70,9 @@ internal fun PasswordResetDialog(
         busy = true
         errorText = null
         scope.launch {
-            val result = onReset(normalizedEmail)
+            val result: Result<Unit> = runCatchingPreservingCancellation {
+                onReset(normalizedEmail)
+            }.getOrElse { error -> Result.failure(error) }
             if (result.isSuccess || result.exceptionOrNull().isMissingAccountError()) {
                 sent = true
                 onEmailAccepted(normalizedEmail)

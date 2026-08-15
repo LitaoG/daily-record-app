@@ -49,6 +49,7 @@ import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
+import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -77,11 +78,14 @@ internal fun AuthScreen(
 ) {
     var modeName by rememberSaveable { mutableStateOf(AuthMode.SignIn.name) }
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var confirmPassword by rememberSaveable { mutableStateOf("") }
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
-    var busy by rememberSaveable { mutableStateOf(false) }
-    var errorText by rememberSaveable { mutableStateOf<String?>(null) }
+    // Passwords and operation state must not be serialized into SavedState.
+    // The coroutine is cancelled when this composition leaves the screen, so
+    // restoring `busy = true` after process death would also strand the form.
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    var errorText by remember { mutableStateOf<String?>(null) }
     var showPasswordReset by rememberSaveable { mutableStateOf(false) }
     val mode = AuthMode.entries.firstOrNull { it.name == modeName } ?: AuthMode.SignIn
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -108,11 +112,13 @@ internal fun AuthScreen(
         busy = true
         errorText = null
         scope.launch {
-            val result = if (mode == AuthMode.SignIn) {
-                onSignIn(email.trim(), password)
-            } else {
-                onRegister(email.trim(), password)
-            }
+            val result: Result<Unit> = runCatchingPreservingCancellation {
+                if (mode == AuthMode.SignIn) {
+                    onSignIn(email.trim(), password)
+                } else {
+                    onRegister(email.trim(), password)
+                }
+            }.getOrElse { error -> Result.failure(error) }
             result.exceptionOrNull()?.let { errorText = authErrorMessage(it, mode) }
             busy = false
         }

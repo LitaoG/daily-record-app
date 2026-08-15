@@ -1,10 +1,10 @@
 # 私密日历文档中心
 
-最后复核：2026-08-09
+最后复核：2026-08-15
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
-当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；本次整理以整理开始时的公共 `main` 为基线。Stage 0–6 和 `v1.0.0-beta.2` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办；合并后以 GitHub `main` 的最新提交为准。
+当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.2` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 的 `main` 代码、安全、性能、生命周期与文档审计见[审计报告](product/audit/2026-08-15-main-code-audit/README.md)；后续合并后仍以 GitHub `main` 的最新提交为准。
 
 ## 当前事实文档
 
@@ -39,7 +39,7 @@
 - [审计与验证证据索引](product/audit/README.md)
 - [设计资产索引](design/README.md)
 - [UI v2 分阶段执行计划](product/QUIET_PRIVATE_JOURNAL_GOALS.md)
-- [同步、隐私与统计一致性加固 Goal（待审阅）](product/GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
+- [同步、隐私与统计一致性加固 Goal（历史审计记录）](product/GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
 - [已确认的 UI v2 设计基线与三张高保真图](product/design/quiet-private-journal-v2/README.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](product/MONTH_STATISTICS_REDESIGN.md)
 - [2026-08-02 统计与日历边界修复](product/audit/2026-08-02-boundary-fixes/README.md)
@@ -56,6 +56,7 @@
 - [2026-08-03 应用内中文文案审查](product/audit/2026-08-03-copy-audit/README.md)
 - [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](product/audit/2026-08-03-stage5-stage6-release/README.md)
 - [2026-08-09 Issue #105 Stage 4–5 记录页验收](product/audit/2026-08-09-record-details-stage4-stage5/README.md)
+- [2026-08-15 `main` 全面代码审计](product/audit/2026-08-15-main-code-audit/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 
 ## 历史证据
