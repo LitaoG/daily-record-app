@@ -5,7 +5,7 @@
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3F7D6B)](https://github.com/LitaoG/daily-record-app/releases)
 [![License](https://img.shields.io/github/license/LitaoG/daily-record-app)](LICENSE)
 
-一个本地优先的 Android 私密次数日历，分别记录“自慰”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。当前 beta.2 已完成日历、日期记录、周/月/年/全部统计，以及两套模块主题适配。
+一个本地优先的 Android 私密次数日历，分别记录“自慰”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。当前 beta.3 已完成日历、日期记录、周/月/年/全部统计，以及两套模块主题适配。
 
 <p align="center">
   <img src="docs/product/audit/2026-07-30-ui-v2-stage2-follow-up/01-calendar-normal.png" alt="当前自慰次数热力日历" width="31%">
@@ -32,14 +32,14 @@
 
 ## 下载与安装
 
-当前公开 Release 为双模块候选版 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，包含自慰与做爱两个独立记录模块。
+当前公开 Release 为双模块候选版 [`v1.0.0-beta.3`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.3)，包含自慰与做爱两个独立记录模块。
 
 1. 从本仓库 [GitHub Releases](https://github.com/LitaoG/daily-record-app/releases) 下载 APK 和同名 `.sha256`。
 2. 在 Windows PowerShell 中校验：
 
    ```powershell
-   Get-FileHash .\hand-brew-calendar-v1.0.0-beta.2.apk -Algorithm SHA256
-   Get-Content .\hand-brew-calendar-v1.0.0-beta.2.apk.sha256
+   Get-FileHash .\hand-brew-calendar-v1.0.0-beta.3.apk -Algorithm SHA256
+   Get-Content .\hand-brew-calendar-v1.0.0-beta.3.apk.sha256
    ```
 
 3. 确认哈希一致后安装；Android 可能要求允许当前浏览器或文件管理器“安装未知应用”。

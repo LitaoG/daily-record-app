@@ -6,7 +6,7 @@
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
-当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.2` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 的 `main` 代码、安全、性能、生命周期与文档审计见[审计报告](product/audit/2026-08-15-main-code-audit/README.md)；后续合并后仍以 GitHub `main` 的最新提交为准。
+当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.3` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 的 `main` 代码、安全、性能、生命周期与文档审计见[审计报告](product/audit/2026-08-15-main-code-audit/README.md)；后续合并后仍以 GitHub `main` 的最新提交为准。
 
 ## 当前事实文档
 
@@ -88,6 +88,7 @@
 - [2026-08-11 Issues #123–#145 清理审计](product/audit/2026-08-11-issues-123-145/README.md)
 - [v1.0.0-beta.1 发布说明](releases/v1.0.0-beta.1.md)
 - [v1.0.0-beta.2 发布说明](releases/v1.0.0-beta.2.md)
+- [v1.0.0-beta.3 发布说明](releases/v1.0.0-beta.3.md)
 - [设计资产总览](design/README.md)
 
 历史文档中的测试数量、截图日期、分支名和“下一步”只描述当时状态。当前版本、发布物和 CI 状态以仓库首页、GitHub Releases 与 `main` 为准。
