@@ -41,19 +41,23 @@ UI 不直接访问 DAO 或 Firestore。`DailyCountRecord` 与 `DailyCountRecordR
 ```text
 app
 └─ io.github.litaog.dailyrecord
-   ├─ core:model       HandBrewRecord / SexRecord
+   ├─ core:model       HandBrewRecord / SexRecord 及逐次详情
    ├─ core:database    two independent entities / DAOs / migration
    ├─ core:data        two independent repositories
    ├─ core:auth        email/password and reset-email boundary
-   ├─ core:cloud       Firebase bootstrap
+   ├─ core:account     account deletion coordinator / local store
+   ├─ core:statistics  statistics models / period anchors / bounds
    ├─ core:common      shared invariants and user-facing copy
    ├─ core:di          Firebase bootstrap / composition root / WorkManager adapters
    ├─ core:sync        remote source / coordinator / deletion journal / recovery coordinator
    └─ ui
       ├─ calendar      CalendarScreen
       ├─ record        RecordScreen
-      ├─ statistics    StatisticsScreen / StatisticsModels
+      ├─ statistics    StatisticsScreen（纯 UI；统计模型在 core:statistics）
       ├─ settings      SettingsScreen
+      ├─ account       AccountDialog / AccountDeletionDialog
+      ├─ auth          AuthScreen / PasswordResetDialog
+      ├─ navigation    DateNavigationDialog
       ├─ components    shared Compose components
       └─ theme         Figma token mapping
 ```

@@ -57,6 +57,8 @@
 - [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](product/audit/2026-08-03-stage5-stage6-release/README.md)
 - [2026-08-09 Issue #105 Stage 4–5 记录页验收](product/audit/2026-08-09-record-details-stage4-stage5/README.md)
 - [2026-08-15 `main` 全面代码审计](product/audit/2026-08-15-main-code-audit/README.md)
+- [2026-08-11 运行时 UX 与统计验收](product/RUNTIME_UX_AUDIT.md)
+- [2026-08-09 记录页逐次详情设计基线](product/design/record-details-v1/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 
 ## 历史证据
@@ -74,6 +76,9 @@
 - [2026-07-22 应用内 UI 一致性审计](product/audit/2026-07-22-native-ui/README.md)
 - [2026-07-22 月历与统计审计](product/audit/2026-07-22-calendar-statistics/README.md)
 - [2026-07-19 深度 UX 审计](product/audit/2026-07-19-deep-ux/README.md)
+- [图标源文件交接](design/icon-source/README.md)
+- [运行时图标资产说明](product/assets/daily-record-icon/README.md)
+- [2026-08-11 Issues #123–#145 清理审计](product/audit/2026-08-11-issues-123-145/README.md)
 - [v1.0.0-beta.1 发布说明](releases/v1.0.0-beta.1.md)
 - [v1.0.0-beta.2 发布说明](releases/v1.0.0-beta.2.md)
 

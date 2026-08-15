@@ -26,7 +26,7 @@
 | [2026-08-02 year line chart](2026-08-02-year-line-chart/README.md) | 年度直线折线和一次性动画 | 已纳入 beta.2 |
 | [2026-08-03 copy audit](2026-08-03-copy-audit/README.md) | 集中文案和中文字符串审查 | 已纳入 beta.2 |
 | [2026-08-03 Stage 5/6 release](2026-08-03-stage5-stage6-release/README.md) | beta.2 发布、签名和私有镜像 | 发布完成 |
-| [2026-08-09 Issue #105 Stage 4–5](2026-08-09-record-details-stage4-stage5/README.md) | 记录页无障碍、窄屏、恢复、跨设备与候选 APK | 历史证据；PR #119 Draft，不代表当前 `main` |
+| [2026-08-09 Issue #105 Stage 4–5](2026-08-09-record-details-stage4-stage5/README.md) | 记录页无障碍、窄屏、恢复、跨设备与候选 APK | 已合并进 main（PR #119） |
 | [2026-08-15 main code audit](2026-08-15-main-code-audit/README.md) | `main` 全面代码、安全、性能、生命周期与文档审计 | 以 `main` `82d4111` 为基线；本分支含认证状态修复 |
 
 ## 阅读规则

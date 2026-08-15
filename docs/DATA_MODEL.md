@@ -9,7 +9,7 @@
 | 字段 | 含义 |
 |---|---|
 | id | 云端记录代际内稳定的 UUID；同日更新沿用原 ID，物理文档被删除后重建时生成新的 UUID 作为代际标记 |
-| localDate | `YYYY-MM-DD`，唯一 |
+| localDate | `YYYY-MM-DD`，同一 owner 下唯一 |
 | brewCount / sexCount | 非负整数；0 表示明确没有发生对应行为 |
 | createdAt | 首次创建时间 |
 | updatedAt | 最近修改时间 |
