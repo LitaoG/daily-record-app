@@ -35,11 +35,3 @@ val MetricNumberMedium = TextStyle(
     fontSize = 28.sp,
     lineHeight = 34.sp,
 )
-
-/** Compact guidance line used under the account sync failure message. */
-val SyncFailureGuidance = TextStyle(
-    fontFamily = Sans,
-    fontWeight = FontWeight.SemiBold,
-    fontSize = 9.33.sp,
-    lineHeight = 13.33.sp,
-)

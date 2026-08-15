@@ -128,7 +128,7 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
             committed
         }
 
-    suspend fun deleteAll(ownerId: String) {
+    override suspend fun deleteAll(ownerId: String) {
         values.value = values.value - ownerId
     }
 

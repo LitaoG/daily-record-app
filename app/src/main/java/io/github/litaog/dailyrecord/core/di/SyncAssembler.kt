@@ -63,6 +63,7 @@ internal fun buildCombinedAccountRemoteDataStore(
     services: FirebaseServices,
 ): CombinedAccountRemoteDataStore = CombinedAccountRemoteDataStore(
     listOf(
-        services.accountDataDeletionStore,
+        services.remoteDataSource,
+        services.sexRemoteDataSource,
     ),
 )

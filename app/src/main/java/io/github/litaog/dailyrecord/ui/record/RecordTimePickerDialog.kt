@@ -1,5 +1,8 @@
 package io.github.litaog.dailyrecord.ui.record
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.rememberSplineBasedDecay
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,6 +27,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,13 +48,15 @@ import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.components.rememberWheelMotion
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 private const val HOURS_PER_DAY = 24
 private const val MINUTES_PER_HOUR = 60
@@ -191,19 +197,24 @@ private fun TimeWheelColumn(
     rowHeight: androidx.compose.ui.unit.Dp,
     surfaceTestTag: String,
     onValueChanged: (Int) -> Unit,
-    modifier: Modifier = Modifier,
     onSettlingChanged: (Boolean) -> Unit = {},
+    modifier: Modifier = Modifier,
 ) {
     var selectedValue by remember(resetKey, valueCount) {
         mutableIntStateOf(wrapTimeWheelValue(initialValue, valueCount))
     }
     var dragOffsetPx by remember(resetKey, valueCount) { mutableFloatStateOf(0f) }
     val latestOnValueChanged = rememberUpdatedState(onValueChanged)
+    val flingAnimation = remember { Animatable(0f) }
+    val settleAnimation = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    var animationJob by remember { mutableStateOf<Job?>(null) }
+    var animationGeneration by remember { mutableIntStateOf(0) }
     val rowHeightPx = with(LocalDensity.current) { rowHeight.toPx() }
     val minimumFlingVelocity = with(LocalDensity.current) {
         MINIMUM_FLING_VELOCITY_DP_PER_SECOND.dp.toPx()
     }
-    val wheelMotion = rememberWheelMotion(minimumFlingVelocity)
+    val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val wheelHeight = rowHeight * 3
     val shape = RoundedCornerShape(16.dp)
 
@@ -227,7 +238,10 @@ private fun TimeWheelColumn(
     }
 
     fun cancelAnimation() {
-        wheelMotion.cancel { onSettlingChanged(false) }
+        animationGeneration += 1
+        animationJob?.cancel()
+        animationJob = null
+        onSettlingChanged(false)
     }
 
     fun snapToNearestValue() {
@@ -241,14 +255,44 @@ private fun TimeWheelColumn(
     }
 
     fun settleWheel(velocity: Float) {
-        wheelMotion.settle(
-            velocity = velocity,
-            currentOffset = { dragOffsetPx },
-            applyOffsetDelta = ::applyOffsetDelta,
-            snapToNearestValue = ::snapToNearestValue,
-            setOffset = { dragOffsetPx = it },
-            onSettlingChanged = onSettlingChanged,
-        )
+        cancelAnimation()
+        val generation = animationGeneration + 1
+        animationGeneration = generation
+        onSettlingChanged(true)
+        animationJob = coroutineScope.launch {
+            try {
+                if (kotlin.math.abs(velocity) >= minimumFlingVelocity) {
+                    var previous = 0f
+                    flingAnimation.snapTo(0f)
+                    flingAnimation.animateDecay(
+                        initialVelocity = velocity,
+                        animationSpec = decayAnimationSpec,
+                    ) {
+                        val current = this.value
+                        val delta = current - previous
+                        previous = current
+                        applyOffsetDelta(delta)
+                    }
+                }
+
+                snapToNearestValue()
+                settleAnimation.snapTo(dragOffsetPx)
+                settleAnimation.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(dampingRatio = 1f, stiffness = 700f),
+                ) {
+                    dragOffsetPx = this.value
+                }
+                dragOffsetPx = 0f
+            } catch (_: CancellationException) {
+                // A new gesture or option tap takes ownership of the wheel.
+            } finally {
+                if (generation == animationGeneration) {
+                    animationJob = null
+                    onSettlingChanged(false)
+                }
+            }
+        }
     }
 
     val draggableState = rememberDraggableState { dragAmount ->

@@ -1,5 +1,7 @@
 package io.github.litaog.dailyrecord.core.sync
 
+import io.github.litaog.dailyrecord.core.account.AccountRemoteDataStore
+
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -34,7 +36,8 @@ internal interface DailyCountSyncStore<LocalRecord, RemoteRecord> {
     ): Int
 }
 
-internal interface DailyCountRemoteDataSource<LocalRecord, RemoteRecord> {
+internal interface DailyCountRemoteDataSource<LocalRecord, RemoteRecord> :
+    AccountRemoteDataStore {
     fun observe(ownerId: String): Flow<RemoteSnapshot>
     suspend fun fetch(ownerId: String): RemoteSnapshot
     fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteRecord>
@@ -76,8 +79,7 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
         var uploaded = 0
         var rejected = initial.rejectedRecordCount
 
-        val pending = store.pending(ownerId)
-        pending.forEach { local ->
+        store.pending(ownerId).forEach { local ->
             val committed = try {
                 remote.commit(ownerId, local)
             } catch (_: MalformedRemoteRecordException) {
@@ -102,15 +104,9 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
             // rebased over another device's data.
         }
 
-        // The initial server snapshot is already authoritative when there is
-        // no local work to commit. Avoid a second full collection read in the
-        // common clean-sync path; a second fetch is still required after a
-        // pending upload to observe the server's committed/conflicting state.
-        if (pending.isNotEmpty()) {
-            val confirmed = remote.fetch(ownerId)
-            downloaded += store.applyRemote(ownerId, remote.recordsFrom(confirmed))
-            rejected = maxOf(rejected, confirmed.rejectedRecordCount)
-        }
+        val confirmed = remote.fetch(ownerId)
+        downloaded += store.applyRemote(ownerId, remote.recordsFrom(confirmed))
+        rejected = maxOf(rejected, confirmed.rejectedRecordCount)
         return SyncResult(
             uploaded = uploaded,
             downloaded = downloaded,

@@ -14,7 +14,7 @@ service cloud.firestore {
         && request.resource.data.localDate == date
         && request.resource.data.localDate is string
         && request.resource.data.localDate.size() == 10
-        && request.resource.data.localDate.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        && request.resource.data.localDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && request.resource.data.createdAtMillis is int
         && request.resource.data.createdAtMillis >= 0
         && request.resource.data.createdAtMillis <= 253402300799999
@@ -40,15 +40,12 @@ service cloud.firestore {
         && hasValidDetailList(request.resource.data.brewCount);
     }
 
-    // Rules cannot iterate each array item. The trusted write callable validates
-    // every new-client item before writing, and the Functions write trigger
-    // removes malformed legacy documents. The field remains optional for beta.2
-    // clients; Rules still keep it typed and prevent more rows than the count.
+    // Details are validated end-to-end by the client and the remote parser
+    // (including minute precision and the 100 visible-character feeling cap).
+    // Rules keep the field typed and prevent more rows than the aggregate count.
     function hasValidDetailList(count) {
       return request.resource.data.get('details', []) is list
-        && request.resource.data.get('details', []).size() <= count
-        && (!request.resource.data.deleted
-          || request.resource.data.get('details', []).size() == 0);
+        && request.resource.data.get('details', []).size() <= count;
     }
 
     function hasValidSexRecordShape(date) {
@@ -78,6 +75,7 @@ service cloud.firestore {
       allow update: if signedInAs(userId)
         && hasValidHandBrewRecordShape(date)
         && preservesStableIdentity();
+      allow delete: if signedInAs(userId);
     }
 
     match /users/{userId}/sexRecords/{date} {
@@ -88,6 +86,7 @@ service cloud.firestore {
       allow update: if signedInAs(userId)
         && hasValidSexRecordShape(date)
         && preservesStableIdentity();
+      allow delete: if signedInAs(userId);
     }
   }
 }

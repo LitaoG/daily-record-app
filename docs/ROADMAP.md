@@ -46,6 +46,7 @@
 - [x] Stage 5 完成最终跨页面审查、定向失败收口和一次最终完整设备套件。
 - [x] Stage 6 完成公共 main 合并、签名发布门禁和 GitHub Release 发布。
 - [x] 发布 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，并在公共 main 验证后同步私有恢复镜像。
+- [ ] 发布 [`v1.0.0-beta.3`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.3)，并在公共 main 验证后同步私有恢复镜像。
 
 ## 已完成：日期记录页逐次详情
 

@@ -646,22 +646,11 @@ private fun DistributionSurface(
 }
 
 private fun weekDistributionDescription(detail: StatisticsDetail): String = when {
-    detail.future -> AppCopy.Components.joinSemantics(
-        detail.label,
-        AppCopy.Statistics.future,
-        AppCopy.Statistics.dash,
-    )
-    !detail.recorded -> AppCopy.Components.joinSemantics(
-        detail.label,
-        AppCopy.Statistics.unset,
-        AppCopy.Statistics.dash,
-    )
+    detail.future -> "${detail.label}，${AppCopy.Statistics.future}，${AppCopy.Statistics.dash}"
+    !detail.recorded -> "${detail.label}，${AppCopy.Statistics.unset}，${AppCopy.Statistics.dash}"
     else -> {
         val count = detail.count ?: 0L
-        AppCopy.Components.joinSemantics(
-            detail.label,
-            AppCopy.Statistics.countText(count),
-            AppCopy.Statistics.daysText(detail.days ?: 0),
-        )
+        "${detail.label}，${AppCopy.Statistics.countText(count)}，" +
+            AppCopy.Statistics.daysText(detail.days ?: 0)
     }
 }

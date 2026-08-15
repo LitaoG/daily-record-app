@@ -1,6 +1,6 @@
 # 私密日历产品交付索引
 
-最后复核：2026-08-15
+最后复核：2026-08-08
 
 完整工程文档请先看[文档中心](../README.md)。本页只索引产品、设计和交付资料。
 
@@ -10,18 +10,15 @@
 - [界面与交互](../UI_UX.md)
 - [统计口径](../STATISTICS.md)
 - [UI v2 分阶段执行计划](QUIET_PRIVATE_JOURNAL_GOALS.md)
-- [同步、隐私与统计一致性加固 Goal（历史审计记录）](GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
+- [同步、隐私与统计一致性加固 Goal（待审阅）](GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
 - [已确认的 UI v2 设计基线与三张高保真图](design/quiet-private-journal-v2/README.md)
 - [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
 - [明亮渐变玻璃主题 Goal 与当前契约](BRIGHT_GLASS_THEME.md)
 - [设置中心 Goal](SETTINGS_HUB_GOAL.md)
 - [2026-08-01 Stage 4 月度热力图与年度月份分析](audit/2026-08-01-ui-v2-stage4/README.md)
-- [2026-08-01 Stage 3 统计与日历基础视觉验收](audit/2026-08-01-ui-v2-stage3/README.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](MONTH_STATISTICS_REDESIGN.md)
 - [2026-08-02 统计与日历边界修复](audit/2026-08-02-boundary-fixes/README.md)
 - [2026-08-02 统计周期玻璃分段控件](audit/2026-08-02-period-glass-tabs/README.md)
-- [2026-08-02 月统计改版验收](audit/2026-08-02-month-statistics/README.md)
-- [2026-08-02 年度折线图验收](audit/2026-08-02-year-line-chart/README.md)
 - [2026-08-01 Stage 5 集成 QA 与候选 APK](audit/2026-08-01-ui-v2-stage5/README.md)
 - [实现与发布准备度](IMPLEMENTATION_READINESS.md)
 - [产品 Backlog](PRODUCT_BACKLOG.md)
@@ -29,10 +26,6 @@
 - [日常使用反馈](DAILY_USE_FEEDBACK.md)
 - [仓库维护与文档生命周期](../REPOSITORY_HYGIENE.md)
 - [审计与验证证据索引](audit/README.md)
-- [2026-08-09 Issue #105 Stage 4–5 记录页验收](audit/2026-08-09-record-details-stage4-stage5/README.md)
-- [2026-08-11 Issues #123–#145 清理审计](audit/2026-08-11-issues-123-145/README.md)
-- [2026-08-15 `main` 全面代码审计](audit/2026-08-15-main-code-audit/README.md)
-- [记录页逐次详情设计基线](design/record-details-v1/README.md)
 - [2026-08-03 应用内中文文案审查](audit/2026-08-03-copy-audit/README.md)
 - [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](audit/2026-08-03-stage5-stage6-release/README.md)
 - [开源借鉴边界](RESEARCH_OPEN_SOURCE.md)
@@ -58,7 +51,5 @@
 - [2026-07-22 月历与统计审计](audit/2026-07-22-calendar-statistics/README.md)
 - [2026-07-19 深度 UX 审计](audit/2026-07-19-deep-ux/README.md)
 - [早期运行时 UX 与统计验收](RUNTIME_UX_AUDIT.md)
-- [每日记录图标资源说明](assets/daily-record-icon/README.md)
-- [2026-08-02 Stage 1 设计 QA 附录](audit/2026-07-30-ui-v2-stage1/DESIGN_QA.md)
 
 这些材料记录特定日期的截图、测试数量和阶段结论，不代表当前待办，也不能覆盖 UI v2 设计基线。旧“通用活动记录器”产品包已从当前文件树移除；未来记录模块也不会恢复旧通用活动模型。

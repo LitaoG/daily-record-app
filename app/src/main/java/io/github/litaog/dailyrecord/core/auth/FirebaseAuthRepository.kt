@@ -41,7 +41,7 @@ internal class FirebaseAuthRepository(
             auth.sendPasswordResetEmail(email.normalizedEmail()).awaitResult()
         } catch (error: FirebaseAuthException) {
             // A reset request must not reveal whether an account exists for the address.
-            if (error.errorCode != FirebaseAuthErrorCodes.USER_NOT_FOUND) throw error
+            if (error.errorCode != "ERROR_USER_NOT_FOUND") throw error
         }
     }
 
@@ -91,7 +91,7 @@ internal class FirebaseAuthRepository(
         } catch (error: CancellationException) {
             throw error
         } catch (error: FirebaseAuthException) {
-            if (error.errorCode == FirebaseAuthErrorCodes.USER_NOT_FOUND) {
+            if (error.errorCode == "ERROR_USER_NOT_FOUND") {
                 AuthAccountPresence.Absent
             } else {
                 AuthAccountPresence.Unknown(error)
@@ -109,11 +109,11 @@ internal class FirebaseAuthRepository(
 private fun String.normalizedEmail(): String = trim().lowercase()
 
 private val DEFINITIVE_DELETE_FAILURE_CODES = setOf(
-    FirebaseAuthErrorCodes.INVALID_CREDENTIAL,
-    FirebaseAuthErrorCodes.OPERATION_NOT_ALLOWED,
-    FirebaseAuthErrorCodes.REQUIRES_RECENT_LOGIN,
-    FirebaseAuthErrorCodes.TOO_MANY_REQUESTS,
-    FirebaseAuthErrorCodes.USER_MISMATCH,
+    "ERROR_INVALID_CREDENTIAL",
+    "ERROR_OPERATION_NOT_ALLOWED",
+    "ERROR_REQUIRES_RECENT_LOGIN",
+    "ERROR_TOO_MANY_REQUESTS",
+    "ERROR_USER_MISMATCH",
 )
 
 private fun FirebaseUser.toAccount(): AuthAccount = AuthAccount(

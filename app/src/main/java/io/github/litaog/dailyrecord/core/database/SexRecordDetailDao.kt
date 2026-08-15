@@ -37,16 +37,6 @@ internal interface SexRecordDetailDao : DailyCountRecordDetailDao<SexRecordDetai
     )
     override suspend fun deleteByOwnerDate(ownerId: String, localDate: LocalDate): Int
 
-    @Query(
-        "DELETE FROM sex_record_details " +
-            "WHERE owner_id = :ownerId AND local_date = :localDate AND id IN (:ids)",
-    )
-    override suspend fun deleteByOwnerDateAndIds(
-        ownerId: String,
-        localDate: LocalDate,
-        ids: List<String>,
-    ): Int
-
     @Query("SELECT COUNT(*) FROM sex_record_details WHERE owner_id = :ownerId")
     override suspend fun countForOwner(ownerId: String): Int
 

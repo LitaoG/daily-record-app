@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -45,8 +46,8 @@ internal val RecordModuleColorTokens.brandIconTheme: BrandIconTheme
 @Composable
 internal fun BrandIcon(
     asset: BrandIconAsset,
-    modifier: Modifier = Modifier,
     theme: BrandIconTheme = BrandIconTheme.Purple,
+    modifier: Modifier = Modifier.size(24.dp),
     contentDescription: String? = null,
     alpha: Float = 1f,
 ) {
@@ -69,7 +70,7 @@ private fun BrandIconAsset.resource(theme: BrandIconTheme): Int = when (theme) {
         BrandIconAsset.Note -> R.drawable.ic_brand_note_purple
         BrandIconAsset.Edit -> R.drawable.ic_brand_edit_purple
         BrandIconAsset.Settings -> R.drawable.ic_brand_settings_purple
-        BrandIconAsset.Return -> R.drawable.ic_brand_previous_purple
+        BrandIconAsset.Return -> R.drawable.ic_brand_return_purple
         BrandIconAsset.CloudSync -> R.drawable.ic_brand_cloud_sync_purple
         BrandIconAsset.Lock -> R.drawable.ic_brand_lock_purple
         BrandIconAsset.Shield -> R.drawable.ic_brand_shield_purple
@@ -84,7 +85,7 @@ private fun BrandIconAsset.resource(theme: BrandIconTheme): Int = when (theme) {
         BrandIconAsset.Note -> R.drawable.ic_brand_note_wine
         BrandIconAsset.Edit -> R.drawable.ic_brand_edit_wine
         BrandIconAsset.Settings -> R.drawable.ic_brand_settings_wine
-        BrandIconAsset.Return -> R.drawable.ic_brand_previous_wine
+        BrandIconAsset.Return -> R.drawable.ic_brand_return_wine
         BrandIconAsset.CloudSync -> R.drawable.ic_brand_cloud_sync_wine
         BrandIconAsset.Lock -> R.drawable.ic_brand_lock_wine
         BrandIconAsset.Shield -> R.drawable.ic_brand_shield_wine

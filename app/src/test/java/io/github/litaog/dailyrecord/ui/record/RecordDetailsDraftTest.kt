@@ -11,47 +11,6 @@ import org.junit.Test
 
 class RecordDetailsDraftTest {
     @Test
-    fun reconcilePreservesSparseOccurrenceIndexes() {
-        val draft = RecordDetailsDraft().reconcile(
-            latest = listOf(
-                RecordDetailEntry(2, feeling = "second"),
-                RecordDetailEntry(4, feeling = "fourth"),
-            ),
-            count = 4,
-        )
-
-        assertEquals(4, draft.entries.size)
-        assertEquals(2, draft.entries[1].occurrenceIndex)
-        assertEquals("second", draft.entries[1].feeling)
-        assertEquals(4, draft.entries[3].occurrenceIndex)
-        assertEquals("fourth", draft.entries[3].feeling)
-    }
-
-    @Test
-    fun hugeAggregateCountDoesNotMaterializeDetailRows() {
-        val draft = RecordDetailsDraft().reconcile(
-            latest = listOf(RecordDetailEntry(Int.MAX_VALUE, feeling = "kept remotely")),
-            count = Int.MAX_VALUE,
-        )
-
-        assertEquals(Int.MAX_VALUE, draft.count)
-        assertTrue(draft.entries.isEmpty())
-        assertFalse(draft.expanded)
-        assertFalse(draft.hasChanges)
-    }
-
-    @Test
-    fun hugeAggregateCountKeepsExistingDetailsInsideTheEditorBoundary() {
-        val draft = RecordDetailsDraft().reconcile(
-            latest = listOf(RecordDetailEntry(1, feeling = "first")),
-            count = Int.MAX_VALUE,
-        )
-
-        assertEquals(listOf(1), draft.entries.map(RecordDetailDraft::occurrenceIndex))
-        assertEquals("first", draft.entries.single().feeling)
-    }
-
-    @Test
     fun reconcileAddsOneBlankEntryPerCount() {
         val draft = RecordDetailsDraft().reconcile(
             latest = listOf(RecordDetailEntry(1, LocalTime.of(9, 20), LocalTime.of(9, 35), "")),
@@ -132,23 +91,5 @@ class RecordDetailsDraftTest {
         val restored = RecordDetailsDraft.Saver.restore(saved)
 
         assertEquals(draft, restored)
-    }
-
-    @Test
-    fun saverRestoresLegacyFourCellFormatWithoutSwappingFlags() {
-        val legacySaved = listOf(
-            listOf(listOf(8 * 60, 9 * 60, "legacy entry", true)),
-            listOf(listOf(8 * 60, 9 * 60, "legacy baseline", false)),
-            false,
-            true,
-        )
-
-        val restored = requireNotNull(RecordDetailsDraft.Saver.restore(legacySaved))
-
-        assertEquals(1, restored.count)
-        assertFalse(restored.initialized)
-        assertTrue(restored.expanded)
-        assertEquals("legacy entry", restored.entries.single().feeling)
-        assertEquals("legacy baseline", restored.baseline.single().feeling)
     }
 }

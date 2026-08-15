@@ -10,16 +10,12 @@ import io.github.litaog.dailyrecord.ui.RecordDetailEntry
 import java.time.LocalTime
 
 internal data class RecordDetailDraft(
-    val occurrenceIndex: Int = 1,
     val startMinutes: Int? = null,
     val endMinutes: Int? = null,
     val feeling: String = "",
     val feelingExpanded: Boolean = false,
 ) {
     init {
-        require(occurrenceIndex >= 1) {
-            "Detail occurrence index must be positive."
-        }
         require(startMinutes == null || startMinutes in 0..(24 * 60 - 1)) {
             "Start time must be a minute within the day."
         }
@@ -40,7 +36,7 @@ internal data class RecordDetailDraft(
 
     fun withoutExpansion(): RecordDetailDraft = copy(feelingExpanded = false)
 
-    fun toEntry(): RecordDetailEntry = RecordDetailEntry(
+    fun toEntry(occurrenceIndex: Int): RecordDetailEntry = RecordDetailEntry(
         occurrenceIndex = occurrenceIndex,
         startTime = startMinutes?.toLocalTime(),
         endTime = endMinutes?.toLocalTime(),
@@ -49,7 +45,6 @@ internal data class RecordDetailDraft(
 
     companion object {
         internal fun fromEntry(entry: RecordDetailEntry): RecordDetailDraft = RecordDetailDraft(
-            occurrenceIndex = entry.occurrenceIndex,
             startMinutes = entry.startTime?.toMinutesOfDay(),
             endMinutes = entry.endTime?.toMinutesOfDay(),
             feeling = entry.feeling.truncateVisibleCharacters(MAX_RECORD_DETAIL_FEELING_CHARACTERS),
@@ -60,22 +55,17 @@ internal data class RecordDetailDraft(
 internal data class RecordDetailsDraft(
     val entries: List<RecordDetailDraft> = emptyList(),
     val baseline: List<RecordDetailDraft> = emptyList(),
-    val count: Int = 0,
     val initialized: Boolean = false,
     val expanded: Boolean = false,
 ) {
-    init {
-        require(count >= 0) { "Record detail count must be non-negative." }
-    }
-
     val hasChanges: Boolean
         get() = initialized && entries.contentWithoutExpansion() != baseline.contentWithoutExpansion()
 
     /**
      * Reconciles the detail rows against the latest remote state.
      *
-     * @param latest the latest stored details, projected onto the editor's
-     *   row boundary as the baseline the user's edits are compared against
+     * @param latest the latest stored details, resized to [count] as the
+     *   baseline the user's edits are compared against
      * @param count the caller's reconciled **draft count** (countDraft.count),
      *   not the raw remote count: when the draft is dirty this keeps the
      *   user's own row size so a remote shrink never truncates in-progress
@@ -92,40 +82,28 @@ internal data class RecordDetailsDraft(
         val latestDraft = latest
             .sortedBy(RecordDetailEntry::occurrenceIndex)
             .map(RecordDetailDraft::fromEntry)
-            .materializeForEditor(count)
+            .resize(count)
         // count is the caller's draft count (the reconciled countDraft), not
         // the raw remote count: a dirty draft keeps its own size so a remote
         // shrink never truncates entries the user is still editing, while a
         // remote grow (with a clean count) still normalizes the row list to
         // match the displayed count.
-        val nextEntries = if (!initialized || !hasChanges) latestDraft else entries.materializeForEditor(count)
+        val nextEntries = if (!initialized || !hasChanges) latestDraft else entries.resize(count)
         return copy(
             entries = nextEntries,
             baseline = latestDraft,
-            count = count,
             initialized = true,
-            expanded = expanded && count in 1..MAX_RECORD_DETAIL_EDITOR_ROWS,
         )
     }
 
     fun resize(count: Int): RecordDetailsDraft {
         require(count >= 0) { "Record detail count must be non-negative." }
-        return copy(
-            entries = entries.materializeForEditor(count),
-            count = count,
-            expanded = expanded && count in 1..MAX_RECORD_DETAIL_EDITOR_ROWS,
-        )
+        val resized = entries.resize(count)
+        return copy(entries = resized)
     }
 
     fun clearContent(): RecordDetailsDraft {
-        val cleared = entries.map {
-            it.copy(
-                startMinutes = null,
-                endMinutes = null,
-                feeling = "",
-                feelingExpanded = false,
-            )
-        }
+        val cleared = entries.map { RecordDetailDraft() }
         return copy(
             entries = cleared,
             baseline = cleared,
@@ -140,9 +118,9 @@ internal data class RecordDetailsDraft(
         })
     }
 
-    fun asEntries(): List<RecordDetailEntry> = entries
-        .map(RecordDetailDraft::toEntry)
-        .sortedBy(RecordDetailEntry::occurrenceIndex)
+    fun asEntries(): List<RecordDetailEntry> = entries.mapIndexed { index, draft ->
+        draft.toEntry(index + 1)
+    }
 
     companion object {
         val Saver: Saver<RecordDetailsDraft, Any> = listSaver(
@@ -150,35 +128,21 @@ internal data class RecordDetailsDraft(
                 listOf(
                     draft.entries.map(::saveDetail),
                     draft.baseline.map(::saveDetail),
-                    draft.count,
                     draft.initialized,
                     draft.expanded,
                 )
             },
             restore = { values ->
-                val currentFormat = values.getOrNull(2) is Int
-                val restoredEntries = restoreDetails(values.getOrNull(0))
-                val restoredBaseline = restoreDetails(values.getOrNull(1))
                 RecordDetailsDraft(
-                    entries = restoredEntries,
-                    baseline = restoredBaseline,
-                    count = if (currentFormat) values[2] as Int else restoredEntries.size,
-                    initialized = if (currentFormat) {
-                        values.getOrNull(3) as? Boolean ?: false
-                    } else {
-                        values.getOrNull(2) as? Boolean ?: false
-                    },
-                    expanded = if (currentFormat) {
-                        values.getOrNull(4) as? Boolean ?: false
-                    } else {
-                        values.getOrNull(3) as? Boolean ?: false
-                    },
+                    entries = restoreDetails(values[0]),
+                    baseline = restoreDetails(values[1]),
+                    initialized = values[2] as Boolean,
+                    expanded = values[3] as Boolean,
                 )
             },
         )
 
         private fun saveDetail(detail: RecordDetailDraft): List<Any?> = listOf(
-            detail.occurrenceIndex,
             detail.startMinutes,
             detail.endMinutes,
             detail.feeling,
@@ -186,38 +150,22 @@ internal data class RecordDetailsDraft(
         )
 
         private fun restoreDetails(value: Any?): List<RecordDetailDraft> =
-            (value as? List<*>).orEmpty().mapIndexedNotNull { index, raw ->
-                val cells = raw as? List<*> ?: return@mapIndexedNotNull null
-                val hasOccurrenceIndex = cells.size >= 5 && cells[0] is Int
+            (value as? List<*>).orEmpty().mapNotNull { raw ->
+                val cells = raw as? List<*> ?: return@mapNotNull null
                 RecordDetailDraft(
-                    occurrenceIndex = if (hasOccurrenceIndex) cells[0] as Int else index + 1,
-                    startMinutes = cells.getOrNull(if (hasOccurrenceIndex) 1 else 0) as? Int,
-                    endMinutes = cells.getOrNull(if (hasOccurrenceIndex) 2 else 1) as? Int,
-                    feeling = cells.getOrNull(if (hasOccurrenceIndex) 3 else 2) as? String ?: "",
-                    feelingExpanded = cells.getOrNull(if (hasOccurrenceIndex) 4 else 3) as? Boolean ?: false,
+                    startMinutes = cells.getOrNull(0) as? Int,
+                    endMinutes = cells.getOrNull(1) as? Int,
+                    feeling = cells.getOrNull(2) as? String ?: "",
+                    feelingExpanded = cells.getOrNull(3) as? Boolean ?: false,
                 )
             }
     }
 }
 
-/**
- * Aggregate counts intentionally remain Int-sized, but the optional detail
- * editor must never allocate one Compose row per untrusted count value.
- * Counts above this boundary keep their aggregate value and any existing
- * detail data, while the editor remains collapsed until the count is small
- * enough to materialize safely.
- */
-internal const val MAX_RECORD_DETAIL_EDITOR_ROWS = 512
-
-private fun List<RecordDetailDraft>.materializeForEditor(count: Int): List<RecordDetailDraft> {
-    if (count > MAX_RECORD_DETAIL_EDITOR_ROWS) {
-        return filter { it.occurrenceIndex in 1..MAX_RECORD_DETAIL_EDITOR_ROWS }
-            .sortedBy(RecordDetailDraft::occurrenceIndex)
-    }
-    val byOccurrence = associateBy(RecordDetailDraft::occurrenceIndex)
-    return List(count) { index ->
-        byOccurrence[index + 1] ?: RecordDetailDraft(occurrenceIndex = index + 1)
-    }
+private fun List<RecordDetailDraft>.resize(count: Int): List<RecordDetailDraft> = when {
+    size > count -> take(count)
+    size < count -> this + List(count - size) { RecordDetailDraft() }
+    else -> this
 }
 
 private fun List<RecordDetailDraft>.contentWithoutExpansion(): List<RecordDetailDraft> =

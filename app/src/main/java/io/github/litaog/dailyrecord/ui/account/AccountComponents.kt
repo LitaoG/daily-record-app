@@ -55,7 +55,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
-import io.github.litaog.dailyrecord.ui.theme.SyncFailureGuidance
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
@@ -377,7 +376,10 @@ internal fun AccountDialog(
                     Text(
                         failurePresentation.guidance,
                         color = DailyRecordDefaultAccent,
-                        style = SyncFailureGuidance,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontSize = 9.33.sp,
+                            lineHeight = 13.33.sp,
+                        ),
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .testTag(

@@ -1,7 +1,6 @@
 package io.github.litaog.dailyrecord.core.sync
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.functions.FirebaseFunctions
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordDetailEntity
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import java.time.Instant
@@ -9,20 +8,25 @@ import java.time.LocalDate
 
 internal class FirebaseHandBrewRemoteDataSource(
     firestore: FirebaseFirestore,
-    functions: FirebaseFunctions,
     detailsProvider: suspend (ownerId: String, localDate: LocalDate) ->
         List<HandBrewRecordDetailEntity> = { _, _ -> emptyList() },
 ) : FirebaseDailyCountRemoteDataSource<
         HandBrewRecordEntity,
         HandBrewRecordDetailEntity,
         RemoteHandBrewRecord,
+        RemoteHandBrewDetail,
     >(
         firestore = firestore,
-        functions = functions,
         detailsProvider = detailsProvider,
         collectionName = "handBrewRecords",
+        countFieldName = FIELD_BREW_COUNT,
         parseRecord = ::parseRemoteHandBrewRecord,
         parseRecords = ::parseRemoteHandBrewRecords,
+        toRemoteDetails = { details ->
+            details.map {
+                RemoteHandBrewDetail(it.id, it.occurrenceIndex, it.startTime, it.endTime, it.feeling)
+            }
+        },
         entityId = { it.id },
         entityLocalDate = { it.localDate },
         entityCount = { it.brewCount },
@@ -32,6 +36,18 @@ internal class FirebaseHandBrewRemoteDataSource(
         entityOwnerId = { it.ownerId },
         entityRemoteRevision = { it.remoteRevision },
         detailToMap = { detailToMap(it.id, it.occurrenceIndex, it.startTime, it.endTime, it.feeling) },
+        buildCommittedRecord = { local, stableId, stableCreatedAt, committedUpdatedAt, revision, details ->
+            RemoteHandBrewRecord(
+                id = stableId,
+                localDate = local.localDate,
+                brewCount = local.brewCount,
+                createdAt = stableCreatedAt,
+                clientUpdatedAt = committedUpdatedAt,
+                deleted = local.isDeleted,
+                revision = revision,
+                details = details,
+            )
+        },
     ),
     HandBrewRemoteDataSource
 

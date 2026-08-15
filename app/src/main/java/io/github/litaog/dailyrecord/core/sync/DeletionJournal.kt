@@ -75,36 +75,18 @@ internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionS
     )
     private val lock = Any()
 
-    /**
-     * Parsed journal cache. [DeletionBarrier.isDeletionBlocked] runs on the
-     * caller thread (including the main thread on every local save) and used
-     * to decode every owner entry on each call; the journal only changes
-     * through this store, so a volatile cache keeps repeated barrier checks
-     * allocation- and decode-free. Writes update the cache under [lock].
-     */
-    @Volatile
-    private var cachedEntries: Map<String, DeletionJournalEntry>? = null
-
-    override fun readJournal(): Map<String, DeletionJournalEntry> {
-        cachedEntries?.let { return it }
-        return synchronized(lock) {
-            cachedEntries ?: loadJournalLocked().also { cachedEntries = it }
+    override fun readJournal(): Map<String, DeletionJournalEntry> = synchronized(lock) {
+        when (preferences.getInt(KEY_SCHEMA_VERSION, 0)) {
+            0 -> migrateLegacyJournal()
+            DeletionJournalEntry.CURRENT_VERSION -> migrateLegacyCleanupPreference(readCurrentJournal())
+            else -> error("Unsupported deletion journal schema")
         }
     }
 
     override fun writeJournal(entries: Map<String, DeletionJournalEntry>) {
         synchronized(lock) {
             writeJournalLocked(entries)
-            cachedEntries = entries
         }
-    }
-
-    private fun loadJournalLocked(): Map<String, DeletionJournalEntry> = when (
-        preferences.getInt(KEY_SCHEMA_VERSION, 0)
-    ) {
-        0 -> migrateLegacyJournal()
-        DeletionJournalEntry.CURRENT_VERSION -> migrateLegacyCleanupPreference(readCurrentJournal())
-        else -> error("Unsupported deletion journal schema")
     }
 
     private fun readCurrentJournal(): Map<String, DeletionJournalEntry> {
@@ -189,7 +171,6 @@ internal class SharedPreferencesDeletionStateStore(context: Context) : DeletionS
             emptySet(),
         ).orEmpty().toSet()
 
-    @Suppress("UseKtx")
     private fun writeJournalLocked(
         entries: Map<String, DeletionJournalEntry>,
         clearLegacyKeys: Boolean = false,

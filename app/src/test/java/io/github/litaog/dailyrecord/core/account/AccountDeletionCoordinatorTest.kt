@@ -5,6 +5,10 @@ import io.github.litaog.dailyrecord.core.auth.AuthAccountPresence
 import io.github.litaog.dailyrecord.core.auth.AuthDeletionResult
 import io.github.litaog.dailyrecord.core.auth.AuthRepository
 import io.github.litaog.dailyrecord.core.auth.AuthState
+import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
+import io.github.litaog.dailyrecord.core.sync.HandBrewRemoteDataSource
+import io.github.litaog.dailyrecord.core.sync.RemoteHandBrewRecord
+import io.github.litaog.dailyrecord.core.sync.RemoteSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
@@ -436,7 +440,7 @@ class AccountDeletionCoordinatorTest {
 
     private fun coordinator(
         auth: AuthRepository,
-        remote: AccountRemoteDataStore,
+        remote: HandBrewRemoteDataSource,
         local: AccountDeletionLocalStore,
         markCloudDeletionComplete: (String) -> Unit = {},
         markAuthDeletionStarted: (String) -> Unit = {},
@@ -503,7 +507,16 @@ private class FakeAuthRepository(
 private class FakeRemote(
     private val calls: MutableList<String>,
     private val deleteFailure: Exception? = null,
-) : AccountRemoteDataStore {
+) : HandBrewRemoteDataSource {
+    override fun observe(ownerId: String): Flow<RemoteSnapshot> = emptyFlow()
+
+    override suspend fun fetch(ownerId: String) = RemoteSnapshot(emptyList(), fromCache = false)
+
+    override suspend fun commit(
+        ownerId: String,
+        local: HandBrewRecordEntity,
+    ): RemoteHandBrewRecord = error("Not used")
+
     override suspend fun deleteAll(ownerId: String) {
         calls += "delete-cloud"
         deleteFailure?.let { throw it }

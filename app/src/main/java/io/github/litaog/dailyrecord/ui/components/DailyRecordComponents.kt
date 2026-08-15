@@ -33,16 +33,13 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -133,13 +130,7 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Calendar) },
-                icon = { color ->
-                    CalendarGlyph(
-                        color,
-                        modifier = Modifier.size(24.dp).offset(y = 2.dp),
-                        theme = colors.brandIconTheme,
-                    )
-                },
+                icon = { color -> CalendarGlyph(color, theme = colors.brandIconTheme) },
             )
             BottomDestination(
                 label = AppCopy.NavigationBar.statistics,
@@ -147,13 +138,7 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Statistics) },
-                icon = { color ->
-                    StatisticsGlyph(
-                        color,
-                        modifier = Modifier.size(24.dp),
-                        theme = colors.brandIconTheme,
-                    )
-                },
+                icon = { color -> StatisticsGlyph(color, theme = colors.brandIconTheme) },
             )
         }
     }
@@ -199,7 +184,9 @@ private fun BottomDestination(
 @Composable
 internal fun CalendarGlyph(
     color: Color,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
+        .size(24.dp)
+        .offset(y = 2.dp),
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
     BrandIcon(
@@ -212,7 +199,7 @@ internal fun CalendarGlyph(
 @Composable
 internal fun StatisticsGlyph(
     color: Color,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
     BrandIcon(
@@ -225,7 +212,7 @@ internal fun StatisticsGlyph(
 @Composable
 internal fun ChevronIcon(
     forward: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(20.dp),
     color: Color = DailyRecordText,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
@@ -238,7 +225,7 @@ internal fun ChevronIcon(
 
 @Composable
 internal fun BackChevronIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(20.dp),
     color: Color = DailyRecordText,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
@@ -247,7 +234,7 @@ internal fun BackChevronIcon(
 
 @Composable
 fun HandBrewIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(36.dp),
     tint: Color? = null,
 ) {
     Image(
@@ -261,7 +248,7 @@ fun HandBrewIcon(
 
 @Composable
 fun SexIcon(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(36.dp),
     tint: Color? = null,
 ) {
     Image(
@@ -660,7 +647,7 @@ fun StatisticRow(
             )
             .padding(horizontal = 12.dp, vertical = 10.dp)
             .semantics(mergeDescendants = true) {
-                contentDescription = AppCopy.Components.joinSemantics(label, countText, daysText)
+                contentDescription = "$label，$countText，$daysText"
             },
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -683,62 +670,6 @@ fun StatisticRow(
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(.8f),
-        )
-    }
-}
-
-@Composable
-internal fun dailyRecordFieldColors(): TextFieldColors {
-    // Material3 exposes this factory as @Composable, so keep the first result
-    // per composition instead of calling it for every recomposition.
-    val cached = remember { arrayOfNulls<TextFieldColors>(1) }
-    return cached[0] ?: OutlinedTextFieldDefaults.colors(
-        focusedTextColor = DailyRecordText,
-        unfocusedTextColor = DailyRecordText,
-        disabledTextColor = DailyRecordTextMuted,
-        focusedBorderColor = DailyRecordDefaultAccent,
-        unfocusedBorderColor = DailyRecordDivider,
-        disabledBorderColor = DailyRecordDivider,
-        focusedLabelColor = DailyRecordDefaultAccent,
-        unfocusedLabelColor = DailyRecordTextMuted,
-        disabledLabelColor = DailyRecordTextMuted,
-        cursorColor = DailyRecordDefaultAccent,
-        focusedContainerColor = DailyRecordSurface,
-        unfocusedContainerColor = DailyRecordSurface,
-        disabledContainerColor = DailyRecordSurface,
-    ).also { cached[0] = it }
-}
-
-/**
- * Shared chevron navigation button for calendar months and statistics
- * periods. The 48dp touch target, disabled alpha and 20dp chevron are the
- * single source of truth for both surfaces.
- */
-@Composable
-internal fun IconArrowButton(
-    forward: Boolean,
-    description: String,
-    enabled: Boolean,
-    theme: BrandIconTheme,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .sizeIn(
-                minWidth = DailyRecordSizes.MinimumTouchTarget,
-                minHeight = DailyRecordSizes.MinimumTouchTarget,
-            )
-            .clip(CircleShape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .alpha(if (enabled) 1f else .3f)
-            .semantics { role = Role.Button; contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
-        ChevronIcon(
-            forward = forward,
-            modifier = Modifier.size(20.dp),
-            color = DailyRecordText,
-            theme = theme,
         )
     }
 }

@@ -41,23 +41,19 @@ UI 不直接访问 DAO 或 Firestore。`DailyCountRecord` 与 `DailyCountRecordR
 ```text
 app
 └─ io.github.litaog.dailyrecord
-   ├─ core:model       HandBrewRecord / SexRecord 及逐次详情
+   ├─ core:model       HandBrewRecord / SexRecord
    ├─ core:database    two independent entities / DAOs / migration
    ├─ core:data        two independent repositories
    ├─ core:auth        email/password and reset-email boundary
-   ├─ core:account     account deletion coordinator / local store
-   ├─ core:statistics  statistics models / period anchors / bounds
+   ├─ core:cloud       Firebase bootstrap
    ├─ core:common      shared invariants and user-facing copy
    ├─ core:di          Firebase bootstrap / composition root / WorkManager adapters
    ├─ core:sync        remote source / coordinator / deletion journal / recovery coordinator
    └─ ui
       ├─ calendar      CalendarScreen
       ├─ record        RecordScreen
-      ├─ statistics    StatisticsScreen（纯 UI；统计模型在 core:statistics）
+      ├─ statistics    StatisticsScreen / StatisticsModels
       ├─ settings      SettingsScreen
-      ├─ account       AccountDialog / AccountDeletionDialog
-      ├─ auth          AuthScreen / PasswordResetDialog
-      ├─ navigation    DateNavigationDialog
       ├─ components    shared Compose components
       └─ theme         Figma token mapping
 ```
@@ -98,12 +94,12 @@ Room 当前版本为 5。v1→v2 只提取旧 `flight` 机器图标标识的记�
 - Firestore 路径分别固定为 `/users/{uid}/handBrewRecords/{YYYY-MM-DD}` 与 `/users/{uid}/sexRecords/{YYYY-MM-DD}`。
 - `CombinedSyncCoordinator` 只按模块列表聚合账号状态、待同步数量和后台触发；每个模块仍使用自己的 Store、RemoteDataSource 和映射。
 - 远端不能直接覆盖本地待同步版本；提交确认也必须匹配发起提交的本地版本。
-- 普通记录清除只写墓碑；客户端物理删除被 Firestore Rules 拒绝。账号删除通过 `deleteAccountData` trusted callable 由 Admin SDK 分批清理本人两个集合，完整边界见同步隐私审计。
+- 删除只写墓碑，不允许客户端物理删除。
 - 云端文档物理消失（如账号数据被清理）时，本机 `remoteRevision > 0` 的待同步编辑以新文档重建；重建会生成新的记录 `id` 作为云端代际标记，并从修订号 1 开始。相同 `id` 代际内按 `remoteRevision` 做乐观并发检查，发现新 `id` 时即使修订号较低也接受新代际；普通清除仍走墓碑，不会无提示地复活用户明确删除的记录（ADR-017）。
 - 新登录先在单个 Room 事务中把 `__local__` 记录按日期合并到账号空间，再开始任何 Firestore 请求；因此云端不可达时本机数据仍立即可见且保持 `PENDING`。
 - 冲突使用本地保存的 `remoteRevision` 作为乐观并发基线；修订不一致时保留服务器版本，设备时钟只作为展示和本机单调编辑元数据，不决定跨设备胜负。
 - 首次把无云端基线的本机记录迁入账号时，先对齐已存在日期的当前云端修订，再提交本机版本。
-- 实时监听负责跨设备更新，WorkManager 与网络恢复负责补偿重试；本地变化使用 750ms 去抖的 `REPLACE` 唯一工作，保存风暴只保留一个活跃同步项。
+- 实时监听负责跨设备更新，WorkManager 与网络恢复负责补偿重试；本地变化使用 `APPEND_OR_REPLACE` 保留运行中任务之后的新同步请求。
 - 后台同步当前使用稳定的 `daily-record-cloud-sync` 唯一工作名；升级时会一次性取消旧的 `hand-brew-cloud-sync` 工作，避免历史单模块任务继续运行。
 - 永久删除账号会先写入按账号持久化的删除阻断标记，再等待已经取得云写入闸门的同步完成，之后取消内存任务和 WorkManager；新的 Worker、实时补偿和本地变更调度在闸门期间不能写回该账号。云端物理删除、Auth 删除请求开始、本机恢复副本准备和 Auth 明确完成分别记录为独立阶段；Auth 响应丢失时保留本机恢复副本并继续阻断同步，启动时只有 `reload()` 明确返回 `USER_NOT_FOUND` 才进入本地清理，否则先确认账号仍在，再重新标记待同步。进程在更早阶段中断时，启动会先重新排队本机行，完成恢复后才解除阻断；未决恢复副本使用按账号隔离的 `__recovery__:<ownerId>` 空间，只有 Auth 明确删除后才 promote 到 `__local__`，且 promote 前会检测已有本机记录，绝不覆盖。
 - 删除恢复状态由 `core/sync/DeletionJournal.kt` 的一个版本化 SharedPreferences journal 持有：每个 owner 只有一条 entry，阶段只能按 `InProgress → CloudDeleted → AuthDeletionPending → AuthDeletedCleanupPending` 前进，恢复副本的 `None/Pending/Ready` 是同一 entry 的受约束字段。旧版 owner-set marker 和旧 cleanup preference 只在首次读取时迁移，迁移成功后清除；运行时不再把多个并行集合或 UI preference 当作第二事实源。`AccountDeletionRecoveryCoordinator` 负责 Auth 查询、Room 恢复/重排队、冲突和指数退避，Compose root 只消费 snapshot 并渲染恢复入口。

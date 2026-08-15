@@ -6,7 +6,6 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import io.github.litaog.dailyrecord.core.common.BACKGROUND_CLOUD_TIMEOUT_MILLIS
 import io.github.litaog.dailyrecord.core.common.INTERACTIVE_CLOUD_TIMEOUT_MILLIS
 import io.github.litaog.dailyrecord.core.common.InteractiveCloudTimeoutException
-import io.github.litaog.dailyrecord.core.auth.FirebaseAuthErrorCodes
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
@@ -275,36 +274,26 @@ internal fun Throwable.isRetryableRemoteObservation(): Boolean =
         (cause is FirebaseAuthException && isRetryableFirebaseAuthCode(cause.errorCode)) ||
             cause is FirebaseNetworkException ||
             cause is IOException ||
-            cause is FirebaseFirestoreException && cause.code in RETRYABLE_FIRESTORE_CODES
+            cause is FirebaseFirestoreException && cause.code in setOf(
+                FirebaseFirestoreException.Code.ABORTED,
+                FirebaseFirestoreException.Code.CANCELLED,
+                FirebaseFirestoreException.Code.DEADLINE_EXCEEDED,
+                FirebaseFirestoreException.Code.INTERNAL,
+                FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED,
+                FirebaseFirestoreException.Code.UNAVAILABLE,
+                FirebaseFirestoreException.Code.UNKNOWN,
+                FirebaseFirestoreException.Code.UNAUTHENTICATED,
+            )
     }
 
-private val RETRYABLE_FIRESTORE_CODES: Set<FirebaseFirestoreException.Code> by lazy {
-    // Keep Firebase enum initialization off the file class initializer. JVM
-    // tests use Firebase exceptions as optional inputs and should not load the
-    // Firestore static state merely to classify IOException failures.
-    setOf(
-        FirebaseFirestoreException.Code.ABORTED,
-        FirebaseFirestoreException.Code.CANCELLED,
-        FirebaseFirestoreException.Code.DEADLINE_EXCEEDED,
-        FirebaseFirestoreException.Code.INTERNAL,
-        FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED,
-        FirebaseFirestoreException.Code.UNAVAILABLE,
-        FirebaseFirestoreException.Code.UNKNOWN,
-        FirebaseFirestoreException.Code.UNAUTHENTICATED,
-    )
-}
-
-private val RETRYABLE_FIREBASE_AUTH_CODES = setOf(
-    FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED,
-    FirebaseAuthErrorCodes.TOO_MANY_REQUESTS,
-    FirebaseAuthErrorCodes.USER_TOKEN_EXPIRED,
-    FirebaseAuthErrorCodes.INVALID_USER_TOKEN,
-    FirebaseAuthErrorCodes.ID_TOKEN_REVOKED,
-    FirebaseAuthErrorCodes.INTERNAL_ERROR,
+internal fun isRetryableFirebaseAuthCode(code: String): Boolean = code in setOf(
+    "ERROR_NETWORK_REQUEST_FAILED",
+    "ERROR_TOO_MANY_REQUESTS",
+    "ERROR_USER_TOKEN_EXPIRED",
+    "ERROR_INVALID_USER_TOKEN",
+    "ERROR_ID_TOKEN_REVOKED",
+    "ERROR_INTERNAL_ERROR",
 )
-
-internal fun isRetryableFirebaseAuthCode(code: String): Boolean =
-    code in RETRYABLE_FIREBASE_AUTH_CODES
 
 internal fun Throwable.isNetworkRelatedSyncFailure(): Boolean =
     syncFailureKind() == SyncFailureKind.Network
@@ -330,8 +319,8 @@ internal fun Throwable.syncFailureKind(): SyncFailureKind {
 }
 
 internal fun syncFailureKindForFirebaseAuthCode(code: String): SyncFailureKind = when (code) {
-    FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED -> SyncFailureKind.Network
-    FirebaseAuthErrorCodes.TOO_MANY_REQUESTS -> SyncFailureKind.Quota
+    "ERROR_NETWORK_REQUEST_FAILED" -> SyncFailureKind.Network
+    "ERROR_TOO_MANY_REQUESTS" -> SyncFailureKind.Quota
     else -> SyncFailureKind.Authentication
 }
 

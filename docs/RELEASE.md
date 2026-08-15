@@ -1,8 +1,8 @@
 # GitHub Release 发布与签名
 
-最后复核：2026-08-03
+最后复核：2026-08-15
 
-本项目只通过 GitHub Releases 向本人和少量使用者提供签名 APK。当前候选版本为 `v1.0.0-beta.2`，对应 `versionCode = 3`；首个候选版本 `v1.0.0-beta.1` 保留为历史发布。发布物不是 Debug APK。
+本项目只通过 GitHub Releases 向本人和少量使用者提供签名 APK。当前候选版本为 `v1.0.0-beta.3`，对应 `versionCode = 4`；`v1.0.0-beta.1` 与 `v1.0.0-beta.2` 保留为历史发布。发布物不是 Debug APK。
 
 ## 版本规则
 
@@ -92,7 +92,7 @@ AF:A5:24:1B:F1:3C:9D:AA:6F:45:AE:7C:8D:69:9D:75:40:D0:11:F0:E2:19:E5:4E:5B:97:BF
    ```
 
 4. 用 `apksigner verify --verbose --print-certs` 检查 APK，并记录公开的证书 SHA-256 指纹。
-5. 创建并推送与版本一致的 tag，例如 `v1.0.0-beta.2`。
+5. 创建并推送与版本一致的 tag，例如 `v1.0.0-beta.3`。
 6. 等待 `Release signed APK` 工作流完成，下载 APK 与 `.sha256` 后再复算一次。
 7. 从旧 release APK 覆盖安装到测试设备，确认 Room 记录、账号状态和日历统计保持。
 

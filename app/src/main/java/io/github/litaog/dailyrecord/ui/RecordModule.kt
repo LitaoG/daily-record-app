@@ -10,10 +10,8 @@ import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.model.DailyCountRecord
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
-import io.github.litaog.dailyrecord.core.model.HandBrewRecordDetail
 import io.github.litaog.dailyrecord.core.model.RecordFactory
 import io.github.litaog.dailyrecord.core.model.SexRecord
-import io.github.litaog.dailyrecord.core.model.SexRecordDetail
 import io.github.litaog.dailyrecord.ui.components.HandBrewIcon
 import io.github.litaog.dailyrecord.ui.components.SexIcon
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
@@ -190,38 +188,6 @@ internal abstract class RepositoryRecordModuleController<T : DailyCountRecord>(
 
     final override suspend fun clearRecord(localDate: LocalDate): Boolean =
         repository.clearRecord(localDate)
-
-    /**
-     * Merges a detail draft with the stored detail models of the same slots.
-     * A detail's id is its slot identity (see the repository's index-based
-     * matching), so edits must not churn ids or rewrite creation timestamps:
-     * existing slots keep their id/createdAt, new slots mint fresh values.
-     */
-    protected suspend fun <TD> mergeDetailsWithStored(
-        localDate: LocalDate,
-        drafts: List<RecordDetailEntry>,
-        stored: suspend () -> List<TD>,
-        occurrenceIndexOf: (TD) -> Int,
-        createdAtOf: (TD) -> Instant,
-        create: (
-            existing: TD?,
-            draft: RecordDetailEntry,
-            createdAt: Instant,
-            updatedAt: Instant,
-        ) -> TD,
-    ): List<TD> {
-        val now = Instant.now()
-        val existingByIndex = stored().associateBy(occurrenceIndexOf)
-        return drafts.map { draft ->
-            val existing = existingByIndex[draft.occurrenceIndex]
-            create(
-                existing,
-                draft,
-                existing?.let(createdAtOf) ?: now,
-                now,
-            )
-        }
-    }
 }
 
 internal class HandBrewModuleController(
@@ -242,27 +208,28 @@ internal class HandBrewModuleController(
         localDate: LocalDate,
         details: List<RecordDetailEntry>,
     ) {
+        val now = Instant.now()
+        // Reuse the stored id and createdAt per occurrence slot: a detail's id
+        // is its slot identity (see the repository's index-based matching), so
+        // edits must not churn ids or rewrite creation timestamps.
+        val existingByIndex = handBrewRepository.observeDetails(localDate)
+            .first()
+            .associateBy { it.occurrenceIndex }
         handBrewRepository.saveRecord(
             record,
-            mergeDetailsWithStored(
-                localDate = localDate,
-                drafts = details,
-                stored = { handBrewRepository.observeDetails(localDate).first() },
-                occurrenceIndexOf = HandBrewRecordDetail::occurrenceIndex,
-                createdAtOf = HandBrewRecordDetail::createdAt,
-                create = { existing, draft, createdAt, updatedAt ->
-                    RecordFactory.createHandBrewDetail(
-                        existing = existing,
-                        localDate = localDate,
-                        occurrenceIndex = draft.occurrenceIndex,
-                        startTime = draft.startTime,
-                        endTime = draft.endTime,
-                        feeling = draft.feeling,
-                        createdAt = createdAt,
-                        updatedAt = updatedAt,
-                    )
-                },
-            ),
+            details.map {
+                val existing = existingByIndex[it.occurrenceIndex]
+                RecordFactory.createHandBrewDetail(
+                    existing = existing,
+                    localDate = localDate,
+                    occurrenceIndex = it.occurrenceIndex,
+                    startTime = it.startTime,
+                    endTime = it.endTime,
+                    feeling = it.feeling,
+                    createdAt = existing?.createdAt ?: now,
+                    updatedAt = now,
+                )
+            },
         )
     }
 
@@ -299,27 +266,28 @@ internal class SexModuleController(
         localDate: LocalDate,
         details: List<RecordDetailEntry>,
     ) {
+        val now = Instant.now()
+        // Reuse the stored id and createdAt per occurrence slot: a detail's id
+        // is its slot identity (see the repository's index-based matching), so
+        // edits must not churn ids or rewrite creation timestamps.
+        val existingByIndex = sexRepository.observeDetails(localDate)
+            .first()
+            .associateBy { it.occurrenceIndex }
         sexRepository.saveRecord(
             record,
-            mergeDetailsWithStored(
-                localDate = localDate,
-                drafts = details,
-                stored = { sexRepository.observeDetails(localDate).first() },
-                occurrenceIndexOf = SexRecordDetail::occurrenceIndex,
-                createdAtOf = SexRecordDetail::createdAt,
-                create = { existing, draft, createdAt, updatedAt ->
-                    RecordFactory.createSexDetail(
-                        existing = existing,
-                        localDate = localDate,
-                        occurrenceIndex = draft.occurrenceIndex,
-                        startTime = draft.startTime,
-                        endTime = draft.endTime,
-                        feeling = draft.feeling,
-                        createdAt = createdAt,
-                        updatedAt = updatedAt,
-                    )
-                },
-            ),
+            details.map {
+                val existing = existingByIndex[it.occurrenceIndex]
+                RecordFactory.createSexDetail(
+                    existing = existing,
+                    localDate = localDate,
+                    occurrenceIndex = it.occurrenceIndex,
+                    startTime = it.startTime,
+                    endTime = it.endTime,
+                    feeling = it.feeling,
+                    createdAt = existing?.createdAt ?: now,
+                    updatedAt = now,
+                )
+            },
         )
     }
 

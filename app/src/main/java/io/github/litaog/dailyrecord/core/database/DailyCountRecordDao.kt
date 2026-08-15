@@ -71,12 +71,6 @@ internal interface DailyCountRecordDetailDao<DetailEntity : Any> {
 
     suspend fun deleteByOwnerDate(ownerId: String, localDate: LocalDate): Int
 
-    suspend fun deleteByOwnerDateAndIds(
-        ownerId: String,
-        localDate: LocalDate,
-        ids: List<String>,
-    ): Int
-
     suspend fun countForOwner(ownerId: String): Int
 
     suspend fun deleteOwnerCache(ownerId: String): Int

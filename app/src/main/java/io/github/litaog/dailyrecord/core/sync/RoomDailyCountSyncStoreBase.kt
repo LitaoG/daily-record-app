@@ -198,9 +198,9 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
                     ),
                 )
             }
-            detailDao.upsertAll(
-                recoveryDetails.map { it.withPromotedLocalIdentity() },
-            )
+            recoveryDetails.forEach { recoveryDetail ->
+                detailDao.upsertAll(listOf(recoveryDetail.withPromotedLocalIdentity()))
+            }
             dao.deleteOwnerCache(recoveryOwner)
             detailDao.deleteOwnerCache(recoveryOwner)
         }
@@ -229,16 +229,9 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
         ownerId: String,
         records: List<R>,
     ): Int {
-        // Fetch the local snapshot once per remote snapshot. The previous
-        // implementation queried Room once per remote date, turning a normal
-        // account sync into an N+1 read pattern.
-        val localByDate = dao.getAllForSync(ownerId)
-            .associateBy(::recordLocalDateOf)
-            .toMutableMap()
         var changed = 0
         records.forEach { remote ->
-            val localDate = remote.localDateOf()
-            val local = localByDate[localDate]
+            val local = dao.getByDate(ownerId, remote.localDateOf())
             if (local != null && recordSyncStateOf(local) == SYNC_PENDING) {
                 return@forEach
             }
@@ -250,15 +243,13 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
                 return@forEach
             }
             if (local != null && recordEntityIdOf(local) != remoteRecordIdOf(remote)) {
-                dao.deleteByOwnerDate(ownerId, localDate)
+                dao.deleteByOwnerDate(ownerId, remote.localDateOf())
             }
-            val entity = remote.asRecordEntity(ownerId)
-            dao.upsert(entity)
-            localByDate[localDate] = entity
-            detailDao.deleteByOwnerDate(ownerId, localDate)
+            dao.upsert(remote.asRecordEntity(ownerId))
+            detailDao.deleteByOwnerDate(ownerId, remote.localDateOf())
             if (!remote.deletedOf()) {
                 detailDao.upsertAll(
-                    remote.detailsOf().map { it.asDetailEntity(ownerId, localDate) },
+                    remote.detailsOf().map { it.asDetailEntity(ownerId, remote.localDateOf()) },
                 )
             }
             changed += 1

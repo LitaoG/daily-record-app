@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,16 +40,13 @@ import io.github.litaog.dailyrecord.core.account.AccountDeletionAuthPendingExcep
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryPendingException
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryConflictException
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
-import io.github.litaog.dailyrecord.core.auth.FirebaseAuthErrorCodes
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.sync.syncFailureKind
 import io.github.litaog.dailyrecord.ui.components.DangerActionButton
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.components.dailyRecordFieldColors
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -71,8 +69,8 @@ internal fun AccountDeletionDialog(
     var stepName by rememberSaveable { mutableStateOf(AccountDeletionStep.Warning.name) }
     var localDataName by rememberSaveable { mutableStateOf(LocalDataAfterAccountDeletion.Keep.name) }
     var password by remember { mutableStateOf("") }
-    var busy by remember { mutableStateOf(false) }
-    var errorText by remember { mutableStateOf<String?>(null) }
+    var busy by rememberSaveable { mutableStateOf(false) }
+    var errorText by rememberSaveable { mutableStateOf<String?>(null) }
     val step = AccountDeletionStep.entries.firstOrNull { it.name == stepName }
         ?: AccountDeletionStep.Warning
     val localData = LocalDataAfterAccountDeletion.entries.firstOrNull { it.name == localDataName }
@@ -84,9 +82,7 @@ internal fun AccountDeletionDialog(
             busy = true
             errorText = null
             scope.launch {
-                val result: Result<Unit> = runCatchingPreservingCancellation {
-                    onDeleteAccount(password, localData)
-                }.getOrElse { error -> Result.failure(error) }
+                val result = onDeleteAccount(password, localData)
                 result.exceptionOrNull()?.let { errorText = accountDeletionErrorMessage(it) }
                 busy = false
             }
@@ -241,7 +237,21 @@ private fun DeletionChoiceCard(
 }
 
 @Composable
-private fun deletionFieldColors() = dailyRecordFieldColors()
+private fun deletionFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = DailyRecordText,
+    unfocusedTextColor = DailyRecordText,
+    disabledTextColor = DailyRecordTextMuted,
+    focusedBorderColor = DailyRecordDefaultAccent,
+    unfocusedBorderColor = DailyRecordDivider,
+    disabledBorderColor = DailyRecordDivider,
+    focusedLabelColor = DailyRecordDefaultAccent,
+    unfocusedLabelColor = DailyRecordTextMuted,
+    disabledLabelColor = DailyRecordTextMuted,
+    cursorColor = DailyRecordDefaultAccent,
+    focusedContainerColor = DailyRecordSurface,
+    unfocusedContainerColor = DailyRecordSurface,
+    disabledContainerColor = DailyRecordSurface,
+)
 
 internal fun accountDeletionErrorMessage(error: Throwable): String {
     if (error is AccountDeletionAuthPendingException) {
@@ -273,13 +283,10 @@ internal fun accountDeletionErrorMessage(error: Throwable): String {
 }
 
 internal fun accountDeletionErrorMessageForCode(code: String): String = when (code) {
-    FirebaseAuthErrorCodes.WRONG_PASSWORD, FirebaseAuthErrorCodes.INVALID_CREDENTIAL ->
-        AppCopy.Deletion.wrongPassword
-    FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED -> AppCopy.Deletion.networkAuthError
-    FirebaseAuthErrorCodes.TOO_MANY_REQUESTS -> AppCopy.Deletion.tooManyAttempts
-    FirebaseAuthErrorCodes.USER_MISMATCH,
-    FirebaseAuthErrorCodes.USER_NOT_FOUND,
-    FirebaseAuthErrorCodes.REQUIRES_RECENT_LOGIN,
-    -> AppCopy.Deletion.authError
+    "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL" -> AppCopy.Deletion.wrongPassword
+    "ERROR_NETWORK_REQUEST_FAILED" -> AppCopy.Deletion.networkAuthError
+    "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Deletion.tooManyAttempts
+    "ERROR_USER_MISMATCH", "ERROR_USER_NOT_FOUND", "ERROR_REQUIRES_RECENT_LOGIN" ->
+        AppCopy.Deletion.authError
     else -> AppCopy.Deletion.unknownError
 }

@@ -1,10 +1,11 @@
 package io.github.litaog.dailyrecord.core.di
 
 import android.content.Context
+import com.google.firebase.FirebaseApp
+import com.google.firebase.firestore.FirebaseFirestore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.ListenableWorker
-import androidx.work.WorkInfo
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.WorkManager
@@ -13,7 +14,9 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
 import io.github.litaog.dailyrecord.core.di.DailyRecordSyncServicesProvider
 import io.github.litaog.dailyrecord.core.di.DailyRecordSyncWorker
+import io.github.litaog.dailyrecord.core.di.FIREBASE_EMULATOR_APP_NAME
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
+import io.github.litaog.dailyrecord.core.common.awaitResult
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
@@ -46,9 +49,6 @@ class DailyRecordSyncWorkerTest {
 
     @After
     fun tearDown() {
-        runBlocking {
-            DailyRecordSyncScheduler.cancelAndAwait(context)
-        }
         DeletionBarrier.endDeletionBlock()
         DeletionBarrier.completeDeletionCleanup(persistentOwner)
     }
@@ -99,21 +99,6 @@ class DailyRecordSyncWorkerTest {
         ).get()
         assertTrue(workInfos.isNotEmpty())
         assertFalse(DeletionBarrier.isDeletionBlocked)
-    }
-
-    @Test
-    fun saveStormKeepsOneActiveDebouncedWorkItem() {
-        val workManager = WorkManager.getInstance(context)
-        repeat(20) {
-            DailyRecordSyncScheduler.schedule(context, ownerId = "storm-owner")
-        }
-
-        val active = workManager.getWorkInfosForUniqueWork(
-            DailyRecordSyncScheduler.workName,
-        ).get().count { info ->
-            info.state == WorkInfo.State.ENQUEUED || info.state == WorkInfo.State.RUNNING
-        }
-        assertEquals(1, active)
     }
 
     @Test
@@ -187,7 +172,10 @@ class DailyRecordSyncWorkerTest {
                 remoteRevision = 0,
             )
             val initial = services.remoteDataSource.commit(account.uid, local)
-            services.accountDataDeletionStore.deleteAll(account.uid)
+            FirebaseFirestore.getInstance(FirebaseApp.getInstance(FIREBASE_EMULATOR_APP_NAME))
+                .collection("users").document(account.uid)
+                .collection("handBrewRecords").document(date.toString())
+                .delete().awaitResult()
 
             database = DailyRecordDatabase.create(context)
             database!!.handBrewRecordDao().upsert(

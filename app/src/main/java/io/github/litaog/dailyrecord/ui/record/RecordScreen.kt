@@ -2,9 +2,11 @@ package io.github.litaog.dailyrecord.ui.record
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,10 +16,16 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -34,21 +42,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.formatMinutesOfDay
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.common.toMinutesOfDay
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
+import io.github.litaog.dailyrecord.core.model.visibleCharacterCount
 import io.github.litaog.dailyrecord.ui.HandBrewModuleController
 import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
@@ -56,24 +69,33 @@ import io.github.litaog.dailyrecord.ui.RecordModuleController
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.BackChevronIcon
+import io.github.litaog.dailyrecord.ui.components.BrandIcon
+import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
+import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.DailyCountControl
 import io.github.litaog.dailyrecord.ui.components.DailyRecordConfirmationDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordBorders
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -83,6 +105,11 @@ private sealed interface RecordLoadState {
         val record: DailyCountEntry?,
         val details: List<RecordDetailEntry>,
     ) : RecordLoadState
+}
+
+private enum class DetailTimeTarget {
+    Start,
+    End,
 }
 
 private data class TimePickerRequest(
@@ -105,7 +132,7 @@ internal fun RecordScreen(
 ) = DailyCountRecordScreen(
     date = date,
     today = today,
-    controller = remember(repository) { HandBrewModuleController(repository) },
+    controller = HandBrewModuleController(repository),
     moduleSpec = HandBrewModuleSpec,
     monthRecords = monthRecords.map(HandBrewRecord::asDailyCountEntry),
     onBack = onBack,
@@ -147,7 +174,7 @@ internal fun DailyCountRecordScreen(
     var showDiscardDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var showRemoveDetailDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
     var errorMessage by remember(date) { mutableStateOf<String?>(null) }
-    var timePickerRequest by remember(date) { mutableStateOf<TimePickerRequest?>(null) }
+    var timePickerRequest by remember { mutableStateOf<TimePickerRequest?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val editable = date <= today
@@ -176,17 +203,8 @@ internal fun DailyCountRecordScreen(
     val hasUnsavedChanges = dataReady && (countDraft.hasChanges || detailsDraft.hasChanges)
     val canSave = dataReady && countDraft.initialized && (record == null || hasUnsavedChanges)
     val applyCount = { nextCount: Int ->
-        val previousCount = countDraft.count
         countDraft = countDraft.copy(count = nextCount)
-        detailsDraft = if (
-            nextCount <= MAX_RECORD_DETAIL_EDITOR_ROWS &&
-            previousCount > MAX_RECORD_DETAIL_EDITOR_ROWS &&
-            !detailsDraft.hasChanges
-        ) {
-            RecordDetailsDraft().reconcile(storedDetails, nextCount)
-        } else {
-            detailsDraft.resize(nextCount)
-        }.let {
+        detailsDraft = detailsDraft.resize(nextCount).let {
             if (nextCount == 0) it.copy(expanded = false) else it
         }
     }
@@ -279,16 +297,15 @@ internal fun DailyCountRecordScreen(
                     enabled = editable && dataReady && countDraft.initialized && !saving,
                     onDecrease = {
                         val last = detailsDraft.entries.lastOrNull()
-                            .takeIf { countDraft.count <= MAX_RECORD_DETAIL_EDITOR_ROWS }
                         if (countDraft.count > 0 && last?.hasContent == true) {
                             showRemoveDetailDialog = true
                         } else {
-                            applyCount(countDraft.decrease().count)
+                            applyCount((countDraft.count - 1).coerceAtLeast(0))
                         }
                     },
                     onIncrease = {
                         if (countDraft.count < Int.MAX_VALUE) {
-                            applyCount(countDraft.increase().count)
+                            applyCount(countDraft.count + 1)
                         }
                     },
                     colors = moduleSpec.colors,
@@ -315,14 +332,7 @@ internal fun DailyCountRecordScreen(
                     )
                 }
                 if (countDraft.count > 0) {
-                    if (countDraft.count > MAX_RECORD_DETAIL_EDITOR_ROWS) {
-                        Text(
-                            text = AppCopy.Record.detailEntryUnavailable,
-                            color = DailyRecordTextMuted,
-                            style = MaterialTheme.typography.labelSmall,
-                            textAlign = TextAlign.Center,
-                        )
-                    } else if (detailsDraft.expanded) {
+                    if (detailsDraft.expanded) {
                         RecordDetailsSection(
                             entries = detailsDraft.entries,
                             accent = moduleSpec.colors.primary,
@@ -411,24 +421,13 @@ internal fun DailyCountRecordScreen(
                             onClick = {
                                 if (!editable || !canSave || saving) return@PrimaryActionButton
                                 val currentDraftCount = countDraft.count
-                                val currentDetails = when {
-                                    currentDraftCount == 0 -> emptyList()
-                                    currentDraftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS ->
-                                        detailsDraft.asEntries().take(currentDraftCount)
-                                    detailsDraft.hasChanges ->
-                                        (storedDetails + detailsDraft.asEntries())
-                                            .filter { it.occurrenceIndex in 1..currentDraftCount }
-                                            .associateBy(RecordDetailEntry::occurrenceIndex)
-                                            .values
-                                            .sortedBy(RecordDetailEntry::occurrenceIndex)
-                                    else -> null
+                                val currentDetails = if (currentDraftCount == 0) {
+                                    emptyList()
+                                } else {
+                                    detailsDraft.asEntries().take(currentDraftCount)
                                 }
                                 launchMutation(AppCopy.Record.saveFailure, onSaved) {
-                                    if (currentDetails == null) {
-                                        controller.saveRecord(date, currentDraftCount)
-                                    } else {
-                                        controller.saveRecord(date, currentDraftCount, currentDetails)
-                                    }
+                                    controller.saveRecord(date, currentDraftCount, currentDetails)
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
@@ -530,7 +529,7 @@ internal fun DailyCountRecordScreen(
             onDismiss = { showRemoveDetailDialog = false },
             onConfirm = {
                 showRemoveDetailDialog = false
-                applyCount(countDraft.decrease().count)
+                applyCount((countDraft.count - 1).coerceAtLeast(0))
             },
         )
     }
@@ -558,6 +557,477 @@ internal fun DailyCountRecordScreen(
 
 internal fun initialTimePickerMinutes(existingMinutes: Int?, now: LocalTime): Int =
     existingMinutes ?: now.toMinutesOfDay()
+
+@Composable
+private fun RecordDetailsSection(
+    entries: List<RecordDetailDraft>,
+    accent: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    onCollapse: () -> Unit,
+    onTimeClick: (Int, DetailTimeTarget) -> Unit,
+    onFeelingToggle: (Int) -> Unit,
+    onFeelingChange: (Int, String) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("record_details_section"),
+        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(DailyRecordBorders.Standard)
+                .background(DailyRecordDivider),
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+                .clip(DailyRecordShapes.Control)
+                .clickable(role = Role.Button, onClick = onCollapse)
+                .semantics {
+                    role = Role.Button
+                    contentDescription = AppCopy.Record.detailCollapse
+                }
+                .padding(vertical = DailyRecordSpacing.Compact),
+        ) {
+            Text(
+                text = AppCopy.Record.detailSectionTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = AppCopy.Record.detailSectionHint,
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
+        entries.forEachIndexed { index, entry ->
+            RecordDetailRow(
+                index = index,
+                entry = entry,
+                accent = accent,
+                theme = theme,
+                onTimeClick = onTimeClick,
+                onFeelingToggle = onFeelingToggle,
+                onFeelingChange = onFeelingChange,
+            )
+            if (index < entries.lastIndex) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(DailyRecordBorders.Standard)
+                        .background(DailyRecordDivider)
+                        .testTag("record_detail_divider_${index + 1}"),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecordDetailRow(
+    index: Int,
+    entry: RecordDetailDraft,
+    accent: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    onTimeClick: (Int, DetailTimeTarget) -> Unit,
+    onFeelingToggle: (Int) -> Unit,
+    onFeelingChange: (Int, String) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("record_detail_${index + 1}"),
+        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+        ) {
+            OccurrenceBadge(number = index + 1, accent = accent)
+            Text(
+                text = AppCopy.Record.detailOccurrence(index + 1),
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            val compactLayout = maxWidth < 300.dp || LocalDensity.current.fontScale >= 1.5f
+            Column(
+                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+            ) {
+                if (compactLayout) {
+                    DetailTimeFields(
+                        occurrence = index + 1,
+                        entry = entry,
+                        accent = accent,
+                        theme = theme,
+                        onTimeClick = onTimeClick,
+                        index = index,
+                    )
+                    FeelingAction(
+                        occurrence = index + 1,
+                        expanded = entry.feelingExpanded,
+                        accent = accent,
+                        theme = theme,
+                        modifier = Modifier.align(Alignment.End),
+                        onClick = { onFeelingToggle(index) },
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
+                    ) {
+                        DetailTimeFields(
+                            occurrence = index + 1,
+                            entry = entry,
+                            accent = accent,
+                            theme = theme,
+                            onTimeClick = onTimeClick,
+                            index = index,
+                            modifier = Modifier.weight(1f),
+                        )
+                        FeelingAction(
+                            occurrence = index + 1,
+                            expanded = entry.feelingExpanded,
+                            accent = accent,
+                            theme = theme,
+                            onClick = { onFeelingToggle(index) },
+                        )
+                    }
+                }
+                if (entry.feelingExpanded) {
+                    FeelingEditor(
+                        occurrence = index + 1,
+                        value = entry.feeling,
+                        accent = accent,
+                        onValueChange = { onFeelingChange(index, it) },
+                    )
+                } else if (entry.feeling.isNotEmpty()) {
+                    Text(
+                        text = entry.feeling,
+                        color = DailyRecordTextSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailTimeFields(
+    occurrence: Int,
+    entry: RecordDetailDraft,
+    accent: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    onTimeClick: (Int, DetailTimeTarget) -> Unit,
+    index: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        DetailTimeField(
+            occurrence = occurrence,
+            target = DetailTimeTarget.Start,
+            label = AppCopy.Record.detailStartTime,
+            placeholder = AppCopy.Record.detailStartTimeUnset,
+            minutes = entry.startMinutes,
+            accent = accent,
+            modifier = Modifier.weight(1f),
+            onClick = { onTimeClick(index, DetailTimeTarget.Start) },
+        )
+        TimeRangeArrow(
+            color = DailyRecordTextMuted,
+            theme = theme,
+            modifier = Modifier.size(width = 24.dp, height = 24.dp),
+        )
+        DetailTimeField(
+            occurrence = occurrence,
+            target = DetailTimeTarget.End,
+            label = AppCopy.Record.detailEndTime,
+            placeholder = AppCopy.Record.detailEndTimeUnset,
+            minutes = entry.endMinutes,
+            accent = accent,
+            modifier = Modifier.weight(1f),
+            onClick = { onTimeClick(index, DetailTimeTarget.End) },
+        )
+    }
+}
+
+@Composable
+private fun OccurrenceBadge(
+    number: Int,
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(accent),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = number.toString(),
+            color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun DetailTimeField(
+    occurrence: Int,
+    target: DetailTimeTarget,
+    label: String,
+    placeholder: String,
+    minutes: Int?,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+            .clip(DailyRecordShapes.Control)
+            .background(DailyRecordSurface)
+            .border(
+                DailyRecordBorders.Standard,
+                accent.copy(alpha = .20f),
+                DailyRecordShapes.Control,
+            )
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics {
+                role = Role.Button
+                contentDescription = AppCopy.Record.detailTimeDescription(
+                    occurrence = occurrence,
+                    label = label,
+                    value = minutes?.let(::formatMinutesOfDay) ?: placeholder,
+                )
+            }
+            .testTag("record_detail_${occurrence}_${target.name.lowercase()}_time")
+            .padding(horizontal = DailyRecordSpacing.Compact),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = minutes?.let(::formatMinutesOfDay) ?: placeholder,
+            color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
+            style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun TimeRangeArrow(
+    color: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    modifier: Modifier = Modifier,
+) {
+    BrandIcon(
+        asset = BrandIconAsset.Next,
+        theme = theme,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun FeelingAction(
+    occurrence: Int,
+    expanded: Boolean,
+    accent: Color,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val label = when {
+        expanded -> AppCopy.Record.detailCollapseFeeling
+        else -> AppCopy.Record.detailWriteFeeling
+    }
+    Row(
+        modifier = modifier
+            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+            .clip(DailyRecordShapes.Control)
+            .background(DailyRecordSurface)
+            .border(
+                DailyRecordBorders.Standard,
+                accent.copy(alpha = .62f),
+                DailyRecordShapes.Control,
+            )
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics {
+                role = Role.Button
+                contentDescription = AppCopy.Record.detailFeelingActionDescription(occurrence, label)
+            }
+            .testTag("record_detail_${occurrence}_feeling")
+            .padding(horizontal = DailyRecordSpacing.Compact),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
+    ) {
+        BrandIcon(
+            asset = BrandIconAsset.Edit,
+            theme = theme,
+            modifier = Modifier.size(32.dp),
+        )
+        Text(
+            text = label,
+            color = accent,
+            style = MaterialTheme.typography.labelLarge,
+        )
+    }
+}
+
+@Composable
+private fun FeelingEditor(
+    occurrence: Int,
+    value: String,
+    accent: Color,
+    onValueChange: (String) -> Unit,
+) {
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 76.dp)
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) {
+                        coroutineScope.launch {
+                            // Wait for the IME inset to settle before asking the scroll
+                            // container to reveal the field.
+                            delay(300)
+                            bringIntoViewRequester.bringIntoView()
+                        }
+                    }
+                }
+                .clip(DailyRecordShapes.Control)
+                .background(DailyRecordSurface)
+                .border(DailyRecordBorders.Standard, accent.copy(alpha = .65f), DailyRecordShapes.Control)
+                .semantics {
+                    contentDescription = AppCopy.Record.detailFeelingEditorDescription(occurrence)
+                }
+                .testTag("record_detail_${occurrence}_feeling_editor")
+                .padding(horizontal = DailyRecordSpacing.Inline, vertical = DailyRecordSpacing.Inline),
+            textStyle = MaterialTheme.typography.bodyMedium.merge(TextStyle(color = DailyRecordText)),
+            decorationBox = { innerTextField ->
+                Box {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = AppCopy.Record.detailFeelingHint,
+                            color = DailyRecordTextMuted,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    innerTextField()
+                }
+            },
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = DailyRecordSpacing.Compact),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            Text(
+                text = AppCopy.Record.detailFeelingCounter(value.visibleCharacterCount()),
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailEntryButton(
+    count: Int,
+    accent: Color,
+    colors: RecordModuleColorTokens,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 58.dp)
+            .clip(DailyRecordShapes.Control)
+            .dailyRecordGlass(
+                shape = DailyRecordShapes.Control,
+                moduleColors = colors,
+                level = DailyRecordGlassLevel.Base,
+                edgeColor = accent,
+            )
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics {
+                role = Role.Button
+                contentDescription = AppCopy.Record.detailEntry
+            }
+            .padding(horizontal = DailyRecordSpacing.Inline),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(DailyRecordShapes.Compact)
+                .background(accent.copy(alpha = .10f))
+                .border(
+                    DailyRecordBorders.Standard,
+                    accent.copy(alpha = .55f),
+                    DailyRecordShapes.Compact,
+                ),
+        ) {
+            BrandIcon(
+                asset = BrandIconAsset.Clock,
+                theme = colors.brandIconTheme,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .size(30.dp),
+            )
+            BrandIcon(
+                asset = BrandIconAsset.Note,
+                theme = colors.brandIconTheme,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(26.dp),
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = AppCopy.Record.detailEntry,
+                color = accent,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = AppCopy.Record.detailEntryHint(count),
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
+        ChevronIcon(
+            forward = true,
+            modifier = Modifier.size(20.dp),
+            color = accent,
+            theme = colors.brandIconTheme,
+        )
+    }
+}
 
 @Composable
 private fun TimePickerHost(
@@ -603,7 +1073,6 @@ private fun RecordHeader(
                 contentAlignment = Alignment.Center,
             ) {
                 BackChevronIcon(
-                    modifier = Modifier.size(20.dp),
                     color = DailyRecordText,
                     theme = moduleSpec.colors.brandIconTheme,
                 )
