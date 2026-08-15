@@ -617,7 +617,9 @@ class HandBrewSyncCoordinatorTest {
         val failure = manager.status.value as SyncStatus.Failed
         assertEquals(SyncFailureKind.Data, failure.kind)
         assertTrue(failure.message.contains("其余记录已同步"))
-        assertEquals(2, remote.fetchCalls)
+        // A rejected snapshot is a terminal data failure and has no pending
+        // local edit to confirm, so the optimized sync path performs one read.
+        assertEquals(1, remote.fetchCalls)
     }
 
     @Test
@@ -797,7 +799,7 @@ private class FakeRemoteDataSource(
             committed
         }
 
-    override suspend fun deleteAll(ownerId: String) {
+    suspend fun deleteAll(ownerId: String) {
         values.value = emptyMap()
     }
 

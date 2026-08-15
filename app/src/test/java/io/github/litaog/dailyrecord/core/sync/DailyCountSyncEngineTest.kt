@@ -16,6 +16,23 @@ class DailyCountSyncEngineTest {
     private val t0 = Instant.parse("2026-07-17T00:00:00Z")
 
     @Test
+    fun cleanSyncDoesNotPerformASecondFullFetch() = runSync {
+        val store = FakeStore()
+        val remote = FakeRemote()
+        val engine = DailyCountSyncEngine(store, remote)
+        store.rows[date] = entity(
+            brewCount = 1,
+            updatedAt = t0,
+            remoteRevision = 5,
+        ).copy(syncState = SYNCED)
+        remote.server[date] = remoteOf(brewCount = 1, clientUpdatedAt = t0, revision = 5)
+
+        engine.syncOnce(owner)
+
+        assertEquals(1, remote.fetchCalls)
+    }
+
+    @Test
     fun inFlightEditSurvivesItsOwnEarlierCommit() = runSync {
         val store = FakeStore()
         val remote = FakeRemote()
@@ -192,13 +209,17 @@ private class FakeStore : DailyCountSyncStore<HandBrewRecordEntity, RemoteHandBr
 
 private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, RemoteHandBrewRecord> {
     val server = mutableMapOf<LocalDate, RemoteHandBrewRecord>()
+    var fetchCalls = 0
 
     /** Simulates a user edit landing while the commit request is in flight. */
     var onCommit: (() -> Unit)? = null
 
     override fun observe(ownerId: String): Flow<RemoteSnapshot> = MutableStateFlow(fetchSnapshot())
 
-    override suspend fun fetch(ownerId: String): RemoteSnapshot = fetchSnapshot()
+    override suspend fun fetch(ownerId: String): RemoteSnapshot {
+        fetchCalls += 1
+        return fetchSnapshot()
+    }
 
     override fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteHandBrewRecord> =
         snapshot.records.filterIsInstance<RemoteHandBrewRecord>()
@@ -232,7 +253,7 @@ private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, Remo
             remote.clientUpdatedAt == local.updatedAt &&
             remote.deleted == local.isDeleted
 
-    override suspend fun deleteAll(ownerId: String) {
+    suspend fun deleteAll(ownerId: String) {
         server.clear()
     }
 

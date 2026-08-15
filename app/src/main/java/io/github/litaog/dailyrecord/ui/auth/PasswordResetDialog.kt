@@ -10,12 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -31,18 +31,17 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuthException
+import io.github.litaog.dailyrecord.core.auth.FirebaseAuthErrorCodes
 import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.components.dailyRecordFieldColors
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -53,9 +52,9 @@ internal fun PasswordResetDialog(
     onEmailAccepted: (String) -> Unit,
 ) {
     var email by rememberSaveable { mutableStateOf(initialEmail) }
-    var busy by rememberSaveable { mutableStateOf(false) }
-    var sent by rememberSaveable { mutableStateOf(false) }
-    var errorText by rememberSaveable { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var sent by remember { mutableStateOf(false) }
+    var errorText by remember { mutableStateOf<String?>(null) }
     val normalizedEmail = email.trim().lowercase()
     val validationError = when {
         email.isBlank() -> AppCopy.Auth.emailRequired
@@ -68,7 +67,9 @@ internal fun PasswordResetDialog(
         busy = true
         errorText = null
         scope.launch {
-            val result = onReset(normalizedEmail)
+            val result: Result<Unit> = runCatchingPreservingCancellation {
+                onReset(normalizedEmail)
+            }.getOrElse { error -> Result.failure(error) }
             if (result.isSuccess || result.exceptionOrNull().isMissingAccountError()) {
                 sent = true
                 onEmailAccepted(normalizedEmail)
@@ -137,21 +138,7 @@ internal fun PasswordResetDialog(
                     ),
                     keyboardActions = KeyboardActions(onDone = { submit() }),
                     shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = DailyRecordText,
-                        unfocusedTextColor = DailyRecordText,
-                        disabledTextColor = DailyRecordTextMuted,
-                        focusedBorderColor = DailyRecordDefaultAccent,
-                        unfocusedBorderColor = DailyRecordDivider,
-                        disabledBorderColor = DailyRecordDivider,
-                        focusedLabelColor = DailyRecordDefaultAccent,
-                        unfocusedLabelColor = DailyRecordTextMuted,
-                        disabledLabelColor = DailyRecordTextMuted,
-                        cursorColor = DailyRecordDefaultAccent,
-                        focusedContainerColor = DailyRecordSurface,
-                        unfocusedContainerColor = DailyRecordSurface,
-                        disabledContainerColor = DailyRecordSurface,
-                    ),
+                    colors = dailyRecordFieldColors(),
                 )
                 if (stackActions) {
                     Column(
@@ -196,7 +183,7 @@ internal fun PasswordResetDialog(
 }
 
 private fun Throwable?.isMissingAccountError(): Boolean =
-    (this as? FirebaseAuthException)?.errorCode == "ERROR_USER_NOT_FOUND"
+    (this as? FirebaseAuthException)?.errorCode == FirebaseAuthErrorCodes.USER_NOT_FOUND
 
 internal fun passwordResetErrorMessage(error: Throwable): String {
     val causes = generateSequence(error) { it.cause }.toList()
@@ -206,9 +193,9 @@ internal fun passwordResetErrorMessage(error: Throwable): String {
 
 internal fun passwordResetErrorMessageFor(code: String, networkFailure: Boolean): String {
     return when (code) {
-        "ERROR_NETWORK_REQUEST_FAILED" -> AppCopy.Auth.resetNetwork
-        "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Auth.resetTooManyRequests
-        "ERROR_QUOTA_EXCEEDED" -> AppCopy.Auth.resetQuotaExceeded
+        FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED -> AppCopy.Auth.resetNetwork
+        FirebaseAuthErrorCodes.TOO_MANY_REQUESTS -> AppCopy.Auth.resetTooManyRequests
+        FirebaseAuthErrorCodes.QUOTA_EXCEEDED -> AppCopy.Auth.resetQuotaExceeded
         else -> if (networkFailure) {
             AppCopy.Auth.resetNetwork
         } else {

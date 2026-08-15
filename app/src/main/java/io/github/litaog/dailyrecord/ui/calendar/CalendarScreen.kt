@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -48,7 +47,7 @@ import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
-import io.github.litaog.dailyrecord.ui.components.ChevronIcon
+import io.github.litaog.dailyrecord.ui.components.IconArrowButton
 import io.github.litaog.dailyrecord.ui.components.RecordModuleSelector
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
@@ -485,17 +484,13 @@ private fun MonthArrow(
     theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
     onClick: () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .sizeIn(minWidth = DailyRecordSizes.MinimumTouchTarget, minHeight = DailyRecordSizes.MinimumTouchTarget)
-            .clip(CircleShape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .alpha(if (enabled) 1f else .3f)
-            .semantics { role = Role.Button; contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
-        ChevronIcon(forward = forward, color = DailyRecordText, theme = theme)
-    }
+    IconArrowButton(
+        forward = forward,
+        description = description,
+        enabled = enabled,
+        theme = theme,
+        onClick = onClick,
+    )
 }
 
 @Composable

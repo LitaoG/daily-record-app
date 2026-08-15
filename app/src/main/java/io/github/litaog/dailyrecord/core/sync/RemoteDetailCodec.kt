@@ -44,14 +44,15 @@ internal fun parseRemoteDetail(value: Any?, label: String): ParsedRemoteDetail {
     val startTime = parseDetailTime(map[DETAIL_START_TIME])
     val endTime = parseDetailTime(map[DETAIL_END_TIME])
     val feeling = map[DETAIL_FEELING] as? String
-    require(!id.isNullOrBlank()) { "$label detail id is missing" }
+    val validId = id?.takeIf(String::isNotBlank)
+        ?: throw IllegalArgumentException("$label detail id is missing")
     require(startTime == null || endTime == null || !endTime.isBefore(startTime)) {
         "$label detail endTime is before startTime"
     }
-    require(feeling != null && feeling.visibleCharacterCount() <= MAX_RECORD_DETAIL_FEELING_CHARACTERS) {
-        "$label detail feeling is invalid"
-    }
-    return ParsedRemoteDetail(id!!, occurrenceIndex, startTime, endTime, feeling!!)
+    val validFeeling = feeling?.takeIf {
+        it.visibleCharacterCount() <= MAX_RECORD_DETAIL_FEELING_CHARACTERS
+    } ?: throw IllegalArgumentException("$label detail feeling is invalid")
+    return ParsedRemoteDetail(validId, occurrenceIndex, startTime, endTime, validFeeling)
 }
 
 internal fun parseDetailTime(value: Any?): LocalTime? {
