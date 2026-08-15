@@ -9,6 +9,7 @@ const db = getFirestore();
 const MAX_SUPPORTED_EPOCH_MILLIS = 253402300799999;
 const MAX_DETAIL_ID_LENGTH = 160;
 const MAX_FEELING_CODE_POINTS = 100;
+const MAX_DETAIL_COUNT = 1000;
 const DELETE_BATCH_SIZE = 400;
 const MAX_AUTH_AGE_SECONDS = 5 * 60;
 
@@ -129,7 +130,9 @@ function validateDetails(details, record, countField, { required = false } = {})
     if (required) throw new Error("details is required");
     return;
   }
-  if (!Array.isArray(details) || details.length > record[countField]) {
+  if (!Array.isArray(details) ||
+      details.length > MAX_DETAIL_COUNT ||
+      details.length > record[countField]) {
     throw new Error("details list is invalid");
   }
   if (record.deleted && details.length !== 0) {

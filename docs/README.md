@@ -2,6 +2,8 @@
 
 最后复核：2026-08-15
 
+仓库级协作规则另见：[开始工作前与完成门槛](../AGENTS.md)、[AI 协作约定](../AI_COLLABORATION.md)、[贡献指南](../CONTRIBUTING.md)。
+
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
 当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.2` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 的 `main` 代码、安全、性能、生命周期与文档审计见[审计报告](product/audit/2026-08-15-main-code-audit/README.md)；后续合并后仍以 GitHub `main` 的最新提交为准。
@@ -44,10 +46,13 @@
 - [月统计改版契约：每日次数、次数分布与单日极值](product/MONTH_STATISTICS_REDESIGN.md)
 - [2026-08-02 统计与日历边界修复](product/audit/2026-08-02-boundary-fixes/README.md)
 - [2026-08-02 统计周期玻璃分段控件](product/audit/2026-08-02-period-glass-tabs/README.md)
+- [2026-08-02 月统计改版验收](product/audit/2026-08-02-month-statistics/README.md)
+- [2026-08-02 年度折线图验收](product/audit/2026-08-02-year-line-chart/README.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
 - [明亮渐变玻璃主题 Goal 与当前契约](product/BRIGHT_GLASS_THEME.md)
 - [设置中心 Goal](product/SETTINGS_HUB_GOAL.md)
 - [2026-08-01 Stage 4 月度热力图与年度月份分析](product/audit/2026-08-01-ui-v2-stage4/README.md)
+- [2026-08-01 Stage 3 统计与日历基础视觉验收](product/audit/2026-08-01-ui-v2-stage3/README.md)
 - [2026-08-01 Stage 5 集成 QA 与候选 APK](product/audit/2026-08-01-ui-v2-stage5/README.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)
 - [用户故事与验收](product/USER_STORIES_AND_ACCEPTANCE.md)
@@ -60,6 +65,7 @@
 - [2026-08-11 运行时 UX 与统计验收](product/RUNTIME_UX_AUDIT.md)
 - [2026-08-09 记录页逐次详情设计基线](product/design/record-details-v1/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
+- [每日记录图标资源说明](product/assets/daily-record-icon/README.md)
 
 ## 历史证据
 
@@ -68,6 +74,7 @@
 - [2026-07-30 UI v2 Stage 2 用户反馈修正](product/audit/2026-07-30-ui-v2-stage2-follow-up/README.md)
 - [2026-07-30 UI v2 Stage 2 方形次数热力日历](product/audit/2026-07-30-ui-v2-stage2/README.md)
 - [2026-07-30 UI v2 Stage 1 设计 Token 与共享外壳](product/audit/2026-07-30-ui-v2-stage1/README.md)
+- [2026-07-30 Stage 1 设计 QA 附录](product/audit/2026-07-30-ui-v2-stage1/DESIGN_QA.md)
 - [历史 Figma Hand-brew-only v2 设计系统](product/FIGMA_DESIGN_SYSTEM.md)
 - [重构与交付日志](product/HAND_BREW_REFACTOR_LOG.md)
 - [2026-07-28 局部一致性、扩展边界与安全加固](product/audit/2026-07-28-consistency-hardening/README.md)
@@ -81,5 +88,6 @@
 - [2026-08-11 Issues #123–#145 清理审计](product/audit/2026-08-11-issues-123-145/README.md)
 - [v1.0.0-beta.1 发布说明](releases/v1.0.0-beta.1.md)
 - [v1.0.0-beta.2 发布说明](releases/v1.0.0-beta.2.md)
+- [设计资产总览](design/README.md)
 
 历史文档中的测试数量、截图日期、分支名和“下一步”只描述当时状态。当前版本、发布物和 CI 状态以仓库首页、GitHub Releases 与 `main` 为准。

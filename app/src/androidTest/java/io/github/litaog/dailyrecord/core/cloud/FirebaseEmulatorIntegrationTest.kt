@@ -225,6 +225,59 @@ class FirebaseEmulatorIntegrationTest {
     }
 
     @Test
+    fun trustedWriteCallableRejectsOversizedDetailListBeforeWriting() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertAuthEmulatorReachable()
+        val services = FirebaseServices.create(context, emulatorHost = "10.0.2.2")
+        services.authRepository.signOut()
+        val suffix = UUID.randomUUID().toString().take(10)
+        try {
+            val account = services.authRepository.register(
+                "callable-size-$suffix@example.com",
+                "test-password-2026",
+            )
+            val functions = FirebaseFunctions.getInstance(
+                FirebaseApp.getInstance(FIREBASE_EMULATOR_APP_NAME),
+            )
+            val oversizedDetails = (1..1001).map { occurrenceIndex ->
+                mapOf(
+                    "id" to "detail-$suffix-$occurrenceIndex",
+                    "occurrenceIndex" to occurrenceIndex.toLong(),
+                    "startTime" to null,
+                    "endTime" to null,
+                    "feeling" to "",
+                )
+            }
+            val result = runCatching {
+                functions.getHttpsCallable("writeDailyCountRecord")
+                    .call(
+                        mapOf(
+                            "collection" to "handBrewRecords",
+                            "localDate" to "2026-07-22",
+                            "id" to "callable-size-$suffix",
+                            "count" to 1001L,
+                            "createdAtMillis" to Instant.parse("2026-07-22T08:00:00Z").toEpochMilli(),
+                            "clientUpdatedAtMillis" to Instant.parse("2026-07-22T08:00:01Z").toEpochMilli(),
+                            "deleted" to false,
+                            "remoteRevision" to 0L,
+                            "details" to oversizedDetails,
+                        ),
+                    )
+                    .awaitResult()
+            }
+            val error = result.exceptionOrNull()
+            assertTrue(error is FirebaseFunctionsException)
+            assertEquals(
+                FirebaseFunctionsException.Code.INVALID_ARGUMENT,
+                (error as FirebaseFunctionsException).code,
+            )
+            assertTrue(services.remoteDataSource.fetch(account.uid).records.isEmpty())
+        } finally {
+            services.authRepository.signOut()
+        }
+    }
+
+    @Test
     fun missingDocumentsRecreateBothModulesWithANewCloudGeneration() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertAuthEmulatorReachable()

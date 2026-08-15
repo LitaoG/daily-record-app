@@ -1,8 +1,5 @@
 package io.github.litaog.dailyrecord.ui.navigation
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.rememberSplineBasedDecay
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
@@ -38,7 +35,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,6 +57,7 @@ import io.github.litaog.dailyrecord.ui.components.BrandIcon
 import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
+import io.github.litaog.dailyrecord.ui.components.rememberWheelMotion
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
@@ -69,10 +66,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlin.math.abs
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -200,16 +193,11 @@ private fun DateWheelColumn(
     var isGestureActive by remember { mutableStateOf(false) }
     val latestOnValueSelected = rememberUpdatedState(onValueSelected)
     val latestOptionEnabled = rememberUpdatedState(optionEnabled)
-    val flingAnimation = remember { Animatable(0f) }
-    val settleAnimation = remember { Animatable(0f) }
-    val coroutineScope = rememberCoroutineScope()
-    var animationJob by remember { mutableStateOf<Job?>(null) }
-    var animationGeneration by remember { mutableIntStateOf(0) }
     val rowHeightPx = with(LocalDensity.current) { DailyRecordSizes.MinimumTouchTarget.toPx() }
     val minimumFlingVelocity = with(LocalDensity.current) {
         MINIMUM_FLING_VELOCITY_DP_PER_SECOND.dp.toPx()
     }
-    val decayAnimationSpec = rememberSplineBasedDecay<Float>()
+    val wheelMotion = rememberWheelMotion(minimumFlingVelocity)
     val shape = RoundedCornerShape(14.dp)
 
     /**
@@ -219,9 +207,7 @@ private fun DateWheelColumn(
      * back under the user's finger.
      */
     fun cancelAnimation() {
-        animationGeneration += 1
-        animationJob?.cancel()
-        animationJob = null
+        wheelMotion.cancel()
     }
 
     LaunchedEffect(selectedValue, values, isGestureActive) {
@@ -280,43 +266,14 @@ private fun DateWheelColumn(
     }
 
     fun settleWheel(velocity: Float) {
-        cancelAnimation()
-        val generation = animationGeneration + 1
-        animationGeneration = generation
-        animationJob = coroutineScope.launch {
-            try {
-                if (abs(velocity) >= minimumFlingVelocity) {
-                    var previous = 0f
-                    flingAnimation.snapTo(0f)
-                    flingAnimation.animateDecay(
-                        initialVelocity = velocity,
-                        animationSpec = decayAnimationSpec,
-                    ) {
-                        val current = this.value
-                        val delta = current - previous
-                        previous = current
-                        applyOffsetDelta(delta)
-                    }
-                }
-
-                snapToNearestValue()
-                settleAnimation.snapTo(dragOffsetPx)
-                settleAnimation.animateTo(
-                    targetValue = 0f,
-                    animationSpec = spring(dampingRatio = 1f, stiffness = 700f),
-                ) {
-                    dragOffsetPx = value
-                }
-                dragOffsetPx = 0f
-            } catch (_: CancellationException) {
-                // A new gesture or option tap takes ownership of the wheel.
-            } finally {
-                if (generation == animationGeneration) {
-                    animationJob = null
-                    isGestureActive = false
-                }
-            }
-        }
+        wheelMotion.settle(
+            velocity = velocity,
+            currentOffset = { dragOffsetPx },
+            applyOffsetDelta = ::applyOffsetDelta,
+            snapToNearestValue = ::snapToNearestValue,
+            setOffset = { dragOffsetPx = it },
+            onSettled = { isGestureActive = false },
+        )
     }
 
     val draggableState = rememberDraggableState { dragAmount ->

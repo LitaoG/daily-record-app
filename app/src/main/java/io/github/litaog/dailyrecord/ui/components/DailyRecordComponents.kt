@@ -688,21 +688,26 @@ fun StatisticRow(
 }
 
 @Composable
-internal fun dailyRecordFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = DailyRecordText,
-    unfocusedTextColor = DailyRecordText,
-    disabledTextColor = DailyRecordTextMuted,
-    focusedBorderColor = DailyRecordDefaultAccent,
-    unfocusedBorderColor = DailyRecordDivider,
-    disabledBorderColor = DailyRecordDivider,
-    focusedLabelColor = DailyRecordDefaultAccent,
-    unfocusedLabelColor = DailyRecordTextMuted,
-    disabledLabelColor = DailyRecordTextMuted,
-    cursorColor = DailyRecordDefaultAccent,
-    focusedContainerColor = DailyRecordSurface,
-    unfocusedContainerColor = DailyRecordSurface,
-    disabledContainerColor = DailyRecordSurface,
-)
+internal fun dailyRecordFieldColors(): TextFieldColors {
+    // Material3 exposes this factory as @Composable, so keep the first result
+    // per composition instead of calling it for every recomposition.
+    val cached = remember { arrayOfNulls<TextFieldColors>(1) }
+    return cached[0] ?: OutlinedTextFieldDefaults.colors(
+        focusedTextColor = DailyRecordText,
+        unfocusedTextColor = DailyRecordText,
+        disabledTextColor = DailyRecordTextMuted,
+        focusedBorderColor = DailyRecordDefaultAccent,
+        unfocusedBorderColor = DailyRecordDivider,
+        disabledBorderColor = DailyRecordDivider,
+        focusedLabelColor = DailyRecordDefaultAccent,
+        unfocusedLabelColor = DailyRecordTextMuted,
+        disabledLabelColor = DailyRecordTextMuted,
+        cursorColor = DailyRecordDefaultAccent,
+        focusedContainerColor = DailyRecordSurface,
+        unfocusedContainerColor = DailyRecordSurface,
+        disabledContainerColor = DailyRecordSurface,
+    ).also { cached[0] = it }
+}
 
 /**
  * Shared chevron navigation button for calendar months and statistics

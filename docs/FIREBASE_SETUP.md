@@ -47,6 +47,12 @@ pnpm exec firebase deploy --only functions,firestore:rules --project daily-recor
 
 不得把 `default` alias 改成生产项目。Functions 发布需要已配置生产项目权限和运行时；如果只在控制台发布 Rules 而没有同步发布 Functions，新的 Android 云写入和账号删除流程不能视为完成。当前机器若 Firebase CLI OAuth 回调不可用，可在 Firebase 控制台 Rules 页粘贴同一文件并发布，但 Functions 仍需通过受控 CI/CLI 发布，发布后必须回读 Rules 历史、Functions 版本和正文。
 
+### 旧客户端兼容与发布顺序
+
+`firestore.rules` 当前故意允许 `details` 字段省略，以兼容已经发布的 `v1.0.0-beta.2` 客户端；新客户端通过 `writeDailyCountRecord` callable 写入并由 Functions 逐项校验。不得在旧客户端仍可能在线时直接把 Rules 收紧为 `hasAll(['details'])`。
+
+如果未来要把 `details` 改为必填，必须按以下顺序执行：先发布会携带 `details` 的 Android 客户端并确认升级窗口，再部署同一版本的 Functions 与 Rules，最后用隔离账号完成新增、修改、墓碑清除和账号删除烟雾测试。任何只发布 Rules、只发布 Functions 或先收紧 Rules 后发布 APK 的流程都不合格。
+
 ## 显式生产烟雾测试
 
 `ProductionFirebaseSmokeTest` 默认跳过，避免普通设备测试误触生产。需要已安装 Debug 与 AndroidTest APK，并显式传参：
