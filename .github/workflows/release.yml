@@ -83,7 +83,7 @@ jobs:
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
           "$APKSIGNER" verify --verbose --print-certs "release-output/$APK_NAME"
           EXPECTED_FINGERPRINT="afa5241bf13c9daa6f45ae7c8d699d7540d011f0e219e54e5b97bf2c996b3e61"
-          ACTUAL_FINGERPRINT="$("$APKSIGNER" verify --print-certs "release-output/$APK_NAME" | awk -F': ' '/certificate SHA-256 digest:/ {print $2; exit}' | tr -d ':[:space:]' | tr '[:upper:]' '[:lower:]')"
+          ACTUAL_FINGERPRINT="$("$APKSIGNER" verify --print-certs "release-output/$APK_NAME" | awk -F': ' '/certificate SHA-256 digest:/ {print $NF; exit}' | tr -d ':[:space:]' | tr '[:upper:]' '[:lower:]')"
           if [ -z "$ACTUAL_FINGERPRINT" ] || [ "$ACTUAL_FINGERPRINT" != "$EXPECTED_FINGERPRINT" ]; then
             echo "::error::APK certificate fingerprint does not match the stable release key. Stop and rotate the signing secrets before publishing."
             exit 1
