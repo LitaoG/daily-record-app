@@ -11,7 +11,7 @@
 - 生产登录联调需要本机私有的 `app/google-services.json`
 - Firestore 规则测试需要 Node.js/pnpm；仓库已锁定依赖版本
 
-GitHub `main` 是当前事实来源；从最新 `main` 建立短生命周期分支，通过 Pull Request、自动化检查和审查后 squash 合并。
+GitHub `main` 是当前事实来源；从最新 `main` 建立短生命周期分支，通过 Pull Request、自动化检查和审查后使用普通 merge commit 合并，保留分支中的每一笔原始提交；禁止 squash merge、rebase merge 和改写共享历史。
 
 ## 验证命令
 
