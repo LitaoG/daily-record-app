@@ -47,6 +47,7 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.CalendarGlyph
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.dailyRecordFieldColors
+import io.github.litaog.dailyrecord.core.auth.FirebaseAuthErrorCodes
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
@@ -350,17 +351,19 @@ internal fun authErrorMessage(error: Throwable, mode: AuthMode): String {
         .firstOrNull()
         ?.errorCode
         .orEmpty()
-    if (error.isNetworkReachabilityFailure() || code == "ERROR_NETWORK_REQUEST_FAILED") {
+    if (error.isNetworkReachabilityFailure() ||
+        code == FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED
+    ) {
         return AppCopy.Auth.network
     }
     return when (code) {
-        "ERROR_EMAIL_ALREADY_IN_USE" -> AppCopy.Auth.emailAlreadyRegistered
-        "ERROR_WEAK_PASSWORD" -> AppCopy.Auth.weakPassword
-        "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Auth.tooManyRequests
-        "ERROR_INVALID_CREDENTIAL",
-        "ERROR_INVALID_LOGIN_CREDENTIALS",
-        "ERROR_WRONG_PASSWORD",
-        "ERROR_USER_NOT_FOUND",
+        FirebaseAuthErrorCodes.EMAIL_ALREADY_IN_USE -> AppCopy.Auth.emailAlreadyRegistered
+        FirebaseAuthErrorCodes.WEAK_PASSWORD -> AppCopy.Auth.weakPassword
+        FirebaseAuthErrorCodes.TOO_MANY_REQUESTS -> AppCopy.Auth.tooManyRequests
+        FirebaseAuthErrorCodes.INVALID_CREDENTIAL,
+        FirebaseAuthErrorCodes.INVALID_LOGIN_CREDENTIALS,
+        FirebaseAuthErrorCodes.WRONG_PASSWORD,
+        FirebaseAuthErrorCodes.USER_NOT_FOUND,
         -> AppCopy.Auth.invalidCredentials
         else -> when (mode) {
             AuthMode.SignIn -> AppCopy.Auth.signInUnavailable

@@ -283,12 +283,12 @@ internal fun DailyCountRecordScreen(
                         if (countDraft.count > 0 && last?.hasContent == true) {
                             showRemoveDetailDialog = true
                         } else {
-                            applyCount((countDraft.count - 1).coerceAtLeast(0))
+                            applyCount(countDraft.decrease().count)
                         }
                     },
                     onIncrease = {
                         if (countDraft.count < Int.MAX_VALUE) {
-                            applyCount(countDraft.count + 1)
+                            applyCount(countDraft.increase().count)
                         }
                     },
                     colors = moduleSpec.colors,
@@ -530,7 +530,7 @@ internal fun DailyCountRecordScreen(
             onDismiss = { showRemoveDetailDialog = false },
             onConfirm = {
                 showRemoveDetailDialog = false
-                applyCount((countDraft.count - 1).coerceAtLeast(0))
+                applyCount(countDraft.decrease().count)
             },
         )
     }

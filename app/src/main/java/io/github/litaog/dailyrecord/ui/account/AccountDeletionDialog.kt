@@ -39,6 +39,7 @@ import io.github.litaog.dailyrecord.core.account.AccountDeletionAuthPendingExcep
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryPendingException
 import io.github.litaog.dailyrecord.core.account.AccountDeletionLocalRecoveryConflictException
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
+import io.github.litaog.dailyrecord.core.auth.FirebaseAuthErrorCodes
 import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
@@ -272,10 +273,13 @@ internal fun accountDeletionErrorMessage(error: Throwable): String {
 }
 
 internal fun accountDeletionErrorMessageForCode(code: String): String = when (code) {
-    "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL" -> AppCopy.Deletion.wrongPassword
-    "ERROR_NETWORK_REQUEST_FAILED" -> AppCopy.Deletion.networkAuthError
-    "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Deletion.tooManyAttempts
-    "ERROR_USER_MISMATCH", "ERROR_USER_NOT_FOUND", "ERROR_REQUIRES_RECENT_LOGIN" ->
-        AppCopy.Deletion.authError
+    FirebaseAuthErrorCodes.WRONG_PASSWORD, FirebaseAuthErrorCodes.INVALID_CREDENTIAL ->
+        AppCopy.Deletion.wrongPassword
+    FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED -> AppCopy.Deletion.networkAuthError
+    FirebaseAuthErrorCodes.TOO_MANY_REQUESTS -> AppCopy.Deletion.tooManyAttempts
+    FirebaseAuthErrorCodes.USER_MISMATCH,
+    FirebaseAuthErrorCodes.USER_NOT_FOUND,
+    FirebaseAuthErrorCodes.REQUIRES_RECENT_LOGIN,
+    -> AppCopy.Deletion.authError
     else -> AppCopy.Deletion.unknownError
 }

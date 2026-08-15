@@ -31,6 +31,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuthException
+import io.github.litaog.dailyrecord.core.auth.FirebaseAuthErrorCodes
 import io.github.litaog.dailyrecord.core.common.isNetworkReachabilityFailure
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
@@ -182,7 +183,7 @@ internal fun PasswordResetDialog(
 }
 
 private fun Throwable?.isMissingAccountError(): Boolean =
-    (this as? FirebaseAuthException)?.errorCode == "ERROR_USER_NOT_FOUND"
+    (this as? FirebaseAuthException)?.errorCode == FirebaseAuthErrorCodes.USER_NOT_FOUND
 
 internal fun passwordResetErrorMessage(error: Throwable): String {
     val causes = generateSequence(error) { it.cause }.toList()
@@ -192,9 +193,9 @@ internal fun passwordResetErrorMessage(error: Throwable): String {
 
 internal fun passwordResetErrorMessageFor(code: String, networkFailure: Boolean): String {
     return when (code) {
-        "ERROR_NETWORK_REQUEST_FAILED" -> AppCopy.Auth.resetNetwork
-        "ERROR_TOO_MANY_REQUESTS" -> AppCopy.Auth.resetTooManyRequests
-        "ERROR_QUOTA_EXCEEDED" -> AppCopy.Auth.resetQuotaExceeded
+        FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED -> AppCopy.Auth.resetNetwork
+        FirebaseAuthErrorCodes.TOO_MANY_REQUESTS -> AppCopy.Auth.resetTooManyRequests
+        FirebaseAuthErrorCodes.QUOTA_EXCEEDED -> AppCopy.Auth.resetQuotaExceeded
         else -> if (networkFailure) {
             AppCopy.Auth.resetNetwork
         } else {
