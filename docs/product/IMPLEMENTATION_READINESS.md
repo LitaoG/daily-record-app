@@ -25,6 +25,9 @@
 - Room v5 schema 导出并纳入版本控制。
 - v1→v5、v2→v5、v3→v5、v4→v5 迁移测试通过；旧自慰数据不丢失，做爱数据和两套逐次详情表按非破坏迁移创建。
 - 单元测试、Lint、Debug/Release 编译、设备数据库/Compose 和 Firestore 规则测试通过。
+- 当前维护基线为 `minSdk 26`、`compileSdk 37`、`targetSdk 36`；目标 SDK 不随 compile SDK 自动升级。
+- Functions、Firebase Emulator 和 CI 统一使用 Node.js 22；Functions 使用 2nd gen 并固定在 `asia-east1`。
+- PR、`main` 和 Release tag 都必须在 API 34 模拟器上执行 `connectedDebugAndroidTest`；失败时保留 JUnit、设备属性和 logcat。
 - 生产 Firestore 采用 `asia-east1` 生产模式，账户隔离规则已发布。
 - 当前 UI v2 设计基线不出现活动筛选、健身或活动管理；旧 Figma 页面只保留为历史证据。
 - 0 次、未填写、1 次、2 次和 9+ 状态完成视觉与 TalkBack 规范。
@@ -43,6 +46,8 @@
 - 旧版 `assets/hand-brew-v2/` 截图包已在 2026-08-11 资源整理中从工作树移除；当前双模块事实以代码、测试和当前文档为准，旧截图仍可从 Git 历史恢复。
 - 完整实现、产品文档与验证证据已纳入 Git 提交链，并通过 Pull Request 同步到 GitHub；以公共 `main` 为唯一当前事实来源，当前提交以 GitHub 页面为准。
 - 发布后的 weekly-chart TalkBack 语义修复已由 PR #90 合并；随后安全、性能、生命周期和文档审计修复已随 `v1.0.0-beta.3` 发布。
+- 发布后公共 `main` 又完成了生命周期感知 Flow 收集、SDK/Functions 运行时对齐和 connected gate 收口；这些维护不伪装成新的 Release 版本。
+- 当前 API 34 Debug 页面截图集中在[README 运行截图](assets/readme/README.md)，使用空的本机测试数据；历史审计截图仍按原日期保留。
 - 账号/云数据删除已具备二次确认、密码重验、云端优先删除、本机默认保留/可选删除和失败恢复。
 - 当前 `v1.0.0-beta.3` 沿用稳定签名、R8 Release、SHA-256、tag 工作流和正式隐私说明；同证书 versionCode 3→4 覆盖安装验证门禁已完成，beta.1/beta.2 的发布记录保留在历史文档。
 - App Check 已完成 GitHub 侧载评估；未建立 Play Console 关联前不接入或强制，避免阻断全部侧载用户。

@@ -6,7 +6,7 @@
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
-当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.3` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 的 `main` 代码、安全、性能、生命周期与文档审计见[审计报告](product/audit/2026-08-15-main-code-audit/README.md)；后续合并后仍以 GitHub `main` 的最新提交为准。
+当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.3` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 的 `main` 代码、安全、性能、生命周期与文档审计见[审计报告](product/audit/2026-08-15-main-code-audit/README.md)；其后的公共维护还包括 compileSdk 37、Node.js 22/Functions 2nd gen、`asia-east1` 区域固定、生命周期感知的 Flow 收集，以及 PR/`main`/Release tag 的 API 34 connected gate。后续合并后仍以 GitHub `main` 的最新提交为准。
 
 ## 当前事实文档
 
@@ -21,6 +21,8 @@
 | [同步与隐私](SYNC_AND_PRIVACY.md) | 本地优先、冲突、删除和云端数据边界 |
 | [架构决策](DECISIONS.md) | 已接受的长期技术与产品决策 |
 | [路线图](ROADMAP.md) | 已完成阶段和持续维护方向 |
+
+当前运行画面见[README 运行截图](product/assets/readme/README.md)。这些图片来自 API 34 测试模拟器的本机空数据，只作为当前运行时展示；历史审计图片仍按原目录保留，不与首页当前画面混用。
 
 当前公开发布：[`v1.0.0-beta.3`](releases/v1.0.0-beta.3.md)，GitHub 下载入口见 [`RELEASE.md`](RELEASE.md)。beta.1、beta.2 及各阶段发布审计只作为不可改写的历史记录。
 
@@ -56,6 +58,7 @@
 - [2026-08-09 记录页逐次详情设计基线](product/design/record-details-v1/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 - [每日记录图标资源说明](product/assets/daily-record-icon/README.md)
+- [当前 README 运行截图与复现边界](product/assets/readme/README.md)
 
 ## 历史证据
 

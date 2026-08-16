@@ -118,6 +118,13 @@
 - 原因：云端文档消失后，本机保留的待同步编辑若一直无法提交，会长期停留在 `Failed(Data)` 且 WorkManager 放弃重试，既不能自愈也无法区分“远端有意删除”与“远端文档异常消失”。正常清除路径使用墓碑文档，不会被本决策影响；因此“本机 pending 编辑优先”不会无提示地复活用户明确删除的记录。
 - 后果：云端删除语义收紧为“墓碑是删除的唯一权威表达”；物理文档消失（账号删除重建等）后，本机离线编辑可以重新进入账号空间。相同 `id` 代际内继续按 `remoteRevision` 做乐观并发检查；发现新的 `id` 时，即使修订号较低也视为新代际并收敛到该远端快照。设备时钟不参与胜负。该策略写入同步契约，禁止再依赖“文档不存在即拒绝提交”的旧行为。
 
+## ADR-018：客户端、Functions 与 CI 运行时保持可复现
+
+- 状态：Accepted
+- 决策：Android 构建使用 `compileSdk 37`、`targetSdk 36`；Functions、Firebase Emulator 与 CI 统一使用 Node.js 22，Functions 统一使用 2nd gen 并部署到 `asia-east1`。PR、`main` 和 Release tag 都必须通过 API 34 的 `connectedDebugAndroidTest`。
+- 原因：SDK、Node、Functions 代际、区域和设备回归不一致时，规则、同步、生命周期或 Android 行为可能只在某个环境通过，无法把发布物当作可复核结果。
+- 后果：`scripts/check-node-runtime.mjs` 在本地测试启动阶段拒绝错误 Node 主版本；Release 工作流先对被打 tag 的源码执行 connected 回归，再构建签名 APK。`targetSdk` 暂不跟随 `compileSdk` 自动升级，运行期行为变化必须另立版本评估。
+
 ## 已废止方向
 
 旧版通用活动表、三种预设计量方式、活动身份色、活动归档、短信验证码、端到端加密和通用日历标记均由本次产品收缩废止，只存在于 Git 历史，不再指导实现。健身等其他记录不属于当前范围；若未来立项，应采用 ADR-002 的独立垂直模块方式重新定义，而不是恢复旧模型。

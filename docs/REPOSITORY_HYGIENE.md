@@ -30,6 +30,8 @@
 
 `app/schemas/README.md` 说明 Room 自动导出的 schema 快照；`docs/design/` 和产品资产 README 说明设计源和运行时轻量资源。它们不是业务事实的替代品，也不能把导出图、预览图或机器截图误当作当前实现证明。
 
+首页展示的运行截图集中在 [`docs/product/assets/readme/README.md`](product/assets/readme/README.md)。它们是经过脱敏的专用模拟器 Debug 产物，可以作为当前 UI 展示提交；采集命令输出、UI XML、logcat、模拟器缓存和真实账号状态仍是机器临时文件，不入库。历史审计目录继续保留原始证据，但不再被首页引用。
+
 ## 为什么 `local.properties`、SDK/cache 等不入库
 
 这些文件不是“漏提交”，而是有意排除的机器状态：

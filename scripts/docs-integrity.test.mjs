@@ -59,6 +59,9 @@ test("current documentation matches release and Android configuration", () => {
   const properties = read("gradle.properties");
   const versionName = property(properties, "dailyRecord.versionName");
   const build = read("app/build.gradle.kts");
+  const functionsPackage = JSON.parse(read("functions/package.json"));
+  const functionsSource = read("functions/index.js");
+  const ciWorkflow = read(".github/workflows/android-ci.yml");
   const database = read(
     "app/src/main/java/io/github/litaog/dailyrecord/core/database/DailyRecordDatabase.kt",
   );
@@ -67,18 +70,32 @@ test("current documentation matches release and Android configuration", () => {
   const dataModel = read("docs/DATA_MODEL.md");
 
   const minSdk = build.match(/\bminSdk\s*=\s*(\d+)/)?.[1];
+  const compileSdk = build.match(/release\((\d+)\)/)?.[1];
   const targetSdk = build.match(/\btargetSdk\s*=\s*(\d+)/)?.[1];
   const roomVersion = database.match(/\bversion\s*=\s*(\d+)/)?.[1];
   assert.ok(minSdk, "Could not read minSdk");
+  assert.ok(compileSdk, "Could not read compileSdk");
   assert.ok(targetSdk, "Could not read targetSdk");
   assert.ok(roomVersion, "Could not read Room version");
 
   assert.ok(readme.includes(`v${versionName}`), "README release version is stale");
   assert.ok(product.includes(`v${versionName}`), "Product contract version is stale");
   assert.ok(readme.includes(`minSdk ${minSdk}`), "README minSdk is stale");
+  assert.ok(readme.includes(`compileSdk ${compileSdk}`), "README compileSdk is stale");
   assert.ok(readme.includes(`targetSdk ${targetSdk}`), "README targetSdk is stale");
   assert.ok(readme.includes(`Room v${roomVersion}`), "README Room schema is stale");
   assert.ok(dataModel.includes(`Room v${roomVersion}`), "DATA_MODEL Room schema is stale");
+  assert.ok(readme.includes("docs/product/assets/readme/calendar-current.png"), "README current calendar screenshot is stale");
+  assert.ok(readme.includes("docs/product/assets/readme/record-current.png"), "README current record screenshot is stale");
+  assert.ok(readme.includes("docs/product/assets/readme/statistics-current.png"), "README current statistics screenshot is stale");
+  assert.doesNotMatch(readme, /docs\/product\/audit\//, "README must not use historical audit screenshots as current images");
+  assert.match(readme, /Node\.js 22/, "README Node.js runtime is stale");
+  assert.match(readme, /Cloud Functions 2nd gen/, "README Functions generation is stale");
+  assert.match(readme, /asia-east1/, "README Functions region is stale");
+  assert.equal(functionsPackage.engines?.node, "22", "Functions Node engine is stale");
+  assert.match(functionsSource, /firebase-functions\/v2\//, "Functions must use 2nd gen APIs");
+  assert.match(functionsSource, /region:\s*["']asia-east1["']/, "Functions region is stale");
+  assert.match(ciWorkflow, /api-level:\s*34/, "Android CI connected API level is stale");
   assert.ok(
     fs.existsSync(path.join(root, `docs/releases/v${versionName}.md`)),
     `Missing release notes for v${versionName}`,

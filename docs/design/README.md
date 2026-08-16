@@ -7,6 +7,8 @@
 - [安静的私密数据日志 UI v2](../product/design/quiet-private-journal-v2/README.md)：当前日历、记录页和统计页的双模块视觉基线。
 - [图标源文件](icon-source/README.md)：Android 自适应图标的 background、foreground、monochrome 分层 SVG/PNG，以及运行时轻量 WebP 层。
 
+实现后的真实页面画面不放在设计源目录，统一见[当前 README 运行截图](../product/assets/readme/README.md)。设计稿说明层级、材质和视觉目标；截图说明当前构建在测试模拟器中的实际页面，两者不能互相替代。
+
 ## 规则
 
 - 设计图用于表达层级、材质和气质；日期拓扑、次数、未来状态、触控范围和 TalkBack 以代码与测试为准。

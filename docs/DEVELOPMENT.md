@@ -4,7 +4,7 @@
 
 ## 环境
 
-- Android Studio 稳定版与内置 JDK
+- Android Studio 稳定版与内置 JDK 21
 - Android SDK / Platform Tools
 - 当前配置为 `minSdk 26`、`compileSdk 37`、`targetSdk 36`，Room schema 为 v5；版本号以 `gradle.properties` 为准，当前公开版本为 `v1.0.0-beta.3` / `versionCode 4`
 - SDK 版本说明：`compileSdk 37` 是升级 core-ktx 1.19.0 / lifecycle 2.11.0 后的强制要求（AAR 元数据校验），本轮已随库升级同步完成。`targetSdk` 刻意冻结在 36：升级到 37 是运行期行为变化（影响 Android 16+ 设备），需要新版本规划中的 API 34 与 minSdk 26 设备回归后一并评估。compileSdk 37 的新 Lint 版本库还新报告 AGP 9.3.1、Compose BOM 2026.08.00、Firebase BOM 34.17.0：其中 Firebase BOM 升级会改变客户端同步/认证 SDK 行为，需设备回归，统一归入 `v1.0.0-beta.4` 的协调升级矩阵，本轮不追版本。下次复查时间为 `v1.0.0-beta.4` 规划时
@@ -27,7 +27,9 @@ pnpm test:android-connected
 pnpm test:firestore-rules
 ```
 
-`test:docs` 会检查全部 Markdown 的本地链接与图片、文档目录是否覆盖所有 Git 跟踪 Markdown/文档文件，并核对 README/产品契约中的发布版本、Android SDK 和 Room schema。修改版本、数据库或文档目录时必须同步通过。
+`test:docs` 会检查全部 Markdown 的本地链接与图片、文档目录是否覆盖所有 Git 跟踪 Markdown/文档文件，并核对 README/产品契约中的发布版本、Android SDK、Room schema 和当前 README 运行截图入口。修改版本、数据库、截图资产或文档目录时必须同步通过。
+
+首页当前运行截图的采集边界见 [`docs/product/assets/readme/README.md`](product/assets/readme/README.md)。它们来自测试模拟器的 Debug 构建，不用于证明 Release 签名；视觉目标仍以产品设计稿、运行时语义树和自动化测试共同判断。
 
 `assembleRelease` 需要仓库外的稳定签名配置和本机私有 `app/google-services.json`：
 

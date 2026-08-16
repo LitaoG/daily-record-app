@@ -5,15 +5,15 @@
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3F7D6B)](https://github.com/LitaoG/daily-record-app/releases)
 [![License](https://img.shields.io/github/license/LitaoG/daily-record-app)](LICENSE)
 
-一个本地优先的 Android 私密次数日历，分别记录“自慰”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。当前 beta.3 已完成日历、日期记录、周/月/年/全部统计，以及两套模块主题适配。
+一个本地优先的 Android 私密次数日历，分别记录“自慰”和“做爱”。无需登录即可使用；需要换机恢复时，可选择邮箱密码账号和 Firebase 云同步。公开 Release 仍是 beta.3；当前 `main` 已继续完成生命周期、云函数运行时、SDK 与 CI 门禁维护。
 
 <p align="center">
-  <img src="docs/product/audit/2026-07-30-ui-v2-stage2-follow-up/01-calendar-normal.png" alt="当前自慰次数热力日历" width="31%">
-  <img src="docs/product/audit/2026-08-01-ui-v2-stage3/01-record-hand-empty.png" alt="当前日期记录页" width="31%">
-  <img src="docs/product/audit/2026-08-02-year-line-chart/implementation.png" alt="当前年度统计折线图" width="31%">
+  <img src="docs/product/assets/readme/calendar-current.png" alt="当前日历运行画面" width="31%">
+  <img src="docs/product/assets/readme/record-current.png" alt="当前日期记录运行画面" width="31%">
+  <img src="docs/product/assets/readme/statistics-current.png" alt="当前统计运行画面" width="31%">
 </p>
 
-三张图分别展示当前日历、日期记录和年度统计的运行证据；对应双模块目标和状态语义见 [UI v2 设计基线](docs/product/design/quiet-private-journal-v2/README.md)。UI v2 Stage 0–6 已完成，后续只通过新的 Issue/PR 进入定向维护，不把历史生成图当作当前待办。
+三张图是 2026-08-16 从当前公共 `main` 基线构建的 API 34 Debug 本机模式运行截图，使用空的测试数据，不是 Release APK 或设计稿。截图采集边界和复现命令见 [当前 README 运行截图](docs/product/assets/readme/README.md)；双模块视觉目标见 [UI v2 设计基线](docs/product/design/quiet-private-journal-v2/README.md)。历史审计目录中的旧截图只用于追溯当时状态，不再作为首页当前画面。
 
 ## 已实现
 
@@ -25,6 +25,7 @@
 - Room 本地数据库；断网时记录、日历和统计照常使用。
 - 可选邮箱密码注册/登录、密码重置、跨设备恢复和离线待同步。
 - 同步错误分级，以及账号与本人云端数据永久删除。
+- Cloud Functions 使用 Node.js 22 的 2nd gen 运行时并固定在 `asia-east1`；新客户端云端写入经过 callable 校验。
 - 主页设置入口集中账号同步、本机优先说明、版本与开源许可，不占用第三个底部导航；自慰 / 做爱切换继续留在主页。
 - TalkBack 语义、48dp 点击目标、200% 系统字体和应用内统一弹窗。
 
@@ -64,12 +65,13 @@
 - Coroutines、Flow、单向数据流
 - Room v5（schema version）、WorkManager
 - Firebase Authentication、Cloud Firestore
-- `minSdk 26`、`targetSdk 36`
+- `minSdk 26`、`compileSdk 37`、`targetSdk 36`
+- Node.js 22、Cloud Functions 2nd gen、`asia-east1`
 - Apache License 2.0
 
 ## 开发与验证
 
-需要 Android Studio 内置 JDK、Android SDK、Node.js/pnpm，以及一台 API 34 Android 模拟器。自动化设备测试会修改应用数据，只能在测试模拟器上运行，不要连接日常使用的真机。
+需要 Android Studio 内置 JDK 21、Android SDK、Node.js 22/pnpm，以及一台 API 34 Android 模拟器。自动化设备测试会修改应用数据，只能在测试模拟器上运行，不要连接日常使用的真机。
 
 日常开发按 [`测试策略与执行矩阵`](docs/TESTING.md) 运行受影响范围的定向测试；下面的完整套件只在一个连贯小版本的最终功能 head 上运行一次，不在每个小修改后机械重复。
 
@@ -85,9 +87,9 @@ pnpm test:android-connected
 ```
 
 - Gradle 命令执行 JVM 测试、Lint 和 APK 编译，不会启动 Firebase 模拟器。
-- `test:docs` 检查本地链接、截图、逐文件文档目录、版本、Android SDK 和 Room schema 是否与工程一致。
+- `test:docs` 检查本地链接、截图、当前 README 运行截图、逐文件文档目录、版本、Android SDK 和 Room schema 是否与工程一致。
 - `test:firestore-rules` 会临时启动隔离的 Firestore 模拟器。
-- `test:android-connected` 会启动隔离的 Auth/Firestore 模拟器，并在已启动的 Android 测试模拟器上执行完整设备套件。
+- `test:android-connected` 会启动隔离的 Auth/Firestore/Functions 模拟器，并在 API 34 Android 测试模拟器上执行完整设备套件； PR、`main` 和 Release tag 工作流均执行这道 connected gate。
 - Release 签名、版本、tag 和覆盖升级流程见 [发布指南](docs/RELEASE.md)。
 
 ## 文档
@@ -104,6 +106,7 @@ pnpm test:android-connected
 - [路线图](docs/ROADMAP.md)
 - [决策记录](docs/DECISIONS.md)
 - [仓库维护与文档生命周期](docs/REPOSITORY_HYGIENE.md)
+- [当前 README 运行截图与复现边界](docs/product/assets/readme/README.md)
 - [文档目录与 AI 阅读索引](docs/DOCUMENTATION_CATALOG.md)
 
 公开仓库不包含 `app/google-services.json`、签名文件、密码、真实用户数据库、APK/AAB 或敏感日志。贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。

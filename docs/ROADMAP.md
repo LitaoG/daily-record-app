@@ -53,6 +53,14 @@
 - [x] 发布 [`v1.0.0-beta.3`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.3)，`versionCode = 4`，并通过当前发布元数据、文档和规则门禁。
 - [x] 进入发布后维护；新问题必须建立新的 Issue/PR，不重新打开已关闭的 UI v2 Stage。
 
+### 发布后公共 main 维护快照（2026-08-16）
+
+- [x] 升级到 `compileSdk 37`，保留 `targetSdk 36`，并把目标 SDK 升级留给单独版本评估。
+- [x] Functions、Firebase Emulator 和 CI 统一到 Node.js 22；Functions 使用 2nd gen 并固定在 `asia-east1`。
+- [x] PR、`main` 和 Release tag 都执行 API 34 `connectedDebugAndroidTest`；失败时上传设备报告和 logcat。
+- [x] Compose 根页、认证、同步和记录 Flow 改用生命周期感知收集，避免后台页面持续重组。
+- [x] 将首页当前运行截图从历史审计目录迁移到脱敏的 API 34 Debug 证据入口，历史审计材料保持不可改写。
+
 ## 已完成：日期记录页逐次详情
 
 - [x] Room v5 非破坏迁移，新增自慰与做爱独立详情表（`hand_brew_record_details` / `sex_record_details`）。

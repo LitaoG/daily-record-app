@@ -55,6 +55,10 @@ pnpm exec firebase emulators:exec --project demo-daily-record-app --only auth,fi
 - 文档或截图变化运行 `pnpm test:docs`。
 - 版本或发布元数据变化运行 `pnpm test:release-metadata`。
 
+README 当前运行截图必须来自可复现的专用模拟器 Debug 构建，记录设备/API、数据是否为空和
+采集日期；截图入口与复现命令见 [`product/assets/readme/README.md`](product/assets/readme/README.md)。
+历史审计截图只能证明当时的输入与结论，不因首页换图而改写。
+
 推送后查看 GitHub CI、机器人评论和真实审查问题。CI 通过不取代本次行为的定向运行证据，但也不需要在本机再次机械执行相同检查。
 
 ### 3. 小版本结束：一次完整验证
