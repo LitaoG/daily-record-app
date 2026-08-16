@@ -4,6 +4,8 @@
 
 本项目只通过 GitHub Releases 向本人和少量使用者提供签名 APK。当前候选版本为 `v1.0.0-beta.3`，对应 `versionCode = 4`；`v1.0.0-beta.1` 与 `v1.0.0-beta.2` 保留为历史发布。发布物不是 Debug APK。
 
+公开 Release 与当前 `main` 是两个需要明确区分的事实：`main` 在 beta.3 之后可以继续接收维护，但只有显式递增 `versionCode`、更新发布说明并通过被打 tag 源码的 API 34 connected 回归、签名和文档门禁后，才会产生新的 Release。README 的当前画面属于 Debug 运行证据，不是发布物证明。
+
 ## 版本规则
 
 - `gradle.properties` 中的 `dailyRecord.versionName` 使用语义化版本；预发布版本使用 `-beta.N`。

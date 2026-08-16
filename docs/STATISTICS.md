@@ -4,6 +4,8 @@
 
 自慰统计从 `hand_brew_records` 推导，做爱统计从 `sex_records` 推导。两类强类型记录只在 UI 层投影为 `DailyCountEntry`，共用同一套纯计算函数；任何统计调用一次只接收一个模块的数据。
 
+当前统计页的空数据运行画面见[README 运行截图](product/assets/readme/README.md)；截图中的 `0 次`、`0 天` 和未填写日期是测试模拟器的真实空状态，不是统计规则示例或历史数据。
+
 ## 指标
 
 ```text

@@ -10,6 +10,8 @@
 - Cloud Firestore：Standard、Native、生产模式、`asia-east1`
 - Cloud Functions：部署区域显式声明为 `asia-east1`（`functions/index.js` 的 `setGlobalOptions`），与 Firestore 同区域；callable、Firestore trigger 和坏文档清理都按该区域部署
 - Firestore 规则：仓库根目录 `firestore.rules` 是事实来源，同时覆盖 `handBrewRecords` 与 `sexRecords`；客户端物理删除被拒绝
+
+当前 Functions、Emulator 与 CI 使用同一份 Node.js 22 运行时；PR、`main` 和 Release tag 还会在 API 34 Android 模拟器上通过 connected 回归后才进入后续构建或发布步骤。Functions 的 2nd gen 区域和客户端 callable 名称不能在部署时临时改写。
 - Cloud Functions：仓库 `functions/` 是 callable 写入、账号数据删除和旧协议坏文档清理的事实来源；生产部署前必须先完成 Functions 与 Rules 的同版本发布
 
 ## 密码重置邮件

@@ -71,6 +71,10 @@ Stage 0–6 已关闭；同一时间只执行一个新阶段，后续需求必�
 - [x] R8 优化 Release APK 构建验证。
 - [x] 稳定签名 APK、覆盖升级、SHA-256 和 GitHub tag 发布工作流。
 - [x] 商店资料与 AAB 不属于当前 GitHub-only 分发范围。
+- [x] 发布后维护统一 `compileSdk 37`、`targetSdk 36`、Node.js 22/Functions 2nd gen 和 `asia-east1` 部署区域。
+- [x] PR、`main` 与 Release tag 的 API 34 connected 回归和失败日志上传门禁。
+- [x] Compose 页面数据使用生命周期感知 Flow 收集，避免后台 UI 订阅造成无意义重组。
+- [x] 首页当前运行截图与历史审计截图分层；当前截图只来自脱敏测试模拟器 Debug 构建。
 
 ## 持续维护观察（非发布门槛）
 
