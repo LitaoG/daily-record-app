@@ -1,6 +1,6 @@
 # 2026-08-01 Stage 5：集成 QA 与候选 APK
 
-状态：`Historical — completed and superseded by the beta.2 release audit`
+状态：`Historical — completed; superseded by the beta.2 release audit and carried into beta.3`
 
 当时状态（2026-08-01）：`implementation-verified`，等待公共 PR/CI 合并和用户候选 APK 验收。本页保留候选 APK 阶段的测试边界；最终合并、发布和镜像证据见 2026-08-03 Stage 5/6 记录。
 
@@ -63,4 +63,4 @@ Stage 6 用户验收后才递增版本并按 [`RELEASE.md`](../../../RELEASE.md)
 
 ## 停止点
 
-Stage 5 在公共 PR 合并、Issue #40 标记 `status:awaiting-acceptance` 后停止。下一步只等待用户安装候选 APK 进行日常使用；复现问题单独建 Issue，不能在未反馈前继续无目的重构。
+Stage 5 当时在公共 PR 合并、Issue #40 标记 `status:awaiting-acceptance` 后停止。下一步当时等待用户安装候选 APK 进行日常使用；后续 Stage 5/6 已完成并发布，当前复现问题应单独建 Issue，不能以历史暂停点继续无目的重构。

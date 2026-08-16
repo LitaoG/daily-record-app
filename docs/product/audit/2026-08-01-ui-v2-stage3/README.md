@@ -1,6 +1,6 @@
 # 2026-08-01 UI v2 Stage 3 记录页定向验收
 
-状态：`Historical — incorporated into v1.0.0-beta.2`
+状态：`Historical — implementation carried forward into v1.0.0-beta.3`
 
 当时状态（2026-08-01）：`Implementation verified — awaiting user acceptance`。本页保留记录页阶段的截图和测试范围，不表示当前阶段仍未关闭。
 
@@ -40,4 +40,4 @@
 
 ## 验收边界
 
-本阶段完成后暂停等待用户在 Android Studio 真机/模拟器上验收。请重点检查：正常字号与 200% 字体、自慰和做爱切换、0/1/2/9+ 次、保存与清除、返回键和旋转/进程恢复。用户确认前不启动 Stage 4 统计页。
+本阶段完成后当时暂停等待用户在 Android Studio 真机/模拟器上验收。请重点检查：正常字号与 200% 字体、自慰和做爱切换、0/1/2/9+ 次、保存与清除、返回键和旋转/进程恢复。后续用户已确认并关闭 Stage 3，Stage 4 统计页也已完成；本段不构成当前暂停点。

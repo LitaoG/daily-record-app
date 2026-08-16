@@ -1,5 +1,7 @@
 # Design QA — UI v2 Stage 1
 
+> Status: historical design comparison evidence. This appendix records the comparison performed at the time and is not a current implementation target.
+
 ## Comparison target
 
 - Source visual truth:

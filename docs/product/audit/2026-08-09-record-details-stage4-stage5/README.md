@@ -1,10 +1,12 @@
 # 2026-08-09 Issue #105：Stage 4–5 记录页验收
 
+> 状态：历史审计证据。本文只记录当时的实现分支、Draft PR 和验收暂停点；PR #119 后续已合并，当前状态以最新 public `main`、代码和 CI 为准。
+
 ## 范围与基线
 
 本次审计只收口 Issue #105 的 Stage 4（无障碍、窄屏、字体放大、恢复与跨设备）和 Stage 5（同视口运行验证、候选 APK 与发布前证据）。不改动 `main`，不重新设计页面，也不把时间/感受字段加入统计口径。
 
-当前实现分支：`integration/review-candidate`；PR #119 保持 Draft，等待用户真机验收后再决定是否进入 `main`。
+当时实现分支：`integration/review-candidate`；当时 PR #119 保持 Draft，等待用户真机验收后再决定是否进入 `main`，后续已完成合并。
 
 ## 本轮实现
 

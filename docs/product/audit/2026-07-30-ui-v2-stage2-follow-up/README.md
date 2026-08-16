@@ -1,6 +1,6 @@
 # 2026-07-30 UI v2 Stage 2 反馈修正
 
-状态：`Historical — incorporated into v1.0.0-beta.2`
+状态：`Historical — implementation carried forward into v1.0.0-beta.3`
 
 当时状态（2026-07-30）：`Implementation verified — awaiting user acceptance`。本页保留当时的反馈收口证据，不表示当前仍在等待验收。
 
@@ -47,4 +47,4 @@
 
 ## 结论
 
-日历首页不再重复记录日均；未来日期和过去未填写日期现在有独立状态底色；短月份底部由轻量图例收尾，不再让“点击日期记录”悬在一块未完成的空白上。Stage 2 继续等待用户验收，验收前不启动 Stage 3。
+日历首页不再重复记录日均；未来日期和过去未填写日期现在有独立状态底色；短月份底部由轻量图例收尾，不再让“点击日期记录”悬在一块未完成的空白上。当时 Stage 2 继续等待用户验收；后续已验收并关闭，Stage 3 也已完成，不应从本页重新启动阶段。
