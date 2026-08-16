@@ -29,6 +29,8 @@
 
 ## 本地安全规则测试
 
+需要 Node.js 22（与 `functions/package.json` engines 和 CI 一致）；其他主版本会在测试启动阶段被 `scripts/check-node-runtime.mjs` 直接拒绝。
+
 ```powershell
 pnpm install --frozen-lockfile
 pnpm --dir functions --ignore-workspace install --frozen-lockfile
@@ -46,6 +48,16 @@ pnpm exec firebase deploy --only functions,firestore:rules --project daily-recor
 ```
 
 不得把 `default` alias 改成生产项目。Functions 发布需要已配置生产项目权限和运行时；如果只在控制台发布 Rules 而没有同步发布 Functions，新的 Android 云写入和账号删除流程不能视为完成。当前机器若 Firebase CLI OAuth 回调不可用，可在 Firebase 控制台 Rules 页粘贴同一文件并发布，但 Functions 仍需通过受控 CI/CLI 发布，发布后必须回读 Rules 历史、Functions 版本和正文。
+
+### Functions 2nd gen（Node 22）迁移顺序
+
+Functions 已从 1st gen 迁移到 2nd gen 并统一为 Node 22（引擎声明在 `functions/package.json`）。若生产还残留旧 1st gen 同名函数，必须按以下顺序执行，避免同名冲突、双写或双触发器：
+
+1. `pnpm exec firebase functions:list --project daily-record-hand-brew` 回读旧函数的实际 region 与 runtime。
+2. 删除旧 1st gen 函数（`writeDailyCountRecord`、`deleteAccountData`、`validateHandBrewRecord`、`validateSexRecord`）。
+3. 部署新 Functions 与 Rules 同一版本，并再次回读函数列表确认 runtime、region 和 Rules 版本。
+
+客户端 callable 名称保持不变，Android 客户端无需跟随升级；迁移窗口内旧函数未删除时不要发布新 APK 或收紧 Rules。
 
 ### 旧客户端兼容与发布顺序
 

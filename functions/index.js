@@ -1,4 +1,5 @@
-const functions = require("firebase-functions/v1");
+const { HttpsError, onCall } = require("firebase-functions/v2/https");
+const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { randomUUID } = require("node:crypto");
@@ -28,7 +29,7 @@ const DETAIL_KEYS = Object.freeze([
 ]);
 
 function httpsError(code, message) {
-  return new functions.https.HttpsError(code, message);
+  return new HttpsError(code, message);
 }
 
 function requireAuthenticated(context) {
@@ -221,13 +222,14 @@ function callableRecord(data, module) {
   };
 }
 
-exports.writeDailyCountRecord = functions.https.onCall(async (data, context) => {
-  const auth = requireAuthenticated(context);
+exports.writeDailyCountRecord = onCall(async (request) => {
+  const auth = requireAuthenticated(request);
+  const data = request.data;
   let validated;
   try {
     validated = validateRecordInput(data);
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) throw error;
+    if (error instanceof HttpsError) throw error;
     throw httpsError("invalid-argument", "The record input is invalid.");
   }
   const { module, record, remoteRevision } = validated;
@@ -283,9 +285,10 @@ exports.writeDailyCountRecord = functions.https.onCall(async (data, context) => 
   return result;
 });
 
-exports.deleteAccountData = functions.https.onCall(async (data, context) => {
-  const auth = requireAuthenticated(context);
+exports.deleteAccountData = onCall(async (request) => {
+  const auth = requireAuthenticated(request);
   requireRecentlyAuthenticated(auth);
+  const data = request.data;
   if (!data || data.ownerId !== auth.uid) {
     throw httpsError("permission-denied", "The owner id must match the signed-in account.");
   }
@@ -329,10 +332,12 @@ async function validateWrittenRecord(change, collectionName) {
   }
 }
 
-exports.validateHandBrewRecord = functions.firestore
-  .document("users/{userId}/handBrewRecords/{date}")
-  .onWrite((change) => validateWrittenRecord(change, "handBrewRecords"));
+exports.validateHandBrewRecord = onDocumentWritten(
+  "users/{userId}/handBrewRecords/{date}",
+  (event) => validateWrittenRecord(event.data, "handBrewRecords"),
+);
 
-exports.validateSexRecord = functions.firestore
-  .document("users/{userId}/sexRecords/{date}")
-  .onWrite((change) => validateWrittenRecord(change, "sexRecords"));
+exports.validateSexRecord = onDocumentWritten(
+  "users/{userId}/sexRecords/{date}",
+  (event) => validateWrittenRecord(event.data, "sexRecords"),
+);
