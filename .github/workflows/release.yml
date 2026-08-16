@@ -40,6 +40,53 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install test dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Functions dependencies
+        run: pnpm --dir functions install --frozen-lockfile
+
+      - name: Run connected instrumentation regression on tagged source
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          emulator-boot-timeout: 600
+          script: pnpm test:android-connected:unix
+
+      - name: Capture device logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          serial="$(adb devices | awk '$1 ~ /^emulator-/ && $2 == "device" { print $1; exit }')"
+          if [ -n "$serial" ]; then
+            adb -s "$serial" logcat -d > logcat.txt || true
+            adb -s "$serial" shell getprop > emulator-properties.txt || true
+          fi
+
+      - name: Upload device reports and logcat on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-connected-android-test-${{ github.run_id }}
+          path: |
+            app/build/outputs/androidTest-results/
+            app/build/reports/androidTests/
+            emulator.log
+            logcat.txt
+            emulator-properties.txt
+          if-no-files-found: ignore
+
       - name: Validate version and tag
         id: metadata
         run: >-
@@ -115,3 +162,4 @@ jobs:
             --notes-file "$NOTES_PATH" \
             --prerelease \
             --verify-tag
+

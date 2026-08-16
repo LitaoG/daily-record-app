@@ -77,11 +77,11 @@ AF:A5:24:1B:F1:3C:9D:AA:6F:45:AE:7C:8D:69:9D:75:40:D0:11:F0:E2:19:E5:4E:5B:97:BF
 | `RELEASE_KEY_PASSWORD` | key 密码 |
 | `GOOGLE_SERVICES_JSON_BASE64` | 生产 `app/google-services.json` 的单行 Base64 |
 
-工作流不会回显 secret。Tag 推送后，`.github/workflows/release.yml` 会验证版本、运行 JVM 测试和 Lint、构建并验证签名 APK、生成 SHA-256 文件，并用仓库范围的短期 `GITHUB_TOKEN` 创建 GitHub prerelease。
+工作流不会回显 secret。Tag 推送后，`.github/workflows/release.yml` 会先在被打 tag 的源码上运行 API 34 Android connected instrumentation（使用隔离 Firebase Emulator），再验证版本、运行 JVM 测试和 Lint、构建并验证签名 APK、生成 SHA-256 文件，并用仓库范围的短期 `GITHUB_TOKEN` 创建 GitHub prerelease。Connected 失败时会上传 JUnit 报告、logcat 和 emulator properties。
 
 ## 发布步骤
 
-1. 确认 `main` 干净且 CI 通过。
+1. 确认 `main` 干净且 CI 通过；发布工作流仍会对实际 tag 源码重复执行 Connected 门禁。
 2. 更新 `dailyRecord.versionCode`、`dailyRecord.versionName` 和对应 `docs/releases/v*.md`。
 3. 本机运行：
 
@@ -114,3 +114,4 @@ Firebase App Check 的 Play Integrity provider 可以支持 Google Play 以外�
 - 等建立 Play Console/可验证的侧载配置后，先发布“仅采集指标、不强制”的候选版，观察真实侧载请求，再决定是否强制。
 
 在这之前直接强制 App Check 可能让全部 GitHub 侧载用户无法登录或同步，风险高于当前少量用户场景的收益。
+
