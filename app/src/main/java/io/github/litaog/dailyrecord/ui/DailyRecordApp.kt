@@ -10,7 +10,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +22,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.litaog.dailyrecord.BuildConfig
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
@@ -150,8 +150,8 @@ fun DailyRecordApp(
         selectedController.observeRecords(EARLIEST_SUPPORTED_DATE, effectiveToday.plusDays(1))
     }
     val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
-    val allRecordsState by recordsFlow.collectAsState<List<DailyCountEntry>, List<DailyCountEntry>?>(
-        initial = null,
+    val allRecordsState by recordsFlow.collectAsStateWithLifecycle(
+        initialValue = null as List<DailyCountEntry>?,
     )
     if (allRecordsState == null) {
         Box(

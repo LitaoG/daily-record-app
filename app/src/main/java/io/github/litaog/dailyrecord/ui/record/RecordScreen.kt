@@ -24,7 +24,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.common.toMinutesOfDay
@@ -128,7 +128,9 @@ internal fun DailyCountRecordScreen(
             controller.observeDetails(date),
         ) { record, details -> RecordLoadState.Loaded(record, details) }
     }
-    val recordState by recordFlow.collectAsState(initial = RecordLoadState.Loading)
+    val recordState by recordFlow.collectAsStateWithLifecycle(
+        initialValue = RecordLoadState.Loading,
+    )
     val loadedState = recordState as? RecordLoadState.Loaded
     val record = loadedState?.record
     val storedDetails = loadedState?.details.orEmpty()
