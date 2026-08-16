@@ -104,6 +104,16 @@ jobs:
           emulator-boot-timeout: 600
           script: pnpm test:android-connected:unix
 
+      - name: Capture device logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          serial="$(adb devices | awk '$1 ~ /^emulator-/ && $2 == "device" { print $1; exit }')"
+          if [ -n "$serial" ]; then
+            adb -s "$serial" logcat -d > logcat.txt || true
+            adb -s "$serial" shell getprop > emulator-properties.txt || true
+          fi
+
       - name: Upload device reports and logcat on failure
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -114,6 +124,7 @@ jobs:
             app/build/reports/androidTests/
             emulator.log
             logcat.txt
+            emulator-properties.txt
           if-no-files-found: ignore
 
 

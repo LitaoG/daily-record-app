@@ -8,6 +8,7 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import io.github.litaog.dailyrecord.core.common.awaitResult
 import io.github.litaog.dailyrecord.core.di.FIREBASE_EMULATOR_APP_NAME
+import io.github.litaog.dailyrecord.core.di.FIREBASE_FUNCTIONS_REGION
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
@@ -186,6 +187,7 @@ class FirebaseEmulatorIntegrationTest {
             )
             val functions = FirebaseFunctions.getInstance(
                 FirebaseApp.getInstance(FIREBASE_EMULATOR_APP_NAME),
+                FIREBASE_FUNCTIONS_REGION,
             )
             val result = runCatching {
                 functions.getHttpsCallable("writeDailyCountRecord")
@@ -238,6 +240,7 @@ class FirebaseEmulatorIntegrationTest {
             )
             val functions = FirebaseFunctions.getInstance(
                 FirebaseApp.getInstance(FIREBASE_EMULATOR_APP_NAME),
+                FIREBASE_FUNCTIONS_REGION,
             )
             val oversizedDetails = (1..1001).map { occurrenceIndex ->
                 mapOf(
@@ -399,3 +402,4 @@ class FirebaseEmulatorIntegrationTest {
         }
     }
 }
+
