@@ -1,6 +1,6 @@
 # 界面与交互
 
-最后复核：2026-08-15
+最后复核：2026-08-16
 
 > 本文描述当前 Compose 运行时已经实现的交互。UI v2 Stage 0 至 Stage 6 已完成并发布 `v1.0.0-beta.3`；阶段截图是历史证据，后续变化必须通过新的 Issue/PR 更新本文。最终发布审计见[Stage 5/6 记录](product/audit/2026-08-03-stage5-stage6-release/README.md)，发布后的无障碍修复见 PR #90。
 

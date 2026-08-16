@@ -1,6 +1,6 @@
 # 路线图
 
-最后复核：2026-08-09
+最后复核：2026-08-16
 
 ## 已完成：自慰专用产品重构
 
@@ -45,8 +45,13 @@
 
 - [x] Stage 5 完成最终跨页面审查、定向失败收口和一次最终完整设备套件。
 - [x] Stage 6 完成公共 main 合并、签名发布门禁和 GitHub Release 发布。
-- [x] 发布 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，并在公共 main 验证后同步私有恢复镜像。
-- [ ] 发布 [`v1.0.0-beta.3`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.3)，并在公共 main 验证后同步私有恢复镜像。
+- [x] 发布 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)；其具体签名与测试链保留在历史发布审计中。
+
+## 已完成：第三次 GitHub Beta
+
+- [x] 在公共 `main` 上完成安全、性能、生命周期和文档一致性审计修复。
+- [x] 发布 [`v1.0.0-beta.3`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.3)，`versionCode = 4`，并通过当前发布元数据、文档和规则门禁。
+- [x] 进入发布后维护；新问题必须建立新的 Issue/PR，不重新打开已关闭的 UI v2 Stage。
 
 ## 已完成：日期记录页逐次详情
 
@@ -69,7 +74,7 @@
 - [x] 月统计中间方案：按周聚合次数柱、发生天数、活跃周数和峰值周（PR #54，后被逐日脉冲图方案取代，仅保留作历史证据）。
 - [x] 月统计最终组合：逐日次数脉冲图、按已填写日计算的次数分布和单日极值（已完成定向模型、设备与 200% 字体验收）。
 - [x] Stage 5：跨页面集成 QA、一次完整套件和候选 APK。
-- [x] Stage 6：GitHub Release 与私有恢复镜像同步；真人日常反馈继续作为后续定向 Issue，不阻塞本版发布。
+- [x] Stage 6：GitHub Release 与发布后维护；真人日常反馈继续作为后续定向 Issue，不阻塞本版发布。
 
 公共 `main` 已包含发布后的无障碍回归修复（PR #90）。下一步不是继续执行旧 Stage，而是根据真实使用反馈建立小范围 Issue；任何新功能或记录类型都必须先更新产品契约和 ADR。
 

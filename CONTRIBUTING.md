@@ -9,6 +9,7 @@
 3. 保持提交聚焦，避免混入无关格式化或重构。
 4. 新功能补充测试和相关文档。
 5. 创建 Pull Request，并填写模板中的验证结果。
+6. 新增、移动、重命名或删除文档时，同步更新 [`docs/DOCUMENTATION_CATALOG.md`](docs/DOCUMENTATION_CATALOG.md)。
 
 ## 分支与提交
 
@@ -17,11 +18,10 @@
 - 文档：`docs/<name>`
 - 自动化代理：`agent/<name>`
 
-提交信息使用简短祈使句，例如：
+提交信息必须带模型前缀，并使用简短祈使句，例如：
 
-- `Add hand-brew calendar states`
-- `Define monthly brew statistics`
-- `Fix week boundary calculation`
+- `[gpt:5.6luna]: docs: update documentation catalog`
+- `[ds:v4flash]: fix: week boundary calculation`
 
 ## 代码要求
 

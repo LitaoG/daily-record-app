@@ -1,5 +1,8 @@
 # 开源借鉴边界
 
+状态：`current reference — license and reuse boundary`
+最后复核：2026-08-16
+
 - [Kizitonwose Calendar](https://github.com/kizitonwose/Calendar)（MIT）：支持周/月/年模式、日期边界、任意日期快速滚动和热力图。当前自研月历已通过历史跳转、未来日期禁用和 TalkBack 语义验收，因此真机反馈出现滑动换月或全年热力图的明确需求前不新增依赖。
 - [Vico](https://github.com/patrykandpatrick/vico)（Apache-2.0）：Compose Multiplatform 图表候选。P0 继续以精确数字和明细表为事实源；用户积累足够历史数据并明确需要趋势分析后，再评估单一趋势图。
 - [Loop Habit Tracker](https://github.com/iSoron/uhabits)（GPLv3）：借鉴“主任务足够快、离线可用、统计逐层展开和数据可导出”的体验，不复制其代码、截图或资源，也不引入连续天数和习惯评分等自慰范围外能力。

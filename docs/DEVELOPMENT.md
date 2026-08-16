@@ -1,12 +1,12 @@
 # 开发、测试与发布
 
-最后复核：2026-08-08
+最后复核：2026-08-16
 
 ## 环境
 
 - Android Studio 稳定版与内置 JDK
 - Android SDK / Platform Tools
-- `minSdk 26`，`compileSdk` 与 `targetSdk` 由工程配置管理
+- 当前配置为 `minSdk 26`、`compileSdk 36.1`、`targetSdk 36`，Room schema 为 v5；版本号以 `gradle.properties` 为准，当前公开版本为 `v1.0.0-beta.3` / `versionCode 4`
 - 至少一台专用 Android 测试模拟器；完整自动化设备套件不得连接日常使用的真机
 - 生产登录联调需要本机私有的 `app/google-services.json`
 - Firestore 规则测试需要 Node.js/pnpm；仓库已锁定依赖版本
@@ -26,7 +26,7 @@ pnpm test:android-connected
 pnpm test:firestore-rules
 ```
 
-`test:docs` 会检查全部 Markdown 的本地链接与图片，并核对 README/产品契约中的发布版本、Android SDK 和 Room schema。修改版本、数据库或文档目录时必须同步通过。
+`test:docs` 会检查全部 Markdown 的本地链接与图片、文档目录是否覆盖所有 Git 跟踪 Markdown/文档文件，并核对 README/产品契约中的发布版本、Android SDK 和 Room schema。修改版本、数据库或文档目录时必须同步通过。
 
 `assembleRelease` 需要仓库外的稳定签名配置和本机私有 `app/google-services.json`：
 

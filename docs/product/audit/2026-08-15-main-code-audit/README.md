@@ -1,15 +1,17 @@
 # 2026-08-15 `main` 代码、安全与运行时审计（修复复核）
 
+> 状态：历史审计记录。本文保留 2026-08-15 的基线、修复分支和验证证据；修复结果已进入后续公共 `main`。当前状态以最新 public `main`、当前文档和 CI 为准。
+
 ## 基线与范围
 
 - 审计基线：公共仓库 `main`，commit `82d4111`（2026-08-15）。
-- 当前修复分支：`agent/ds-pro-main-audit-fixes`，审计起点与上述 `main` 同基线。
+- 当时修复分支：`agent/ds-pro-main-audit-fixes`，审计起点与上述 `main` 同基线。
 - 范围：Android/Kotlin 代码、Firestore 规则、Room/同步生命周期、构建配置、文档一致性、单元/规则/设备测试和模拟器运行时检查。
 - 本审计不读取或提交私有生产材料；本地 `google-services.json`、签名配置和日志均未加入 Git。
 
 ## 结论摘要
 
-当前修复分支已把原报告中的 P1/P2 可执行项落地并完成验证：没有发现已证实的跨账号读取、Release 明文网络配置或持续性内存泄漏。剩余告警是需要单独做兼容性验证的 SDK/依赖升级建议，不是本轮新增漏洞。
+当时修复分支已把原报告中的 P1/P2 可执行项落地并完成验证：没有发现已证实的跨账号读取、Release 明文网络配置或持续性内存泄漏。剩余告警是需要单独做兼容性验证的 SDK/依赖升级建议，不是当时新增漏洞。
 
 1. **P1 物理删除已修复。** `firestore.rules` 已移除客户端 `allow delete`；账号删除改为 `deleteAccountData` trusted callable，由 Admin SDK 按 UID 分批删除两个集合，并要求登录态、UID 匹配和最近 5 分钟内的重新认证。普通记录仍只能通过客户端写墓碑。Android/Firestore Emulator 已验证规则拒绝客户端物理删除，账号删除 callable 能清空两个集合。
 2. **P1 `details` 逐项校验已移到可信写入协议。** 当前 Android 远端写入统一调用 `writeDailyCountRecord` callable；服务端事务逐项校验详情键集合、ID/occurrenceIndex 唯一性、次数边界、最多 1000 条详情、时间格式与顺序、感受字段 100 个 Unicode code point 上限、墓碑空详情和 revision/id 并发基线。为兼容 beta.2，Rules 仍允许旧文档省略 `details`；旧客户端直接写入的坏文档由 Functions trigger 在版本不变时删除，因此存在短暂落库窗口但不会长期被应用接受。规则脚本和 connected Android 测试均覆盖该边界。

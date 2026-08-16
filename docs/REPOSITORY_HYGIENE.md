@@ -1,69 +1,70 @@
 # 仓库整理与文档生命周期
 
-最后复核：2026-08-11
+状态：`current — repository and documentation policy`
+最后复核：2026-08-16
 
-本文是 Daily Record 的仓库维护说明，解决“当前事实在哪里、历史材料如何保留、什么时候清理分支和生成物”这三个问题。它不替代产品、架构、数据模型或统计契约。
+本文是 Daily Record 的公共仓库维护说明，回答四个问题：当前事实在哪里、历史材料如何保留、机器相关文件为什么不入库、什么时候清理分支和生成物。它不替代产品、架构、数据模型或统计契约；文档的逐文件状态和阅读路由以[文档目录与 AI 阅读索引](DOCUMENTATION_CATALOG.md)为准。
 
 ## 当前事实来源
 
 - 日常开发、提交、Pull Request、CI、审查和合并只在公共仓库 [`LitaoG/daily-record-app`](https://github.com/LitaoG/daily-record-app) 完成。
-- 整理开始时的公共 `main` 基线为 `9e2aa5fd3a737fe40ed31d0b5a7d2657ee0426e7`（短写 `9e2aa5f`）；它包含 `v1.0.0-beta.2` 发布后的 weekly chart TalkBack 语义修复（PR #90）。本次 PR 合并后，以 GitHub `main` 的最新提交为当前事实。
-- 当前公开发布仍是 [`v1.0.0-beta.2`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.2)，tag 指向发布时的提交；发布后的无障碍修复不改变版本号和 APK。
-- `main` 是唯一当前代码事实来源。旧本地分支不得作为开发基线；开始工作前应从最新公共 `main` 建立短生命周期分支。
+- 当前公开发布为 [`v1.0.0-beta.3`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.3)，对应 `versionCode = 4`；发布后的当前状态以公共 `main`、代码、测试和 CI 为准。
+- `main` 是唯一当前代码事实来源。每次工作开始前从最新公共 `main` 建立短生命周期 `agent/<description>` 分支；旧本地分支不能作为开发基线。
+- 当前文档的入口、优先级和 AI 阅读顺序由 [`docs/DOCUMENTATION_CATALOG.md`](DOCUMENTATION_CATALOG.md) 集中维护。新增、移动、重命名或删除文档必须同步更新该目录。
 
 ## 文档分类与处理规则
 
-### 当前事实文档
+### 当前事实和契约
 
-这些文档描述现在的代码、数据、交互、安全和发布规则，必须随实现变化同步更新：
+`README.md`、根目录协作规则、`docs/PRODUCT.md`、`docs/UI_UX.md`、`docs/ARCHITECTURE.md`、`docs/DATA_MODEL.md`、`docs/STATISTICS.md`、`docs/SYNC_AND_PRIVACY.md`、`docs/DECISIONS.md`、`docs/DEVELOPMENT.md`、`docs/TESTING.md`、`docs/FIREBASE_SETUP.md`、`docs/RELEASE.md` 和 `docs/ROADMAP.md` 描述当前行为或当前流程，必须随代码、测试、配置和发布变化同步更新。
 
-- `README.md`、`PRIVACY.md`、`SECURITY.md`、`CONTRIBUTING.md`、`AGENTS.md`
-- `docs/PRODUCT.md`、`docs/UI_UX.md`、`docs/ARCHITECTURE.md`、`docs/DATA_MODEL.md`
-- `docs/STATISTICS.md`、`docs/SYNC_AND_PRIVACY.md`、`docs/TESTING.md`
-- `docs/DEVELOPMENT.md`、`docs/FIREBASE_SETUP.md`、`docs/RELEASE.md`、`docs/ROADMAP.md`
+`docs/product/IMPLEMENTATION_READINESS.md`、`MONTH_STATISTICS_REDESIGN.md`、`BRIGHT_GLASS_THEME.md`、`USER_STORIES_AND_ACCEPTANCE.md` 和当前设计基线是当前产品协作契约。代码与其中任一项冲突时，先确认代码/测试事实，再修正文档或建立 ADR；不能默默带着冲突继续开发。
 
-### 当前产品协作文档
+### 历史审计与发布证据
 
-`docs/product/README.md` 和 `docs/product/QUIET_PRIVATE_JOURNAL_GOALS.md` 是产品协作入口。UI v2 Stage 0–6 已关闭；新的视觉、功能或记录类型必须新建 Issue/Goal/ADR，不能继续在已完成阶段下追加隐含范围。
+`docs/product/audit/`、`docs/product/HAND_BREW_REFACTOR_LOG.md`、旧 Figma 设计说明和 `docs/releases/` 中的旧版本记录保留截图、命令、提交、分支、测试数量和当时结论。它们必须标明“历史/已取代/发布历史”，不能作为当前待办或当前分支状态。
 
-`docs/product/IMPLEMENTATION_READINESS.md`、`MONTH_STATISTICS_REDESIGN.md`、`BRIGHT_GLASS_THEME.md` 和 `design/quiet-private-journal-v2/README.md` 是当前冻结契约或实现基线。若代码与其中任一项冲突，先修正文档的当前状态或建立 ADR，再改代码。
+历史文档允许补充归档说明和指向当前事实的链接，但不得为了与现在一致而改写当时的证据。需要确认过去发生了什么时，才按目录中的 AI 阅读标记读取它们。
 
-### 历史审计与设计资产
+### 生成物与资产说明
 
-`docs/product/audit/`、`docs/product/FIGMA_DESIGN_SYSTEM.md` 和 `docs/product/HAND_BREW_REFACTOR_LOG.md` 保留截图、命令、阶段结论和旧方案，不能当作当前待办。历史文档保留当时的状态，但必须有“归档/被后续版本取代”的说明；不得为了让旧截图看起来像当前 UI 而改写证据。旧版 `assets/hand-brew-v2/` 截图包已在 2026-08-11 资源整理中从工作树移除，旧文件仍可从 Git 历史恢复。
+`app/schemas/README.md` 说明 Room 自动导出的 schema 快照；`docs/design/` 和产品资产 README 说明设计源和运行时轻量资源。它们不是业务事实的替代品，也不能把导出图、预览图或机器截图误当作当前实现证明。
 
-`docs/design/icon-source/` 是图标源文件交接目录：SVG/PNG 设计源可以保留，运行时只引用轻量自适应图标层；营销大图不进入 APK 资源。
+## 为什么 `local.properties`、SDK/cache 等不入库
 
-## 本次整理决策
+这些文件不是“漏提交”，而是有意排除的机器状态：
 
-- 删除仓库根目录未被任何文档引用、且内容与 `docs/product/audit/2026-08-02-year-line-chart/README.md` 重复的 `design-qa.md`；历史证据仍在审计目录中。
-- 保留 `docs/product/audit/` 的审计证据，因为它们包含可追溯的截图、测试和迁移背景；在索引和文档状态中明确它们是历史材料。
-- 删除已被当前双模块 UI 取代的 `docs/product/assets/hand-brew-v2/` 截图包；它不参与构建，且旧图像可从 Git 历史恢复。
-- 删除图标三层的重复 PNG、1024px 备份和本地预览合成图；保留 SVG 交接源、用户确认的 1254px 源图和 Play 512px 导出。运行时仍只使用 `drawable-nodpi` 下的轻量 WebP 层。
-- 将 UI v2 Goal、设计基线、玻璃主题、README、路线图、Backlog 和 UI 事实文档更新到 Stage 0–6 已完成、公共 `main` 已完成 beta.2 后维护的状态。
-- 不删除 GitHub Release、tag、已关闭 Issue、审计截图或 Room 迁移历史；删除这些内容会损失恢复和审查证据。
+- `local.properties` 通常包含本机 Android SDK 的绝对路径。换电脑后路径、用户名和 SDK 安装位置都会变化；提交它会让其他机器继承错误路径，并暴露本机环境信息。Android Studio 或 Gradle 会在新电脑本地重新生成它。
+- Android SDK、Gradle cache、`build/`、`.gradle/`、`node_modules/` 和模拟器缓存是可由版本化的 Gradle wrapper、锁文件和构建配置重建的下载物/产物。它们体积大、跨平台差异明显，也不属于源代码。
+- `google-services.json`、`keystore.properties`、签名文件、token、真实数据库、APK/AAB 和日志可能包含生产标识、密钥、用户数据或机器信息，不能进入公共仓库或公共 Git 历史。
+- 仓库只提交能在新机器上复现开发环境的内容：源码、测试、Gradle wrapper、锁文件、Rules/Functions 源码、Room schema 快照、必要的设计源和文档。新电脑按 [`DEVELOPMENT.md`](DEVELOPMENT.md) 与 [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md) 安装 SDK，并在本机生成 `local.properties`；需要生产联调的配置通过受控渠道提供。
 
-## 分支与 PR 清理
+公共仓库不保存真实用户数据或生产配置。私有恢复镜像不是日常开发源，也不能把其中的私有生产材料反向推送到公共仓库；只有完成一个连贯发布里程碑或私有恢复材料发生变化时，才按单独流程同步。纯公共文档整理不自动产生私有同步内容。
 
-- PR 合并后删除远端临时分支；仅当分支没有未合并提交且没有打开 PR 时才删除。
-- 本次整理后应只保留公共 `main` 和明确仍在工作的分支。旧本地 `main` 若与公共 `main` 分叉且没有待保留提交，应在创建可恢复的归档引用后删除，避免误从过时代码继续开发。
-- 不使用 `reset --hard`、强推或重写公共历史；所有清理通过普通分支删除和新提交完成。
+## 分支、提交与 PR 清理
 
-## 生成物、私密材料与存储
+- 使用 `agent/<description>` 短生命周期分支；不在 `main` 直接修改。
+- PR 合并必须保留分支中的每一笔原始提交，使用普通 merge；不使用 squash merge、rebase 合并、强推或其他历史重写方式。
+- PR 合并后，只有在没有未合并提交且没有打开 PR 时才删除远端临时分支；删除前先确认 `main` 已包含完整提交链。
+- 不使用 `reset --hard`、`git checkout --` 覆盖用户改动或任何不可恢复的批量删除。清理前先检查 Git 跟踪、引用和文档链接。
 
-- `build/`、`.gradle/`、`node_modules/`、Firebase 调试日志、测试临时报告和模拟器截图缓存只存在本地，使用后清理；不把测试文件写到桌面。
-- `app/google-services.json`、`local.properties`、`keystore.properties`、签名文件、APK/AAB、真实数据库、token 和日志均由 `.gitignore` 排除，并通过 `git ls-files` 定期确认没有进入历史。
-- 公共仓库不保存真实用户数据或生产配置。私有恢复仓库只在公共 `main` 完成一个连贯小版本、或私有恢复材料发生变化时同步；本次仅为公共文档/分支整理，不产生新的私有生产材料，因此不触发私有镜像同步。
+## 文档删除与历史保留
 
-## 每次整理的最小验证
+- 删除前检查 `DOCUMENTATION_CATALOG.md`、本地链接、脚本、Issue/PR 引用和发布/迁移用途。
+- 仍包含发布、迁移、截图、测试或安全证据的文件应保留并标为历史，不因“看起来旧”直接删除。
+- 只有无引用、可由其他文档完整替代且不承载审计事实的临时文档才可删除；删除范围必须写入提交说明和 PR。
+- 2026-08-11 的资源删除详情见 [`RESOURCE_CLEANUP.md`](RESOURCE_CLEANUP.md)，不把一次性清理决策伪装成当前事实。
+
+## 最小验证
 
 ```powershell
 git status --short --branch
 git diff --check
+node --test scripts/documentation-catalog.test.mjs
 node --test scripts/docs-integrity.test.mjs
 node --test scripts/release-metadata.test.mjs
 node --test scripts/copy-integrity.test.mjs
 git ls-files | rg -i 'google-services\\.json|local\\.properties|keystore|\\.apk$|\\.aab$|\\.jks$|\\.log$'
 ```
 
-代码、数据库、同步、Manifest 或发布配置发生变化时，再按 [`TESTING.md`](TESTING.md) 扩大到受影响的 Gradle、规则和 Android 设备测试；纯文档或历史截图整理不机械重复无关的完整设备套件。
+代码、数据库、同步、Manifest 或发布配置发生变化时，再按 [`TESTING.md`](TESTING.md) 扩大到受影响的 Gradle、Rules/Functions 和 Android 设备测试；纯文档或历史资料整理不机械重复无关的完整设备套件。

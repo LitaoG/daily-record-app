@@ -1,5 +1,8 @@
 # Daily Record adaptive icon source
 
+Status: `current asset handoff reference`
+Last reviewed: 2026-08-16
+
 This folder contains the approved neon source and the three-layer handoff from Figma.
 Only canonical handoff files are kept here; generated previews and duplicate raster
 exports are intentionally not versioned.

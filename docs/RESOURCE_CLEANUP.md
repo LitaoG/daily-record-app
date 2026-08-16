@@ -1,5 +1,6 @@
 # 资源清理记录
 
+状态：`historical cleanup record`
 最后复核：2026-08-11
 
 本次整理从最新公共 `main` 建立 `maintenance/resource-cleanup` 分支，目标是减少

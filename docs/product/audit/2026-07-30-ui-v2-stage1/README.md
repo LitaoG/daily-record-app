@@ -1,5 +1,7 @@
 # UI v2 Stage 1：设计 Token 与共享外壳验收
 
+状态：`Historical — incorporated into the beta.3 runtime baseline`
+
 日期：2026-07-30
 
 范围：只验收 [Stage 1](../../QUIET_PRIVATE_JOURNAL_GOALS.md#stage-1设计-token-与共享外壳) 的颜色 Token、排版与尺寸 Token、模块切换器、周期切换、页面边距和底部导航。本轮不把日历格、记录页主体或年度统计主体提前算作已经改版。

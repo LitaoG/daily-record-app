@@ -1,5 +1,8 @@
 # 记录时间与感受：确认稿
 
+状态：`current reference — implemented in v1.0.0-beta.3`
+最后复核：2026-08-16
+
 Issue：[#105](https://github.com/LitaoG/daily-record-app/issues/105)
 
 这组设计资产对应记录页的两个连续状态：

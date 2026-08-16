@@ -1,10 +1,12 @@
 # Issues #123–#145 第三轮代码审计
 
+> 状态：历史审计记录。本文记录 2026-08-11 当时的审查分支、Draft PR 和验证结果；后续公共 `main` 已继续演进，当前状态以最新代码、文档和 CI 为准，不是当前合并阻塞项。
+
 审计分支：`review/integrate-123-145-gpt5.6luna`  
 审计提交：当前审查分支最新 head（包含 `de3db38` 修复及 Firebase Task 取消安全补丁）  
-基线：`origin/main`，不合并到 `main`，等待用户验收。
+基线：`origin/main`；当时不合并到 `main`，等待用户验收。
 
-远端交付：Draft PR [#152](https://github.com/LitaoG/daily-record-app/pull/152)；非 `main` 分支已在本审查分支保留历史并完成吸收，PR 保持 Draft，不自动合并到 `main`。
+远端交付：当时的 Draft PR [#152](https://github.com/LitaoG/daily-record-app/pull/152)；非 `main` 分支已在当时审查分支保留历史并完成吸收，PR 当时保持 Draft，不自动合并到 `main`。
 
 ## 结论
 
@@ -41,4 +43,4 @@
 
 ## 后续门槛
 
-本分支保持可审查状态，不自动合并到 `main`。完整设备套件已在可访问 Emulator 的 API 34 模拟器上通过；仍建议真机只做最终体验验收，不把真机数据接入测试环境。
+当时审查分支保持可审查状态，不自动合并到 `main`。完整设备套件已在可访问 Emulator 的 API 34 模拟器上通过；仍建议真机只做最终体验验收，不把真机数据接入测试环境。后续是否合并以公共 `main` 的实际提交链为准。

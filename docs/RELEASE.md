@@ -1,6 +1,6 @@
 # GitHub Release 发布与签名
 
-最后复核：2026-08-15
+最后复核：2026-08-16
 
 本项目只通过 GitHub Releases 向本人和少量使用者提供签名 APK。当前候选版本为 `v1.0.0-beta.3`，对应 `versionCode = 4`；`v1.0.0-beta.1` 与 `v1.0.0-beta.2` 保留为历史发布。发布物不是 Debug APK。
 

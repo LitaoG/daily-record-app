@@ -1,6 +1,6 @@
 # 2026-07-30 UI v2 Stage 2 定向验收
 
-状态：`Historical — incorporated into v1.0.0-beta.2`
+状态：`Historical — implementation carried forward into v1.0.0-beta.3`
 
 当时状态（2026-07-30）：`Implementation verified — awaiting user acceptance`。Stage 2 后续反馈与最终交付以公共 `main` 和 Stage 5/6 发布审计为准。
 
