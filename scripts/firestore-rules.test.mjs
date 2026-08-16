@@ -141,6 +141,32 @@ try {
       localDate: "2026-00-20",
     }),
   );
+  // Rules cannot perform calendar arithmetic, so shape-valid but
+  // calendar-invalid dates are accepted at write time; the Functions trigger
+  // must reject them via isValidDateText and remove the malformed document.
+  for (const invalidDate of ["2026-02-31", "2026-04-31", "2026-02-29"]) {
+    const invalidDateRecord = doc(userA, `users/user-a/handBrewRecords/${invalidDate}`);
+    await assertSucceeds(
+      setDoc(invalidDateRecord, {
+        ...validRecord,
+        localDate: invalidDate,
+      }),
+    );
+    await waitForDocumentToDisappear(invalidDateRecord);
+  }
+  // A real leap date must survive the trigger and remain readable.
+  const leapDateRecord = doc(userA, "users/user-a/handBrewRecords/2024-02-29");
+  await assertSucceeds(
+    setDoc(leapDateRecord, {
+      ...validRecord,
+      localDate: "2024-02-29",
+    }),
+  );
+  await new Promise((resolve) => setTimeout(resolve, 2_000));
+  assert.ok(
+    (await getDoc(leapDateRecord)).exists(),
+    "A valid leap date must not be removed",
+  );
   await assertFails(
     setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-20"), {
       ...validRecord,

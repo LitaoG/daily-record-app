@@ -6,6 +6,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
+    // Rules cannot perform real calendar arithmetic: a shape-valid string
+    // like 2026-02-31 still passes the regex below. The Functions write
+    // trigger validates the real calendar date (isValidDateText) and removes
+    // malformed documents, so semantically invalid dates are cleaned up
+    // asynchronously instead of being rejected at write time.
     function hasValidCommonRecordShape(date, allowedKeys) {
       return request.resource.data.keys().hasOnly(allowedKeys)
         && request.resource.data.id is string
