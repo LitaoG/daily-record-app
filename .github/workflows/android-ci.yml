@@ -48,6 +48,9 @@ jobs:
       - name: Validate copy, documentation, and release metadata
         run: node --test scripts/copy-integrity.test.mjs scripts/docs-integrity.test.mjs scripts/release-metadata.test.mjs
 
+      - name: Validate Functions log safety
+        run: node --test functions/delete-log.test.js
+
       - name: Validate Firestore rules
         run: pnpm test:firestore-rules
 

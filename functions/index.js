@@ -2,6 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { randomUUID } = require("node:crypto");
+const { deleteLogEntry } = require("./delete-log");
 
 admin.initializeApp();
 
@@ -304,16 +305,15 @@ exports.deleteAccountData = functions.https.onCall(async (data, context) => {
   return { ownerId: auth.uid, deleted };
 });
 
-async function deleteMalformedDocument(after, reason) {
+async function deleteMalformedDocument(after, collectionName, reason) {
   const current = await after.ref.get();
   if (!current.exists) return;
   const sameVersion = !after.updateTime || !current.updateTime ||
     current.updateTime.toMillis() === after.updateTime.toMillis();
   if (!sameVersion) return;
-  console.warn("Deleting malformed Daily Record document", {
-    path: after.ref.path,
-    reason,
-  });
+  // Log only the fixed collection name and a stable error code. The document
+  // path carries the owner id and local date and must never reach logs.
+  console.warn("Deleting malformed Daily Record document", deleteLogEntry(collectionName, reason));
   await after.ref.delete();
 }
 
@@ -325,7 +325,7 @@ async function validateWrittenRecord(change, collectionName) {
   try {
     validateStoredRecord(data, module);
   } catch (error) {
-    await deleteMalformedDocument(after, error.message);
+    await deleteMalformedDocument(after, collectionName, error);
   }
 }
 
