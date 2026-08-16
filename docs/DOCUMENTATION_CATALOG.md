@@ -3,7 +3,7 @@
 状态：`current — authoritative documentation registry`
 最后复核：2026-08-16
 
-本文是公共仓库中全部 Git 跟踪 Markdown 文档的逐文件索引，也是 AI 开始工作前判断“先读什么、哪些只是历史证据”的唯一入口。当前仓库没有被 Git 跟踪的 `.doc`、`.docx` 或 `.markdown` 文件；如果以后新增或删除任意文档，必须在同一提交中更新本文，`scripts/documentation-catalog.test.mjs` 会检查目录是否完整。
+本文是公共仓库中全部 Git 跟踪 Markdown 文档的逐文件索引，也是 AI 开始工作前判断“先读什么、哪些只是历史证据”的唯一入口。当前仓库没有被 Git 跟踪的 `.doc`、`.docx` 或 `.markdown` 文件；如果以后新增或删除任意文档，必须在同一提交中更新本文，`scripts/documentation-catalog.test.mjs` 会检查目录是否完整。当前 README 运行截图及其复现边界单独登记在产品资产目录中，历史审计截图不再冒充首页当前画面。
 
 ## 字段定义
 
@@ -65,6 +65,7 @@
 | `docs/product/FIGMA_DESIGN_SYSTEM.md` | 历史证据 | P3 | 留档 | 否 | 否 | 已被双模块 UI v2 取代的旧 Figma 设计系统 |
 | `docs/product/HAND_BREW_REFACTOR_LOG.md` | 历史证据 | P3 | 留档 | 否 | 否 | 已完成的早期重构、提交和发布过程记录 |
 | `docs/product/assets/daily-record-icon/README.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 图标资源交接入口和 canonical 来源 |
+| `docs/product/assets/readme/README.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | 从 API 34 测试模拟器采集的当前 README 运行截图、数据隐私和复现边界 |
 | `docs/product/design/quiet-private-journal-v2/README.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前日历、记录页和统计页的视觉目标 |
 | `docs/product/design/record-details-v1/README.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 逐次详情设计与运行时实现边界 |
 | `docs/product/audit/README.md` | 当前索引 | P1 | 按范围 | 按范围 | 按范围 | 所有审计目录的历史状态和阅读路由 |

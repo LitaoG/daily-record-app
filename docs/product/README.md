@@ -4,6 +4,8 @@
 
 完整工程文档请先看[文档中心](../README.md)。本页只索引产品、设计和交付资料。
 
+公开 Release 仍为 `v1.0.0-beta.3`；当前公共 `main` 在该版本之后继续维护 SDK、生命周期、Functions 运行时和 CI 门禁。首页使用的最新运行时画面集中在[README 运行截图](assets/readme/README.md)，不要从历史审计目录挑选旧图作为当前状态。
+
 ## 当前产品资料
 
 - [产品契约](../PRODUCT.md)
@@ -16,6 +18,7 @@
 - [设置中心 Goal](SETTINGS_HUB_GOAL.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](MONTH_STATISTICS_REDESIGN.md)
 - [实现与发布准备度](IMPLEMENTATION_READINESS.md)
+- [当前 README 运行截图与复现边界](assets/readme/README.md)
 - [产品 Backlog](PRODUCT_BACKLOG.md)
 - [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)
 - [日常使用反馈](DAILY_USE_FEEDBACK.md)
