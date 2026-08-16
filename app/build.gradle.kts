@@ -46,9 +46,7 @@ val effectiveVersionName = providers.gradleProperty("dailyRecord.versionNameOver
 android {
     namespace = "io.github.litaog.dailyrecord"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
+        version = release(37)
     }
 
     defaultConfig {
