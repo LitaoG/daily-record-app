@@ -13,7 +13,7 @@
    - 只改文档或审计截图，不会让已经通过的 Room、同步或设备测试失效。
    - 只改 Compose 组件，不会让 Firestore Rules 测试失效。
    - 修改共享数据模型、Gradle、Manifest、依赖、数据库或同步边界时，应扩大验证范围。
-5. 同一个最终 head 不重复运行已经通过且未失效的完整套件。GitHub CI 是独立验证，不要求本机机械重复相同命令；每次变更按影响范围选择定向验证，只有小版本最终功能 head 才运行一次完整设备套件。
+5. 同一个最终 head 不重复运行已经通过且未失效的完整套件。GitHub CI 是独立验证，不要求本机机械重复相同命令；每次变更按影响范围选择定向验证，只有小版本最终功能 head 才运行一次完整设备套件。PR 与 `main` 门禁会真实执行 `connectedDebugAndroidTest`（API 34 模拟器 + 隔离 Auth/Firestore/Functions 模拟器），失败时可从 Actions 下载 JUnit 报告与 logcat；发布 tag 构建不重复完整设备套件，因为 tag 只来自已通过 connected 门禁的 `main` head，设备回归前置到 `main` 门禁。
 6. 设备测试只能运行在可重置模拟器；执行前必须用 `adb devices -l` 排除日常使用的实体手机。
 7. 生产 Firebase 烟雾测试默认跳过，只有生产配置、规则部署或账号隔离需要显式验收时才单独执行。
 
