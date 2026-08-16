@@ -85,14 +85,14 @@ pnpm test:android-connected
 ```
 
 - Gradle 命令执行 JVM 测试、Lint 和 APK 编译，不会启动 Firebase 模拟器。
-- `test:docs` 检查本地链接、截图、版本、Android SDK 和 Room schema 是否与工程一致。
+- `test:docs` 检查本地链接、截图、逐文件文档目录、版本、Android SDK 和 Room schema 是否与工程一致。
 - `test:firestore-rules` 会临时启动隔离的 Firestore 模拟器。
 - `test:android-connected` 会启动隔离的 Auth/Firestore 模拟器，并在已启动的 Android 测试模拟器上执行完整设备套件。
 - Release 签名、版本、tag 和覆盖升级流程见 [发布指南](docs/RELEASE.md)。
 
 ## 文档
 
-[文档中心](docs/README.md)区分“当前事实文档”和“历史审计证据”。常用入口：
+[文档中心](docs/README.md)区分“当前事实文档”和“历史审计证据”；[文档目录与 AI 阅读索引](docs/DOCUMENTATION_CATALOG.md)为每个 Markdown 标注状态、优先级、必要程度和 AI 阅读时机。常用入口：
 
 - [产品契约](docs/PRODUCT.md)
 - [界面与交互](docs/UI_UX.md)
@@ -104,5 +104,6 @@ pnpm test:android-connected
 - [路线图](docs/ROADMAP.md)
 - [决策记录](docs/DECISIONS.md)
 - [仓库维护与文档生命周期](docs/REPOSITORY_HYGIENE.md)
+- [文档目录与 AI 阅读索引](docs/DOCUMENTATION_CATALOG.md)
 
 公开仓库不包含 `app/google-services.json`、签名文件、密码、真实用户数据库、APK/AAB 或敏感日志。贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
