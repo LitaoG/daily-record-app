@@ -1,6 +1,6 @@
 # 数据模型
 
-当前 schema：Room v5。最后复核：2026-08-10。
+当前 schema：Room v5。最后复核：2026-08-16。
 
 ## 两个独立领域实体
 
@@ -65,7 +65,7 @@ moduleCount > 0 -> OCCURRED（已发生）
 2. 创建空的 `sex_records`，字段包含 `sex_count` 与完整同步元数据。
 3. 建立 `owner_id + local_date` 唯一索引和 `owner_id + sync_state` 待同步索引。
 4. 不推断或复制任何历史自慰行为为做爱记录。
-5. 自动化测试覆盖 v1→v4、v2→v4、v3→v4，禁止 destructive migration。
+5. 自动化测试覆盖 v1→v5、v2→v5、v3→v5、v4→v5，禁止 destructive migration。
 
 ## v4 → v5 迁移：逐次详情
 

@@ -1,5 +1,8 @@
 # Daily Record 主图标资源
 
+状态：`current asset handoff reference`
+最后复核：2026-08-16
+
 本目录是图标交接入口。完整源稿和导出物统一放在 [`docs/design/icon-source`](../../../design/icon-source)，避免同一张图在多个目录重复维护；本目录不再保存运行时副本。
 
 ## 当前来源

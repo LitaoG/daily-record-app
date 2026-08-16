@@ -2,7 +2,7 @@
 
 状态：`Accepted visual target — Stages 1–6 implemented and released`
 
-确认日期：2026-07-29；最后复核：2026-08-13
+确认日期：2026-07-29；最后复核：2026-08-16
 
 执行计划：[分阶段 Goal](../../QUIET_PRIVATE_JOURNAL_GOALS.md)
 

@@ -1,5 +1,8 @@
 # Room schema 说明
 
+状态：`generated artifact reference`
+最后复核：2026-08-16
+
 这里的 JSON 文件是 Room 自动导出的数据库版本快照，用于验证用户从旧版本升级到当前版本时不会丢失自慰或做爱记录。
 
 - `5.json` 是当前双模块数据库结构，业务表为相互独立的 `hand_brew_records`、`hand_brew_record_details`、`sex_records` 和 `sex_record_details`。
