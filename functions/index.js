@@ -1,7 +1,12 @@
-const functions = require("firebase-functions/v1");
+const { HttpsError, onCall } = require("firebase-functions/v2/https");
+const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { randomUUID } = require("node:crypto");
+const { deleteLogEntry } = require("./delete-log");
+
+setGlobalOptions({ region: "asia-east1" });
 
 admin.initializeApp();
 
@@ -27,7 +32,7 @@ const DETAIL_KEYS = Object.freeze([
 ]);
 
 function httpsError(code, message) {
-  return new functions.https.HttpsError(code, message);
+  return new HttpsError(code, message);
 }
 
 function requireAuthenticated(context) {
@@ -220,13 +225,14 @@ function callableRecord(data, module) {
   };
 }
 
-exports.writeDailyCountRecord = functions.https.onCall(async (data, context) => {
-  const auth = requireAuthenticated(context);
+exports.writeDailyCountRecord = onCall(async (request) => {
+  const auth = requireAuthenticated(request);
+  const data = request.data;
   let validated;
   try {
     validated = validateRecordInput(data);
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) throw error;
+    if (error instanceof HttpsError) throw error;
     throw httpsError("invalid-argument", "The record input is invalid.");
   }
   const { module, record, remoteRevision } = validated;
@@ -282,9 +288,10 @@ exports.writeDailyCountRecord = functions.https.onCall(async (data, context) => 
   return result;
 });
 
-exports.deleteAccountData = functions.https.onCall(async (data, context) => {
-  const auth = requireAuthenticated(context);
+exports.deleteAccountData = onCall(async (request) => {
+  const auth = requireAuthenticated(request);
   requireRecentlyAuthenticated(auth);
+  const data = request.data;
   if (!data || data.ownerId !== auth.uid) {
     throw httpsError("permission-denied", "The owner id must match the signed-in account.");
   }
@@ -304,16 +311,15 @@ exports.deleteAccountData = functions.https.onCall(async (data, context) => {
   return { ownerId: auth.uid, deleted };
 });
 
-async function deleteMalformedDocument(after, reason) {
+async function deleteMalformedDocument(after, collectionName, reason) {
   const current = await after.ref.get();
   if (!current.exists) return;
   const sameVersion = !after.updateTime || !current.updateTime ||
     current.updateTime.toMillis() === after.updateTime.toMillis();
   if (!sameVersion) return;
-  console.warn("Deleting malformed Daily Record document", {
-    path: after.ref.path,
-    reason,
-  });
+  // Log only the fixed collection name and a stable error code. The document
+  // path carries the owner id and local date and must never reach logs.
+  console.warn("Deleting malformed Daily Record document", deleteLogEntry(collectionName, reason));
   await after.ref.delete();
 }
 
@@ -325,14 +331,16 @@ async function validateWrittenRecord(change, collectionName) {
   try {
     validateStoredRecord(data, module);
   } catch (error) {
-    await deleteMalformedDocument(after, error.message);
+    await deleteMalformedDocument(after, collectionName, error);
   }
 }
 
-exports.validateHandBrewRecord = functions.firestore
-  .document("users/{userId}/handBrewRecords/{date}")
-  .onWrite((change) => validateWrittenRecord(change, "handBrewRecords"));
+exports.validateHandBrewRecord = onDocumentWritten(
+  "users/{userId}/handBrewRecords/{date}",
+  (event) => validateWrittenRecord(event.data, "handBrewRecords"),
+);
 
-exports.validateSexRecord = functions.firestore
-  .document("users/{userId}/sexRecords/{date}")
-  .onWrite((change) => validateWrittenRecord(change, "sexRecords"));
+exports.validateSexRecord = onDocumentWritten(
+  "users/{userId}/sexRecords/{date}",
+  (event) => validateWrittenRecord(event.data, "sexRecords"),
+);

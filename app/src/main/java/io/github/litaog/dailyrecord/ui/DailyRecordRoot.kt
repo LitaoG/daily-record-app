@@ -12,18 +12,18 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.litaog.dailyrecord.core.auth.AuthState
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
@@ -129,7 +129,9 @@ internal fun DailyRecordRoot(
     // here never recreates FirebaseServices; this read is what initializes
     // Firebase for the first time (local-only startup never reaches it).
     val services = servicesProvider()
-    val authState by services.authRepository.state.collectAsState(initial = AuthState.Loading)
+    val authState by services.authRepository.state.collectAsStateWithLifecycle(
+        initialValue = AuthState.Loading,
+    )
     val recoveryResolved = remember(database) { mutableStateOf(false) }
     LaunchedEffect(database, authState, recoveryRetryRevision) {
         if (authState !is AuthState.Loading) {
@@ -358,7 +360,7 @@ private fun SignedInRoot(
         buildAccountDeletionCoordinator(database, services)
     }
     val scope = rememberCoroutineScope()
-    val syncStatus by syncManager.status.collectAsState()
+    val syncStatus by syncManager.status.collectAsStateWithLifecycle()
     var activeSyncJobs by remember(ownerId) { mutableStateOf<List<Job>>(emptyList()) }
     val deletionOrchestrator = AccountDeletionOrchestrator(
         cancelAndAwait = {

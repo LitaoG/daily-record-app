@@ -24,12 +24,13 @@ Firestore 使用两个独立路径：
 
 自慰文档字段为 `brewCount`，做爱文档字段为 `sexCount`；其余包括稳定 ID、本地日期、创建/修改时间、删除墓碑、修订号、schema 版本、服务器更新时间和可选的模块专用 `details` 数组。详情只包含用户主动填写的逐次开始/结束时间与最多 100 个可见字符的感受；不保存伴侣、地点、姿势、位置、联系人、健康数据、额外备注、图片或设备标识。
 
-生产数据库位于 `asia-east1`，以生产模式创建。安全规则要求：
+生产数据库位于 `asia-east1`，以生产模式创建；Cloud Functions 的部署区域同样显式声明为 `asia-east1`，callable、Firestore trigger 与 Firestore 同区域运行。安全规则要求：
 
 - 必须已登录且 UID 与路径一致。
 - 字段必须完全匹配白名单，次数非负且日期与文档 ID 一致。
 - 新客户端写入的 `details` 必须是当前模块的数组，条目数不能超过对应次数；为兼容 beta.2 旧客户端，Rules 允许省略该字段，解析器按空数组处理。客户端与远端解析器校验时间精度、时间顺序和感受的 100 个可见字符上限。
 - ID、本地日期和创建时间在更新后不可改变。
+- Rules 的正则只能约束日期形状，无法做真实日历运算；形状合法但日历不存在的日期（如 `2026-02-31`）会先被旧客户端直接写入，再由写入触发器的 `isValidDateText` 判定为坏文档并物理清理，客户端监听随后收敛到无该日期记录。新客户端写入统一走 `writeDailyCountRecord` callable，在写入前完成真实日历校验。
 - 修订号每次只增加 1；应用的普通记录清除仍写墓碑，客户端物理删除被 Rules 拒绝。账号删除通过要求最近重新认证且 UID 匹配的 `deleteAccountData` trusted callable 物理清理两个集合；新客户端详情写入通过 `writeDailyCountRecord` callable 逐项校验，见[2026-08-15 main 代码审计](product/audit/2026-08-15-main-code-audit/README.md)。
 
 生产构建通过 Manifest 禁止明文网络流量，Firebase 客户端请求使用 TLS。Debug 构建仅为开发机上的 Firebase Emulator Suite 覆盖允许 HTTP，Debug APK 不作为正式分发包。

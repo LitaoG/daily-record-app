@@ -48,10 +48,83 @@ jobs:
       - name: Validate copy, documentation, and release metadata
         run: node --test scripts/copy-integrity.test.mjs scripts/docs-integrity.test.mjs scripts/release-metadata.test.mjs
 
+      - name: Validate Functions log safety
+        run: node --test functions/delete-log.test.js
+
       - name: Validate Firestore rules
         run: pnpm test:firestore-rules
 
       - name: Validate and build
         run: ./gradlew testDebugUnitTest compileDebugAndroidTestKotlin lintDebug assembleDebug --stacktrace
+
+  connected:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up Java
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install test dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Functions dependencies
+        run: pnpm --dir functions install --frozen-lockfile
+
+      - name: Run connected instrumentation regression on an emulator
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          emulator-boot-timeout: 600
+          script: pnpm test:android-connected:unix
+
+      - name: Capture device logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          serial="$(adb devices | awk '$1 ~ /^emulator-/ && $2 == "device" { print $1; exit }')"
+          if [ -n "$serial" ]; then
+            adb -s "$serial" logcat -d > logcat.txt || true
+            adb -s "$serial" shell getprop > emulator-properties.txt || true
+          fi
+
+      - name: Upload device reports and logcat on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: connected-android-test-${{ github.run_id }}
+          path: |
+            app/build/outputs/androidTest-results/
+            app/build/reports/androidTests/
+            emulator.log
+            logcat.txt
+            emulator-properties.txt
+          if-no-files-found: ignore
 
 

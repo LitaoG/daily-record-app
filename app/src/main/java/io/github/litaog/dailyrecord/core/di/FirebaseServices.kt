@@ -22,6 +22,7 @@ internal const val FIREBASE_EMULATOR_APP_NAME = "daily-record-emulator"
 internal const val FIREBASE_AUTH_EMULATOR_PORT = 9099
 internal const val FIREBASE_FIRESTORE_EMULATOR_PORT = 8080
 internal const val FIREBASE_FUNCTIONS_EMULATOR_PORT = 5001
+internal const val FIREBASE_FUNCTIONS_REGION = "asia-east1"
 
 internal data class FirebaseServices(
     val authRepository: AuthRepository,
@@ -49,7 +50,7 @@ internal data class FirebaseServices(
             }
             val auth = FirebaseAuth.getInstance(app)
             val firestore = FirebaseFirestore.getInstance(app)
-            val functions = FirebaseFunctions.getInstance(app)
+            val functions = FirebaseFunctions.getInstance(app, FIREBASE_FUNCTIONS_REGION)
             if (emulatorHost != null && emulatorAppCreated) {
                 auth.useEmulator(emulatorHost, FIREBASE_AUTH_EMULATOR_PORT)
                 firestore.useEmulator(emulatorHost, FIREBASE_FIRESTORE_EMULATOR_PORT)
@@ -79,3 +80,4 @@ internal data class FirebaseServices(
             .build()
     }
 }
+

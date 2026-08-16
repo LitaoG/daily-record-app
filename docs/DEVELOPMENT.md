@@ -6,10 +6,11 @@
 
 - Android Studio 稳定版与内置 JDK
 - Android SDK / Platform Tools
-- 当前配置为 `minSdk 26`、`compileSdk 36.1`、`targetSdk 36`，Room schema 为 v5；版本号以 `gradle.properties` 为准，当前公开版本为 `v1.0.0-beta.3` / `versionCode 4`
+- 当前配置为 `minSdk 26`、`compileSdk 37`、`targetSdk 36`，Room schema 为 v5；版本号以 `gradle.properties` 为准，当前公开版本为 `v1.0.0-beta.3` / `versionCode 4`
+- SDK 版本说明：`compileSdk 37` 是升级 core-ktx 1.19.0 / lifecycle 2.11.0 后的强制要求（AAR 元数据校验），本轮已随库升级同步完成。`targetSdk` 刻意冻结在 36：升级到 37 是运行期行为变化（影响 Android 16+ 设备），需要新版本规划中的 API 34 与 minSdk 26 设备回归后一并评估。compileSdk 37 的新 Lint 版本库还新报告 AGP 9.3.1、Compose BOM 2026.08.00、Firebase BOM 34.17.0：其中 Firebase BOM 升级会改变客户端同步/认证 SDK 行为，需设备回归，统一归入 `v1.0.0-beta.4` 的协调升级矩阵，本轮不追版本。下次复查时间为 `v1.0.0-beta.4` 规划时
 - 至少一台专用 Android 测试模拟器；完整自动化设备套件不得连接日常使用的真机
 - 生产登录联调需要本机私有的 `app/google-services.json`
-- Firestore 规则测试需要 Node.js/pnpm；仓库已锁定依赖版本
+- Firestore 规则测试需要 Node.js 22 与 pnpm；Cloud Functions 为 2nd gen（Node 22），与 CI 和本地模拟器保持一致，版本不符时测试在启动阶段直接失败（`scripts/check-node-runtime.mjs`），避免运行时漂移让业务断言失真
 
 GitHub `main` 是当前事实来源；从最新 `main` 建立短生命周期分支，通过 Pull Request、自动化检查和审查后使用普通 merge commit 合并，保留分支中的每一笔原始提交；禁止 squash merge、rebase merge 和改写共享历史。
 
