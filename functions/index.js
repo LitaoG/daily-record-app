@@ -1,9 +1,12 @@
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { randomUUID } = require("node:crypto");
 const { deleteLogEntry } = require("./delete-log");
+
+setGlobalOptions({ region: "asia-east1" });
 
 admin.initializeApp();
 

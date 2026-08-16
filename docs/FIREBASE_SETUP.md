@@ -8,6 +8,7 @@
 - Android 包名：`io.github.litaog.dailyrecord`
 - Authentication：仅启用 Email/Password
 - Cloud Firestore：Standard、Native、生产模式、`asia-east1`
+- Cloud Functions：部署区域显式声明为 `asia-east1`（`functions/index.js` 的 `setGlobalOptions`），与 Firestore 同区域；callable、Firestore trigger 和坏文档清理都按该区域部署
 - Firestore 规则：仓库根目录 `firestore.rules` 是事实来源，同时覆盖 `handBrewRecords` 与 `sexRecords`；客户端物理删除被拒绝
 - Cloud Functions：仓库 `functions/` 是 callable 写入、账号数据删除和旧协议坏文档清理的事实来源；生产部署前必须先完成 Functions 与 Rules 的同版本发布
 
@@ -51,13 +52,13 @@ pnpm exec firebase deploy --only functions,firestore:rules --project daily-recor
 
 ### Functions 2nd gen（Node 22）迁移顺序
 
-Functions 已从 1st gen 迁移到 2nd gen 并统一为 Node 22（引擎声明在 `functions/package.json`）。若生产还残留旧 1st gen 同名函数，必须按以下顺序执行，避免同名冲突、双写或双触发器：
+Functions 已从 1st gen 迁移到 2nd gen 并统一为 Node 22（引擎声明在 `functions/package.json`），部署区域统一为 `asia-east1`（与 Firestore 同区域，声明在 `functions/index.js` 的 `setGlobalOptions`）。若生产还残留旧 1st gen 同名函数，必须按以下顺序执行，避免同名冲突、双写或双触发器：
 
 1. `pnpm exec firebase functions:list --project daily-record-hand-brew` 回读旧函数的实际 region 与 runtime。
 2. 删除旧 1st gen 函数（`writeDailyCountRecord`、`deleteAccountData`、`validateHandBrewRecord`、`validateSexRecord`）。
-3. 部署新 Functions 与 Rules 同一版本，并再次回读函数列表确认 runtime、region 和 Rules 版本。
+3. 部署新 Functions 与 Rules 同一版本，并再次回读函数列表确认 runtime 为 2nd gen、region 为 `asia-east1` 且 Rules 版本一致。
 
-客户端 callable 名称保持不变，Android 客户端无需跟随升级；迁移窗口内旧函数未删除时不要发布新 APK 或收紧 Rules。
+客户端 callable 名称保持不变，Android 客户端无需跟随升级；迁移窗口内旧函数未删除时不要发布新 APK 或收紧 Rules。变更区域后，用隔离随机账号在 `asia-east1` 完成新增、修改、墓碑清除、账号删除和坏文档清理烟雾测试。
 
 ### 旧客户端兼容与发布顺序
 
