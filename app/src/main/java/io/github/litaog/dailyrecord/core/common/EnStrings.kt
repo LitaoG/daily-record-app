@@ -235,7 +235,9 @@ internal object EnStrings : AppStrings {
         override val oneTime = "1"
         override val twoTimes = "2"
         override val ninePlusTimes = "9+"
-        override val todayShort = "Today"
+        // A dot marker keeps the square cell geometry intact at 200% font;
+        // the today border and TalkBack "today" carry the full meaning.
+        override val todayShort = "•"
         override val futureDescription = "Future date, not recordable"
         override val unsetDescription = "Unset"
         override val zeroDescription = "Recorded as 0"
