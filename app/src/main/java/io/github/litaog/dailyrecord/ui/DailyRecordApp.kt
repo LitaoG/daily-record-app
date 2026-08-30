@@ -81,7 +81,9 @@ fun DailyRecordApp(
     val effectiveToday = today ?: rememberCurrentDate()
     val modulePreference = remember(context) { SelectedRecordModulePreference(context) }
     val languagePreference = remember(context) { LanguagePreference(context) }
-    val language = languagePreference.current
+    val language by languagePreference.language.collectAsStateWithLifecycle(
+        initialValue = languagePreference.current,
+    )
     val onLanguageSelected: (AppLanguage) -> Unit = { selected ->
         languagePreference.setLanguage(selected)
         AppLanguageState.current = selected.strings()
