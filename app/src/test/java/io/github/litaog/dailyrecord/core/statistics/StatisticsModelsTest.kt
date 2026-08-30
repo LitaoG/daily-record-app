@@ -489,6 +489,82 @@ class StatisticsModelsTest {
         assertEquals(listOf(6), year.minimumMonths.map { it.month.monthValue })
     }
 
+    @Test
+    fun tiedMinimumMonthsAreBothKept() {
+        val today = LocalDate.of(2026, 12, 31)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = today,
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 4), 2),
+                record(LocalDate.of(2026, 3, 4), 2),
+                record(LocalDate.of(2026, 7, 4), 9),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertEquals(listOf(1, 3), year.minimumMonths.map { it.month.monthValue })
+    }
+
+    @Test
+    fun emptyYearHasNoExtremaAndZeroTotals() {
+        val today = LocalDate.of(2026, 7, 17)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = today,
+            today = today,
+            records = emptyList(),
+        )
+
+        val year = requireNotNull(model.year)
+        assertTrue(year.maximumMonths.isEmpty())
+        assertTrue(year.minimumMonths.isEmpty())
+        assertEquals(0L, model.summary.totalCount)
+        assertEquals(0.0, year.monthlyAverage, 0.001)
+        assertTrue(year.quarters.all { it.totalCount == 0L })
+    }
+
+    @Test
+    fun emptyMonthHasNoDayExtremes() {
+        val today = LocalDate.of(2026, 8, 2)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Month,
+            anchorDate = LocalDate.of(2026, 7, 15),
+            today = today,
+            records = emptyList(),
+        )
+
+        val month = requireNotNull(model.month)
+        assertNull(month.maximum)
+        assertNull(month.minimumPositive)
+    }
+
+    @Test
+    fun crossYearWeekWithAnchorAtYearEndKeepsJanuaryDaysInTheSameWeek() {
+        val today = LocalDate.of(2027, 1, 5)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Week,
+            anchorDate = LocalDate.of(2026, 12, 31),
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 12, 29), 3),
+                record(LocalDate.of(2027, 1, 2), 2),
+            ),
+        )
+
+        assertEquals(5L, model.summary.totalCount)
+        assertEquals(2, model.summary.recordedDays)
+        assertEquals(
+            listOf(28, 29, 30, 31),
+            model.details.take(4).mapNotNull { it.date?.dayOfMonth },
+        )
+        assertEquals(
+            listOf(1, 2, 3),
+            model.details.drop(4).mapNotNull { it.date?.dayOfMonth },
+        )
+    }
+
     private fun record(date: LocalDate, count: Int) = DailyCountEntry(
         localDate = date,
         count = count,
