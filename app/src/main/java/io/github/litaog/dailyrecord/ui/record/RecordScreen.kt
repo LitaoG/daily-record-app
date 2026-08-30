@@ -173,8 +173,8 @@ internal fun DailyCountRecordScreen(
         }
     }
 
-    val storedMonthCount = monthRecords.sumOf { it.count.toLong() }
-    val storedMonthDays = monthRecords.count { it.count > 0 }
+    val storedMonthCount = remember(monthRecords) { monthRecords.sumOf { it.count.toLong() } }
+    val storedMonthDays = remember(monthRecords) { monthRecords.count { it.count > 0 } }
     val hasUnsavedChanges = dataReady && (countDraft.hasChanges || detailsDraft.hasChanges)
     val canSave = dataReady && countDraft.initialized && (record == null || hasUnsavedChanges)
     val applyCount = { nextCount: Int ->

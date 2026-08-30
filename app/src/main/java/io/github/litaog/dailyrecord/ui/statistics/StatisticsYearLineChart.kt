@@ -225,12 +225,14 @@ private fun YearLineChartPlot(
         val plotBottomPx = with(density) { plotBottom.toPx() }
         val chartWidthPx = constraints.maxWidth.toFloat()
         val monthWidth = maxWidth / 12
-        val offsets = points.mapIndexed { index, point ->
-            point.fraction?.let { fraction ->
-                Offset(
-                    x = chartWidthPx * (index + .5f) / 12f,
-                    y = plotBottomPx - (plotBottomPx - plotTopPx) * fraction,
-                )
+        val offsets = remember(points, plotTopPx, plotBottomPx, chartWidthPx) {
+            points.mapIndexed { index, point ->
+                point.fraction?.let { fraction ->
+                    Offset(
+                        x = chartWidthPx * (index + .5f) / 12f,
+                        y = plotBottomPx - (plotBottomPx - plotTopPx) * fraction,
+                    )
+                }
             }
         }
 

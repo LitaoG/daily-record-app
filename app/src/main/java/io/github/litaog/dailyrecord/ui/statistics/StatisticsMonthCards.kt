@@ -323,20 +323,22 @@ private fun MonthDailyChartPlot(
         val horizontalInsetPx = with(density) { horizontalInset.toPx() }
         val slotWidth = maxWidth / month.days.size
         val tickDays = monthDailyChartTickDays(month.days.size)
-        val offsets = month.days.mapIndexed { index, day ->
-            val count = day.count?.takeIf { day.recorded && !day.future }
-            Offset(
-                x = monthDailyChartXPosition(
-                    day = index + 1,
-                    dayCount = month.days.size,
-                    width = constraints.maxWidth.toFloat(),
-                    inset = horizontalInsetPx,
-                ),
-                y = count?.let { value ->
-                    val fraction = (value.toFloat() / scale.maximum.toFloat()).coerceIn(0f, 1f)
-                    plotBottomPx - (plotBottomPx - plotTopPx) * fraction
-                } ?: plotBottomPx,
-            )
+        val offsets = remember(month, scale, plotTopPx, plotBottomPx, horizontalInsetPx, constraints.maxWidth) {
+            month.days.mapIndexed { index, day ->
+                val count = day.count?.takeIf { day.recorded && !day.future }
+                Offset(
+                    x = monthDailyChartXPosition(
+                        day = index + 1,
+                        dayCount = month.days.size,
+                        width = constraints.maxWidth.toFloat(),
+                        inset = horizontalInsetPx,
+                    ),
+                    y = count?.let { value ->
+                        val fraction = (value.toFloat() / scale.maximum.toFloat()).coerceIn(0f, 1f)
+                        plotBottomPx - (plotBottomPx - plotTopPx) * fraction
+                    } ?: plotBottomPx,
+                )
+            }
         }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
