@@ -3,6 +3,7 @@ package io.github.litaog.dailyrecord.ui.record
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.key
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -112,23 +113,25 @@ internal fun RecordDetailsSection(
             )
         }
         entries.forEachIndexed { index, entry ->
-            RecordDetailRow(
-                index = index,
-                entry = entry,
-                accent = accent,
-                theme = theme,
-                onTimeClick = onTimeClick,
-                onFeelingToggle = onFeelingToggle,
-                onFeelingChange = onFeelingChange,
-            )
-            if (index < entries.lastIndex) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(DailyRecordBorders.Standard)
-                        .background(DailyRecordDivider)
-                        .testTag("record_detail_divider_${index + 1}"),
+            key(entry.occurrenceIndex) {
+                RecordDetailRow(
+                    index = index,
+                    entry = entry,
+                    accent = accent,
+                    theme = theme,
+                    onTimeClick = onTimeClick,
+                    onFeelingToggle = onFeelingToggle,
+                    onFeelingChange = onFeelingChange,
                 )
+                if (index < entries.lastIndex) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(DailyRecordBorders.Standard)
+                            .background(DailyRecordDivider)
+                            .testTag("record_detail_divider_${index + 1}"),
+                    )
+                }
             }
         }
     }

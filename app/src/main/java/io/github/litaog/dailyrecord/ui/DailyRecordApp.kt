@@ -96,7 +96,7 @@ fun DailyRecordApp(
     val availableControllers = remember(handBrewController, sexController) {
         listOfNotNull(handBrewController, sexController)
     }
-    val availableModuleSpecs = remember(availableControllers) {
+    val availableModuleSpecs = remember(availableControllers, language) {
         availableControllers.map { it.module.uiSpec() }
     }
     var selectedModuleName by rememberSaveable {
@@ -144,20 +144,24 @@ fun DailyRecordApp(
         ?.takeIf { selected -> availableControllers.any { it.module == selected } }
         ?: RecordModule.HandBrew
     val selectedController = availableControllers.first { it.module == selectedModule }
-    val moduleSpec = selectedModule.uiSpec()
+    val moduleSpec = remember(selectedModule, language) { selectedModule.uiSpec() }
     val selectModule: (RecordModule) -> Unit = { module ->
         if (availableControllers.any { it.module == module }) {
             selectedModuleName = module.name
             modulePreference.setSelectedModule(module)
         }
     }
-    val selectedDate = selectedDateText
-        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-        ?.takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
-    val browseDate = runCatching { LocalDate.parse(browseDateText) }
-        .getOrDefault(effectiveToday)
-        .takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
-        ?: effectiveToday
+    val selectedDate = remember(selectedDateText, effectiveToday) {
+        selectedDateText
+            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            ?.takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
+    }
+    val browseDate = remember(browseDateText, effectiveToday) {
+        runCatching { LocalDate.parse(browseDateText) }
+            .getOrDefault(effectiveToday)
+            .takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
+            ?: effectiveToday
+    }
     val displayedMonth = YearMonth.from(browseDate)
     val recordsFlow = remember(selectedController, effectiveToday) {
         selectedController.observeRecords(EARLIEST_SUPPORTED_DATE, effectiveToday.plusDays(1))
