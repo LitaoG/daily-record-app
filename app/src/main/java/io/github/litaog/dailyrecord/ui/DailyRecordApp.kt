@@ -28,6 +28,9 @@ import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.AppLanguage
+import io.github.litaog.dailyrecord.core.common.AppLanguageState
+import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
@@ -69,6 +72,7 @@ fun DailyRecordApp(
     onSyncNow: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onSignIn: (() -> Unit)? = null,
+    onLanguageChanged: (AppLanguage) -> Unit = {},
     onDeleteAccount: suspend (String, LocalDataAfterAccountDeletion) -> Result<Unit> = { _, _ ->
         Result.failure(IllegalStateException("Account deletion is unavailable"))
     },
@@ -76,6 +80,13 @@ fun DailyRecordApp(
     val context = LocalContext.current
     val effectiveToday = today ?: rememberCurrentDate()
     val modulePreference = remember(context) { SelectedRecordModulePreference(context) }
+    val languagePreference = remember(context) { LanguagePreference(context) }
+    val language = languagePreference.current
+    val onLanguageSelected: (AppLanguage) -> Unit = { selected ->
+        languagePreference.setLanguage(selected)
+        AppLanguageState.current = selected.strings()
+        onLanguageChanged(selected)
+    }
     val handBrewController = remember(repository) { HandBrewModuleController(repository) }
     val sexController = remember(sexRepository) {
         sexRepository?.let(::SexModuleController)
@@ -203,6 +214,8 @@ fun DailyRecordApp(
                 accountEmail = accountEmail,
                 syncStatus = syncStatus,
                 moduleColors = moduleSpec.colors,
+                language = language,
+                onLanguageSelected = onLanguageSelected,
                 onBack = { showSettings = false },
                 onOpenAccount = { showAccountDialog = true },
                 onSignIn = onSignIn,

@@ -160,10 +160,12 @@ internal object ZhStrings : AppStrings {
 
     private object RecordModule : AppStrings.RecordModuleStrings {
         override val handBrewLabel = "自慰"
+        override val handBrewAccessibilityLabel = "自慰"
         override val handBrewQuestionToday = "今天自慰了几次？"
         override val handBrewQuestionPast = "当天自慰了几次？"
         override val handBrewZero = "当天没有自慰"
         override val sexLabel = "做爱"
+        override val sexAccessibilityLabel = "做爱"
         override val sexQuestionToday = "今天做爱了几次？"
         override val sexQuestionPast = "当天做爱了几次？"
         override val sexZero = "当天没有做爱"

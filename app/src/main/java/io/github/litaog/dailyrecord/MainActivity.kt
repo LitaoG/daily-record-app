@@ -31,6 +31,10 @@ class MainActivity : ComponentActivity() {
                 DailyRecordRoot(
                     database = app.database,
                     servicesProvider = servicesProvider,
+                    onLanguageChanged = { language ->
+                        AppLanguageState.current = language.strings()
+                        recreate()
+                    },
                 )
             }
         }

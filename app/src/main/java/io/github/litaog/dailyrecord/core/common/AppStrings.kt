@@ -154,10 +154,12 @@ internal interface AppStrings {
 
     interface RecordModuleStrings {
         val handBrewLabel: String
+        val handBrewAccessibilityLabel: String
         val handBrewQuestionToday: String
         val handBrewQuestionPast: String
         val handBrewZero: String
         val sexLabel: String
+        val sexAccessibilityLabel: String
         val sexQuestionToday: String
         val sexQuestionPast: String
         val sexZero: String
@@ -580,6 +582,5 @@ internal object AppLanguageState {
 
 internal fun AppLanguage.strings(): AppStrings = when (this) {
     AppLanguage.ZH -> ZhStrings
-    // Stage 2 replaces this placeholder with the real English implementation.
-    AppLanguage.EN -> ZhStrings
+    AppLanguage.EN -> EnStrings
 }

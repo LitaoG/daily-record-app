@@ -49,7 +49,7 @@ internal fun handBrewUiSpec(): RecordModuleUiSpec = RecordModuleUiSpec(
     questionToday = AppCopy.RecordModule.handBrewQuestionToday,
     questionPast = AppCopy.RecordModule.handBrewQuestionPast,
     explicitZeroText = AppCopy.RecordModule.handBrewZero,
-    semanticCountLabel = AppCopy.RecordModule.handBrewLabel,
+    semanticCountLabel = AppCopy.RecordModule.handBrewAccessibilityLabel,
     colors = HandBrewColorTokens,
     icon = { modifier, color ->
         HandBrewIcon(
@@ -65,7 +65,7 @@ internal fun sexUiSpec(): RecordModuleUiSpec = RecordModuleUiSpec(
     questionToday = AppCopy.RecordModule.sexQuestionToday,
     questionPast = AppCopy.RecordModule.sexQuestionPast,
     explicitZeroText = AppCopy.RecordModule.sexZero,
-    semanticCountLabel = AppCopy.RecordModule.sexLabel,
+    semanticCountLabel = AppCopy.RecordModule.sexAccessibilityLabel,
     colors = SexColorTokens,
     icon = { modifier, color ->
         SexIcon(

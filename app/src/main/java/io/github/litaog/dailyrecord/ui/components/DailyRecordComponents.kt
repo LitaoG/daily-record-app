@@ -326,7 +326,10 @@ internal fun RecordModuleSelector(
                     .semantics {
                         this.selected = active
                         role = Role.Tab
-                        contentDescription = AppCopy.selectedState(AppCopy.RecordModule.recordLabel(spec.label), active)
+                        contentDescription = AppCopy.selectedState(
+                            AppCopy.RecordModule.recordLabel(spec.semanticCountLabel),
+                            active,
+                        )
                     },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,

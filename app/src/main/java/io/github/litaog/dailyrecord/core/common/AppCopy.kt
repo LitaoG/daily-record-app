@@ -141,10 +141,14 @@ internal object AppCopy {
 
     object RecordModule {
         val handBrewLabel: String get() = AppLanguageState.current.recordModule.handBrewLabel
+        val handBrewAccessibilityLabel: String get() =
+            AppLanguageState.current.recordModule.handBrewAccessibilityLabel
         val handBrewQuestionToday: String get() = AppLanguageState.current.recordModule.handBrewQuestionToday
         val handBrewQuestionPast: String get() = AppLanguageState.current.recordModule.handBrewQuestionPast
         val handBrewZero: String get() = AppLanguageState.current.recordModule.handBrewZero
         val sexLabel: String get() = AppLanguageState.current.recordModule.sexLabel
+        val sexAccessibilityLabel: String get() =
+            AppLanguageState.current.recordModule.sexAccessibilityLabel
         val sexQuestionToday: String get() = AppLanguageState.current.recordModule.sexQuestionToday
         val sexQuestionPast: String get() = AppLanguageState.current.recordModule.sexQuestionPast
         val sexZero: String get() = AppLanguageState.current.recordModule.sexZero
