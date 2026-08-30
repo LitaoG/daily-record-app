@@ -43,8 +43,8 @@
 | 1 | `ce92f54` | 语言基础设施：AppLanguage、偏好、AppStrings 接口与 ZhStrings 迁移、AppCopy 门面、文案解耦点、根接线；中文零回归 |
 | 2 | `9be2c0d` | EnStrings 全量英文文案与格式双语化、设置页语言入口、values-en、双语单测矩阵 |
 | 3 | `4f056f4` | 英文长词布局收口：EN 今天标记改圆点，保持 200% 字体方格几何 |
-| 4 | 本提交 | 双语 androidTest（EN 渲染、设置切换往返、持久化）、文档收口 |
-| 5 | 待办 | 最终功能 head 上运行一次完整套件（unit + lint + assemble + connected），模拟器双语言截图与 TalkBack 抽查，发布评估 |
+| 4 | `8f83ca1`、`495b975` | 双语 androidTest（EN 渲染、设置切换往返、持久化）、文档收口 |
+| 5 | 本分支最终 head | 验证完成：unit 256 全绿（含双语矩阵与残留检查）、lintDebug/assemble 通过、API 34 模拟器设备测试 49/49 全绿（含 DailyRecordAppEnglishTest 4/4）；双语言截图与 TalkBack 音频抽查待常规会话补采（本机无 Node 工具链，`pnpm test:docs` 等 Node 门禁待有 Node 环境执行） |
 
 ## 验收
 

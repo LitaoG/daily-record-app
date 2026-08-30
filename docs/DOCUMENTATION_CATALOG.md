@@ -58,6 +58,7 @@
 | `docs/product/MONTH_STATISTICS_REDESIGN.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 月统计逐日脉冲图、分布和极值规则 |
 | `docs/product/SETTINGS_HUB_GOAL.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已实现设置中心的目标、范围和验收 |
 | `docs/product/I18N_GOAL.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 双语适配（中文默认 + English）的目标、机制、简写策略与阶段证据 |
+| `docs/product/OPTIMIZATION_2026-08_LOG.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 2026-08 性能与测试加固日志（优化任务与验证证据） |
 | `docs/product/UI_REDESIGN_RESEARCH_BASELINE.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已接受的竞品研究和设计取舍 |
 | `docs/product/RESEARCH_OPEN_SOURCE.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 开源借鉴、许可证和不引入依赖的边界 |
 | `docs/product/DAILY_USE_FEEDBACK.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 日常使用反馈格式和隐私脱敏要求 |
