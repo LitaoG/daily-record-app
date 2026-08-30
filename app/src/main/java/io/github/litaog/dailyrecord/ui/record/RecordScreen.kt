@@ -50,7 +50,7 @@ import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.HandBrewModuleController
-import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
+import io.github.litaog.dailyrecord.ui.handBrewUiSpec
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
 import io.github.litaog.dailyrecord.ui.RecordModuleController
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
@@ -106,7 +106,7 @@ internal fun RecordScreen(
     date = date,
     today = today,
     controller = remember(repository) { HandBrewModuleController(repository) },
-    moduleSpec = HandBrewModuleSpec,
+    moduleSpec = handBrewUiSpec(),
     monthRecords = monthRecords.map(HandBrewRecord::asDailyCountEntry),
     onBack = onBack,
     onSaved = onSaved,

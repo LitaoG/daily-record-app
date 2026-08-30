@@ -5,8 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.remember
+import io.github.litaog.dailyrecord.core.common.AppLanguageState
+import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.ui.DailyRecordRoot
+import io.github.litaog.dailyrecord.ui.LanguagePreference
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 
 class MainActivity : ComponentActivity() {
@@ -14,6 +17,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val app = application as DailyRecordApplication
+        // Resolve the persisted language before the first composition so both
+        // UI and non-UI copy consumers read the same strings set.
+        AppLanguageState.current = LanguagePreference(this).current.strings()
         setContent {
             DailyRecordTheme {
                 // The provider is remembered with the stable app instance, so

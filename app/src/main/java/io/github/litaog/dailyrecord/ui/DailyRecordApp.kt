@@ -49,8 +49,8 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import java.time.LocalDate
 import java.time.YearMonth
 
-internal const val VPN_SYNC_FAILURE_MESSAGE =
-    AppCopy.vpnSyncFailure
+internal val VPN_SYNC_FAILURE_MESSAGE: String
+    get() = AppCopy.vpnSyncFailure
 
 private val earliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
 
