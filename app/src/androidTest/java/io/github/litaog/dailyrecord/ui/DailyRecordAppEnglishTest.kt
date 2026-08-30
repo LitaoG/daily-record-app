@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
@@ -47,7 +48,10 @@ class DailyRecordAppEnglishTest {
         composeRule.onNodeWithText("Sex").assertIsDisplayed()
         composeRule.onNodeWithText("Calendar").assertIsDisplayed()
         composeRule.onNodeWithText("Stats").assertIsDisplayed()
-        composeRule.onNodeWithText("Tap a date to record").assertIsDisplayed()
+        composeRule
+            .onNodeWithContentDescription("Tap a date to record Masturbation. States: unset, future (disabled), 0, recorded")
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onAllNodesWithText("This month: 0 times · 0 days").assertCountEquals(1)
         composeRule.onAllNodesWithText("Jul 2026").assertCountEquals(1)
         composeRule.onAllNodesWithText("日历").assertCountEquals(0)
@@ -101,6 +105,7 @@ class DailyRecordAppEnglishTest {
             DailyRecordTheme {
                 DailyRecordApp(
                     repository = FakeHandBrewRecordRepository(),
+                    sexRepository = FakeSexRecordRepository(),
                     today = LocalDate.of(2026, 7, 17),
                 )
             }
