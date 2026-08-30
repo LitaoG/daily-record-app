@@ -57,4 +57,50 @@ class StatisticsPeriodAnchorsTest {
             previousPeriodAnchor(StatisticsPeriod.Year, LocalDate.of(2024, 2, 29), earliest),
         )
     }
+
+    @Test
+    fun crossYearWeekAndMonthNavigation() {
+        assertEquals(
+            LocalDate.of(2025, 12, 29),
+            previousPeriodAnchor(StatisticsPeriod.Week, LocalDate.of(2026, 1, 5), earliest),
+        )
+        assertEquals(
+            LocalDate.of(2025, 12, 15),
+            previousPeriodAnchor(StatisticsPeriod.Month, LocalDate.of(2026, 1, 15), earliest),
+        )
+        assertEquals(
+            today,
+            nextPeriodAnchor(StatisticsPeriod.Week, LocalDate.of(2026, 7, 10), today),
+        )
+        assertEquals(
+            LocalDate.of(2026, 7, 7),
+            nextPeriodAnchor(StatisticsPeriod.Week, LocalDate.of(2026, 6, 30), today),
+        )
+    }
+
+    @Test
+    fun nextMonthClampsToValidDayOfTargetMonth() {
+        assertEquals(
+            LocalDate.of(2026, 2, 28),
+            nextPeriodAnchor(StatisticsPeriod.Month, LocalDate.of(2026, 1, 31), today),
+        )
+        assertNull(nextPeriodAnchor(StatisticsPeriod.All, today, today))
+        assertNull(previousPeriodAnchor(StatisticsPeriod.All, today, earliest))
+    }
+
+    @Test
+    fun shiftMonthAnchorHandlesNegativeOffsetsAndCoercion() {
+        assertEquals(
+            LocalDate.of(2025, 6, 30),
+            shiftMonthAnchor(LocalDate.of(2025, 7, 31), -1, earliest, today),
+        )
+        assertEquals(
+            earliest,
+            shiftMonthAnchor(LocalDate.of(1970, 2, 1), -1, earliest, today),
+        )
+        assertEquals(
+            today,
+            shiftMonthAnchor(today, 3, earliest, today),
+        )
+    }
 }

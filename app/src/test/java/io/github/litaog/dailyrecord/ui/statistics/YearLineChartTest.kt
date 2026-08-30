@@ -61,6 +61,28 @@ class YearLineChartTest {
         assertEquals(1f, yearLineChartPointRevealAlpha(11, 1f), 0.0001f)
     }
 
+    @Test
+    fun scaleFiveStepPhaseKicksInWhenDoublingIsNotEnough() {
+        val scale = yearLineChartScale(
+            yearStatistics(month(1, count = 11L)),
+        )
+
+        assertEquals(15L, scale.maximum)
+        assertEquals(listOf(0L, 5L, 10L, 15L), scale.ticks)
+    }
+
+    @Test
+    fun scaleFourStaysOnSingleStepsAndEmptyYearStaysAtOne() {
+        val scale = yearLineChartScale(
+            yearStatistics(month(1, count = 4L)),
+        )
+        assertEquals(4L, scale.maximum)
+        assertEquals(listOf(0L, 1L, 2L, 3L, 4L), scale.ticks)
+
+        val empty = yearLineChartScale(yearStatistics())
+        assertEquals(1L, empty.maximum)
+    }
+
     private fun month(
         number: Int,
         count: Long?,
