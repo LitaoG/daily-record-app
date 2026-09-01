@@ -1,7 +1,7 @@
 # 双语适配 Goal（i18n：中文默认 + English）
 
-状态：`in progress — 本地分支 agent/i18n-bilingual 实现中`
-最后更新：2026-08-16
+状态：`in progress — 本地分支 agent/optim-perf 实现中`
+最后更新：2026-09-01
 
 来源：2026-08-16 用户直接需求。GitHub 远端暂不可用，全部阶段在本地分支实现，远端恢复后按本文件末尾的 Issue 草稿补建 Issue 并推送。
 
@@ -44,7 +44,7 @@
 | 2 | `9be2c0d` | EnStrings 全量英文文案与格式双语化、设置页语言入口、values-en、双语单测矩阵 |
 | 3 | `4f056f4` | 英文长词布局收口：EN 今天标记改圆点，保持 200% 字体方格几何 |
 | 4 | `8f83ca1`、`495b975` | 双语 androidTest（EN 渲染、设置切换往返、持久化）、文档收口 |
-| 5 | 本分支最终 head | 验证完成：unit 256 全绿（含双语矩阵与残留检查）、lintDebug/assemble 通过、API 34 模拟器设备测试 49/49 全绿（含 DailyRecordAppEnglishTest 4/4）；双语言截图与 TalkBack 音频抽查待常规会话补采（本机无 Node 工具链，`pnpm test:docs` 等 Node 门禁待有 Node 环境执行） |
+| 5 | `edae318`/`8f83ca1` | 验证完成：unit 265 全绿（含双语矩阵、残留检查、PeriodAnchors、Chart 5-step）、lintDebug/assemble 通过、API 34 模拟器设备测试 53/53 全绿（含 DailyRecordAppEnglishTest 4/4、LanguagePreferenceTest 4/4）；`pnpm test:docs/copy/release-metadata` 4/4/2/2 全绿；双语言截图与 TalkBack 语义抽查见 `docs/product/audit/2026-09-01-i18n-bilingual/` |
 
 ## 验收
 
@@ -55,7 +55,7 @@
 
 ## 执行纪律
 
-- 分支：`agent/i18n-bilingual`（自公共 `main`）；提交前缀 `[ds:v4pro]`；合并保留全部提交历史。
+- 分支：`agent/optim-perf`（自 `agent/i18n-bilingual`）；提交前缀按模型：`[ds:pro]`/`[kim:k3]`/`[MS:1.2]`（当前模型 `muse-spark-1.2` 使用 `[MS:1.2]`）；合并保留全部提交历史。
 - 测试遵循 `docs/TESTING.md`：开发中只跑定向测试；Stage 5 在最终 head 上跑一次完整套件。
 - 远端恢复后：按下方草稿创建 Issue（一次一个、间隔 60 秒以上，见 `AI_COLLABORATION.md` 教训），推送分支并为每个阶段开 PR。
 
