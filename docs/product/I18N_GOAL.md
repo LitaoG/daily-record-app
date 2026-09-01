@@ -44,7 +44,7 @@
 | 2 | `9be2c0d` | EnStrings 全量英文文案与格式双语化、设置页语言入口、values-en、双语单测矩阵 |
 | 3 | `4f056f4` | 英文长词布局收口：EN 今天标记改圆点，保持 200% 字体方格几何 |
 | 4 | `8f83ca1`、`495b975` | 双语 androidTest（EN 渲染、设置切换往返、持久化）、文档收口 |
-| 5 | `edae318`/`8f83ca1` | 验证完成：unit 265 全绿（含双语矩阵、残留检查、PeriodAnchors、Chart 5-step）、lintDebug/assemble 通过、API 34 模拟器设备测试 53/53 全绿（含 DailyRecordAppEnglishTest 4/4、LanguagePreferenceTest 4/4）；`pnpm test:docs/copy/release-metadata` 4/4/2/2 全绿；双语言截图与 TalkBack 语义抽查见 `docs/product/audit/2026-09-01-i18n-bilingual/` |
+| 5 | `edae318`/`885b1d3` | 验证完成：unit 265 全绿（含双语矩阵、残留检查、PeriodAnchors、Chart 5-step、Converters/TimeFormat/SyncId/RemoteCodec）、lintDebug/assemble 通过、API 34 定向设备测试 53/53 全绿；`pnpm test:docs/copy/release-metadata` 4/4/2/2 全绿、`test:firestore-rules` 通过；双语言截图与 TalkBack 语义抽查见 `docs/product/audit/2026-09-01-i18n-bilingual/`（全量 `connected` 194 中 1 注入抖动，CI 重试） |
 
 ## 验收
 

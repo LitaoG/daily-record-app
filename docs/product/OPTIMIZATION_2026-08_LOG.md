@@ -36,6 +36,7 @@
 | `lintDebug` | 通过（0 errors） |
 | `assembleDebug` / `assembleDebugAndroidTest` | 通过 |
 | `pnpm test:docs` / `test:copy` / `test:release-metadata`（Node 22.23.2 便携版） | 4/4、2/2、4/4 通过 |
-| API 34 模拟器 connected（DailyRecordAppTest + CalendarScreenTest + RecordScreenTest + DailyRecordAppEnglishTest + LanguagePreferenceTest） | 49/49、43/43、4/4 通过 |
-| Firestore 规则 / Functions 触发器 `pnpm test:firestore-rules` | 待安装 firebase-tools 后执行 |
-| 双语言截图与 TalkBack 语义抽查 | 进行中（API 34 模拟器 `Pixel_7_API_34`，见 `docs/product/audit/2026-09-01-i18n-bilingual/`） |
+| `pnpm test:firestore-rules`（Firestore + Functions 模拟器） | 通过（ownership/shape/revision/detail validation） |
+| API 34 模拟器 connected（`DailyRecordAppTest`/`CalendarScreenTest`/`RecordScreenTest`/`DailyRecordAppEnglishTest`/`LanguagePreferenceTest` 定向） | 49/49、43/43、4/4 通过 |
+| API 34 全量 `connectedDebugAndroidTest`（194 tests，`test:android-connected:windows`） | 194 中 1 注入抖动 `Failed to inject touch input`（环境，非代码），CI 重试通过；定向子集 53/53 全绿 |
+| 双语言截图与 TalkBack 语义抽查 | 完成（`Pixel_4_API_34`，ZH/EN 正常+200% 6 张，`uiautomator dump` 验证 `Solo` 可见/`Masturbation records, selected` 语义，见 `docs/product/audit/2026-09-01-i18n-bilingual/`） |
