@@ -68,6 +68,18 @@ Functions 已从 1st gen 迁移到 2nd gen 并统一为 Node 22（引擎声明�
 
 如果未来要把 `details` 改为必填，必须按以下顺序执行：先发布会携带 `details` 的 Android 客户端并确认升级窗口，再部署同一版本的 Functions 与 Rules，最后用隔离账号完成新增、修改、墓碑清除和账号删除烟雾测试。任何只发布 Rules、只发布 Functions 或先收紧 Rules 后发布 APK 的流程都不合格。
 
+### 生产 Functions 部署检查清单（2026-09-04 故障复盘）
+
+beta.3 起客户端写入统一走 callable，而生产 `asia-east1` 从未部署过函数，导致所有同步秒回 NOT_FOUND（旧分类器显示为未知失败）。首次部署生产函数必须逐项确认，缺一不可：
+
+1. Blaze 结算：2nd gen 函数必须开 Blaze 才能部署；免费额度内个人用量一般为 0 元，但绑卡是硬门槛。
+2. IAM 生效等待：首次启用 API、-Blaze 升级后，服务账号与 IAM 绑定需要几分钟传播；遇到授权失败先等再重跑，不要反复改配置。
+3. pnpm 工程依赖：`functions/package.json` 必须显式声明 `@google-cloud/functions-framework`，否则 Cloud Build 直接失败（本地模拟器不受影响，极易漏检）。
+4. 触发器类型冲突：同名函数从 HTTPS 改后台触发（或反向）会被拒绝，先 `functions:delete <name> --region asia-east1 --force` 删除再重建。
+5. callable 公开访问：部署后在 Cloud Run 控制台确认 `writeDailyCountRecord` 与 `deleteAccountData` 已勾选“允许未经身份验证的调用”（Firebase deploy 正常会自动加，IAM 失败时会被跳过；缺失时客户端报 UNAUTHENTICATED）。
+6. 部署后验证：`functions:list -P production` 确认四个函数在 `asia-east1` 且为 v2/nodejs22；用隔离账号向 callable 发畸形包，必须返回 INVALID_ARGUMENT（NOT_FOUND 表示没部署上，UNAUTHENTICATED 表示第 5 步没做）。
+7. 镜像清理策略：`functions:artifacts:setpolicy --location asia-east1 -P production`（保留 1 天），否则旧容器镜像堆积产生小额账单。
+
 ## 显式生产烟雾测试
 
 `ProductionFirebaseSmokeTest` 默认跳过，避免普通设备测试误触生产。需要已安装 Debug 与 AndroidTest APK，并显式传参：
