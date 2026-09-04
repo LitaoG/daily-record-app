@@ -62,11 +62,15 @@ class SyncFailureKindTest {
     fun functionsRequestCodesAreData() {
         assertEquals(
             SyncFailureKind.Data,
-            syncFailureKindForFunctionsCode(FirebaseFunctionsException.Code.NOT_FOUND),
-        )
-        assertEquals(
-            SyncFailureKind.Data,
             syncFailureKindForFunctionsCode(FirebaseFunctionsException.Code.INVALID_ARGUMENT),
+        )
+    }
+
+    @Test
+    fun missingFunctionEndpointIsService() {
+        assertEquals(
+            SyncFailureKind.Service,
+            syncFailureKindForFunctionsCode(FirebaseFunctionsException.Code.NOT_FOUND),
         )
     }
 

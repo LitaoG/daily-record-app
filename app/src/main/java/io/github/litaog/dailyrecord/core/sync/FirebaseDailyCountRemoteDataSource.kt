@@ -138,9 +138,11 @@ internal fun syncFailureKindForFunctionsCode(code: FirebaseFunctionsException.Co
         FirebaseFunctionsException.Code.UNAVAILABLE -> SyncFailureKind.Network
         FirebaseFunctionsException.Code.CANCELLED,
         FirebaseFunctionsException.Code.ABORTED,
-        FirebaseFunctionsException.Code.INTERNAL -> SyncFailureKind.Service
+        FirebaseFunctionsException.Code.INTERNAL,
+        // NOT_FOUND on a callable means the function endpoint itself is
+        // missing server-side (deployment/region), not a data problem.
+        FirebaseFunctionsException.Code.NOT_FOUND -> SyncFailureKind.Service
         FirebaseFunctionsException.Code.INVALID_ARGUMENT,
-        FirebaseFunctionsException.Code.NOT_FOUND,
         FirebaseFunctionsException.Code.ALREADY_EXISTS,
         FirebaseFunctionsException.Code.FAILED_PRECONDITION,
         FirebaseFunctionsException.Code.OUT_OF_RANGE,
