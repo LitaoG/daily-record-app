@@ -70,6 +70,7 @@ import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
+import io.github.litaog.dailyrecord.core.statistics.label
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -325,7 +326,10 @@ internal fun RecordModuleSelector(
                     .semantics {
                         this.selected = active
                         role = Role.Tab
-                        contentDescription = AppCopy.selectedState(AppCopy.RecordModule.recordLabel(spec.label), active)
+                        contentDescription = AppCopy.selectedState(
+                            AppCopy.RecordModule.recordLabel(spec.semanticCountLabel),
+                            active,
+                        )
                     },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,

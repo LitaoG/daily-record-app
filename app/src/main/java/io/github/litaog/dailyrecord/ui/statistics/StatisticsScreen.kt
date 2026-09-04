@@ -43,7 +43,7 @@ import io.github.litaog.dailyrecord.core.statistics.StatisticsUiModel
 import io.github.litaog.dailyrecord.core.statistics.buildDailyCountStatistics
 import io.github.litaog.dailyrecord.core.statistics.nextPeriodAnchor
 import io.github.litaog.dailyrecord.core.statistics.previousPeriodAnchor
-import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
+import io.github.litaog.dailyrecord.ui.handBrewUiSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
@@ -79,9 +79,9 @@ internal fun StatisticsScreen(
     anchorDate = anchorDate,
     earliestDate = earliestDate,
     records = records.map(HandBrewRecord::asDailyCountEntry),
-    moduleSpec = HandBrewModuleSpec,
+    moduleSpec = handBrewUiSpec(),
     selectedModule = RecordModule.HandBrew,
-    availableModules = listOf(HandBrewModuleSpec),
+    availableModules = listOf(handBrewUiSpec()),
     onModuleSelected = {},
     onAnchorDateChanged = onAnchorDateChanged,
     onOpenDatePicker = onOpenDatePicker,

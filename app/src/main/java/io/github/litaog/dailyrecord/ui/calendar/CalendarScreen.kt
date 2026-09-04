@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
+import io.github.litaog.dailyrecord.ui.handBrewUiSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
@@ -81,9 +81,9 @@ internal fun CalendarScreen(
     focusedDate = focusedDate,
     today = today,
     records = records.map(HandBrewRecord::asDailyCountEntry),
-    moduleSpec = HandBrewModuleSpec,
+    moduleSpec = handBrewUiSpec(),
     selectedModule = RecordModule.HandBrew,
-    availableModules = listOf(HandBrewModuleSpec),
+    availableModules = listOf(handBrewUiSpec()),
     modifier = modifier,
     earliestMonth = earliestMonth,
     onModuleSelected = {},

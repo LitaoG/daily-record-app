@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const productionRoot = path.join(root, "app", "src", "main");
-const allowedCopyFile = path.join(
+const commonRoot = path.join(
   productionRoot,
   "java",
   "io",
@@ -16,8 +16,14 @@ const allowedCopyFile = path.join(
   "dailyrecord",
   "core",
   "common",
-  "AppCopy.kt",
 );
+// Bilingual contract: Chinese copy lives only in the Chinese language file,
+// and the English language file may only carry the self-named "中文" option.
+const allowedCopyFiles = new Set([
+  path.join(commonRoot, "AppCopy.kt"),
+  path.join(commonRoot, "ZhStrings.kt"),
+]);
+const englishLanguageFile = path.join(commonRoot, "EnStrings.kt");
 const appNameResource = path.join(productionRoot, "res", "values", "strings.xml");
 const textExtensions = new Set([".kt", ".java", ".xml", ".kts", ".gradle", ".properties"]);
 const cjk = /[\u3400-\u9fff]/u;
@@ -31,16 +37,24 @@ function filesUnder(directory) {
   });
 }
 
-test("production Chinese copy stays in AppCopy or Android resources", () => {
+test("production Chinese copy stays in the language files or Android resources", () => {
   const violations = [];
   for (const file of filesUnder(productionRoot)) {
     if (!textExtensions.has(path.extname(file).toLowerCase())) continue;
     const text = fs.readFileSync(file, "utf8");
-    if (file === allowedCopyFile) continue;
+    if (allowedCopyFiles.has(file)) continue;
 
     for (const [index, line] of text.split(/\r?\n/).entries()) {
       if (!cjk.test(line)) continue;
       if (file === appNameResource && /<string\s+name="app_name">/.test(line)) continue;
+      // The English set intentionally shows the Chinese option in its own script.
+      if (
+        file === englishLanguageFile &&
+        /languageZh\s*=\s*"/.test(line) &&
+        line.includes(String.fromCodePoint(0x4e2d, 0x6587))
+      ) {
+        continue;
+      }
       violations.push(`${path.relative(root, file)}:${index + 1}`);
     }
   }
@@ -48,7 +62,8 @@ test("production Chinese copy stays in AppCopy or Android resources", () => {
   assert.deepEqual(
     violations,
     [],
-    "Move user-facing Chinese copy into AppCopy.kt; keep only app_name in strings.xml.",
+    "Move user-facing Chinese copy into ZhStrings.kt; keep only app_name in strings.xml" +
+      " and the self-named 中文 option in EnStrings.kt.",
   );
 });
 

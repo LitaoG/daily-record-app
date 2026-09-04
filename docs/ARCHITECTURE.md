@@ -72,10 +72,21 @@ app
 ## 文案与显示格式
 
 用户可见的标题、按钮、状态、错误提示、无障碍描述和日期/次数格式统一收敛到
-`core/common/AppCopy.kt` 的分组对象中。Compose 页面和同步层只引用这些入口，动态
-文案由集中函数接收数据生成；领域错误码、Firestore 字段名和数据库迁移 SQL 仍保留
-在各自的技术边界中，不把技术标识伪装成界面文案。新增文案先加入 `AppCopy`，再在
-调用处引用，避免同义文案分散、模块之间漂移和后续本地化时逐文件搜索。
+`core/common` 的文案契约中：`AppStrings` 接口声明全部文案签名，`ZhStrings`（中文）
+与 `EnStrings`（英文）分别实现，漏译直接编译失败；`AppCopy` 保持历史调用形态，
+作为语言委托门面把每个成员转发给 `AppLanguageState.current` 指向的语言实现。
+Compose 页面、同步层和统计模型只引用这些入口，动态文案由集中函数接收数据生成；
+领域错误码、Firestore 字段名和数据库迁移 SQL 仍保留在各自的技术边界中，不把
+技术标识伪装成界面文案。新增文案先加入 `AppStrings` 接口与两个语言实现，再在
+调用处引用，避免同义文案分散、模块之间漂移和漏译。
+
+语言状态：`ui/LanguagePreference` 以 SharedPreferences 持久化所选语言（默认中文），
+暴露 StateFlow；进程启动时 `MainActivity` 先把持久化语言写入 `AppLanguageState.current`，
+保证 UI 与非 UI 层读取同一文案集。设置页切换语言后由主 Activity 重建界面
+（`recreate()`），`rememberSaveable` 持有的浏览日期、模块与导航状态在重建后保留。
+`RecordModule.uiSpec()` 与 `StatisticsPeriod.label` 在调用时按当前语言取值，
+不允许在类加载期固化文案。`app_name` 由 `res/values-en` 提供英文桌面名，应用内
+标题仍走文案契约。
 
 ## 功能演进边界
 

@@ -125,6 +125,13 @@
 - 原因：SDK、Node、Functions 代际、区域和设备回归不一致时，规则、同步、生命周期或 Android 行为可能只在某个环境通过，无法把发布物当作可复核结果。
 - 后果：`scripts/check-node-runtime.mjs` 在本地测试启动阶段拒绝错误 Node 主版本；Release 工作流先对被打 tag 的源码执行 connected 回归，再构建签名 APK。`targetSdk` 暂不跟随 `compileSdk` 自动升级，运行期行为变化必须另立版本评估。
 
+## ADR-019：双语机制保持 AppCopy 唯一文案事实源
+
+- 状态：Accepted
+- 决策：应用支持中文（默认）与英语，设置页“通用 → 语言”切换并持久化，不提供“跟随系统”模式；`AppCopy` 继续是用户可见文案的唯一事实源，不引入 Android 系统字符串资源方案替代。`AppStrings` 接口声明全部文案签名，`ZhStrings`/`EnStrings` 分别实现（漏译编译失败），`AppCopy` 变为语言委托门面；`AppLanguageState.current` 同时服务 UI 与同步/统计等非 UI 层。类加载期不得固化文案（`RecordModule.uiSpec()`、`StatisticsPeriod.label` 按当前语言取值）；切换语言由主 Activity `recreate()` 全量重组，浏览日期等 `rememberSaveable` 状态保留。
+- 原因：全部用户可见文案已集中在 AppCopy，改造为语言维度的门面比搬迁数百条字符串到 resources 成本更低、更可审计；英文单词普遍长于中文，固定宽度容器必须使用可见短标签，TalkBack 语义用全称，保证 200% 字体与窄屏不截断。
+- 后果：新增文案必须同时实现两个语言文件；测试用 `AppLanguageState` 注入语言；`app_name` 由 `values-en/strings.xml` 提供英文桌面名，应用内文案不依赖系统 locale。
+
 ## 已废止方向
 
 旧版通用活动表、三种预设计量方式、活动身份色、活动归档、短信验证码、端到端加密和通用日历标记均由本次产品收缩废止，只存在于 Git 历史，不再指导实现。健身等其他记录不属于当前范围；若未来立项，应采用 ADR-002 的独立垂直模块方式重新定义，而不是恢复旧模型。
