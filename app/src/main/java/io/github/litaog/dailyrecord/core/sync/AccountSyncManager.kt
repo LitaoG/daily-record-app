@@ -311,6 +311,9 @@ internal fun Throwable.isNetworkRelatedSyncFailure(): Boolean =
 
 internal fun Throwable.syncFailureKind(): SyncFailureKind {
     val causes = generateSequence(this) { it.cause }.toList()
+    causes.filterIsInstance<ClassifiedSyncException>().firstOrNull()?.let { error ->
+        return error.kind
+    }
     causes.filterIsInstance<FirebaseAuthException>().firstOrNull()?.let { error ->
         return syncFailureKindForFirebaseAuthCode(error.errorCode)
     }

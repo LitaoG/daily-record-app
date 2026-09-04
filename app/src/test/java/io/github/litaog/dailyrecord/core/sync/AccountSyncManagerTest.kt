@@ -166,6 +166,32 @@ class AccountSyncManagerTest {
     }
 
     @Test
+    fun classifiedSyncExceptionWinsOverGenericCauses() {
+        assertEquals(
+            SyncFailureKind.Permission,
+            ClassifiedSyncException(
+                SyncFailureKind.Permission,
+                java.io.IOException("connection reset"),
+            ).syncFailureKind(),
+        )
+        assertEquals(
+            SyncFailureKind.Network,
+            ClassifiedSyncException(
+                SyncFailureKind.Network,
+                IllegalArgumentException("bad row"),
+            ).syncFailureKind(),
+        )
+        assertTrue(
+            ClassifiedSyncException(SyncFailureKind.Network, RuntimeException("x"))
+                .isNetworkRelatedSyncFailure(),
+        )
+        assertFalse(
+            ClassifiedSyncException(SyncFailureKind.Service, RuntimeException("x"))
+                .isNetworkRelatedSyncFailure(),
+        )
+    }
+
+    @Test
     fun nonRetryableListenerErrorPublishesFailureWithoutCrashing() = runBlocking {
         val manager = AccountSyncManager(
             ownerId = "owner",
