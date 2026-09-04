@@ -5,6 +5,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import io.github.litaog.dailyrecord.core.common.awaitResult
 import java.time.Instant
 import java.time.LocalDate
@@ -56,22 +57,28 @@ internal open class FirebaseDailyCountRemoteDataSource<E : Any, D : Any, R : Rem
     suspend fun commit(ownerId: String, local: E): R {
         require(entityOwnerId(local) == ownerId) { "Cannot upload a record owned by another account" }
         val details = detailsProvider(ownerId, entityLocalDate(local))
-        val result = functions.getHttpsCallable(WRITE_FUNCTION_NAME)
-            .call(
-                mapOf(
-                    "collection" to collectionName,
-                    "localDate" to entityLocalDate(local).toString(),
-                    "id" to entityId(local),
-                    "count" to entityCount(local).toLong(),
-                    "createdAtMillis" to entityCreatedAt(local).toEpochMilli(),
-                    "clientUpdatedAtMillis" to entityUpdatedAt(local).toEpochMilli(),
-                    "deleted" to entityIsDeleted(local),
-                    "remoteRevision" to entityRemoteRevision(local),
-                    "details" to details.map(detailToMap),
-                ),
-            )
-            .awaitResult()
-            .data
+        val result = try {
+            functions.getHttpsCallable(WRITE_FUNCTION_NAME)
+                .call(
+                    mapOf(
+                        "collection" to collectionName,
+                        "localDate" to entityLocalDate(local).toString(),
+                        "id" to entityId(local),
+                        "count" to entityCount(local).toLong(),
+                        "createdAtMillis" to entityCreatedAt(local).toEpochMilli(),
+                        "clientUpdatedAtMillis" to entityUpdatedAt(local).toEpochMilli(),
+                        "deleted" to entityIsDeleted(local),
+                        "remoteRevision" to entityRemoteRevision(local),
+                        "details" to details.map(detailToMap),
+                    ),
+                )
+                .awaitResult()
+                .data
+        } catch (error: FirebaseFunctionsException) {
+            // Translate here: the shared classifier must stay free of the
+            // Functions SDK types (Android-only static state breaks JVM tests).
+            throw ClassifiedSyncException(syncFailureKindForFunctionsCode(error.code), error)
+        }
         val resultMap = result as? Map<*, *> ?: error("Cloud write response is malformed")
         val recordMap = resultMap["record"] as? Map<*, *>
             ?: error("Cloud write response has no record")
@@ -114,6 +121,33 @@ internal open class FirebaseDailyCountRemoteDataSource<E : Any, D : Any, R : Rem
         const val WRITE_FUNCTION_NAME = "writeDailyCountRecord"
     }
 }
+
+/**
+ * Maps Cloud Functions callable status codes with the same severity ladder as
+ * the Firestore table: identity problems stay authentication, transport
+ * problems stay network (so the VPN guidance still appears), and only
+ * request/server-shape problems land on data/service. Lives next to the only
+ * caller that can produce these exceptions.
+ */
+internal fun syncFailureKindForFunctionsCode(code: FirebaseFunctionsException.Code): SyncFailureKind =
+    when (code) {
+        FirebaseFunctionsException.Code.UNAUTHENTICATED -> SyncFailureKind.Authentication
+        FirebaseFunctionsException.Code.PERMISSION_DENIED -> SyncFailureKind.Permission
+        FirebaseFunctionsException.Code.RESOURCE_EXHAUSTED -> SyncFailureKind.Quota
+        FirebaseFunctionsException.Code.DEADLINE_EXCEEDED,
+        FirebaseFunctionsException.Code.UNAVAILABLE -> SyncFailureKind.Network
+        FirebaseFunctionsException.Code.CANCELLED,
+        FirebaseFunctionsException.Code.ABORTED,
+        FirebaseFunctionsException.Code.INTERNAL -> SyncFailureKind.Service
+        FirebaseFunctionsException.Code.INVALID_ARGUMENT,
+        FirebaseFunctionsException.Code.NOT_FOUND,
+        FirebaseFunctionsException.Code.ALREADY_EXISTS,
+        FirebaseFunctionsException.Code.FAILED_PRECONDITION,
+        FirebaseFunctionsException.Code.OUT_OF_RANGE,
+        FirebaseFunctionsException.Code.UNIMPLEMENTED,
+        FirebaseFunctionsException.Code.DATA_LOSS -> SyncFailureKind.Data
+        else -> SyncFailureKind.Unknown
+    }
 
 /**
  * Parse a single document without the rejection-swallowing behavior used for
