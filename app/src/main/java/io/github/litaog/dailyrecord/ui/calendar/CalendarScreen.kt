@@ -326,14 +326,21 @@ private fun CalendarGuide(
     }
 }
 
-private enum class CalendarLegendItem(
-    val label: String,
-) {
-    Unset(AppCopy.Calendar.unset),
-    Disabled(AppCopy.Calendar.future),
-    Zero(AppCopy.Calendar.zero),
-    Recorded(AppCopy.Calendar.recorded),
+private enum class CalendarLegendItem {
+    Unset,
+    Disabled,
+    Zero,
+    Recorded,
 }
+
+/** Visible legend label; resolved at call time so language switches apply. */
+private val CalendarLegendItem.label: String
+    get() = when (this) {
+        CalendarLegendItem.Unset -> AppCopy.Calendar.unset
+        CalendarLegendItem.Disabled -> AppCopy.Calendar.future
+        CalendarLegendItem.Zero -> AppCopy.Calendar.zero
+        CalendarLegendItem.Recorded -> AppCopy.Calendar.recorded
+    }
 
 @Composable
 private fun CalendarLegendEntry(

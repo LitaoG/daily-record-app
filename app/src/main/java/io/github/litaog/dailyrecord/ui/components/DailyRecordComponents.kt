@@ -458,13 +458,15 @@ fun PeriodTabs(
                             animationSpec = tween(durationMillis = 180),
                             label = "period_text_color_${period.name}",
                         ).value
+                        val interactionSource = remember { MutableInteractionSource() }
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .testTag("statistics_period_${period.name}")
                                 .clickable(
-                                    enabled = true,
+                                    interactionSource = interactionSource,
+                                    indication = null,
                                     role = Role.Tab,
                                     onClick = { onSelected(period) },
                                 )

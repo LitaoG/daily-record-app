@@ -86,9 +86,12 @@ fun DailyRecordApp(
         initialValue = languagePreference.current,
     )
     val onLanguageSelected: (AppLanguage) -> Unit = { selected ->
-        languagePreference.setLanguage(selected)
-        AppLanguageState.current = selected.strings()
-        onLanguageChanged(selected)
+        // Tapping the active language must not trigger a full recreation.
+        if (selected != language) {
+            languagePreference.setLanguage(selected)
+            AppLanguageState.current = selected.strings()
+            onLanguageChanged(selected)
+        }
     }
     val handBrewController = remember(repository) { HandBrewModuleController(repository) }
     val sexController = remember(sexRepository) {

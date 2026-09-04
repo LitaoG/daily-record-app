@@ -109,7 +109,9 @@ internal fun DailyCountStatisticsScreen(
     var periodName by rememberSaveable { mutableStateOf(StatisticsPeriod.Week.name) }
     val period = StatisticsPeriod.entries.firstOrNull { it.name == periodName }
         ?: StatisticsPeriod.Week
-    val model = remember(period, anchorDate, today, earliestDate, records) {
+    // moduleSpec.label differs per module and per language, so model labels
+    // rebuild on either change even without an activity recreation.
+    val model = remember(period, anchorDate, today, earliestDate, records, moduleSpec.label) {
         buildDailyCountStatistics(
             period = period,
             anchorDate = anchorDate,

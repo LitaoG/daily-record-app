@@ -79,9 +79,10 @@ internal open class FirebaseDailyCountRemoteDataSource<E : Any, D : Any, R : Rem
             // Functions SDK types (Android-only static state breaks JVM tests).
             throw ClassifiedSyncException(syncFailureKindForFunctionsCode(error.code), error)
         }
-        val resultMap = result as? Map<*, *> ?: error("Cloud write response is malformed")
+        val resultMap = result as? Map<*, *>
+            ?: throw IllegalArgumentException("Cloud write response is malformed")
         val recordMap = resultMap["record"] as? Map<*, *>
-            ?: error("Cloud write response has no record")
+            ?: throw IllegalArgumentException("Cloud write response has no record")
         val values = recordMap.entries.associate { (key, value) ->
             require(key is String) { "Cloud write response has a non-string field" }
             key to normalizeCallableValue(value)
