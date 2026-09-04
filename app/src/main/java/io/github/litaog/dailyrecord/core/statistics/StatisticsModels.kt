@@ -134,7 +134,9 @@ private fun buildWeek(
     // The week still starts on Monday for statistics; only the display range is
     // clipped so the earliest supported week never shows pre-1970 dates.
     val start = maxOf(weekStart, earliestDate)
-    val rangeRecords = records.filter { it.localDate in start..end }
+    val rangeRecordsByDate = records
+        .filter { it.localDate in start..end }
+        .associateBy(DailyCountEntry::localDate)
     val details = (0L..6L).mapNotNull { offset ->
         val date = weekStart.plusDays(offset)
         if (date < earliestDate) return@mapNotNull null
@@ -149,7 +151,7 @@ private fun buildWeek(
                 date = date,
             )
         } else {
-            val record = rangeRecords.firstOrNull { it.localDate == date }
+            val record = rangeRecordsByDate[date]
             StatisticsDetail(
                 label = AppCopy.Statistics.weekdayDateLabel(weekdayName(date), date),
                 count = record?.count?.toLong() ?: 0L,
@@ -163,7 +165,7 @@ private fun buildWeek(
     return StatisticsUiModel(
         title = dateRangeTitle(start, end),
         status = AppCopy.Statistics.periodStatus(end, today),
-        summary = summaryOf(rangeRecords),
+        summary = summaryOf(rangeRecordsByDate.values.toList()),
         detailsTitle = AppCopy.Statistics.dailyDetails,
         details = details,
     )

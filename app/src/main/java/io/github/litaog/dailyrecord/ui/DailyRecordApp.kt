@@ -51,6 +51,7 @@ import io.github.litaog.dailyrecord.ui.settings.SettingsScreen
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 internal val VPN_SYNC_FAILURE_MESSAGE: String
     get() = AppCopy.vpnSyncFailure
@@ -96,7 +97,7 @@ fun DailyRecordApp(
     val availableControllers = remember(handBrewController, sexController) {
         listOfNotNull(handBrewController, sexController)
     }
-    val availableModuleSpecs = remember(availableControllers) {
+    val availableModuleSpecs = remember(availableControllers, language) {
         availableControllers.map { it.module.uiSpec() }
     }
     var selectedModuleName by rememberSaveable {
@@ -144,26 +145,43 @@ fun DailyRecordApp(
         ?.takeIf { selected -> availableControllers.any { it.module == selected } }
         ?: RecordModule.HandBrew
     val selectedController = availableControllers.first { it.module == selectedModule }
-    val moduleSpec = selectedModule.uiSpec()
+    val moduleSpec = remember(selectedModule, language) { selectedModule.uiSpec() }
     val selectModule: (RecordModule) -> Unit = { module ->
         if (availableControllers.any { it.module == module }) {
             selectedModuleName = module.name
             modulePreference.setSelectedModule(module)
         }
     }
-    val selectedDate = selectedDateText
-        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-        ?.takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
-    val browseDate = runCatching { LocalDate.parse(browseDateText) }
-        .getOrDefault(effectiveToday)
-        .takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
-        ?: effectiveToday
+    val selectedDate = remember(selectedDateText, effectiveToday) {
+        selectedDateText
+            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            ?.takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
+    }
+    val browseDate = remember(browseDateText, effectiveToday) {
+        runCatching { LocalDate.parse(browseDateText) }
+            .getOrDefault(effectiveToday)
+            .takeIf { it in EARLIEST_SUPPORTED_DATE..effectiveToday }
+            ?: effectiveToday
+    }
     val displayedMonth = YearMonth.from(browseDate)
+    // The full-history flow drives the statistics screen and the initial
+    // loading gate; the calendar and record screen consume a month-scoped
+    // flow so saves outside the browsed month no longer rebuild their models.
     val recordsFlow = remember(selectedController, effectiveToday) {
         selectedController.observeRecords(EARLIEST_SUPPORTED_DATE, effectiveToday.plusDays(1))
+            .distinctUntilChanged()
+    }
+    val monthRecordsFlow = remember(selectedController, displayedMonth) {
+        selectedController.observeRecords(
+            displayedMonth.atDay(1),
+            displayedMonth.plusMonths(1).atDay(1),
+        ).distinctUntilChanged()
     }
     val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
     val allRecordsState by recordsFlow.collectAsStateWithLifecycle(
+        initialValue = null as List<DailyCountEntry>?,
+    )
+    val scopedMonthRecordsState by monthRecordsFlow.collectAsStateWithLifecycle(
         initialValue = null as List<DailyCountEntry>?,
     )
     if (allRecordsState == null) {
@@ -180,21 +198,25 @@ fun DailyRecordApp(
         return
     }
     val allRecords = allRecordsState.orEmpty()
+    // Until the month-scoped flow emits (or after a month switch), derive the
+    // browsed month from the already-loaded full list so no frame ever shows
+    // an under-filled calendar.
+    val fallbackMonthRecords = remember(allRecords, displayedMonth) {
+        allRecords.filter { YearMonth.from(it.localDate) == displayedMonth }
+    }
+    val displayedMonthRecords = scopedMonthRecordsState ?: fallbackMonthRecords
 
     if (selectedDate != null) {
         // Key the record screen by module so each module keeps its own
         // saveable draft slots: a hand-brew draft must never be restored as a
         // sex draft for the same date (and vice versa).
         key(selectedModule) {
-            val monthRecords = remember(allRecords, selectedDate) {
-                allRecords.filter { YearMonth.from(it.localDate) == YearMonth.from(selectedDate) }
-            }
             DailyCountRecordScreen(
                 date = selectedDate,
                 today = effectiveToday,
                 controller = selectedController,
                 moduleSpec = moduleSpec,
-                monthRecords = monthRecords,
+                monthRecords = displayedMonthRecords,
                 onBack = { selectedDateText = null },
                 // Saving is an in-place action. Keep the record page mounted so
                 // the user can see the saved feeling and continue editing this
@@ -263,7 +285,7 @@ fun DailyRecordApp(
                         month = displayedMonth,
                         focusedDate = browseDate,
                         today = effectiveToday,
-                        records = allRecords,
+                        records = displayedMonthRecords,
                         moduleSpec = moduleSpec,
                         selectedModule = selectedModule,
                         availableModules = availableModuleSpecs,
