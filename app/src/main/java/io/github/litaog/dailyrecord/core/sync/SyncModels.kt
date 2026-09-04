@@ -88,6 +88,18 @@ enum class SyncFailureKind {
     Unknown,
 }
 
+/**
+ * A cloud failure already classified at the boundary that produced it. The
+ * classifier in AccountSyncManager honors this kind before inspecting the
+ * cause chain, so boundaries can translate SDK-specific errors (such as
+ * Cloud Functions status codes, whose types touch Android-only static state)
+ * without leaking those types into the shared classification path.
+ */
+internal class ClassifiedSyncException(
+    val kind: SyncFailureKind,
+    cause: Throwable,
+) : RuntimeException(cause)
+
 sealed interface SyncStatus {
     data object NotConfigured : SyncStatus
     data object Offline : SyncStatus

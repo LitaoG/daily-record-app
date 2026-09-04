@@ -43,7 +43,7 @@ import io.github.litaog.dailyrecord.core.statistics.StatisticsUiModel
 import io.github.litaog.dailyrecord.core.statistics.buildDailyCountStatistics
 import io.github.litaog.dailyrecord.core.statistics.nextPeriodAnchor
 import io.github.litaog.dailyrecord.core.statistics.previousPeriodAnchor
-import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
+import io.github.litaog.dailyrecord.ui.handBrewUiSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
@@ -79,9 +79,9 @@ internal fun StatisticsScreen(
     anchorDate = anchorDate,
     earliestDate = earliestDate,
     records = records.map(HandBrewRecord::asDailyCountEntry),
-    moduleSpec = HandBrewModuleSpec,
+    moduleSpec = handBrewUiSpec(),
     selectedModule = RecordModule.HandBrew,
-    availableModules = listOf(HandBrewModuleSpec),
+    availableModules = listOf(handBrewUiSpec()),
     onModuleSelected = {},
     onAnchorDateChanged = onAnchorDateChanged,
     onOpenDatePicker = onOpenDatePicker,
@@ -109,7 +109,9 @@ internal fun DailyCountStatisticsScreen(
     var periodName by rememberSaveable { mutableStateOf(StatisticsPeriod.Week.name) }
     val period = StatisticsPeriod.entries.firstOrNull { it.name == periodName }
         ?: StatisticsPeriod.Week
-    val model = remember(period, anchorDate, today, earliestDate, records) {
+    // moduleSpec.label differs per module and per language, so model labels
+    // rebuild on either change even without an activity recreation.
+    val model = remember(period, anchorDate, today, earliestDate, records, moduleSpec.label) {
         buildDailyCountStatistics(
             period = period,
             anchorDate = anchorDate,

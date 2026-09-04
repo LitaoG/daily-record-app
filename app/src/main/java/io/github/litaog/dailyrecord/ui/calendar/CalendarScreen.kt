@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.ui.HandBrewModuleSpec
+import io.github.litaog.dailyrecord.ui.handBrewUiSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.asDailyCountEntry
@@ -81,9 +81,9 @@ internal fun CalendarScreen(
     focusedDate = focusedDate,
     today = today,
     records = records.map(HandBrewRecord::asDailyCountEntry),
-    moduleSpec = HandBrewModuleSpec,
+    moduleSpec = handBrewUiSpec(),
     selectedModule = RecordModule.HandBrew,
-    availableModules = listOf(HandBrewModuleSpec),
+    availableModules = listOf(handBrewUiSpec()),
     modifier = modifier,
     earliestMonth = earliestMonth,
     onModuleSelected = {},
@@ -326,14 +326,21 @@ private fun CalendarGuide(
     }
 }
 
-private enum class CalendarLegendItem(
-    val label: String,
-) {
-    Unset(AppCopy.Calendar.unset),
-    Disabled(AppCopy.Calendar.future),
-    Zero(AppCopy.Calendar.zero),
-    Recorded(AppCopy.Calendar.recorded),
+private enum class CalendarLegendItem {
+    Unset,
+    Disabled,
+    Zero,
+    Recorded,
 }
+
+/** Visible legend label; resolved at call time so language switches apply. */
+private val CalendarLegendItem.label: String
+    get() = when (this) {
+        CalendarLegendItem.Unset -> AppCopy.Calendar.unset
+        CalendarLegendItem.Disabled -> AppCopy.Calendar.future
+        CalendarLegendItem.Zero -> AppCopy.Calendar.zero
+        CalendarLegendItem.Recorded -> AppCopy.Calendar.recorded
+    }
 
 @Composable
 private fun CalendarLegendEntry(

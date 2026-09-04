@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -22,7 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -153,7 +154,7 @@ internal fun YearLineChartCard(
                 points = points,
                 scale = scale,
                 colors = colors,
-                revealProgress = revealProgress.value,
+                revealProgress = revealProgress,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -209,7 +210,7 @@ private fun YearLineChartPlot(
     points: List<YearLineChartPoint>,
     scale: YearLineChartScale,
     colors: RecordModuleColorTokens,
-    revealProgress: Float,
+    revealProgress: Animatable<Float, AnimationVector1D>,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(
@@ -224,16 +225,19 @@ private fun YearLineChartPlot(
         val plotBottomPx = with(density) { plotBottom.toPx() }
         val chartWidthPx = constraints.maxWidth.toFloat()
         val monthWidth = maxWidth / 12
-        val offsets = points.mapIndexed { index, point ->
-            point.fraction?.let { fraction ->
-                Offset(
-                    x = chartWidthPx * (index + .5f) / 12f,
-                    y = plotBottomPx - (plotBottomPx - plotTopPx) * fraction,
-                )
+        val offsets = remember(points, plotTopPx, plotBottomPx, chartWidthPx) {
+            points.mapIndexed { index, point ->
+                point.fraction?.let { fraction ->
+                    Offset(
+                        x = chartWidthPx * (index + .5f) / 12f,
+                        y = plotBottomPx - (plotBottomPx - plotTopPx) * fraction,
+                    )
+                }
             }
         }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
+            val reveal = revealProgress.value.coerceIn(0f, 1f)
             val gridPathEffect = PathEffect.dashPathEffect(
                 intervals = floatArrayOf(3.dp.toPx(), 4.dp.toPx()),
             )
@@ -261,7 +265,7 @@ private fun YearLineChartPlot(
                 }
             }
 
-            val revealRight = size.width * revealProgress.coerceIn(0f, 1f)
+            val revealRight = size.width * reveal
             if (revealRight > 0f) {
                 clipRect(right = revealRight) {
                     offsets.contiguousSegments().forEach { segment ->
@@ -313,7 +317,9 @@ private fun YearLineChartPlot(
                         .offset(x = monthWidth * index, y = labelY.coerceAtLeast(0.dp))
                         .width(monthWidth)
                         .height(20.dp)
-                        .alpha(yearLineChartPointRevealAlpha(index, revealProgress)),
+                        .graphicsLayer {
+                            alpha = yearLineChartPointRevealAlpha(index, revealProgress.value)
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(

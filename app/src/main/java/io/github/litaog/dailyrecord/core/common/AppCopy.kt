@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.core.common
 
-import io.github.litaog.dailyrecord.core.model.MAX_RECORD_DETAIL_FEELING_CHARACTERS
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Locale
@@ -8,231 +7,240 @@ import java.util.Locale
 /**
  * Single source for user-facing copy used by both the UI and sync layer.
  *
- * Keeping copy out of individual Composables makes wording changes auditable and
- * prevents the two record modules from drifting. Dynamic copy stays here as
- * small functions so callers only provide data, never assemble user-facing
- * fragments themselves.
+ * The facade delegates every member to the active [AppStrings] implementation
+ * selected by [AppLanguageState.current]; call sites keep their historical
+ * shape, so switching languages never touches individual Composables.
  */
 internal object AppCopy {
-    const val privateRecordSubtitle = "记录每天的次数"
-    const val offlineSubtitle = "本机记录可离线使用"
-    const val vpnSyncFailure = "请打开 VPN（梯子）后重试；记录仍在本机。"
-    const val readingLocalRecords = "正在读取本机记录"
+    val privateRecordSubtitle: String get() = AppLanguageState.current.privateRecordSubtitle
+    val offlineSubtitle: String get() = AppLanguageState.current.offlineSubtitle
+    val vpnSyncFailure: String get() = AppLanguageState.current.vpnSyncFailure
+    val readingLocalRecords: String get() = AppLanguageState.current.readingLocalRecords
+    val selected: String get() = AppLanguageState.current.selected
+    val unselected: String get() = AppLanguageState.current.unselected
+    val today: String get() = AppLanguageState.current.today
+    val historyDate: String get() = AppLanguageState.current.historyDate
+    val futureDate: String get() = AppLanguageState.current.futureDate
 
-    const val selected = "已选择"
-    const val unselected = "未选择"
-    const val today = "今天"
-    const val historyDate = "历史日期"
-    const val futureDate = "未来日期"
-    private val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
-
-    fun weekdayName(dayOfWeek: Int): String {
-        require(dayOfWeek in 1..7) { "dayOfWeek must be in 1..7, was $dayOfWeek" }
-        return weekdayNames[dayOfWeek - 1]
-    }
+    fun weekdayName(dayOfWeek: Int): String = AppLanguageState.current.weekdayName(dayOfWeek)
 
     fun selectedState(label: String, isSelected: Boolean): String =
-        "$label，${if (isSelected) selected else unselected}"
+        AppLanguageState.current.selectedState(label, isSelected)
 
     object Auth {
-        const val signIn = "登录"
-        const val register = "注册"
-        const val email = "邮箱"
-        const val password = "密码"
-        const val confirmPassword = "再次输入密码"
-        const val show = "显示"
-        const val hide = "隐藏"
-        const val showPassword = "显示密码"
-        const val hidePassword = "隐藏密码"
-        const val forgotPassword = "忘记密码？"
-        const val openPasswordReset = "打开重置密码"
-        const val title = "私密日历"
-        const val signInSubtitle = "登录后可恢复云端记录"
-        const val registerSubtitle = "注册后可保存数据到云端长久记录"
-        const val signInLocalSyncNotice = "若先行选择“本机记录”，记录的数据会在登录后自动同步到账号"
-        const val registerLocalSyncNotice = "若先行选择“本机记录”，记录的数据会在注册后自动同步到账号"
-        const val passwordPolicy = "密码至少 8 位"
-        const val signInVpnNotice = "需使用 VPN 进行登录\n若暂无 VPN 可先选择使用“本机记录”来进行记录活动"
-        const val registerVpnNotice = "需使用 VPN 进行注册\n若暂无 VPN 可先选择使用“本机记录”来进行记录活动"
-        const val emulatorNotice = "当前仅连接本地测试环境，云同步不可用。"
-        const val wait = "请稍候…"
-        const val signInAndRestore = "登录并恢复记录"
-        const val createAccount = "创建账号"
-        const val continueOffline = "暂不登录，先使用“本机记录”"
-        const val continueOfflineRegister = "暂不注册，先使用“本机记录”"
-        const val emailRequired = "请输入邮箱"
-        const val emailInvalid = "请输入有效邮箱"
-        const val passwordTooShort = "密码至少需要 8 位"
-        const val passwordMismatch = "两次输入的密码不一致"
-        const val network = "网络不可用或连接云服务超时，请检查 VPN（梯子）后重试。"
-        const val emailAlreadyRegistered = "此邮箱已注册，请直接登录"
-        const val weakPassword = "密码强度不足，请使用更长的密码。"
-        const val tooManyRequests = "尝试次数过多，请稍后再试"
-        const val invalidCredentials = "邮箱或密码错误，请检查后重试。"
-        const val signInUnavailable = "暂时无法登录，请稍后重试"
-        const val registerUnavailable = "暂时无法创建账号，请稍后重试"
-        const val resetSentTitle = "请查收邮件"
-        const val resetTitle = "重置密码"
-        const val resetSentSubtitle = "如果邮箱已注册，重置邮件已发送。为保护隐私，页面不会显示账号是否存在。"
-        const val resetSubtitle = "输入注册邮箱，我们会发送重置邮件。"
-        const val resetSuccess = "请检查收件箱和垃圾邮件，并按邮件提示修改密码。"
-        const val backToSignIn = "返回登录"
-        const val sendResetEmail = "发送重置邮件"
-        const val sendingResetEmail = "正在发送…"
-        const val cancel = "取消"
-        const val resetNetwork = "网络不可用，重置邮件未发送。请打开 VPN（梯子）后重试。"
-        const val resetTooManyRequests = "请求过于频繁，请稍后再试。"
-        const val resetQuotaExceeded = "今日发送额度已用完，请稍后再试。"
-        const val resetUnavailable = "暂时无法发送重置邮件，请稍后重试。"
+        val signIn: String get() = AppLanguageState.current.auth.signIn
+        val register: String get() = AppLanguageState.current.auth.register
+        val email: String get() = AppLanguageState.current.auth.email
+        val password: String get() = AppLanguageState.current.auth.password
+        val confirmPassword: String get() = AppLanguageState.current.auth.confirmPassword
+        val show: String get() = AppLanguageState.current.auth.show
+        val hide: String get() = AppLanguageState.current.auth.hide
+        val showPassword: String get() = AppLanguageState.current.auth.showPassword
+        val hidePassword: String get() = AppLanguageState.current.auth.hidePassword
+        val forgotPassword: String get() = AppLanguageState.current.auth.forgotPassword
+        val openPasswordReset: String get() = AppLanguageState.current.auth.openPasswordReset
+        val title: String get() = AppLanguageState.current.auth.title
+        val signInSubtitle: String get() = AppLanguageState.current.auth.signInSubtitle
+        val registerSubtitle: String get() = AppLanguageState.current.auth.registerSubtitle
+        val signInLocalSyncNotice: String get() = AppLanguageState.current.auth.signInLocalSyncNotice
+        val registerLocalSyncNotice: String get() = AppLanguageState.current.auth.registerLocalSyncNotice
+        val passwordPolicy: String get() = AppLanguageState.current.auth.passwordPolicy
+        val signInVpnNotice: String get() = AppLanguageState.current.auth.signInVpnNotice
+        val registerVpnNotice: String get() = AppLanguageState.current.auth.registerVpnNotice
+        val emulatorNotice: String get() = AppLanguageState.current.auth.emulatorNotice
+        val wait: String get() = AppLanguageState.current.auth.wait
+        val signInAndRestore: String get() = AppLanguageState.current.auth.signInAndRestore
+        val createAccount: String get() = AppLanguageState.current.auth.createAccount
+        val continueOffline: String get() = AppLanguageState.current.auth.continueOffline
+        val continueOfflineRegister: String get() = AppLanguageState.current.auth.continueOfflineRegister
+        val emailRequired: String get() = AppLanguageState.current.auth.emailRequired
+        val emailInvalid: String get() = AppLanguageState.current.auth.emailInvalid
+        val passwordTooShort: String get() = AppLanguageState.current.auth.passwordTooShort
+        val passwordMismatch: String get() = AppLanguageState.current.auth.passwordMismatch
+        val network: String get() = AppLanguageState.current.auth.network
+        val emailAlreadyRegistered: String get() = AppLanguageState.current.auth.emailAlreadyRegistered
+        val weakPassword: String get() = AppLanguageState.current.auth.weakPassword
+        val tooManyRequests: String get() = AppLanguageState.current.auth.tooManyRequests
+        val invalidCredentials: String get() = AppLanguageState.current.auth.invalidCredentials
+        val signInUnavailable: String get() = AppLanguageState.current.auth.signInUnavailable
+        val registerUnavailable: String get() = AppLanguageState.current.auth.registerUnavailable
+        val resetSentTitle: String get() = AppLanguageState.current.auth.resetSentTitle
+        val resetTitle: String get() = AppLanguageState.current.auth.resetTitle
+        val resetSentSubtitle: String get() = AppLanguageState.current.auth.resetSentSubtitle
+        val resetSubtitle: String get() = AppLanguageState.current.auth.resetSubtitle
+        val resetSuccess: String get() = AppLanguageState.current.auth.resetSuccess
+        val backToSignIn: String get() = AppLanguageState.current.auth.backToSignIn
+        val sendResetEmail: String get() = AppLanguageState.current.auth.sendResetEmail
+        val sendingResetEmail: String get() = AppLanguageState.current.auth.sendingResetEmail
+        val cancel: String get() = AppLanguageState.current.auth.cancel
+        val resetNetwork: String get() = AppLanguageState.current.auth.resetNetwork
+        val resetTooManyRequests: String get() = AppLanguageState.current.auth.resetTooManyRequests
+        val resetQuotaExceeded: String get() = AppLanguageState.current.auth.resetQuotaExceeded
+        val resetUnavailable: String get() = AppLanguageState.current.auth.resetUnavailable
     }
 
     object Account {
-        const val signInSync = "登录并同步"
-        const val reSignIn = "重新登录"
-        const val signInSyncAccessibility = "登录账号并同步记录"
-        const val accountAndSync = "账号与云同步"
-        const val signOutConfirm = "确认退出登录？"
-        const val cloudDataRetained = "云端记录仍会保留"
-        const val restoreOnAnotherDevice = "换手机登录后即可恢复记录"
-        const val signOutMessage = "退出登录不会删除云端记录；下次登录后仍可继续同步。"
-        const val back = "返回"
-        const val confirmSignOut = "确认退出"
-        const val syncDescription = "记录会先保存在本机，联网后自动同步；换手机登录即可恢复。"
-        const val syncing = "正在同步"
-        const val syncNow = "立即同步"
-        const val close = "关闭"
-        const val signOut = "退出登录"
-        const val deleteAccount = "删除账号与云端数据"
-        const val notConfigured = "云同步未配置"
-        const val offline = "当前离线，记录已保存在本机"
-        const val synced = "云端已同步"
-        const val shortNotConfigured = "未连接"
-        const val shortOffline = "离线"
-        const val shortSyncing = "同步中"
-        const val shortSynced = "已同步"
-        const val shortRetry = "同步失败"
-        const val networkFailureTitle = "网络连接异常"
-        const val networkFailureGuidance = "请检查网络或 VPN（梯子），然后重试。"
-        const val authFailureTitle = "登录状态已失效"
-        const val authFailureGuidance = "请重新登录账号，然后再次同步本机记录。"
-        const val permissionFailureTitle = "账号无权访问云端数据"
-        const val permissionFailureGuidance = "请重新登录；如果仍然失败，请稍后重试或联系开发者。"
-        const val quotaFailureTitle = "云服务暂时无法处理请求"
-        const val quotaFailureGuidance = "本机记录不会丢失，请稍后再试。"
-        const val serviceFailureTitle = "云服务暂时不可用"
-        const val serviceFailureGuidance = "云服务暂时异常；本机记录不会丢失，请稍后再试。"
-        const val dataFailureTitle = "部分记录无法同步"
-        const val dataFailureGuidance = "未同步的记录仍在本机，请稍后再试。"
-        const val unknownFailureTitle = "暂时无法完成同步"
-        const val unknownFailureGuidance = "记录仍在本机，请稍后再试。"
-        const val syncDialogMessage = "请检查网络或 VPN（梯子），然后重试。"
-        const val dataFormatFailure = "部分云端记录无法读取，其余记录已同步。"
-        fun timeoutFailure(timeoutMillis: Long): String =
-            "等待云服务超过 ${(timeoutMillis / 1_000L).coerceAtLeast(1)} 秒，已停止同步；记录仍在本机。"
-        const val networkFailure = "网络连接异常，记录仍在本机。"
-        const val authFailure = "登录状态已失效，记录仍在本机。"
-        const val permissionFailure = "账号暂时无法访问云端，记录仍在本机。"
-        const val quotaFailure = "云服务暂时无法处理同步，记录仍在本机。"
-        const val serviceFailure = "云服务暂时异常，记录仍在本机。"
-        const val dataFailure = "部分记录暂未同步，记录仍在本机。"
-        const val unknownFailure = "同步未完成，记录仍在本机。"
+        val signInSync: String get() = AppLanguageState.current.account.signInSync
+        val reSignIn: String get() = AppLanguageState.current.account.reSignIn
+        val signInSyncAccessibility: String get() = AppLanguageState.current.account.signInSyncAccessibility
+        val accountAndSync: String get() = AppLanguageState.current.account.accountAndSync
+        val signOutConfirm: String get() = AppLanguageState.current.account.signOutConfirm
+        val cloudDataRetained: String get() = AppLanguageState.current.account.cloudDataRetained
+        val restoreOnAnotherDevice: String get() = AppLanguageState.current.account.restoreOnAnotherDevice
+        val signOutMessage: String get() = AppLanguageState.current.account.signOutMessage
+        val back: String get() = AppLanguageState.current.account.back
+        val confirmSignOut: String get() = AppLanguageState.current.account.confirmSignOut
+        val syncDescription: String get() = AppLanguageState.current.account.syncDescription
+        val syncing: String get() = AppLanguageState.current.account.syncing
+        val syncNow: String get() = AppLanguageState.current.account.syncNow
+        val close: String get() = AppLanguageState.current.account.close
+        val signOut: String get() = AppLanguageState.current.account.signOut
+        val deleteAccount: String get() = AppLanguageState.current.account.deleteAccount
+        val notConfigured: String get() = AppLanguageState.current.account.notConfigured
+        val offline: String get() = AppLanguageState.current.account.offline
+        val synced: String get() = AppLanguageState.current.account.synced
+        val shortNotConfigured: String get() = AppLanguageState.current.account.shortNotConfigured
+        val shortOffline: String get() = AppLanguageState.current.account.shortOffline
+        val shortSyncing: String get() = AppLanguageState.current.account.shortSyncing
+        val shortSynced: String get() = AppLanguageState.current.account.shortSynced
+        val shortRetry: String get() = AppLanguageState.current.account.shortRetry
+        val networkFailureTitle: String get() = AppLanguageState.current.account.networkFailureTitle
+        val networkFailureGuidance: String get() = AppLanguageState.current.account.networkFailureGuidance
+        val authFailureTitle: String get() = AppLanguageState.current.account.authFailureTitle
+        val authFailureGuidance: String get() = AppLanguageState.current.account.authFailureGuidance
+        val permissionFailureTitle: String get() = AppLanguageState.current.account.permissionFailureTitle
+        val permissionFailureGuidance: String get() = AppLanguageState.current.account.permissionFailureGuidance
+        val quotaFailureTitle: String get() = AppLanguageState.current.account.quotaFailureTitle
+        val quotaFailureGuidance: String get() = AppLanguageState.current.account.quotaFailureGuidance
+        val serviceFailureTitle: String get() = AppLanguageState.current.account.serviceFailureTitle
+        val serviceFailureGuidance: String get() = AppLanguageState.current.account.serviceFailureGuidance
+        val dataFailureTitle: String get() = AppLanguageState.current.account.dataFailureTitle
+        val dataFailureGuidance: String get() = AppLanguageState.current.account.dataFailureGuidance
+        val unknownFailureTitle: String get() = AppLanguageState.current.account.unknownFailureTitle
+        val unknownFailureGuidance: String get() = AppLanguageState.current.account.unknownFailureGuidance
+        val syncDialogMessage: String get() = AppLanguageState.current.account.syncDialogMessage
+        val dataFormatFailure: String get() = AppLanguageState.current.account.dataFormatFailure
+        val networkFailure: String get() = AppLanguageState.current.account.networkFailure
+        val authFailure: String get() = AppLanguageState.current.account.authFailure
+        val permissionFailure: String get() = AppLanguageState.current.account.permissionFailure
+        val quotaFailure: String get() = AppLanguageState.current.account.quotaFailure
+        val serviceFailure: String get() = AppLanguageState.current.account.serviceFailure
+        val dataFailure: String get() = AppLanguageState.current.account.dataFailure
+        val unknownFailure: String get() = AppLanguageState.current.account.unknownFailure
 
-        fun pending(count: Int): String = "有 $count 条记录待同步"
-        fun shortPending(count: Int): String = "待同步 $count 条"
-        fun syncChipDescription(status: String): String = "账号与云同步状态：$status"
+        fun timeoutFailure(timeoutMillis: Long): String =
+            AppLanguageState.current.account.timeoutFailure(timeoutMillis)
+
+        fun pending(count: Int): String = AppLanguageState.current.account.pending(count)
+
+        fun shortPending(count: Int): String = AppLanguageState.current.account.shortPending(count)
+
+        fun syncChipDescription(status: String): String =
+            AppLanguageState.current.account.syncChipDescription(status)
     }
 
     object RecordModule {
-        const val handBrewLabel = "自慰"
-        const val handBrewQuestionToday = "今天自慰了几次？"
-        const val handBrewQuestionPast = "当天自慰了几次？"
-        const val handBrewZero = "当天没有自慰"
-        const val sexLabel = "做爱"
-        const val sexQuestionToday = "今天做爱了几次？"
-        const val sexQuestionPast = "当天做爱了几次？"
-        const val sexZero = "当天没有做爱"
-        fun recordLabel(label: String): String = "${label}记录"
+        val handBrewLabel: String get() = AppLanguageState.current.recordModule.handBrewLabel
+        val handBrewAccessibilityLabel: String get() =
+            AppLanguageState.current.recordModule.handBrewAccessibilityLabel
+        val handBrewQuestionToday: String get() = AppLanguageState.current.recordModule.handBrewQuestionToday
+        val handBrewQuestionPast: String get() = AppLanguageState.current.recordModule.handBrewQuestionPast
+        val handBrewZero: String get() = AppLanguageState.current.recordModule.handBrewZero
+        val sexLabel: String get() = AppLanguageState.current.recordModule.sexLabel
+        val sexAccessibilityLabel: String get() =
+            AppLanguageState.current.recordModule.sexAccessibilityLabel
+        val sexQuestionToday: String get() = AppLanguageState.current.recordModule.sexQuestionToday
+        val sexQuestionPast: String get() = AppLanguageState.current.recordModule.sexQuestionPast
+        val sexZero: String get() = AppLanguageState.current.recordModule.sexZero
+
+        fun recordLabel(label: String): String =
+            AppLanguageState.current.recordModule.recordLabel(label)
     }
 
     object Deletion {
-        const val warningTitle = "删除账号与云端数据？"
-        const val confirmationTitle = "确认永久删除？"
-        const val irreversible = "此操作无法撤销"
-        const val verifyPassword = "输入当前密码验证身份"
-        const val warningMessage = "继续后会先验证密码，再永久删除账号和全部云端记录。"
-        const val localChoice = "选择是否保留本机记录"
-        const val keepLocalTitle = "保留本机记录（推荐）"
-        const val keepLocalDescription = "删除账号后继续离线使用这些记录"
-        const val deleteLocalTitle = "同时删除本机记录"
-        const val deleteLocalDescription = "云端和这台手机都不再保留这些记录"
-        const val continueVerification = "继续验证身份"
-        const val currentPassword = "当前密码"
-        const val deleting = "正在删除…"
-        const val deletePermanently = "永久删除账号"
-        const val confirmationKeepLocal = "云端记录和账号会永久删除；本机记录将转为离线记录。"
-        const val confirmationDeleteLocal = "云端记录、账号和本机记录都会永久删除。"
-        const val networkError = "网络中断，删除未完成。本机记录仍保留，请打开 VPN（梯子）后重试。"
-        const val networkAuthError = "网络不可用，请打开 VPN（梯子）后重试。"
-        const val authError = "登录状态已失效，请重新登录后再删除。"
-        const val permissionError = "账号暂时无权删除；本机记录仍保留，请重新登录后重试。"
-        const val serviceError = "云服务暂时不可用；本机记录仍保留，请稍后重试。"
-        const val unknownError = "删除未完成，本机记录仍保留。部分云端记录可能已删除，请重试。"
-        const val localCleanupPending = "账号和云端数据已删除，但本机记录清理未完成，将在下次启动时自动完成。"
-        const val authDeletionPending = "删除请求的最终结果暂时无法确认；本机记录已保留，云同步已暂停。请保持网络可用后重新打开应用。"
-        const val retryRecovery = "重试恢复"
-        const val recoveryConflict = "本机已有记录，恢复副本未覆盖；请先处理现有本机记录后再重试恢复。"
-        const val recoveryRetryGuidance = "恢复操作暂时未完成；本机数据和恢复副本均已保留。请检查网络后重试。"
-        const val replaceLocalAndRestore = "删除现有本机记录并恢复"
-        const val replaceLocalAndRestoreTitle = "删除现有本机记录？"
-        const val replaceLocalAndRestoreMessage = "这会删除当前本机空间中的记录，再恢复已删除账号的本机副本。此操作不可撤销。"
-        const val cancelRecoveryReplacement = "取消"
-        const val wrongPassword = "密码不正确，请重新输入"
-        const val tooManyAttempts = "尝试次数过多，请稍后再试"
-
-        const val localRecoveryPending = "本机恢复副本清理未完成，云服务同步已暂停。请保持网络可用后重新打开应用。"
+        val warningTitle: String get() = AppLanguageState.current.deletion.warningTitle
+        val confirmationTitle: String get() = AppLanguageState.current.deletion.confirmationTitle
+        val irreversible: String get() = AppLanguageState.current.deletion.irreversible
+        val verifyPassword: String get() = AppLanguageState.current.deletion.verifyPassword
+        val warningMessage: String get() = AppLanguageState.current.deletion.warningMessage
+        val localChoice: String get() = AppLanguageState.current.deletion.localChoice
+        val keepLocalTitle: String get() = AppLanguageState.current.deletion.keepLocalTitle
+        val keepLocalDescription: String get() = AppLanguageState.current.deletion.keepLocalDescription
+        val deleteLocalTitle: String get() = AppLanguageState.current.deletion.deleteLocalTitle
+        val deleteLocalDescription: String get() = AppLanguageState.current.deletion.deleteLocalDescription
+        val continueVerification: String get() = AppLanguageState.current.deletion.continueVerification
+        val currentPassword: String get() = AppLanguageState.current.deletion.currentPassword
+        val deleting: String get() = AppLanguageState.current.deletion.deleting
+        val deletePermanently: String get() = AppLanguageState.current.deletion.deletePermanently
+        val confirmationKeepLocal: String get() = AppLanguageState.current.deletion.confirmationKeepLocal
+        val confirmationDeleteLocal: String get() = AppLanguageState.current.deletion.confirmationDeleteLocal
+        val networkError: String get() = AppLanguageState.current.deletion.networkError
+        val networkAuthError: String get() = AppLanguageState.current.deletion.networkAuthError
+        val authError: String get() = AppLanguageState.current.deletion.authError
+        val permissionError: String get() = AppLanguageState.current.deletion.permissionError
+        val serviceError: String get() = AppLanguageState.current.deletion.serviceError
+        val unknownError: String get() = AppLanguageState.current.deletion.unknownError
+        val localCleanupPending: String get() = AppLanguageState.current.deletion.localCleanupPending
+        val authDeletionPending: String get() = AppLanguageState.current.deletion.authDeletionPending
+        val retryRecovery: String get() = AppLanguageState.current.deletion.retryRecovery
+        val recoveryConflict: String get() = AppLanguageState.current.deletion.recoveryConflict
+        val recoveryRetryGuidance: String get() = AppLanguageState.current.deletion.recoveryRetryGuidance
+        val replaceLocalAndRestore: String get() = AppLanguageState.current.deletion.replaceLocalAndRestore
+        val replaceLocalAndRestoreTitle: String get() = AppLanguageState.current.deletion.replaceLocalAndRestoreTitle
+        val replaceLocalAndRestoreMessage: String get() = AppLanguageState.current.deletion.replaceLocalAndRestoreMessage
+        val cancelRecoveryReplacement: String get() = AppLanguageState.current.deletion.cancelRecoveryReplacement
+        val wrongPassword: String get() = AppLanguageState.current.deletion.wrongPassword
+        val tooManyAttempts: String get() = AppLanguageState.current.deletion.tooManyAttempts
+        val localRecoveryPending: String get() = AppLanguageState.current.deletion.localRecoveryPending
 
         fun selectionDescription(title: String, isSelected: Boolean): String =
-            "$title，${if (isSelected) AppCopy.selected else AppCopy.unselected}"
+            AppLanguageState.current.deletion.selectionDescription(title, isSelected)
     }
 
     object Calendar {
-        val weekdays = listOf("一", "二", "三", "四", "五", "六", "日")
-        const val recordHint = "点击日期填写次数"
-        const val unset = "未填"
-        const val future = "未来"
-        const val zero = "0 次"
-        const val recorded = "已记录"
-        const val previousMonth = "上个月"
-        const val nextMonth = "下个月"
-        const val selectDate = "选择年份和日期"
-        const val backToToday = "回到今天"
-        const val legendDescription = "点击日期填写%s次数。状态包括：未填写、未来不可填写、0 次和已记录"
-        const val unavailable = "不可用"
-        const val oneTime = "1 次"
-        const val twoTimes = "2 次"
-        const val ninePlusTimes = "9 次以上"
-        const val todayShort = "今"
-        const val futureDescription = "未来日期，不可记录"
-        const val unsetDescription = "未填写"
-        const val zeroDescription = "记录为 0 次"
-        const val selectedSuffix = "，已选择"
-        const val todaySuffix = "，今天"
+        val weekdays: List<String> get() = AppLanguageState.current.calendar.weekdays
+        val recordHint: String get() = AppLanguageState.current.calendar.recordHint
+        val unset: String get() = AppLanguageState.current.calendar.unset
+        val future: String get() = AppLanguageState.current.calendar.future
+        val zero: String get() = AppLanguageState.current.calendar.zero
+        val recorded: String get() = AppLanguageState.current.calendar.recorded
+        val previousMonth: String get() = AppLanguageState.current.calendar.previousMonth
+        val nextMonth: String get() = AppLanguageState.current.calendar.nextMonth
+        val selectDate: String get() = AppLanguageState.current.calendar.selectDate
+        val backToToday: String get() = AppLanguageState.current.calendar.backToToday
+        val legendDescription: String get() = AppLanguageState.current.calendar.legendDescription
+        val unavailable: String get() = AppLanguageState.current.calendar.unavailable
+        val oneTime: String get() = AppLanguageState.current.calendar.oneTime
+        val twoTimes: String get() = AppLanguageState.current.calendar.twoTimes
+        val ninePlusTimes: String get() = AppLanguageState.current.calendar.ninePlusTimes
+        val todayShort: String get() = AppLanguageState.current.calendar.todayShort
+        val futureDescription: String get() = AppLanguageState.current.calendar.futureDescription
+        val unsetDescription: String get() = AppLanguageState.current.calendar.unsetDescription
+        val zeroDescription: String get() = AppLanguageState.current.calendar.zeroDescription
+        val selectedSuffix: String get() = AppLanguageState.current.calendar.selectedSuffix
+        val todaySuffix: String get() = AppLanguageState.current.calendar.todaySuffix
 
-        fun monthSummary(count: Long, days: Int): String = "本月 $count 次 · $days 天有记录"
-        fun monthTitle(month: YearMonth): String = "${month.year}年 ${month.monthValue}月"
-        fun monthTitleMultiline(month: YearMonth): String = "${month.year}年\n${month.monthValue}月"
+        fun monthSummary(count: Long, days: Int): String =
+            AppLanguageState.current.calendar.monthSummary(count, days)
+
+        fun monthTitle(month: YearMonth): String =
+            AppLanguageState.current.calendar.monthTitle(month)
+
+        fun monthTitleMultiline(month: YearMonth): String =
+            AppLanguageState.current.calendar.monthTitleMultiline(month)
+
         fun monthSelectionDescription(month: YearMonth): String =
-            "$selectDate，当前${month.year}年${month.monthValue}月"
+            AppLanguageState.current.calendar.monthSelectionDescription(month)
+
         fun monthDateDescription(date: LocalDate, state: String, focused: Boolean): String =
-            "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$state${if (focused) selectedSuffix else ""}"
-        fun legendDescription(moduleLabel: String): String = legendDescription.format(moduleLabel)
-        fun countDescription(count: Int): String = when (count) {
-            0 -> zero
-            1 -> oneTime
-            2 -> twoTimes
-            in 3..8 -> "${count} 次"
-            else -> ninePlusTimes
-        }
+            AppLanguageState.current.calendar.monthDateDescription(date, state, focused)
+
+        fun legendDescription(moduleLabel: String): String =
+            AppLanguageState.current.calendar.legendDescription(moduleLabel)
+
+        fun countDescription(count: Int): String =
+            AppLanguageState.current.calendar.countDescription(count)
+
         fun statusDescription(
             date: LocalDate,
             today: LocalDate,
@@ -240,264 +248,309 @@ internal object AppCopy {
             future: Boolean,
             count: Int?,
             moduleLabel: String,
-        ): String {
-            val status = when {
-                unsupported -> unavailable
-                future -> futureDescription
-                count == null -> unsetDescription
-                count == 0 -> "$moduleLabel，$zeroDescription"
-                // The same count bucketing as the visual cell keeps TalkBack
-                // and screen text consistent (9+ is never read as exact 9).
-                else -> "$moduleLabel，${countDescription(count)}"
-            }
-            return if (date == today) "$status$todaySuffix" else status
-        }
+        ): String = AppLanguageState.current.calendar.statusDescription(
+            date, today, unsupported, future, count, moduleLabel,
+        )
     }
 
     object Navigation {
-        val weekdays = Calendar.weekdays
-        const val title = "快速跳转"
-        const val subtitle = "直接选择年份和日期"
-        const val dateWheelSubtitle = "选择日期"
-        const val monthSubtitle = "直接选择年份和月份"
-        const val jumpToDate = "跳转到此日"
-        const val jumpToMonth = "跳转到此月"
-        const val jumpToYear = "跳转到此年"
-        const val selected = "已选择"
-        const val switchYear = "切换年份"
-        const val returnToDatePicker = "返回日期选择"
-        const val selectYear = "选择年份"
-        const val selectMonth = "选择月份"
-        const val dateWheelHint = "上下滑动调整日期"
-        const val yearUnit = "年"
-        const val monthUnit = "月"
-        const val dayUnit = "日"
-        private val monthNames = listOf(
-            "一月", "二月", "三月", "四月", "五月", "六月",
-            "七月", "八月", "九月", "十月", "十一月", "十二月",
-        )
-        fun switchYearDescription(year: Int): String = "$switchYear，当前${year}年"
-        fun nextYearDescription(forward: Boolean): String = if (forward) "跳转到下一年" else "跳转到上一年"
+        val weekdays: List<String> get() = AppLanguageState.current.navigation.weekdays
+        val title: String get() = AppLanguageState.current.navigation.title
+        val subtitle: String get() = AppLanguageState.current.navigation.subtitle
+        val dateWheelSubtitle: String get() = AppLanguageState.current.navigation.dateWheelSubtitle
+        val monthSubtitle: String get() = AppLanguageState.current.navigation.monthSubtitle
+        val jumpToDate: String get() = AppLanguageState.current.navigation.jumpToDate
+        val jumpToMonth: String get() = AppLanguageState.current.navigation.jumpToMonth
+        val jumpToYear: String get() = AppLanguageState.current.navigation.jumpToYear
+        val selected: String get() = AppLanguageState.current.navigation.selected
+        val switchYear: String get() = AppLanguageState.current.navigation.switchYear
+        val returnToDatePicker: String get() = AppLanguageState.current.navigation.returnToDatePicker
+        val selectYear: String get() = AppLanguageState.current.navigation.selectYear
+        val selectMonth: String get() = AppLanguageState.current.navigation.selectMonth
+        val dateWheelHint: String get() = AppLanguageState.current.navigation.dateWheelHint
+        val yearUnit: String get() = AppLanguageState.current.navigation.yearUnit
+        val monthUnit: String get() = AppLanguageState.current.navigation.monthUnit
+        val dayUnit: String get() = AppLanguageState.current.navigation.dayUnit
+
+        fun switchYearDescription(year: Int): String =
+            AppLanguageState.current.navigation.switchYearDescription(year)
+
+        fun nextYearDescription(forward: Boolean): String =
+            AppLanguageState.current.navigation.nextYearDescription(forward)
+
         fun dateText(date: LocalDate): String =
-            date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy年M月d日"))
+            AppLanguageState.current.navigation.dateText(date)
+
         fun dateLabel(date: LocalDate, weekday: String): String =
-            "${dateText(date)} · $weekday"
-        fun selectYearDescription(year: Int): String = "选择${year}年"
-        fun yearTitle(year: Int): String = "${year}年"
-        fun monthTitle(month: YearMonth): String = "${month.year}年 ${month.monthValue}月"
-        fun monthLabel(month: Int): String = monthNames.getOrElse(month - 1) { "${month}月" }
-        fun dayLabel(day: Int): String = "${day}日"
-        fun monthDescription(month: YearMonth): String = "选择${month.year}年${month.monthValue}月"
+            AppLanguageState.current.navigation.dateLabel(date, weekday)
+
+        fun selectYearDescription(year: Int): String =
+            AppLanguageState.current.navigation.selectYearDescription(year)
+
+        fun yearTitle(year: Int): String = AppLanguageState.current.navigation.yearTitle(year)
+
+        fun monthTitle(month: YearMonth): String =
+            AppLanguageState.current.navigation.monthTitle(month)
+
+        fun monthLabel(month: Int): String = AppLanguageState.current.navigation.monthLabel(month)
+
+        fun dayLabel(day: Int): String = AppLanguageState.current.navigation.dayLabel(day)
+
+        fun monthDescription(month: YearMonth): String =
+            AppLanguageState.current.navigation.monthDescription(month)
     }
 
     object Record {
-        const val loading = "正在读取…"
-        const val saving = "正在保存…"
-        const val saved = "已保存"
-        const val save = "保存记录"
-        const val saveFailure = "保存失败，请重试"
-        const val clear = "清除记录"
-        const val clearFailure = "清除失败，请重试"
-        const val countOnly = "只记录次数"
-        const val countFirst = "先记录次数"
-        const val countAndDetails = "记录次数与每次详情"
-        const val detailEntry = "记录时间和感受"
-        const val detailEntryHintFormat = "为这 %d 次补充详情"
-        const val detailSectionTitle = "本次详情"
-        const val detailSectionHint = "每增加 1 次，自动新增一条"
-        const val detailCollapse = "收起详情"
-        const val detailExpand = "展开详情"
-        const val detailOccurrenceFormat = "第 %d 次"
-        const val detailStartTime = "开始"
-        const val detailEndTime = "结束"
-        const val detailStartTimeUnset = "开始时间"
-        const val detailEndTimeUnset = "结束时间"
-        const val detailTimeUnset = "选择时间"
-        const val detailTimePickerTitle = "选择时间"
-        const val detailTimePickerSubtitle = "上下滑动选择小时和分钟"
-        const val detailTimePickerHour = "小时"
-        const val detailTimePickerMinute = "分钟"
-        const val detailTimePickerHint = "滚动停止后会自动对齐"
-        const val detailTimePickerConfirm = "确定"
-        const val detailWriteFeeling = "写感受"
-        const val detailCollapseFeeling = "收起"
-        const val detailFeelingLabel = "感受（可选）"
-        const val detailFeelingHint = "写下这一刻的感受"
-        // The counter denominator must track the validation limit so the
-        // displayed "N / 100" never drifts from the accepted length.
-        val detailFeelingCounter = "%d / ${MAX_RECORD_DETAIL_FEELING_CHARACTERS}"
-        const val detailEndBeforeStart = "结束时间不能早于开始时间"
-        const val detailDiscardTitle = "移除这次详情？"
-        const val detailDiscardMessage = "这次已填写的时间或感受会一起移除。"
-        const val detailConfirmRemove = "移除详情"
+        val loading: String get() = AppLanguageState.current.record.loading
+        val saving: String get() = AppLanguageState.current.record.saving
+        val saved: String get() = AppLanguageState.current.record.saved
+        val save: String get() = AppLanguageState.current.record.save
+        val saveFailure: String get() = AppLanguageState.current.record.saveFailure
+        val clear: String get() = AppLanguageState.current.record.clear
+        val clearFailure: String get() = AppLanguageState.current.record.clearFailure
+        val countOnly: String get() = AppLanguageState.current.record.countOnly
+        val countFirst: String get() = AppLanguageState.current.record.countFirst
+        val countAndDetails: String get() = AppLanguageState.current.record.countAndDetails
+        val detailEntry: String get() = AppLanguageState.current.record.detailEntry
+        val detailEntryHintFormat: String get() = AppLanguageState.current.record.detailEntryHintFormat
+        val detailSectionTitle: String get() = AppLanguageState.current.record.detailSectionTitle
+        val detailSectionHint: String get() = AppLanguageState.current.record.detailSectionHint
+        val detailCollapse: String get() = AppLanguageState.current.record.detailCollapse
+        val detailExpand: String get() = AppLanguageState.current.record.detailExpand
+        val detailOccurrenceFormat: String get() = AppLanguageState.current.record.detailOccurrenceFormat
+        val detailStartTime: String get() = AppLanguageState.current.record.detailStartTime
+        val detailEndTime: String get() = AppLanguageState.current.record.detailEndTime
+        val detailStartTimeUnset: String get() = AppLanguageState.current.record.detailStartTimeUnset
+        val detailEndTimeUnset: String get() = AppLanguageState.current.record.detailEndTimeUnset
+        val detailTimeUnset: String get() = AppLanguageState.current.record.detailTimeUnset
+        val detailTimePickerTitle: String get() = AppLanguageState.current.record.detailTimePickerTitle
+        val detailTimePickerSubtitle: String get() = AppLanguageState.current.record.detailTimePickerSubtitle
+        val detailTimePickerHour: String get() = AppLanguageState.current.record.detailTimePickerHour
+        val detailTimePickerMinute: String get() = AppLanguageState.current.record.detailTimePickerMinute
+        val detailTimePickerHint: String get() = AppLanguageState.current.record.detailTimePickerHint
+        val detailTimePickerConfirm: String get() = AppLanguageState.current.record.detailTimePickerConfirm
+        val detailWriteFeeling: String get() = AppLanguageState.current.record.detailWriteFeeling
+        val detailCollapseFeeling: String get() = AppLanguageState.current.record.detailCollapseFeeling
+        val detailFeelingLabel: String get() = AppLanguageState.current.record.detailFeelingLabel
+        val detailFeelingHint: String get() = AppLanguageState.current.record.detailFeelingHint
+        val detailFeelingCounter: String get() = AppLanguageState.current.record.detailFeelingCounter
+        val detailEndBeforeStart: String get() = AppLanguageState.current.record.detailEndBeforeStart
+        val detailDiscardTitle: String get() = AppLanguageState.current.record.detailDiscardTitle
+        val detailDiscardMessage: String get() = AppLanguageState.current.record.detailDiscardMessage
+        val detailConfirmRemove: String get() = AppLanguageState.current.record.detailConfirmRemove
+        val detailEntryUnavailable: String get() = AppLanguageState.current.record.detailEntryUnavailable
+        val loadingRecords: String get() = AppLanguageState.current.record.loadingRecords
+        val futureUnavailable: String get() = AppLanguageState.current.record.futureUnavailable
+        val notSaved: String get() = AppLanguageState.current.record.notSaved
+        val zeroRecorded: String get() = AppLanguageState.current.record.zeroRecorded
+        val clearTitle: String get() = AppLanguageState.current.record.clearTitle
+        val clearSubtitle: String get() = AppLanguageState.current.record.clearSubtitle
+        val clearMessage: String get() = AppLanguageState.current.record.clearMessage
+        val confirmClear: String get() = AppLanguageState.current.record.confirmClear
+        val clearDetailsFailure: String get() = AppLanguageState.current.record.clearDetailsFailure
+        val clearDetailsTitle: String get() = AppLanguageState.current.record.clearDetailsTitle
+        val clearDetailsSubtitle: String get() = AppLanguageState.current.record.clearDetailsSubtitle
+        val clearDetailsMessage: String get() = AppLanguageState.current.record.clearDetailsMessage
+        val confirmClearDetails: String get() = AppLanguageState.current.record.confirmClearDetails
+        val discardTitle: String get() = AppLanguageState.current.record.discardTitle
+        val unsavedSubtitle: String get() = AppLanguageState.current.record.unsavedSubtitle
+        val discardMessage: String get() = AppLanguageState.current.record.discardMessage
+        val continueEditing: String get() = AppLanguageState.current.record.continueEditing
+        val discard: String get() = AppLanguageState.current.record.discard
+        val backToCalendar: String get() = AppLanguageState.current.record.backToCalendar
 
-        const val detailEntryUnavailable = "详情过多，仅编辑总次数，当前次数内的已有详情会保留"
+        fun savedStatus(count: Int): String = AppLanguageState.current.record.savedStatus(count)
+
+        fun recordedStatus(count: Int): String = AppLanguageState.current.record.recordedStatus(count)
+
+        fun explicitZeroHint(text: String): String =
+            AppLanguageState.current.record.explicitZeroHint(text)
+
+        fun monthSaved(month: Int): String = AppLanguageState.current.record.monthSaved(month)
+
+        fun monthSummary(count: Long, days: Int): String =
+            AppLanguageState.current.record.monthSummary(count, days)
+
+        fun moduleRecordLabel(moduleLabel: String): String =
+            AppLanguageState.current.record.moduleRecordLabel(moduleLabel)
+
+        fun dateLabel(date: LocalDate, weekday: String): String =
+            AppLanguageState.current.record.dateLabel(date, weekday)
+
+        fun detailEntryHint(count: Int): String = AppLanguageState.current.record.detailEntryHint(count)
+
+        fun detailOccurrence(index: Int): String = AppLanguageState.current.record.detailOccurrence(index)
+
+        fun detailFeelingCounter(count: Int): String =
+            AppLanguageState.current.record.detailFeelingCounter(count)
 
         fun detailTimeDescription(occurrence: Int, label: String, value: String): String =
-            "${detailOccurrence(occurrence)}，$label，$value"
+            AppLanguageState.current.record.detailTimeDescription(occurrence, label, value)
 
         fun detailTimeWheelCurrent(unit: String, value: String): String =
-            "$unit，当前 $value"
+            AppLanguageState.current.record.detailTimeWheelCurrent(unit, value)
 
         fun detailTimeWheelOption(unit: String, value: String): String =
-            "选择$unit $value"
+            AppLanguageState.current.record.detailTimeWheelOption(unit, value)
 
         fun detailFeelingActionDescription(occurrence: Int, action: String): String =
-            "${detailOccurrence(occurrence)}，$action"
+            AppLanguageState.current.record.detailFeelingActionDescription(occurrence, action)
 
         fun detailFeelingEditorDescription(occurrence: Int): String =
-            "${detailOccurrence(occurrence)}，$detailFeelingLabel"
-        const val loadingRecords = "正在读取记录…"
-        const val futureUnavailable = "未来日期，不能记录"
-        const val notSaved = "尚未填写"
-        const val zeroRecorded = "已记录 · 0 次"
-        const val clearTitle = "清除这天的记录？"
-        const val clearSubtitle = "只影响当前模块"
-        const val clearMessage = "清除后会恢复为“未填写”，不会计入统计。"
-        const val confirmClear = "确认清除"
-        const val clearDetailsFailure = "清除详情失败，请重试"
-        const val clearDetailsTitle = "清除本次详情？"
-        const val clearDetailsSubtitle = "只清除时间和感受"
-        const val clearDetailsMessage = "清除后当天次数保持不变，时间和感受会被移除。"
-        const val confirmClearDetails = "确认清除详情"
-        const val discardTitle = "放弃未保存的修改？"
-        const val unsavedSubtitle = "当前次数或详情尚未保存"
-        const val discardMessage = "返回日历后，这次次数或详情修改会丢失。"
-        const val continueEditing = "继续编辑"
-        const val discard = "放弃修改"
-        const val backToCalendar = "返回日历"
-        fun savedStatus(count: Int): String = "待保存 · $count 次"
-        fun recordedStatus(count: Int): String = "已记录 · $count 次"
-        fun explicitZeroHint(text: String): String = "填 0 表示$text，会保留记录。"
-        fun monthSaved(month: Int): String = "${month}月记录"
-        fun monthSummary(count: Long, days: Int): String = "$count 次 · $days 天有记录"
-        fun moduleRecordLabel(moduleLabel: String): String = "${moduleLabel}记录"
-        fun dateLabel(date: LocalDate, weekday: String): String =
-            "${date.monthValue}月${date.dayOfMonth}日 · $weekday"
-        fun detailEntryHint(count: Int): String = detailEntryHintFormat.format(count)
-        fun detailOccurrence(index: Int): String = detailOccurrenceFormat.format(index)
-        fun detailFeelingCounter(count: Int): String = detailFeelingCounter.format(count)
+            AppLanguageState.current.record.detailFeelingEditorDescription(occurrence)
     }
 
     object Statistics {
-        val weekdays = Calendar.weekdays
-        const val title = "统计"
-        const val countAndDays = "次数 · 天数"
-        const val countUnit = "次"
-        const val dayUnit = "天"
-        const val perDayUnit = "次/天"
-        const val recordedDaysLabel = "发生天数"
-        const val averageLabel = "日均次数"
-        const val dailyDetails = "每日明细"
-        const val monthlyDetails = "每月明细"
-        const val yearlyDetails = "年度明细"
-        const val allHistory = "全部历史"
-        const val ended = "已结束"
-        const val inProgress = "进行中"
-        const val noRecords = "暂无记录"
-        const val weekTab = "周"
-        const val monthTab = "月"
-        const val yearTab = "年"
-        const val allTab = "全部"
-        const val currentWeek = "本周"
-        const val currentMonth = "本月"
-        const val monthTotalCount = "本月总次数"
-        const val currentYear = "本年"
-        const val historyPeriod = "历史"
-        const val selectRange = "选择统计范围"
-        const val emptyTitle = "还没有可统计的%s记录"
-        const val emptyMessage = "去日历填写第一条记录。"
-        const val calendarAction = "去日历填写"
-        const val dailyDistribution = "每日分布"
-        const val times = "次数"
-        const val weeklySummaryTitle = "本周"
-        const val weeklyRecordedLabel = "有记录"
-        const val weeklyLegendFourPlus = "4次及以上"
-        const val weeklyLegendThree = "3次"
-        const val weeklyLegendTwo = "2次"
-        const val weeklyLegendOne = "1次"
-        const val weeklyLegendZero = "0次"
-        const val weeklyLegendUnrecorded = "未填写"
-        const val weeklyLegendFuture = "未到"
-        const val dailyCount = "每日次数"
-        const val byDate = "按日期"
-        const val countComposition = "次数分布"
-        const val explicitZero = "0 次"
-        const val once = "1 次"
-        const val twice = "2 次"
-        const val threePlus = "3 次以上"
-        const val unfilledDays = "未填写"
-        const val futureDays = "未来日期"
-        const val noSavedDays = "本月还没有填写记录"
-        const val singleDayExtremes = "单日最高与最低"
-        const val byPositiveCount = "仅统计有次数的日期"
-        const val maximumDay = "最高单日"
-        const val minimumPositiveDay = "最低单日"
-        const val noPositiveDay = "本月没有大于 0 次的记录"
-        const val future = "未来"
-        const val unset = "未填写"
-        const val unsetShort = "未填"
-        const val dash = "—"
-        const val annualCount = "年度次数"
-        const val quarterShare = "季度占比"
-        const val noPositiveCount = "暂无次数"
-        const val byCount = "按次数"
-        const val quarterShareHint = "填写次数后显示占比。"
-        const val monthSummary = "月份摘要"
-        const val fullMonths = "只比较已结束月份"
-        const val monthExtremesHint = "已结束月份不足，暂时无法比较。"
-        const val maximumMonth = "最高月份"
-        const val minimumMonth = "最低月份"
-        const val monthAverageFormat = "月均 %.1f 次"
-        fun detailCount(count: Long?): String = if (count == null) "未填写" else "$count 次"
-        fun detailDays(days: Int?): String = if (days == null) "未填写" else "$days 天"
-        fun historyStatus(first: LocalDate?, today: LocalDate): String = first?.let {
-            "${it.year}年${it.monthValue}月—${today.year}年${today.monthValue}月"
-        } ?: noRecords
-        fun yearTitle(year: Int): String = "${year}年"
-        fun monthTitle(year: Int, month: Int): String = "${year}年 ${month}月"
-        fun monthLabel(month: Int): String = "${month}月"
+        val weekdays: List<String> get() = AppLanguageState.current.statistics.weekdays
+        val title: String get() = AppLanguageState.current.statistics.title
+        val countAndDays: String get() = AppLanguageState.current.statistics.countAndDays
+        val countUnit: String get() = AppLanguageState.current.statistics.countUnit
+        val dayUnit: String get() = AppLanguageState.current.statistics.dayUnit
+        val perDayUnit: String get() = AppLanguageState.current.statistics.perDayUnit
+        val recordedDaysLabel: String get() = AppLanguageState.current.statistics.recordedDaysLabel
+        val averageLabel: String get() = AppLanguageState.current.statistics.averageLabel
+        val dailyDetails: String get() = AppLanguageState.current.statistics.dailyDetails
+        val monthlyDetails: String get() = AppLanguageState.current.statistics.monthlyDetails
+        val yearlyDetails: String get() = AppLanguageState.current.statistics.yearlyDetails
+        val allHistory: String get() = AppLanguageState.current.statistics.allHistory
+        val ended: String get() = AppLanguageState.current.statistics.ended
+        val inProgress: String get() = AppLanguageState.current.statistics.inProgress
+        val noRecords: String get() = AppLanguageState.current.statistics.noRecords
+        val weekTab: String get() = AppLanguageState.current.statistics.weekTab
+        val monthTab: String get() = AppLanguageState.current.statistics.monthTab
+        val yearTab: String get() = AppLanguageState.current.statistics.yearTab
+        val allTab: String get() = AppLanguageState.current.statistics.allTab
+        val currentWeek: String get() = AppLanguageState.current.statistics.currentWeek
+        val currentMonth: String get() = AppLanguageState.current.statistics.currentMonth
+        val monthTotalCount: String get() = AppLanguageState.current.statistics.monthTotalCount
+        val currentYear: String get() = AppLanguageState.current.statistics.currentYear
+        val historyPeriod: String get() = AppLanguageState.current.statistics.historyPeriod
+        val selectRange: String get() = AppLanguageState.current.statistics.selectRange
+        val emptyTitle: String get() = AppLanguageState.current.statistics.emptyTitle
+        val emptyMessage: String get() = AppLanguageState.current.statistics.emptyMessage
+        val calendarAction: String get() = AppLanguageState.current.statistics.calendarAction
+        val dailyDistribution: String get() = AppLanguageState.current.statistics.dailyDistribution
+        val times: String get() = AppLanguageState.current.statistics.times
+        val weeklySummaryTitle: String get() = AppLanguageState.current.statistics.weeklySummaryTitle
+        val weeklyRecordedLabel: String get() = AppLanguageState.current.statistics.weeklyRecordedLabel
+        val weeklyLegendFourPlus: String get() = AppLanguageState.current.statistics.weeklyLegendFourPlus
+        val weeklyLegendThree: String get() = AppLanguageState.current.statistics.weeklyLegendThree
+        val weeklyLegendTwo: String get() = AppLanguageState.current.statistics.weeklyLegendTwo
+        val weeklyLegendOne: String get() = AppLanguageState.current.statistics.weeklyLegendOne
+        val weeklyLegendZero: String get() = AppLanguageState.current.statistics.weeklyLegendZero
+        val weeklyLegendUnrecorded: String get() = AppLanguageState.current.statistics.weeklyLegendUnrecorded
+        val weeklyLegendFuture: String get() = AppLanguageState.current.statistics.weeklyLegendFuture
+        val dailyCount: String get() = AppLanguageState.current.statistics.dailyCount
+        val byDate: String get() = AppLanguageState.current.statistics.byDate
+        val countComposition: String get() = AppLanguageState.current.statistics.countComposition
+        val explicitZero: String get() = AppLanguageState.current.statistics.explicitZero
+        val once: String get() = AppLanguageState.current.statistics.once
+        val twice: String get() = AppLanguageState.current.statistics.twice
+        val threePlus: String get() = AppLanguageState.current.statistics.threePlus
+        val unfilledDays: String get() = AppLanguageState.current.statistics.unfilledDays
+        val futureDays: String get() = AppLanguageState.current.statistics.futureDays
+        val noSavedDays: String get() = AppLanguageState.current.statistics.noSavedDays
+        val singleDayExtremes: String get() = AppLanguageState.current.statistics.singleDayExtremes
+        val byPositiveCount: String get() = AppLanguageState.current.statistics.byPositiveCount
+        val maximumDay: String get() = AppLanguageState.current.statistics.maximumDay
+        val minimumPositiveDay: String get() = AppLanguageState.current.statistics.minimumPositiveDay
+        val noPositiveDay: String get() = AppLanguageState.current.statistics.noPositiveDay
+        val future: String get() = AppLanguageState.current.statistics.future
+        val unset: String get() = AppLanguageState.current.statistics.unset
+        val unsetShort: String get() = AppLanguageState.current.statistics.unsetShort
+        val dash: String get() = AppLanguageState.current.statistics.dash
+        val annualCount: String get() = AppLanguageState.current.statistics.annualCount
+        val quarterShare: String get() = AppLanguageState.current.statistics.quarterShare
+        val noPositiveCount: String get() = AppLanguageState.current.statistics.noPositiveCount
+        val byCount: String get() = AppLanguageState.current.statistics.byCount
+        val quarterShareHint: String get() = AppLanguageState.current.statistics.quarterShareHint
+        val monthSummary: String get() = AppLanguageState.current.statistics.monthSummary
+        val fullMonths: String get() = AppLanguageState.current.statistics.fullMonths
+        val monthExtremesHint: String get() = AppLanguageState.current.statistics.monthExtremesHint
+        val maximumMonth: String get() = AppLanguageState.current.statistics.maximumMonth
+        val minimumMonth: String get() = AppLanguageState.current.statistics.minimumMonth
+        val monthAverageFormat: String get() = AppLanguageState.current.statistics.monthAverageFormat
+
+        fun detailCount(count: Long?): String =
+            AppLanguageState.current.statistics.detailCount(count)
+
+        fun detailDays(days: Int?): String =
+            AppLanguageState.current.statistics.detailDays(days)
+
+        fun historyStatus(first: LocalDate?, today: LocalDate): String =
+            AppLanguageState.current.statistics.historyStatus(first, today)
+
+        fun yearTitle(year: Int): String = AppLanguageState.current.statistics.yearTitle(year)
+
+        fun monthTitle(year: Int, month: Int): String =
+            AppLanguageState.current.statistics.monthTitle(year, month)
+
+        fun monthLabel(month: Int): String = AppLanguageState.current.statistics.monthLabel(month)
+
         fun dateDescription(date: LocalDate, status: String): String =
-            "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$status"
-        fun weekdayDateLabel(weekday: String, date: LocalDate): String = "$weekday ${date.dayOfMonth}日"
-        fun dayLabel(day: Int): String = "${day}日"
+            AppLanguageState.current.statistics.dateDescription(date, status)
+
+        fun weekdayDateLabel(weekday: String, date: LocalDate): String =
+            AppLanguageState.current.statistics.weekdayDateLabel(weekday, date)
+
+        fun dayLabel(day: Int): String = AppLanguageState.current.statistics.dayLabel(day)
+
         fun dateRangeTitle(start: LocalDate, end: LocalDate): String =
-            if (start.year == end.year) {
-                "${start.year}年 ${start.monthValue}月${start.dayOfMonth}日–" +
-                    "${end.monthValue}月${end.dayOfMonth}日"
-            } else {
-                "${start.year}年${start.monthValue}月${start.dayOfMonth}日–${end.year}年${end.monthValue}月${end.dayOfMonth}日"
-            }
+            AppLanguageState.current.statistics.dateRangeTitle(start, end)
+
         fun yearStatus(end: LocalDate, today: LocalDate): String =
-            if (end < today) ended else "截至${today.monthValue}月${today.dayOfMonth}日"
-        fun periodStatus(end: LocalDate, today: LocalDate): String = if (end < today) ended else inProgress
-        fun periodAction(period: String, previous: Boolean): String = when (period) {
-            weekTab -> if (previous) "上一周" else "下一周"
-            monthTab -> if (previous) "上个月" else "下个月"
-            yearTab -> if (previous) "上一年" else "下一年"
-            else -> if (previous) "上一段历史" else "下一段历史"
-        }
-        fun datePickerDescription(title: String): String = "$selectRange，当前$title"
-        fun emptyTitle(moduleLabel: String): String = Statistics.emptyTitle.format(moduleLabel)
-        fun periodCountLabel(period: String, moduleLabel: String): String = "$period · ${moduleLabel}次数"
-        fun statisticsLabel(period: String): String = "${period}统计"
-        fun average(value: Double): String = String.format(java.util.Locale.US, "%.1f 次/天", value)
-        fun averageNumber(value: Double): String = String.format(java.util.Locale.US, "%.1f", value)
-        fun annualAverage(value: Double): String = String.format(java.util.Locale.US, monthAverageFormat, value)
-        fun countText(count: Long): String = "$count 次"
-        fun weeklyRecordedDays(recorded: Int, total: Int): String = "$recorded / $total 天"
-        fun weeklyCountSuffix(count: Long): String = "（${count}次）"
-        fun daysText(days: Int): String = "$days 天"
-        fun savedDaysSubtitle(days: Int): String = "已填写 ${days} 天"
-        fun categoryDays(days: Int): String = "$days 天"
-        fun dayChartValue(day: Int, count: Long?, future: Boolean, recorded: Boolean): String = when {
-            future -> "${dayLabel(day)}，未来日期"
-            !recorded -> "${dayLabel(day)}，未填写"
-            else -> "${dayLabel(day)}，${countText(count ?: 0L)}"
-        }
-        fun monthDailyChartAccessibility(days: String): String = "每日次数图：$days"
+            AppLanguageState.current.statistics.yearStatus(end, today)
+
+        fun periodStatus(end: LocalDate, today: LocalDate): String =
+            AppLanguageState.current.statistics.periodStatus(end, today)
+
+        fun periodAction(period: String, previous: Boolean): String =
+            AppLanguageState.current.statistics.periodAction(period, previous)
+
+        fun datePickerDescription(title: String): String =
+            AppLanguageState.current.statistics.datePickerDescription(title)
+
+        fun emptyTitle(moduleLabel: String): String =
+            AppLanguageState.current.statistics.emptyTitle(moduleLabel)
+
+        fun periodCountLabel(period: String, moduleLabel: String): String =
+            AppLanguageState.current.statistics.periodCountLabel(period, moduleLabel)
+
+        fun statisticsLabel(period: String): String =
+            AppLanguageState.current.statistics.statisticsLabel(period)
+
+        fun average(value: Double): String = AppLanguageState.current.statistics.average(value)
+
+        fun averageNumber(value: Double): String =
+            AppLanguageState.current.statistics.averageNumber(value)
+
+        fun annualAverage(value: Double): String =
+            AppLanguageState.current.statistics.annualAverage(value)
+
+        fun countText(count: Long): String = AppLanguageState.current.statistics.countText(count)
+
+        fun weeklyRecordedDays(recorded: Int, total: Int): String =
+            AppLanguageState.current.statistics.weeklyRecordedDays(recorded, total)
+
+        fun weeklyCountSuffix(count: Long): String =
+            AppLanguageState.current.statistics.weeklyCountSuffix(count)
+
+        fun daysText(days: Int): String = AppLanguageState.current.statistics.daysText(days)
+
+        fun savedDaysSubtitle(days: Int): String =
+            AppLanguageState.current.statistics.savedDaysSubtitle(days)
+
+        fun categoryDays(days: Int): String = AppLanguageState.current.statistics.categoryDays(days)
+
+        fun dayChartValue(day: Int, count: Long?, future: Boolean, recorded: Boolean): String =
+            AppLanguageState.current.statistics.dayChartValue(day, count, future, recorded)
+
+        fun monthDailyChartAccessibility(days: String): String =
+            AppLanguageState.current.statistics.monthDailyChartAccessibility(days)
+
         fun monthSummaryAccessibility(totalCount: Long, recordedDays: Int, average: Double): String =
-            "本月总次数${countText(totalCount)}；发生天数${daysText(recordedDays)}；日均次数${average(average)}"
+            AppLanguageState.current.statistics.monthSummaryAccessibility(totalCount, recordedDays, average)
+
         fun monthCompositionAccessibility(
             savedDays: Int,
             explicitZeroDays: Int,
@@ -506,65 +559,78 @@ internal object AppCopy {
             threePlusCountDays: Int,
             unfilledDays: Int,
             futureDays: Int,
-        ): String =
-            "次数分布：已填写 $savedDays 天；0 次 $explicitZeroDays 天；1 次 $oneCountDays 天；" +
-                "2 次 $twoCountDays 天；3 次以上 $threePlusCountDays 天；" +
-                "未填写 $unfilledDays 天；未来日期 $futureDays 天"
+        ): String = AppLanguageState.current.statistics.monthCompositionAccessibility(
+            savedDays, explicitZeroDays, oneCountDays, twoCountDays,
+            threePlusCountDays, unfilledDays, futureDays,
+        )
+
         fun monthExtremeAccessibility(label: String, count: Long): String =
-            "$label，${countText(count)}"
-        fun percentage(value: Double): String = String.format(java.util.Locale.US, "%.0f%%", value)
-        fun quarterLabel(quarter: Int): String = "Q$quarter"
+            AppLanguageState.current.statistics.monthExtremeAccessibility(label, count)
+
+        fun percentage(value: Double): String = AppLanguageState.current.statistics.percentage(value)
+
+        fun quarterLabel(quarter: Int): String =
+            AppLanguageState.current.statistics.quarterLabel(quarter)
+
         fun monthChartLabel(month: Int, isFuture: Boolean, recorded: Boolean, count: Long?): String =
-            "${month}月 ${chartMonthValue(isFuture, recorded, count)}"
-        fun totalCountAccessibility(total: Long, quarters: String): String = "季度占比：总次数 $total 次；$quarters"
-        fun annualChartAccessibility(months: String): String = "年度次数折线图：$months"
-        fun chartMonthValue(isFuture: Boolean, recorded: Boolean, count: Long?): String = when {
-            isFuture -> future
-            !recorded -> unset
-            else -> countText(count ?: 0L)
-        }.toString()
+            AppLanguageState.current.statistics.monthChartLabel(month, isFuture, recorded, count)
+
+        fun totalCountAccessibility(total: Long, quarters: String): String =
+            AppLanguageState.current.statistics.totalCountAccessibility(total, quarters)
+
+        fun annualChartAccessibility(months: String): String =
+            AppLanguageState.current.statistics.annualChartAccessibility(months)
+
+        fun chartMonthValue(isFuture: Boolean, recorded: Boolean, count: Long?): String =
+            AppLanguageState.current.statistics.chartMonthValue(isFuture, recorded, count)
     }
 
     object Settings {
-        const val title = "设置"
-        const val open = "打开设置"
-        const val back = "返回主页"
-        const val accountSection = "账号与同步"
-        const val localAccountTitle = "本机记录"
-        const val localAccountSummary = "记录只保存在这台设备；登录后可同步并在换机时恢复。"
-        const val signedInAccountSummary = "查看同步状态、手动同步或管理账号"
-        const val dataSection = "数据与隐私"
-        const val localFirstTitle = "本机优先"
-        const val localFirstSummary = "所有记录先保存在本机；未登录时不会上传。"
-        const val privacyTitle = "隐私保护"
-        const val privacySummary = "不含广告、分析或崩溃上报 SDK"
-        const val aboutSection = "关于"
-        const val version = "版本"
-        const val license = "开源许可"
-        const val licenseValue = "Apache 2.0"
+        val title: String get() = AppLanguageState.current.settings.title
+        val open: String get() = AppLanguageState.current.settings.open
+        val back: String get() = AppLanguageState.current.settings.back
+        val accountSection: String get() = AppLanguageState.current.settings.accountSection
+        val localAccountTitle: String get() = AppLanguageState.current.settings.localAccountTitle
+        val localAccountSummary: String get() = AppLanguageState.current.settings.localAccountSummary
+        val signedInAccountSummary: String get() = AppLanguageState.current.settings.signedInAccountSummary
+        val generalSection: String get() = AppLanguageState.current.settings.generalSection
+        val languageTitle: String get() = AppLanguageState.current.settings.languageTitle
+        val languageZh: String get() = AppLanguageState.current.settings.languageZh
+        val languageEn: String get() = AppLanguageState.current.settings.languageEn
+        val languageDialogTitle: String get() = AppLanguageState.current.settings.languageDialogTitle
+        val dataSection: String get() = AppLanguageState.current.settings.dataSection
+        val localFirstTitle: String get() = AppLanguageState.current.settings.localFirstTitle
+        val localFirstSummary: String get() = AppLanguageState.current.settings.localFirstSummary
+        val privacyTitle: String get() = AppLanguageState.current.settings.privacyTitle
+        val privacySummary: String get() = AppLanguageState.current.settings.privacySummary
+        val aboutSection: String get() = AppLanguageState.current.settings.aboutSection
+        val version: String get() = AppLanguageState.current.settings.version
+        val license: String get() = AppLanguageState.current.settings.license
+        val licenseValue: String get() = AppLanguageState.current.settings.licenseValue
 
-        fun accountDescription(title: String, status: String): String = "$title，$status"
+        fun accountDescription(title: String, status: String): String =
+            AppLanguageState.current.settings.accountDescription(title, status)
     }
 
     object NavigationBar {
-        const val calendar = "日历"
-        const val statistics = "统计"
+        val calendar: String get() = AppLanguageState.current.navigationBar.calendar
+        val statistics: String get() = AppLanguageState.current.navigationBar.statistics
     }
 
     object Components {
-        const val decrease = "减少一次"
-        const val increase = "增加一次"
+        val decrease: String get() = AppLanguageState.current.components.decrease
+        val increase: String get() = AppLanguageState.current.components.increase
 
-        /** Joins TalkBack-visible parts with the app's fixed semantics separator. */
-        fun joinSemantics(vararg parts: String): String = parts.joinToString(SEMANTICS_SEPARATOR)
+        fun joinSemantics(vararg parts: String): String =
+            AppLanguageState.current.joinSemantics(*parts)
 
         fun joinSemantics(parts: Iterable<String>): String =
-            parts.joinToString(SEMANTICS_SEPARATOR)
+            AppLanguageState.current.joinSemantics(parts)
     }
 
     /** Locale used for user-visible date/weekday formatting. */
-    val DISPLAY_LOCALE: Locale = Locale.SIMPLIFIED_CHINESE
+    val DISPLAY_LOCALE: Locale get() = AppLanguageState.current.displayLocale
 
     /** TalkBack-visible list separator used across app semantic descriptions. */
-    const val SEMANTICS_SEPARATOR = "，"
+    val SEMANTICS_SEPARATOR: String get() = AppLanguageState.current.semanticsSeparator
 }

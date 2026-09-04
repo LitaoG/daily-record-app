@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.litaog.dailyrecord.core.auth.AuthState
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.AppLanguage
 import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.di.buildAccountDeletionCoordinator
@@ -58,6 +59,7 @@ import kotlinx.coroutines.launch
 internal fun DailyRecordRoot(
     database: DailyRecordDatabase,
     servicesProvider: () -> FirebaseServices,
+    onLanguageChanged: (AppLanguage) -> Unit = {},
 ) {
     val context = LocalContext.current
     val rootScope = rememberCoroutineScope()
@@ -119,6 +121,7 @@ internal fun DailyRecordRoot(
                     authOpenedFromLocal = true
                     continueOffline = false
                 },
+                onLanguageChanged = onLanguageChanged,
             )
         }
         return
@@ -225,6 +228,7 @@ internal fun DailyRecordRoot(
                 recoveryRestartRevision = recoveryRestartRevision,
                 onRetryDeletionRecovery = { recoveryRetryRevision += 1 },
                 hasRecoveryConflict = recoveryConflictOwners.isNotEmpty(),
+                onLanguageChanged = onLanguageChanged,
                 onReplaceExistingLocal = {
                     val ownerId = recoveryConflictOwners.firstOrNull() ?: return@SignedInRoot
                     rootScope.launch {
@@ -247,7 +251,11 @@ internal fun DailyRecordRoot(
 }
 
 @Composable
-private fun LocalRoot(database: DailyRecordDatabase, onSignIn: () -> Unit) {
+private fun LocalRoot(
+    database: DailyRecordDatabase,
+    onSignIn: () -> Unit,
+    onLanguageChanged: (AppLanguage) -> Unit,
+) {
     val handBrewRepository = remember(database) {
         RoomHandBrewRecordRepository(database = database, ownerId = LOCAL_OWNER_ID)
     }
@@ -258,6 +266,7 @@ private fun LocalRoot(database: DailyRecordDatabase, onSignIn: () -> Unit) {
         repository = handBrewRepository,
         sexRepository = sexRepository,
         onSignIn = onSignIn,
+        onLanguageChanged = onLanguageChanged,
     )
 }
 
@@ -275,6 +284,7 @@ private fun SignedInRoot(
     hasRecoveryConflict: Boolean,
     onReplaceExistingLocal: () -> Unit,
     onAccountDeletedWithLocalRecords: () -> Unit,
+    onLanguageChanged: (AppLanguage) -> Unit,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val ownerId = state.account.uid
@@ -410,6 +420,7 @@ private fun SignedInRoot(
         syncStatus = syncStatus,
         onSyncNow = { scope.launch { syncManager.syncNow() } },
         onSignOut = services.authRepository::signOut,
+        onLanguageChanged = onLanguageChanged,
         onDeleteAccount = { password, localData ->
             val completion = CompletableDeferred<Result<Unit>>()
             accountDeletionScope.launch {

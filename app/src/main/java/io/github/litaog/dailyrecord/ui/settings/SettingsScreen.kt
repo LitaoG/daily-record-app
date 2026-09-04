@@ -2,6 +2,7 @@ package io.github.litaog.dailyrecord.ui.settings
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +29,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,16 +43,19 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.AppLanguage
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.color
 import io.github.litaog.dailyrecord.ui.account.label
 import io.github.litaog.dailyrecord.ui.components.BrandIcon
 import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
+import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
@@ -70,12 +78,15 @@ internal fun SettingsScreen(
     accountEmail: String?,
     syncStatus: SyncStatus,
     moduleColors: RecordModuleColorTokens,
+    language: AppLanguage,
+    onLanguageSelected: (AppLanguage) -> Unit,
     onBack: () -> Unit,
     onOpenAccount: () -> Unit,
     onSignIn: (() -> Unit)?,
 ) {
     BackHandler(onBack = onBack)
 
+    var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     val backdropBrush = remember(moduleColors) { dailyRecordBackdropBrush(moduleColors) }
     Box(
         modifier = Modifier
@@ -116,6 +127,22 @@ internal fun SettingsScreen(
                         onOpenAccount = onOpenAccount,
                         onSignIn = onSignIn,
                     )
+                }
+                item {
+                    SettingsSectionTitle(
+                        text = AppCopy.Settings.generalSection,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+                item {
+                    SettingsCard(contentSpacing = 0.dp) {
+                        LanguageSettingsRow(
+                            language = language,
+                            theme = moduleColors.brandIconTheme,
+                            tint = moduleColors.primary,
+                            onClick = { showLanguageDialog = true },
+                        )
+                    }
                 }
                 item {
                     SettingsSectionTitle(
@@ -167,6 +194,18 @@ internal fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showLanguageDialog) {
+        LanguageSelectionDialog(
+            currentLanguage = language,
+            tint = moduleColors.primary,
+            onDismiss = { showLanguageDialog = false },
+            onSelected = { selected ->
+                onLanguageSelected(selected)
+                showLanguageDialog = false
+            },
+        )
     }
 }
 
@@ -430,4 +469,126 @@ private fun AboutRow(
             style = MaterialTheme.typography.bodyMedium,
         )
     }
+}
+
+@Composable
+private fun LanguageSettingsRow(
+    language: AppLanguage,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_language_row")
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = AppCopy.Components.joinSemantics(
+                    AppCopy.Settings.languageTitle,
+                    languageDisplayName(language),
+                )
+            }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(
+            icon = BrandIconAsset.Edit,
+            theme = theme,
+            tint = tint,
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = AppCopy.Settings.languageTitle,
+            color = DailyRecordText,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = languageDisplayName(language),
+            color = DailyRecordTextSecondary,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        BrandIcon(
+            asset = BrandIconAsset.Next,
+            theme = theme,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun LanguageSelectionDialog(
+    currentLanguage: AppLanguage,
+    tint: Color,
+    onDismiss: () -> Unit,
+    onSelected: (AppLanguage) -> Unit,
+) {
+    DailyRecordDialog(
+        title = AppCopy.Settings.languageDialogTitle,
+        testTag = "settings_language_dialog",
+        onDismissRequest = onDismiss,
+    ) {
+        AppLanguage.entries.forEach { language ->
+            LanguageOptionRow(
+                label = languageDisplayName(language),
+                selected = language == currentLanguage,
+                tint = tint,
+                onClick = { onSelected(language) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun LanguageOptionRow(
+    label: String,
+    selected: Boolean,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .testTag("settings_language_option")
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                this.selected = selected
+                role = Role.RadioButton
+                contentDescription = AppCopy.selectedState(label, selected)
+            }
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = if (selected) tint else DailyRecordText,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(
+                    if (selected) tint else Color.Transparent,
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (selected) tint else DailyRecordDivider,
+                    shape = CircleShape,
+                ),
+        )
+    }
+}
+
+private fun languageDisplayName(language: AppLanguage): String = when (language) {
+    AppLanguage.ZH -> AppCopy.Settings.languageZh
+    AppLanguage.EN -> AppCopy.Settings.languageEn
 }

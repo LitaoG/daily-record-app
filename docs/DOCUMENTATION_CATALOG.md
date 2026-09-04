@@ -1,7 +1,7 @@
 # 文档目录与 AI 阅读索引
 
 状态：`current — authoritative documentation registry`
-最后复核：2026-08-16
+最后复核：2026-09-01
 
 本文是公共仓库中全部 Git 跟踪 Markdown 文档的逐文件索引，也是 AI 开始工作前判断“先读什么、哪些只是历史证据”的唯一入口。当前仓库没有被 Git 跟踪的 `.doc`、`.docx` 或 `.markdown` 文件；如果以后新增或删除任意文档，必须在同一提交中更新本文，`scripts/documentation-catalog.test.mjs` 会检查目录是否完整。当前 README 运行截图及其复现边界单独登记在产品资产目录中，历史审计截图不再冒充首页当前画面。
 
@@ -57,6 +57,8 @@
 | `docs/product/BRIGHT_GLASS_THEME.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前双模块玻璃主题的实现基线 |
 | `docs/product/MONTH_STATISTICS_REDESIGN.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 月统计逐日脉冲图、分布和极值规则 |
 | `docs/product/SETTINGS_HUB_GOAL.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已实现设置中心的目标、范围和验收 |
+| `docs/product/I18N_GOAL.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 双语适配（中文默认 + English）的目标、机制、简写策略与阶段证据 |
+| `docs/product/OPTIMIZATION_2026-08_LOG.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 2026-08 性能与测试加固日志（优化任务与验证证据） |
 | `docs/product/UI_REDESIGN_RESEARCH_BASELINE.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已接受的竞品研究和设计取舍 |
 | `docs/product/RESEARCH_OPEN_SOURCE.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 开源借鉴、许可证和不引入依赖的边界 |
 | `docs/product/DAILY_USE_FEEDBACK.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 日常使用反馈格式和隐私脱敏要求 |
@@ -69,7 +71,8 @@
 | `docs/product/design/quiet-private-journal-v2/README.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前日历、记录页和统计页的视觉目标 |
 | `docs/product/design/record-details-v1/README.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 逐次详情设计与运行时实现边界 |
 | `docs/product/audit/README.md` | 当前索引 | P1 | 按范围 | 按范围 | 按范围 | 所有审计目录的历史状态和阅读路由 |
-| `docs/product/audit/2026-08-15-main-code-audit/README.md` | 历史证据（当前最新审计） | P1 | 按范围 | 按范围 | 按范围 | 最近一次安全、性能、生命周期和测试审计结果 |
+| `docs/product/audit/2026-08-15-main-code-audit/README.md` | 历史证据 | P1 | 按范围 | 按范围 | 按范围 | 最近一次安全、性能、生命周期和测试审计结果 |
+| `docs/product/audit/2026-09-01-i18n-bilingual/README.md` | 历史证据 | P1 | 按范围 | 按范围 | 按范围 | 双语适配运行证据（API 34 模拟器 ZH/EN 与 200% 字体截图、语义抽查） |
 | `docs/product/audit/2026-08-11-issues-123-145/README.md` | 历史证据 | P2 | 按范围 | 按范围 | 按范围 | Issues #123–#145 的第三轮审计和验证 |
 | `docs/product/audit/2026-08-09-record-details-stage4-stage5/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 记录详情 Stage 4–5 当时的验收和 Draft PR 证据 |
 | `docs/product/audit/2026-08-03-stage5-stage6-release/README.md` | 发布历史 | P3 | 留档 | 否 | 否 | beta.2 的最终测试、合并、签名和发布链 |

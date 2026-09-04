@@ -43,13 +43,13 @@ internal data class RecordModuleUiSpec(
     val icon: @Composable (Modifier, Color) -> Unit,
 )
 
-internal val HandBrewModuleSpec = RecordModuleUiSpec(
+internal fun handBrewUiSpec(): RecordModuleUiSpec = RecordModuleUiSpec(
     module = RecordModule.HandBrew,
     label = AppCopy.RecordModule.handBrewLabel,
     questionToday = AppCopy.RecordModule.handBrewQuestionToday,
     questionPast = AppCopy.RecordModule.handBrewQuestionPast,
     explicitZeroText = AppCopy.RecordModule.handBrewZero,
-    semanticCountLabel = AppCopy.RecordModule.handBrewLabel,
+    semanticCountLabel = AppCopy.RecordModule.handBrewAccessibilityLabel,
     colors = HandBrewColorTokens,
     icon = { modifier, color ->
         HandBrewIcon(
@@ -59,13 +59,13 @@ internal val HandBrewModuleSpec = RecordModuleUiSpec(
     },
 )
 
-internal val SexModuleSpec = RecordModuleUiSpec(
+internal fun sexUiSpec(): RecordModuleUiSpec = RecordModuleUiSpec(
     module = RecordModule.Sex,
     label = AppCopy.RecordModule.sexLabel,
     questionToday = AppCopy.RecordModule.sexQuestionToday,
     questionPast = AppCopy.RecordModule.sexQuestionPast,
     explicitZeroText = AppCopy.RecordModule.sexZero,
-    semanticCountLabel = AppCopy.RecordModule.sexLabel,
+    semanticCountLabel = AppCopy.RecordModule.sexAccessibilityLabel,
     colors = SexColorTokens,
     icon = { modifier, color ->
         SexIcon(
@@ -76,8 +76,8 @@ internal val SexModuleSpec = RecordModuleUiSpec(
 )
 
 internal fun RecordModule.uiSpec(): RecordModuleUiSpec = when (this) {
-    RecordModule.HandBrew -> HandBrewModuleSpec
-    RecordModule.Sex -> SexModuleSpec
+    RecordModule.HandBrew -> handBrewUiSpec()
+    RecordModule.Sex -> sexUiSpec()
 }
 
 internal data class RecordDetailEntry(
