@@ -202,8 +202,11 @@ internal fun SettingsScreen(
             tint = moduleColors.primary,
             onDismiss = { showLanguageDialog = false },
             onSelected = { selected ->
-                onLanguageSelected(selected)
+                // Settle the dialog state before requesting the language
+                // change: the callback may recreate the activity, and the
+                // restored dialog must not reopen.
                 showLanguageDialog = false
+                onLanguageSelected(selected)
             },
         )
     }
