@@ -94,6 +94,7 @@ private data class TimePickerRequest(
     val initialMinutes: Int,
 )
 
+// Legacy single-module adapter retained for tests; production uses DailyCountRecordScreen.
 @Composable
 internal fun RecordScreen(
     date: LocalDate,
