@@ -390,10 +390,10 @@ private fun FeelingAction(
         BrandIcon(
             asset = BrandIconAsset.Edit,
             theme = theme,
-            // The edit glyph carries wide transparent padding inside its
-            // box; keep a compact box and optically shift the glyph to the
-            // content start so the label is not pushed against the right edge.
-            modifier = Modifier.size(20.dp).offset(x = (-3).dp),
+            // The edit glyph occupies ~31% of its box height (wide transparent
+            // padding): a 40dp box renders the pen about as tall as the
+            // 14sp label, and the optical shift keeps it hugging the left.
+            modifier = Modifier.size(40.dp).offset(x = (-6).dp),
         )
         Text(
             text = label,
