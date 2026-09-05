@@ -73,6 +73,7 @@
 | `docs/product/audit/README.md` | 当前索引 | P1 | 按范围 | 按范围 | 按范围 | 所有审计目录的历史状态和阅读路由 |
 | `docs/product/audit/2026-08-15-main-code-audit/README.md` | 历史证据 | P1 | 按范围 | 按范围 | 按范围 | 最近一次安全、性能、生命周期和测试审计结果 |
 | `docs/product/audit/2026-09-01-i18n-bilingual/README.md` | 历史证据 | P1 | 按范围 | 按范围 | 按范围 | 双语适配运行证据（API 34 模拟器 ZH/EN 与 200% 字体截图、语义抽查） |
+| `docs/product/audit/2026-09-05-feeling-button/README.md` | 历史证据 | P2 | 按范围 | 按范围 | 按范围 | 写感受按钮对齐修复证据（裁边前后对比截图） |
 | `docs/product/audit/2026-08-11-issues-123-145/README.md` | 历史证据 | P2 | 按范围 | 按范围 | 按范围 | Issues #123–#145 的第三轮审计和验证 |
 | `docs/product/audit/2026-08-09-record-details-stage4-stage5/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 记录详情 Stage 4–5 当时的验收和 Draft PR 证据 |
 | `docs/product/audit/2026-08-03-stage5-stage6-release/README.md` | 发布历史 | P3 | 留档 | 否 | 否 | beta.2 的最终测试、合并、签名和发布链 |
