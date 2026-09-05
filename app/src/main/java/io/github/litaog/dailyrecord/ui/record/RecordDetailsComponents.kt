@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -389,10 +390,10 @@ private fun FeelingAction(
         BrandIcon(
             asset = BrandIconAsset.Edit,
             theme = theme,
-            // The edit asset is cropped to the pen glyph: the box hugs the
-            // shape, so the icon sits at the content start and the label
-            // keeps even breathing room on both sides.
-            modifier = Modifier.size(24.dp),
+            // Optical alignment: nudge the glyph toward the content start so
+            // it sits visibly left of the label instead of centering in its
+            // box. The click target and semantics stay on the full button.
+            modifier = Modifier.size(24.dp).offset(x = (-2).dp),
         )
         Text(
             text = label,
