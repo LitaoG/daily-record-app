@@ -1,7 +1,7 @@
 # 双语适配 Goal（i18n：中文默认 + English）
 
-状态：`in progress — 本地分支 agent/optim-perf 实现中`
-最后更新：2026-09-01
+状态：`completed — 已合入 main（PR #249），分支已清理`
+最后更新：2026-09-05
 
 来源：2026-08-16 用户直接需求。GitHub 远端暂不可用，全部阶段在本地分支实现，远端恢复后按本文件末尾的 Issue 草稿补建 Issue 并推送。
 

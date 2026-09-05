@@ -19,8 +19,9 @@ const commonRoot = path.join(
 );
 // Bilingual contract: Chinese copy lives only in the Chinese language file,
 // and the English language file may only carry the self-named "中文" option.
+// AppCopy.kt is intentionally NOT excluded: as a pure delegation facade it
+// must stay Han-free, and the scan enforces that.
 const allowedCopyFiles = new Set([
-  path.join(commonRoot, "AppCopy.kt"),
   path.join(commonRoot, "ZhStrings.kt"),
 ]);
 const englishLanguageFile = path.join(commonRoot, "EnStrings.kt");
