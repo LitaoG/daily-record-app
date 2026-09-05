@@ -36,17 +36,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
-import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.core.statistics.StatisticsUiModel
 import io.github.litaog.dailyrecord.core.statistics.buildDailyCountStatistics
 import io.github.litaog.dailyrecord.core.statistics.nextPeriodAnchor
 import io.github.litaog.dailyrecord.core.statistics.previousPeriodAnchor
-import io.github.litaog.dailyrecord.ui.handBrewUiSpec
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
-import io.github.litaog.dailyrecord.ui.asDailyCountEntry
 import io.github.litaog.dailyrecord.ui.components.IconArrowButton
 import io.github.litaog.dailyrecord.ui.components.PeriodTabs
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
@@ -62,33 +59,6 @@ import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import java.time.LocalDate
-
-@Composable
-internal fun StatisticsScreen(
-    today: LocalDate,
-    anchorDate: LocalDate,
-    earliestDate: LocalDate,
-    records: List<HandBrewRecord>,
-    onAnchorDateChanged: (LocalDate) -> Unit,
-    onOpenDatePicker: () -> Unit,
-    modifier: Modifier = Modifier,
-    onOpenPeriodPicker: (StatisticsPeriod) -> Unit = { onOpenDatePicker() },
-    onOpenCalendar: () -> Unit = {},
-) = DailyCountStatisticsScreen(
-    today = today,
-    anchorDate = anchorDate,
-    earliestDate = earliestDate,
-    records = records.map(HandBrewRecord::asDailyCountEntry),
-    moduleSpec = handBrewUiSpec(),
-    selectedModule = RecordModule.HandBrew,
-    availableModules = listOf(handBrewUiSpec()),
-    onModuleSelected = {},
-    onAnchorDateChanged = onAnchorDateChanged,
-    onOpenDatePicker = onOpenDatePicker,
-    modifier = modifier,
-    onOpenPeriodPicker = onOpenPeriodPicker,
-    onOpenCalendar = onOpenCalendar,
-)
 
 @Composable
 internal fun DailyCountStatisticsScreen(

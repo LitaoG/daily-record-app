@@ -63,6 +63,7 @@ import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import java.time.LocalDate
 import java.time.YearMonth
 
+// Legacy single-module adapter retained for tests; production uses DailyCountCalendarScreen.
 @Composable
 internal fun CalendarScreen(
     month: YearMonth,

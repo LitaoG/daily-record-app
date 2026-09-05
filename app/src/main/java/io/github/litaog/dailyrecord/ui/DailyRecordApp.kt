@@ -169,15 +169,18 @@ fun DailyRecordApp(
     val displayedMonth = YearMonth.from(browseDate)
     // The full-history flow drives the statistics screen and the initial
     // loading gate; the calendar and record screen consume a month-scoped
-    // flow so saves outside the browsed month no longer rebuild their models.
+    // flow so saves outside the consumed month no longer rebuild their models.
+    // The scope follows the record screen's selected date when open, so the
+    // month summary can never desync from the edited date.
+    val recordsMonth = selectedDate?.let(YearMonth::from) ?: displayedMonth
     val recordsFlow = remember(selectedController, effectiveToday) {
         selectedController.observeRecords(EARLIEST_SUPPORTED_DATE, effectiveToday.plusDays(1))
             .distinctUntilChanged()
     }
-    val monthRecordsFlow = remember(selectedController, displayedMonth) {
+    val monthRecordsFlow = remember(selectedController, recordsMonth) {
         selectedController.observeRecords(
-            displayedMonth.atDay(1),
-            displayedMonth.plusMonths(1).atDay(1),
+            recordsMonth.atDay(1),
+            recordsMonth.plusMonths(1).atDay(1),
         ).distinctUntilChanged()
     }
     val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
@@ -202,12 +205,12 @@ fun DailyRecordApp(
     }
     val allRecords = allRecordsState.orEmpty()
     // Until the month-scoped flow emits (or after a month switch), derive the
-    // browsed month from the already-loaded full list so no frame ever shows
+    // consumed month from the already-loaded full list so no frame ever shows
     // an under-filled calendar.
-    val fallbackMonthRecords = remember(allRecords, displayedMonth) {
-        allRecords.filter { YearMonth.from(it.localDate) == displayedMonth }
+    val fallbackMonthRecords = remember(allRecords, recordsMonth) {
+        allRecords.filter { YearMonth.from(it.localDate) == recordsMonth }
     }
-    val displayedMonthRecords = scopedMonthRecordsState ?: fallbackMonthRecords
+    val monthRecords = scopedMonthRecordsState ?: fallbackMonthRecords
 
     if (selectedDate != null) {
         // Key the record screen by module so each module keeps its own
@@ -219,7 +222,7 @@ fun DailyRecordApp(
                 today = effectiveToday,
                 controller = selectedController,
                 moduleSpec = moduleSpec,
-                monthRecords = displayedMonthRecords,
+                monthRecords = monthRecords,
                 onBack = { selectedDateText = null },
                 // Saving is an in-place action. Keep the record page mounted so
                 // the user can see the saved feeling and continue editing this
@@ -288,7 +291,7 @@ fun DailyRecordApp(
                         month = displayedMonth,
                         focusedDate = browseDate,
                         today = effectiveToday,
-                        records = displayedMonthRecords,
+                        records = monthRecords,
                         moduleSpec = moduleSpec,
                         selectedModule = selectedModule,
                         availableModules = availableModuleSpecs,

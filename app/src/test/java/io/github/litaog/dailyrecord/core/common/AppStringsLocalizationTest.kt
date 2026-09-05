@@ -119,6 +119,17 @@ class AppStringsLocalizationTest {
         assertEquals("9 次以上", AppCopy.Calendar.countDescription(9))
     }
 
+    @Test
+    fun weekdayListsStayStructurallyAlignedAcrossLanguages() {
+        val zhWeekdays = ZhStrings.calendar.weekdays
+        val enWeekdays = inEnglish { AppCopy.Calendar.weekdays }
+        assertEquals(7, zhWeekdays.size)
+        assertEquals(zhWeekdays.size, enWeekdays.size)
+        assertEquals(listOf("M", "T", "W", "T", "F", "S", "S"), enWeekdays)
+        assertEquals(enWeekdays, inEnglish { AppCopy.Statistics.weekdays })
+        assertEquals(enWeekdays, inEnglish { AppCopy.Navigation.weekdays })
+    }
+
     private fun <T> inEnglish(block: () -> T): T {
         val previous = AppLanguageState.current
         AppLanguageState.current = EnStrings
@@ -140,6 +151,15 @@ class AppStringsLocalizationTest {
                     it.returnType == String::class.java
             }
             methods.forEach { values += it.invoke(target) as String }
+            val stringLists = target.javaClass.methods.filter {
+                it.name.startsWith("get") &&
+                    it.name != "getClass" &&
+                    it.parameterCount == 0 &&
+                    it.returnType == List::class.java
+            }
+            stringLists.forEach { method ->
+                values += (method.invoke(target) as List<*>).filterIsInstance<String>()
+            }
             val nested = target.javaClass.methods.filter {
                 it.name.startsWith("get") &&
                     it.parameterCount == 0 &&
