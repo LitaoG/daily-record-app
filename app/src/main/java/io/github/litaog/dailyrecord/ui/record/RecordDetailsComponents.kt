@@ -389,7 +389,10 @@ private fun FeelingAction(
         BrandIcon(
             asset = BrandIconAsset.Edit,
             theme = theme,
-            modifier = Modifier.size(32.dp),
+            // The edit glyph carries transparent padding inside its box; keep
+            // the box compact so the icon hugs the left edge instead of
+            // pushing the label against the right edge.
+            modifier = Modifier.size(24.dp),
         )
         Text(
             text = label,
