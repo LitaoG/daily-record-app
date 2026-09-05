@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -389,10 +390,10 @@ private fun FeelingAction(
         BrandIcon(
             asset = BrandIconAsset.Edit,
             theme = theme,
-            // The edit glyph carries transparent padding inside its box; keep
-            // the box compact so the icon hugs the left edge instead of
-            // pushing the label against the right edge.
-            modifier = Modifier.size(24.dp),
+            // The edit glyph carries wide transparent padding inside its
+            // box; keep a compact box and optically shift the glyph to the
+            // content start so the label is not pushed against the right edge.
+            modifier = Modifier.size(20.dp).offset(x = (-3).dp),
         )
         Text(
             text = label,
