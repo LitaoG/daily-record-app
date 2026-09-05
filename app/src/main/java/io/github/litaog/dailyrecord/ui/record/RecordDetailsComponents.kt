@@ -383,17 +383,17 @@ private fun FeelingAction(
                 contentDescription = AppCopy.Record.detailFeelingActionDescription(occurrence, label)
             }
             .testTag("record_detail_${occurrence}_feeling")
-            .padding(horizontal = DailyRecordSpacing.Compact),
+            .padding(start = 0.dp, end = DailyRecordSpacing.Compact),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Compact),
     ) {
         BrandIcon(
             asset = BrandIconAsset.Edit,
             theme = theme,
-            // Optical alignment: nudge the glyph toward the content start so
-            // it sits visibly left of the label instead of centering in its
-            // box. The click target and semantics stay on the full button.
-            modifier = Modifier.size(24.dp).offset(x = (-2).dp),
+            // Optical alignment: with the cropped glyph and zero start
+            // padding, a 1dp nudge lands the pen flush against the button
+            // border. The click target and semantics stay on the full button.
+            modifier = Modifier.size(24.dp).offset(x = (-1).dp),
         )
         Text(
             text = label,
