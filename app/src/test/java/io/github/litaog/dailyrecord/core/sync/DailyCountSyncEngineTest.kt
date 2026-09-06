@@ -3,11 +3,13 @@ package io.github.litaog.dailyrecord.core.sync
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
 import io.github.litaog.dailyrecord.core.database.SYNCED
+import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DailyCountSyncEngineTest {
@@ -116,13 +118,60 @@ class DailyCountSyncEngineTest {
         assertEquals(5, requireNotNull(remote.server[date]).brewCount)
     }
 
+    @Test
+    fun dataPoisonDateIsQuarantinedWhileOtherDatesStillUpload() = runSync {
+        val store = FakeStore()
+        val remote = FakeRemote()
+        val engine = DailyCountSyncEngine(store, remote)
+        val goodDate = date.plusDays(1)
+        store.rows[date] = entity(brewCount = 1, updatedAt = t0, remoteRevision = 0)
+        store.rows[goodDate] = entity(
+            localDate = goodDate,
+            brewCount = 2,
+            updatedAt = t0.plusSeconds(1),
+            remoteRevision = 0,
+        )
+        // The server refuses the first date with a data error (for example a
+        // detail the callable rejects); the rest of the queue must proceed.
+        remote.poisonDates = mapOf(
+            date to ClassifiedSyncException(SyncFailureKind.Data, IllegalArgumentException("bad details")),
+        )
+
+        val result = engine.syncOnce(owner)
+
+        assertEquals(1, result.uploaded)
+        assertEquals(1, result.rejectedRemoteRecords)
+        assertEquals(SYNCED, requireNotNull(store.rows[goodDate]).syncState)
+        // The poisoned row stays pending for an explicit user retry instead of
+        // wedging the module or being dropped silently.
+        assertEquals(SYNC_PENDING, requireNotNull(store.rows[date]).syncState)
+        assertEquals(2, remote.fetchCalls)
+    }
+
+    @Test
+    fun nonDataCommitFailureStillAbortsTheModuleAttempt() = runSync {
+        val store = FakeStore()
+        val remote = FakeRemote()
+        val engine = DailyCountSyncEngine(store, remote)
+        store.rows[date] = entity(brewCount = 1, updatedAt = t0, remoteRevision = 0)
+        remote.poisonDates = mapOf(
+            date to ClassifiedSyncException(SyncFailureKind.Network, IOException("offline")),
+        )
+
+        val result = runCatching { engine.syncOnce(owner) }
+
+        assertTrue(result.exceptionOrNull() is ClassifiedSyncException)
+        assertEquals(SYNC_PENDING, requireNotNull(store.rows[date]).syncState)
+    }
+
     private fun entity(
         brewCount: Int,
         updatedAt: Instant,
         remoteRevision: Long,
+        localDate: LocalDate = date,
     ) = HandBrewRecordEntity(
-        id = "record-$date",
-        localDate = date,
+        id = "record-$localDate",
+        localDate = localDate,
         ownerId = owner,
         brewCount = brewCount,
         createdAt = t0,
@@ -224,10 +273,14 @@ private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, Remo
     override fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteHandBrewRecord> =
         snapshot.records.filterIsInstance<RemoteHandBrewRecord>()
 
+    /** Dates whose commit must fail with the mapped error instead of uploading. */
+    var poisonDates: Map<LocalDate, Throwable> = emptyMap()
+
     override suspend fun commit(
         ownerId: String,
         local: HandBrewRecordEntity,
     ): RemoteHandBrewRecord {
+        poisonDates[local.localDate]?.let { throw it }
         onCommit?.invoke()
         val current = server[local.localDate]
         if (current != null && local.remoteRevision != current.revision) {
