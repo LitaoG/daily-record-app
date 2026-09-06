@@ -182,7 +182,7 @@ internal class AccountDeletionRecoveryCoordinator(
                 }
                 localStore.deleteOwnerCache(ownerId)
             }.onSuccess {
-                runCatching {
+                runCatchingPreservingCancellation {
                     DeletionBarrier.completeDeletionCleanup(ownerId)
                 }
             }.onFailure { error ->
