@@ -186,6 +186,20 @@ try {
     }),
   );
   await waitForDocumentToDisappear(malformedDetailRecord);
+  // The trusted cap (1000 rows, same as the write callable) is enforced
+  // synchronously: oversized legacy writes never land for the trigger to clean.
+  const oversizedDetails = Array.from({ length: 1001 }, (_, index) => ({
+    id: `detail-${index}`,
+    occurrenceIndex: index + 1,
+  }));
+  await assertFails(
+    setDoc(doc(userA, "users/user-a/handBrewRecords/2026-07-24"), {
+      ...validRecord,
+      localDate: "2026-07-24",
+      brewCount: 1001,
+      details: oversizedDetails,
+    }),
+  );
   await assertFails(
     setDoc(record, {
       ...validRecord,

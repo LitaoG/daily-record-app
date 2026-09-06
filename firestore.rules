@@ -48,10 +48,13 @@ service cloud.firestore {
     // Rules cannot iterate each array item. The trusted write callable validates
     // every new-client item before writing, and the Functions write trigger
     // removes malformed legacy documents. The field remains optional for beta.2
-    // clients; Rules still keep it typed and prevent more rows than the count.
+    // clients; Rules still keep it typed, prevent more rows than the count,
+    // and enforce the same 1000-row trusted cap as the callable so oversized
+    // legacy writes are rejected synchronously instead of landing first.
     function hasValidDetailList(count) {
       return request.resource.data.get('details', []) is list
         && request.resource.data.get('details', []).size() <= count
+        && request.resource.data.get('details', []).size() <= 1000
         && (!request.resource.data.deleted
           || request.resource.data.get('details', []).size() == 0);
     }

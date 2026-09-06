@@ -13,6 +13,17 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+/** Matches the server-side delete batch size; see deleteDetailsByIds. */
+internal const val DETAIL_DELETE_CHUNK_SIZE = 400
+
+/**
+ * Splits detail-row deletes so no single `IN(:ids)` exceeds the chunk size.
+ * Older Android SQLite builds reject more than 999 bound variables, which a
+ * single date carrying the trusted maximum of 1000 details would hit.
+ */
+internal fun chunkDetailIdsForDelete(ids: List<String>): List<List<String>> =
+    ids.chunked(DETAIL_DELETE_CHUNK_SIZE)
+
 /**
  * Shared Room-backed repository behavior for the isolated daily-count modules.
  *
@@ -146,9 +157,7 @@ internal abstract class RoomDailyCountRecordRepository<T : DailyCountRecord, TD,
             .filterNot { it.occurrenceIndexOf() in incomingOccurrences }
             .map { it.idOf() }
             .toList()
-        if (staleIds.isNotEmpty()) {
-            detailDao.deleteByOwnerDateAndIds(ownerId, saved.localDate, staleIds)
-        }
+        deleteDetailsByIds(saved.localDate, staleIds)
         val normalized = details.map { detail ->
             val existing = existingByOccurrence[detail.occurrenceIndexOf()]
             // createdAt is the first-creation timestamp and must never move
@@ -175,8 +184,19 @@ internal abstract class RoomDailyCountRecordRepository<T : DailyCountRecord, TD,
             .map { it.toDetailModel() }
             .filter { it.occurrenceIndexOf() > count }
             .map { it.idOf() }
-        if (staleIds.isNotEmpty()) {
-            detailDao.deleteByOwnerDateAndIds(ownerId, localDate, staleIds)
+        deleteDetailsByIds(localDate, staleIds)
+    }
+
+    /**
+     * Deletes detail rows in small chunks: a single `IN(:ids)` breaks on
+     * older Android SQLite builds (999 variable limit) exactly when a date
+     * carries the trusted maximum of 1000 details.
+     */
+    private suspend fun deleteDetailsByIds(localDate: LocalDate, ids: List<String>) {
+        chunkDetailIdsForDelete(ids).forEach { chunk ->
+            if (chunk.isNotEmpty()) {
+                detailDao.deleteByOwnerDateAndIds(ownerId, localDate, chunk)
+            }
         }
     }
 
