@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -294,6 +295,8 @@ private fun SyncStatusChip(
             .clip(CircleShape)
             .background(DailyRecordDefaultAccentSoft)
             .border(1.dp, DailyRecordDivider, CircleShape)
+            // Visual stays 38dp; the touch target still meets the 48dp contract.
+            .minimumInteractiveComponentSize()
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp)
             .height(DailyRecordSizes.SyncChipHeight)
