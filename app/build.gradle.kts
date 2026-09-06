@@ -57,6 +57,10 @@ android {
         versionName = effectiveVersionName.get()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // App copy stays in Kotlin (ADR-019); only keep Chinese + English resources
+        // so third-party language splits do not ship in the APK.
+        resourceConfigurations += listOf("zh", "en")
     }
 
     signingConfigs {
@@ -118,15 +122,16 @@ room {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(platform(libs.firebase.bom))
-    // Pins the kotlinx-serialization runtime required at test runtime by
-    // MigrationTestHelper (Room schema validation); no direct imports exist.
+    // Pins the kotlinx-serialization runtime pulled transitively by
+    // lifecycle-viewmodel-savedstate and room-testing (MigrationTestHelper);
+    // no direct imports exist. Must stay on the main classpath: removing it
+    // downgrades release transitives to 1.7.3 and breaks androidTest
+    // consistent resolution (verified 2026-09-05, Issue #256).
     implementation(platform(libs.kotlinx.serialization.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -145,4 +150,5 @@ dependencies {
     androidTestImplementation(libs.androidx.work.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.tooling.preview)
 }
