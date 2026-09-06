@@ -149,6 +149,26 @@ class DailyCountSyncEngineTest {
     }
 
     @Test
+    fun confirmedSnapshotRefreshesInitialRejectedCountButKeepsPoison() = runSync {
+        val store = FakeStore()
+        val remote = FakeRemote()
+        val engine = DailyCountSyncEngine(store, remote)
+        store.rows[date] = entity(brewCount = 1, updatedAt = t0, remoteRevision = 0)
+        remote.poisonDates = mapOf(
+            date to ClassifiedSyncException(SyncFailureKind.Data, IllegalArgumentException("bad details")),
+        )
+        // A trigger cleans the two initially malformed documents between the
+        // two reads; the locally quarantined date must stay counted.
+        remote.rejectedPerFetch = listOf(2, 0)
+
+        val result = engine.syncOnce(owner)
+
+        assertEquals(1, result.rejectedRemoteRecords)
+        assertEquals(0, result.uploaded)
+        assertEquals(SYNC_PENDING, requireNotNull(store.rows[date]).syncState)
+    }
+
+    @Test
     fun nonDataCommitFailureStillAbortsTheModuleAttempt() = runSync {
         val store = FakeStore()
         val remote = FakeRemote()
@@ -263,11 +283,14 @@ private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, Remo
     /** Simulates a user edit landing while the commit request is in flight. */
     var onCommit: (() -> Unit)? = null
 
+    /** Rejected counts served per fetch call, in order; defaults to zero. */
+    var rejectedPerFetch: List<Int> = emptyList()
+
     override fun observe(ownerId: String): Flow<RemoteSnapshot> = MutableStateFlow(fetchSnapshot())
 
     override suspend fun fetch(ownerId: String): RemoteSnapshot {
         fetchCalls += 1
-        return fetchSnapshot()
+        return fetchSnapshot(rejectedPerFetch.getOrElse(fetchCalls - 1) { 0 })
     }
 
     override fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteHandBrewRecord> =
@@ -310,9 +333,10 @@ private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, Remo
         server.clear()
     }
 
-    private fun fetchSnapshot() = RemoteSnapshot(
+    private fun fetchSnapshot(rejected: Int = 0) = RemoteSnapshot(
         records = server.values.toList(),
         fromCache = false,
+        rejectedRecordCount = rejected,
     )
 }
 

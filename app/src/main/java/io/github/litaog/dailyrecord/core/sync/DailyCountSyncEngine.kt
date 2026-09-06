@@ -122,7 +122,11 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
         if (pending.isNotEmpty()) {
             val confirmed = remote.fetch(ownerId)
             downloaded += store.applyRemote(ownerId, remote.recordsFrom(confirmed))
-            rejected = maxOf(rejected, confirmed.rejectedRecordCount)
+            // The post-upload snapshot is fresher than the initial one: a
+            // trigger may have cleaned a malformed document between the two
+            // reads, so its count replaces the initial snapshot's count while
+            // locally quarantined poison dates stay counted.
+            rejected = rejected - initial.rejectedRecordCount + confirmed.rejectedRecordCount
         }
         return SyncResult(
             uploaded = uploaded,
