@@ -216,6 +216,26 @@ class AccountSyncManagerTest {
     }
 
     @Test
+    fun lateSnapshotDuringAccountDeletionIsDiscardedSilently() = runBlocking {
+        val operations = CountingApplyOperations()
+        val manager = AccountSyncManager(
+            ownerId = "owner",
+            coordinator = operations,
+            productionConfigured = true,
+            cloudWriteGate = DeletionBlockingGate(),
+        )
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val job = manager.start(scope).first()
+        // Let the snapshot flow through the (blocked) write gate, then assert
+        // the apply never ran and no failure was surfaced for the deletion.
+        delay(500)
+        assertEquals(0, operations.applyCalls.get())
+        assertFalse(manager.status.value is SyncStatus.Failed)
+        assertFalse(job.isCompleted)
+        scope.cancel()
+    }
+
+    @Test
     fun applySnapshotFailureSurfacesStatusButKeepsTheChannelAlive() = runBlocking {
         val manager = AccountSyncManager(
             ownerId = "owner",
@@ -234,6 +254,32 @@ class AccountSyncManagerTest {
         assertFalse(job.isCompleted)
         scope.cancel()
     }
+}
+
+private class DeletionBlockingGate : CloudWriteGate {
+    override suspend fun <T> withWrite(ownerId: String, block: suspend () -> T): T =
+        throw AccountDeletionInProgressException(ownerId)
+}
+
+private class CountingApplyOperations : AccountSyncOperations {
+    val applyCalls = AtomicInteger()
+
+    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
+        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        awaitCancellation()
+    }
+
+    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
+
+    override suspend fun pendingCount(ownerId: String): Int = 0
+
+    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int {
+        applyCalls.incrementAndGet()
+        return 0
+    }
+
+    override suspend fun syncOnce(ownerId: String): SyncResult =
+        SyncResult(uploaded = 0, downloaded = 0, pending = 0)
 }
 
 private class NonRetryableFailingOperations : AccountSyncOperations {
