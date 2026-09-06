@@ -92,6 +92,46 @@ class FirebaseSexRemoteRecordParserTest {
         }
     }
 
+    @Test
+    fun rejectsDetailsAboveTrustedServerLimit() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteSexRecord(
+                DATE,
+                validValues() + ("sexCount" to 1001L) + (
+                    "details" to (1..1001).map { occurrenceIndex ->
+                        detail("detail-$occurrenceIndex", occurrenceIndex.toLong())
+                    }
+                    ),
+            )
+        }
+    }
+
+    @Test
+    fun acceptsExactlyOneThousandDetails() {
+        val record = parseRemoteSexRecord(
+            DATE,
+            validValues() + ("sexCount" to 1000L) + (
+                "details" to (1..1000).map { occurrenceIndex ->
+                    detail("detail-$occurrenceIndex", occurrenceIndex.toLong())
+                }
+                ),
+        )
+
+        assertEquals(1000, record.details.size)
+    }
+
+    @Test
+    fun rejectsTombstoneCarryingDetails() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteSexRecord(
+                DATE,
+                validValues() + ("deleted" to true) + (
+                    "details" to listOf(detail("detail-id", 1L))
+                    ),
+            )
+        }
+    }
+
     private fun detail(id: String, occurrenceIndex: Any): Map<String, Any?> = mapOf(
         "id" to id,
         "occurrenceIndex" to occurrenceIndex,

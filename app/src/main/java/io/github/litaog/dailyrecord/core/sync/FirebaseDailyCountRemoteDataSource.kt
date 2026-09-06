@@ -9,6 +9,7 @@ import com.google.firebase.functions.FirebaseFunctionsException
 import io.github.litaog.dailyrecord.core.common.awaitResult
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -166,6 +167,8 @@ internal fun <R> parseRemoteRecordOrThrow(
     parse(documentId, requireNotNull(values) { "Cloud record has no data" })
 } catch (error: MalformedRemoteRecordException) {
     throw error
+} catch (error: CancellationException) {
+    throw error
 } catch (error: RuntimeException) {
     throw MalformedRemoteRecordException(error)
 }
@@ -188,6 +191,8 @@ internal fun <R : RemoteDailyCountRecord> parseRemoteRecords(
                 documentId,
                 requireNotNull(values) { "Cloud record has no data" },
             )
+        } catch (error: CancellationException) {
+            throw error
         } catch (_: RuntimeException) {
             rejected += 1
             null

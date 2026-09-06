@@ -189,6 +189,48 @@ class FirebaseHandBrewRemoteRecordParserTest {
         }
     }
 
+    @Test
+    fun rejectsDetailsAboveTrustedServerLimit() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteHandBrewRecord(
+                documentId = DATE,
+                values = validValues() + (
+                    "brewCount" to 1001L
+                    ) + (
+                    "details" to (1..1001).map { occurrenceIndex ->
+                        detail("detail-$occurrenceIndex", occurrenceIndex.toLong())
+                    }
+                    ),
+            )
+        }
+    }
+
+    @Test
+    fun acceptsExactlyOneThousandDetails() {
+        val record = parseRemoteHandBrewRecord(
+            documentId = DATE,
+            values = validValues() + ("brewCount" to 1000L) + (
+                "details" to (1..1000).map { occurrenceIndex ->
+                    detail("detail-$occurrenceIndex", occurrenceIndex.toLong())
+                }
+                ),
+        )
+
+        assertEquals(1000, record.details.size)
+    }
+
+    @Test
+    fun rejectsTombstoneCarryingDetails() {
+        assertThrows(IllegalArgumentException::class.java) {
+            parseRemoteHandBrewRecord(
+                documentId = DATE,
+                values = validValues() + ("deleted" to true) + (
+                    "details" to listOf(detail("detail-id", 1L))
+                    ),
+            )
+        }
+    }
+
     private fun detail(id: String, occurrenceIndex: Any): Map<String, Any?> = mapOf(
         "id" to id,
         "occurrenceIndex" to occurrenceIndex,

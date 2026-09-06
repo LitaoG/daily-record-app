@@ -6,6 +6,7 @@ import io.github.litaog.dailyrecord.core.database.HandBrewRecordDetailEntity
 import io.github.litaog.dailyrecord.core.database.HandBrewRecordEntity
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
 
 internal class FirebaseHandBrewRemoteDataSource(
     firestore: FirebaseFirestore,
@@ -67,6 +68,11 @@ internal fun parseRemoteHandBrewRecord(
         }
     }
     require(details.size <= count) { "hand-brew details exceed brewCount" }
+    require(details.size <= MAX_REMOTE_DETAIL_COUNT) {
+        "hand-brew details exceed trusted limit"
+    }
+    val deleted = requireNotNull(values[FIELD_DELETED] as? Boolean)
+    require(!deleted || details.isEmpty()) { "deleted records cannot carry details" }
     requireUniqueRemoteDetailIdentity(
         ids = details.map { it.id },
         occurrenceIndexes = details.map { it.occurrenceIndex },
@@ -81,11 +87,13 @@ internal fun parseRemoteHandBrewRecord(
         brewCount = count.toInt(),
         createdAt = Instant.ofEpochMilli(createdAtMillis),
         clientUpdatedAt = Instant.ofEpochMilli(updatedAtMillis),
-        deleted = requireNotNull(values[FIELD_DELETED] as? Boolean),
+        deleted = deleted,
         revision = revision,
         details = details,
     )
 } catch (error: MalformedRemoteRecordException) {
+    throw error
+} catch (error: CancellationException) {
     throw error
 } catch (error: RuntimeException) {
     throw MalformedRemoteRecordException(error)

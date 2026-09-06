@@ -24,4 +24,10 @@ internal const val DETAIL_FEELING = "feeling"
 
 internal const val DELETE_BATCH_SIZE = 400L
 internal const val MAX_SUPPORTED_EPOCH_MILLIS = 253_402_300_799_999L
+/**
+ * Trusted server-side cap for a single date's detail list (mirrors the
+ * Functions MAX_DETAIL_COUNT). Anything larger never enters Room; it is
+ * isolated as a rejected snapshot record instead.
+ */
+internal const val MAX_REMOTE_DETAIL_COUNT = 1000
 internal const val USERS_COLLECTION = "users"

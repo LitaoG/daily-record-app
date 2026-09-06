@@ -6,6 +6,7 @@ import io.github.litaog.dailyrecord.core.database.SexRecordDetailEntity
 import io.github.litaog.dailyrecord.core.database.SexRecordEntity
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
 
 internal class FirebaseSexRemoteDataSource(
     firestore: FirebaseFirestore,
@@ -63,6 +64,11 @@ internal fun parseRemoteSexRecord(
         }
     }
     require(details.size <= count) { "sex details exceed sexCount" }
+    require(details.size <= MAX_REMOTE_DETAIL_COUNT) {
+        "sex details exceed trusted limit"
+    }
+    val deleted = requireNotNull(values[FIELD_DELETED] as? Boolean)
+    require(!deleted || details.isEmpty()) { "deleted records cannot carry details" }
     requireUniqueRemoteDetailIdentity(
         ids = details.map { it.id },
         occurrenceIndexes = details.map { it.occurrenceIndex },
@@ -77,11 +83,13 @@ internal fun parseRemoteSexRecord(
         sexCount = count.toInt(),
         createdAt = Instant.ofEpochMilli(createdAtMillis),
         clientUpdatedAt = Instant.ofEpochMilli(updatedAtMillis),
-        deleted = requireNotNull(values[FIELD_DELETED] as? Boolean),
+        deleted = deleted,
         revision = revision,
         details = details,
     )
 } catch (error: MalformedRemoteRecordException) {
+    throw error
+} catch (error: CancellationException) {
     throw error
 } catch (error: RuntimeException) {
     throw MalformedRemoteRecordException(error)
