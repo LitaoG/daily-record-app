@@ -238,7 +238,9 @@ internal fun MonthDailyCountCard(
     modifier: Modifier = Modifier,
 ) {
     val scale = remember(month) { monthDailyChartScale(month) }
-    val description = remember(month) {
+    // dailyCount is localized: keying on it re-resolves the TalkBack string on
+    // a language switch even where no activity recreation rebuilds this card.
+    val description = remember(month, AppCopy.Statistics.dailyCount) {
         AppCopy.Statistics.monthDailyChartAccessibility(
             AppCopy.Components.joinSemantics(month.days.map { day ->
                 AppCopy.Statistics.dayChartValue(

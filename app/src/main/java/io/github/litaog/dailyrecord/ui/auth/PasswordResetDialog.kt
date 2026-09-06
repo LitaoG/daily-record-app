@@ -51,7 +51,7 @@ internal fun PasswordResetDialog(
     onReset: suspend (String) -> Result<Unit>,
     onEmailAccepted: (String) -> Unit,
 ) {
-    var email by rememberSaveable { mutableStateOf(initialEmail) }
+    var email by rememberSaveable(initialEmail) { mutableStateOf(initialEmail) }
     var busy by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
     var errorText by remember { mutableStateOf<String?>(null) }

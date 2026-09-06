@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -75,6 +75,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 private sealed interface RecordLoadState {
@@ -128,6 +129,10 @@ internal fun DailyCountRecordScreen(
             controller.observeRecord(date),
             controller.observeDetails(date),
         ) { record, details -> RecordLoadState.Loaded(record, details) }
+            // Room can re-emit equal snapshots (e.g. background writes to other
+            // dates); structural equality on the data-class state keeps the UI
+            // asleep instead of restarting the reconcile effect below.
+            .distinctUntilChanged()
     }
     val recordState by recordFlow.collectAsStateWithLifecycle(
         initialValue = RecordLoadState.Loading,
@@ -247,7 +252,7 @@ internal fun DailyCountRecordScreen(
                 .imePadding()
                 .padding(contentPadding),
         ) {
-            val recordScrollState = rememberScrollState()
+            val recordScrollState = remember(date) { ScrollState(0) }
             Column(
                 modifier = Modifier
                     .weight(1f)
