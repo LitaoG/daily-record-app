@@ -81,6 +81,12 @@ data class StatisticsDetail(
     val future: Boolean = false,
     val recorded: Boolean = true,
     /**
+     * Language-independent identity for LazyColumn keys. Labels are localized,
+     * so keying rows by label alone recreates every row (and loses scroll
+     * position) on a language switch. Null keeps the legacy label behavior.
+     */
+    val key: String? = null,
+    /**
      * Week position in the Monday-based week (week view only); null falls
      * back to the caller-supplied list index.
      */
@@ -327,7 +333,12 @@ private fun buildAll(today: LocalDate, records: List<DailyCountEntry>): Statisti
     val years = byYear.keys.sortedDescending()
     val details = years.map { year ->
         val summary = summaryOf(byYear.getValue(year))
-        StatisticsDetail(AppCopy.Statistics.yearTitle(year), summary.totalCount, summary.recordedDays)
+        StatisticsDetail(
+            AppCopy.Statistics.yearTitle(year),
+            summary.totalCount,
+            summary.recordedDays,
+            key = year.toString(),
+        )
     }
     val status = AppCopy.Statistics.historyStatus(records.minOfOrNull { it.localDate }, today)
     return StatisticsUiModel(
