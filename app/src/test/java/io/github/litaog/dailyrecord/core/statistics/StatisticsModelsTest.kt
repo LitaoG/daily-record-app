@@ -18,6 +18,62 @@ class StatisticsModelsTest {
     }
 
     @Test
+    fun fixedYearFixtureReconcilesAcrossAllPeriods() {
+        // Mirrors RoomHandBrewRecordRepositoryTest.fixedYearFixtureReports128BrewsAcross74Days:
+        // Jan-Oct carry 128 brews on 74 distinct days, Nov-Dec are empty.
+        val monthlyCounts = listOf(13, 11, 12, 14, 15, 16, 13, 14, 11, 9)
+        val monthlyDays = listOf(9, 7, 8, 8, 10, 9, 8, 9, 4, 2)
+        val records = monthlyCounts.zip(monthlyDays).flatMapIndexed { monthIndex, (count, days) ->
+            val baseCount = count / days
+            val remainder = count % days
+            (0 until days).map { dayIndex ->
+                record(
+                    LocalDate.of(2026, monthIndex + 1, dayIndex + 1),
+                    baseCount + if (dayIndex < remainder) 1 else 0,
+                )
+            }
+        }
+        assertEquals(74, records.size)
+        val octoberEnd = LocalDate.of(2026, 10, 31)
+
+        val all = buildDailyCountStatistics(StatisticsPeriod.All, octoberEnd, octoberEnd, records)
+        assertEquals(128L, all.summary.totalCount)
+        assertEquals(74, all.summary.recordedDays)
+        assertEquals(128L, all.details.sumOf { it.count ?: 0L })
+
+        val year = buildDailyCountStatistics(StatisticsPeriod.Year, octoberEnd, octoberEnd, records)
+        assertEquals(128L, year.summary.totalCount)
+        assertEquals(74, year.summary.recordedDays)
+        assertEquals(
+            listOf(36L, 45L, 38L, 9L),
+            requireNotNull(year.year).quarters.map { it.totalCount },
+        )
+        assertEquals(128L, year.details.filterNot { it.future }.sumOf { it.count ?: 0L })
+
+        val march = LocalDate.of(2026, 3, 15)
+        val month = buildDailyCountStatistics(StatisticsPeriod.Month, march, octoberEnd, records)
+        assertEquals(12L, month.summary.totalCount)
+        assertEquals(8, month.summary.recordedDays)
+        assertEquals(12L, month.details.filter { it.recorded }.sumOf { it.count ?: 0L })
+
+        val weekStart = LocalDate.of(2026, 1, 5)
+        val weekEnd = weekStart.plusDays(6)
+        val week = buildDailyCountStatistics(
+            StatisticsPeriod.Week,
+            LocalDate.of(2026, 1, 7),
+            octoberEnd,
+            records,
+        )
+        val expectedWeek = records.filter { it.localDate in weekStart..weekEnd }
+        assertEquals(expectedWeek.sumOf { it.count.toLong() }, week.summary.totalCount)
+        assertEquals(expectedWeek.size, week.summary.recordedDays)
+        assertEquals(
+            expectedWeek.sumOf { it.count.toLong() },
+            week.details.filter { it.recorded }.sumOf { it.count ?: 0L },
+        )
+    }
+
+    @Test
     fun weekDistinguishesExplicitZeroAndFutureDays() {
         val model = buildDailyCountStatistics(
             period = StatisticsPeriod.Week,

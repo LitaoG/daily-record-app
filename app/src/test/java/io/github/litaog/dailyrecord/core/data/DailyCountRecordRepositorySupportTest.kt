@@ -21,6 +21,19 @@ class DailyCountRecordRepositorySupportTest {
     }
 
     @Test
+    fun detailDeleteIdsAreChunkedBelowSqliteVariableLimit() {
+        assertEquals(emptyList<List<String>>(), chunkDetailIdsForDelete(emptyList()))
+        assertEquals(listOf(listOf("a")), chunkDetailIdsForDelete(listOf("a")))
+
+        val ids = (1..1000).map { "detail-$it" }
+        val chunks = chunkDetailIdsForDelete(ids)
+
+        assertEquals(listOf(400, 400, 200), chunks.map { it.size })
+        assertEquals(ids, chunks.flatten())
+        assertTrue(chunks.all { it.size <= 999 })
+    }
+
+    @Test
     fun localChangeCallbackDoesNotTurnBestEffortSchedulingIntoFailure() {
         var invoked = false
 
