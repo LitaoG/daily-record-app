@@ -288,7 +288,13 @@ internal fun DailyCountRecordScreen(
                     onDecrease = {
                         val last = detailsDraft.entries.lastOrNull()
                             .takeIf { countDraft.count <= MAX_RECORD_DETAIL_EDITOR_ROWS }
-                        if (countDraft.count > 0 && last?.hasContent == true) {
+                        if (shouldConfirmDetailRemoval(
+                                count = countDraft.count,
+                                editorRowLimit = MAX_RECORD_DETAIL_EDITOR_ROWS,
+                                draftTailHasContent = last?.hasContent == true,
+                                storedDetails = storedDetails,
+                            )
+                        ) {
                             showRemoveDetailDialog = true
                         } else {
                             applyCount(countDraft.decrease().count)
@@ -566,6 +572,26 @@ internal fun DailyCountRecordScreen(
 
 internal fun initialTimePickerMinutes(existingMinutes: Int?, now: LocalTime): Int =
     existingMinutes ?: now.toMinutesOfDay()
+
+/**
+ * Whether decreasing the count must first confirm removal of the last detail
+ * row. At or below the editor materialization limit the draft tail decides;
+ * above it the draft holds no rows, so a stored tail row with content gets
+ * the same confirmation instead of being dropped silently.
+ */
+internal fun shouldConfirmDetailRemoval(
+    count: Int,
+    editorRowLimit: Int,
+    draftTailHasContent: Boolean,
+    storedDetails: List<RecordDetailEntry>,
+): Boolean {
+    if (count <= 0) return false
+    if (count <= editorRowLimit) return draftTailHasContent
+    return storedDetails.any {
+        it.occurrenceIndex == count &&
+            (it.startTime != null || it.endTime != null || it.feeling.isNotEmpty())
+    }
+}
 
 @Composable
 private fun TimePickerHost(

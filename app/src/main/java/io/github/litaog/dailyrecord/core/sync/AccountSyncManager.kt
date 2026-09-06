@@ -53,9 +53,16 @@ internal class AccountSyncManager(
                 coordinator.observeRemote(ownerId)
                     .onEach { snapshot ->
                         try {
-                            coordinator.applySnapshot(ownerId, snapshot)
+                            // The deletion barrier drains in-flight writers before
+                            // the owner cache is cleared; a late snapshot that
+                            // arrives mid-deletion must not resurrect rows.
+                            cloudWriteGate.withWrite(ownerId) {
+                                coordinator.applySnapshot(ownerId, snapshot)
+                            }
                         } catch (error: CancellationException) {
                             throw error
+                        } catch (error: AccountDeletionInProgressException) {
+                            return@onEach
                         } catch (error: Exception) {
                             // A local apply failure (Room, malformed record)
                             // must not kill the realtime channel or the app:

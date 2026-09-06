@@ -14,7 +14,12 @@ internal class CombinedAccountDeletionLocalStore(
 
     override suspend fun stageLocalRecoveryCopy(ownerId: String) {
         try {
-            stores.forEach { it.stageLocalRecoveryCopy(ownerId) }
+            // Both modules stage inside one transaction so a crash between
+            // them cannot leave a half-written recovery namespace behind.
+            // Module DAOs stay independent; only the boundary is shared.
+            transactionRunner {
+                stores.forEach { it.stageLocalRecoveryCopy(ownerId) }
+            }
         } catch (error: CancellationException) {
             discardAllSafely(ownerId, error)
             throw error

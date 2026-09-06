@@ -62,6 +62,11 @@ internal data class RemoteSnapshot(
     val rejectedRecordCount: Int = 0,
 )
 
+/**
+ * rejectedRemoteRecords counts quarantined dates: malformed remote documents
+ * plus local pending rows the server refused with a data error. A non-zero
+ * count suppresses blind WorkManager retries of rows that can never succeed.
+ */
 internal data class SyncResult(
     val uploaded: Int,
     val downloaded: Int,

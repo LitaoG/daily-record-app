@@ -45,6 +45,32 @@ class CombinedAccountDeletionLocalStoreUnitTest {
     }
 
     @Test
+    fun stagingRunsEveryStoreInsideOneTransaction() = runBlocking {
+        val calls = mutableListOf<String>()
+        val store = CombinedAccountDeletionLocalStore(
+            stores = listOf(
+                RecordingLocalStore("first", calls),
+                RecordingLocalStore("second", calls),
+            ),
+            transactionRunner = { operation ->
+                calls += "tx-enter"
+                try {
+                    operation()
+                } finally {
+                    calls += "tx-exit"
+                }
+            },
+        )
+
+        store.stageLocalRecoveryCopy("owner")
+
+        assertEquals(
+            listOf("tx-enter", "stage:first", "stage:second", "tx-exit"),
+            calls,
+        )
+    }
+
+    @Test
     fun failedStagingRollsBackEveryStore() = runBlocking {
         val calls = mutableListOf<String>()
         val store = CombinedAccountDeletionLocalStore(
