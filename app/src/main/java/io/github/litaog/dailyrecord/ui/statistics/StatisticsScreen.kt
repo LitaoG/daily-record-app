@@ -191,7 +191,7 @@ internal fun DailyCountStatisticsScreen(
                             Text(AppCopy.Statistics.countAndDays, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
                         }
                     }
-                    items(model.details, key = { it.label }) { detail ->
+                    items(model.details, key = { it.key ?: it.label }) { detail ->
                         StatisticRow(
                             label = detail.label,
                             countText = when {

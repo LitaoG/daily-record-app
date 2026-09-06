@@ -16,6 +16,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DailyRecord"
         android:usesCleartextTraffic="false">
+        <!-- Local-first: Firebase is initialized lazily by FirebaseServices only
+            on the signed-in path. Removing the auto-init provider keeps cold
+            start in offline/local mode free of Firebase initialization. -->
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            android:authorities="${applicationId}.firebaseinitprovider"
+            tools:node="remove" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
