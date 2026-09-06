@@ -281,6 +281,58 @@ class FirebaseEmulatorIntegrationTest {
     }
 
     @Test
+    fun trustedWriteCallableRejectsPrototypePollutedCollection() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertAuthEmulatorReachable()
+        val services = FirebaseServices.create(context, emulatorHost = "10.0.2.2")
+        services.authRepository.signOut()
+        val suffix = UUID.randomUUID().toString().take(10)
+        try {
+            val account = services.authRepository.register(
+                "callable-proto-$suffix@example.com",
+                "test-password-2026",
+            )
+            val functions = FirebaseFunctions.getInstance(
+                FirebaseApp.getInstance(FIREBASE_EMULATOR_APP_NAME),
+                FIREBASE_FUNCTIONS_REGION,
+            )
+            // Object.prototype keys ("constructor", "toString", "__proto__") must not
+            // pass the callable collection allow-list: MODULES inherits them, so a
+            // truthiness lookup would let Admin SDK writes escape to same-UID
+            // collections that triggers and account deletion never clean up.
+            listOf("constructor", "toString", "__proto__").forEach { collection ->
+                val result = runCatching {
+                    functions.getHttpsCallable("writeDailyCountRecord")
+                        .call(
+                            mapOf(
+                                "collection" to collection,
+                                "localDate" to "2026-07-23",
+                                "id" to "callable-proto-$suffix",
+                                "count" to 1L,
+                                "createdAtMillis" to Instant.parse("2026-07-23T08:00:00Z").toEpochMilli(),
+                                "clientUpdatedAtMillis" to Instant.parse("2026-07-23T08:00:01Z").toEpochMilli(),
+                                "deleted" to false,
+                                "remoteRevision" to 0L,
+                                "details" to emptyList<Map<String, Any?>>(),
+                            ),
+                        )
+                        .awaitResult()
+                }
+                val error = result.exceptionOrNull()
+                assertTrue(error is FirebaseFunctionsException)
+                assertEquals(
+                    FirebaseFunctionsException.Code.INVALID_ARGUMENT,
+                    (error as FirebaseFunctionsException).code,
+                )
+            }
+            assertTrue(services.remoteDataSource.fetch(account.uid).records.isEmpty())
+            assertTrue(services.sexRemoteDataSource.fetch(account.uid).records.isEmpty())
+        } finally {
+            services.authRepository.signOut()
+        }
+    }
+
+    @Test
     fun missingDocumentsRecreateBothModulesWithANewCloudGeneration() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertAuthEmulatorReachable()

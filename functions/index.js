@@ -159,8 +159,13 @@ function validateRecordInput(data) {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     throw new Error("record input is invalid");
   }
+  // Own-property check: MODULES inherits from Object.prototype, so a plain
+  // truthiness lookup would accept "__proto__"/"constructor"/"toString" and
+  // let Admin SDK writes escape to arbitrary same-UID collections.
+  if (typeof data.collection !== "string" || !Object.hasOwn(MODULES, data.collection)) {
+    throw new Error("collection is invalid");
+  }
   const module = MODULES[data.collection];
-  if (!module) throw new Error("collection is invalid");
   requireString(data.localDate, "localDate", { maxLength: 10 });
   if (!isValidDateText(data.localDate)) throw new Error("localDate is invalid");
   requireString(data.id, "id");
