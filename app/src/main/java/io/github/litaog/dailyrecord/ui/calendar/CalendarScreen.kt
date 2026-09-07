@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
@@ -359,7 +360,12 @@ private fun CalendarLegendEntry(
         Text(
             text = item.label,
             color = DailyRecordTextMuted,
-            style = MaterialTheme.typography.labelSmall,
+            // Drop the legacy font padding so the glyphs sit on the line's
+            // visual center: otherwise the 14dp marker, geometrically centered
+            // against the padded line box, reads as floating above the text.
+            style = MaterialTheme.typography.labelSmall.copy(
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+            ),
             maxLines = 1,
         )
     }
