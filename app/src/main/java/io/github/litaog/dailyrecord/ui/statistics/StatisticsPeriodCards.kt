@@ -405,7 +405,11 @@ private fun WeekRingChart(
                         ),
                     )
                     WeekRingState.Unrecorded -> drawArc(
-                        color = DailyRecordDivider.copy(alpha = .92f),
+                        // Must resolve through weekRingSegmentColor (same as
+                        // the legend marker) so the ring can never drift from
+                        // the legend: past-unfilled segments use the homepage
+                        // unset fill, not the neutral divider grey.
+                        color = weekRingSegmentColor(WeekRingState.Unrecorded, 0f, colors),
                         startAngle = startAngle,
                         sweepAngle = segmentSweep,
                         useCenter = false,
