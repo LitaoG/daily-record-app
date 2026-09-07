@@ -82,7 +82,8 @@ class DesignTokensTest {
     }
 
     @Test
-    fun unsetColorsStayModuleSpecific() {        val handBrewUnset = HandBrewColorTokens.colorsFor(RecordVisualState.Unset)
+    fun unsetColorsStayModuleSpecific() {
+        val handBrewUnset = HandBrewColorTokens.colorsFor(RecordVisualState.Unset)
         val sexUnset = SexColorTokens.colorsFor(RecordVisualState.Unset)
 
         assertEquals(HandBrewColorTokens.unset, handBrewUnset.background)

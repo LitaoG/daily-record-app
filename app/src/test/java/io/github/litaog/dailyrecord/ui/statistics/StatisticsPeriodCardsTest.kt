@@ -2,7 +2,6 @@ package io.github.litaog.dailyrecord.ui.statistics
 
 import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import java.time.LocalDate
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
