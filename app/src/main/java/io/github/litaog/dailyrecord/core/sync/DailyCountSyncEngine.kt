@@ -12,7 +12,20 @@ internal interface DailyCountSyncStore<LocalRecord, RemoteRecord> {
     suspend fun pending(ownerId: String): List<LocalRecord>
     suspend fun pendingCount(ownerId: String): Int
     suspend fun adoptLocalRecords(ownerId: String): Int
-    suspend fun applyRemote(ownerId: String, records: List<RemoteRecord>): Int
+
+    /**
+     * Applies one remote snapshot. [completeServerSnapshot] marks a fresh,
+     * fully parsed server snapshot that is authoritative about absence, so
+     * confirmed local mirrors of physically disappeared documents can be
+     * collected (ADR-020). Cache snapshots and snapshots carrying rejected
+     * malformed documents never collect.
+     */
+    suspend fun applyRemote(
+        ownerId: String,
+        records: List<RemoteRecord>,
+        completeServerSnapshot: Boolean,
+    ): Int
+
     suspend fun alignUnbasedPendingRevisions(ownerId: String, records: List<RemoteRecord>): Int
     suspend fun applyCommitIfUnchanged(
         ownerId: String,
@@ -44,6 +57,15 @@ internal interface DailyCountRemoteDataSource<LocalRecord, RemoteRecord> {
 }
 
 /**
+ * A snapshot is authoritative about document absence only when it is a fresh
+ * server read that parsed without rejecting any malformed document: a rejected
+ * document is still present server-side, so it must never collect its local
+ * mirror (ADR-020).
+ */
+internal fun RemoteSnapshot.isCompleteServerSnapshot(): Boolean =
+    !fromCache && rejectedRecordCount == 0
+
+/**
  * Shared conflict/retry algorithm for daily-count modules. Runs commits,
  * applies remote snapshots and keeps pending rows consistent under the
  * revision protocol; both modules share this engine with their own typed
@@ -60,7 +82,11 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
     suspend fun pendingCount(ownerId: String): Int = store.pendingCount(ownerId)
 
     suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int =
-        store.applyRemote(ownerId, remote.recordsFrom(snapshot))
+        store.applyRemote(
+            ownerId,
+            remote.recordsFrom(snapshot),
+            completeServerSnapshot = snapshot.isCompleteServerSnapshot(),
+        )
 
     suspend fun prepareLocalAccount(ownerId: String): Int {
         require(ownerId.isNotBlank()) { "ownerId must not be blank" }
@@ -73,7 +99,11 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
         val initial = remote.fetch(ownerId)
         val initialRecords = remote.recordsFrom(initial)
         store.alignUnbasedPendingRevisions(ownerId, initialRecords)
-        var downloaded = store.applyRemote(ownerId, initialRecords)
+        var downloaded = store.applyRemote(
+            ownerId,
+            initialRecords,
+            completeServerSnapshot = initial.isCompleteServerSnapshot(),
+        )
         var uploaded = 0
         var rejected = initial.rejectedRecordCount
 
@@ -121,7 +151,11 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
         // pending upload to observe the server's committed/conflicting state.
         if (pending.isNotEmpty()) {
             val confirmed = remote.fetch(ownerId)
-            downloaded += store.applyRemote(ownerId, remote.recordsFrom(confirmed))
+            downloaded += store.applyRemote(
+                ownerId,
+                remote.recordsFrom(confirmed),
+                completeServerSnapshot = confirmed.isCompleteServerSnapshot(),
+            )
             // The post-upload snapshot is fresher than the initial one: a
             // trigger may have cleaned a malformed document between the two
             // reads, so its count replaces the initial snapshot's count while
