@@ -29,7 +29,7 @@ Stage 0–6 已关闭；同一时间只执行一个新阶段，后续需求必�
 
 - [x] 定义 `HandBrewRecord`，统计由原始记录统一推导。
 - [x] 删除活动、计量类型和通用状态模型。
-- [x] 建立 `hand_brew_records` schema v3、账号隔离、墓碑与迁移代码。
+- [x] 建立 `hand_brew_records`、账号隔离、墓碑与迁移代码（当时 schema v3，后续经 v4/v5/v6 非破坏迁移演进，当前为 v6）。
 - [x] 新增独立 `SexRecord`、`sex_records` schema v4、DAO/Repository 和 v3→v4 非破坏迁移。
 - [x] 建立 Room v5 逐次详情表并通过 v1→v5、v2→v5、v3→v5、v4→v5 迁移测试。
 - [x] Room v6 增加待同步排序索引并通过 v1→v6 五链迁移测试。
