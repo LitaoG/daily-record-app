@@ -369,8 +369,11 @@ class StatisticsPeriodCardsTest {
             assertEquals(DailyRecordSurfaceDisabled, future)
             assertNotEquals(future, unrecorded)
             assertNotEquals(future, zero)
-            // Unrecorded stays a neutral divider tone for both palettes.
-            assertEquals(DailyRecordDivider.copy(alpha = .92f), unrecorded)
+            // Unrecorded matches the homepage's past-unset cell fill exactly.
+            assertEquals(
+                colors.colorsFor(RecordVisualState.Unset).background,
+                unrecorded,
+            )
             // Zero resolves to the module primary, so both modules keep their identity.
             assertEquals(colors.primary, zero)
         }

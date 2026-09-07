@@ -275,7 +275,10 @@ internal fun weekRingSegmentColor(
     // homepage reserves for past unfilled dates. The weekday/date copy
     // stays muted separately.
     WeekRingState.Future -> DailyRecordSurfaceDisabled
-    WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
+    // Past-unfilled (unrecorded) segments use the same module-specific pale
+    // fill as the homepage's unset cells, so the ring and its legend read
+    // identically to the calendar. The weekday/date copy stays muted.
+    WeekRingState.Unrecorded -> colors.colorsFor(RecordVisualState.Unset).background
     WeekRingState.ExplicitZero -> colors.primary
     WeekRingState.Positive ->
         colors.primary.copy(alpha = .58f + .38f * intensity.coerceIn(0f, 1f))
