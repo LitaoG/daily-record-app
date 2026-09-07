@@ -480,7 +480,7 @@ internal object EnStrings : AppStrings {
         override val weeklyLegendOne = "1"
         override val weeklyLegendZero = "0"
         override val weeklyLegendUnrecorded = "Unset"
-        override val weeklyLegendFuture = "Not yet"
+        override val weeklyLegendFuture = "Future"
         override val dailyCount = "Daily count"
         override val byDate = "By date"
         override val countComposition = "Distribution"
