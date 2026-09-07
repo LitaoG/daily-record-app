@@ -41,6 +41,7 @@ import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -268,10 +269,16 @@ internal fun weekRingSegmentColor(
     intensity: Float,
     colors: RecordModuleColorTokens,
 ): Color = when (state) {
-    // Future ring segments use the same module-specific pale fill as the
-    // homepage's unset cells. The weekday/date copy stays muted separately.
-    WeekRingState.Future -> colors.colorsFor(RecordVisualState.Unset).background
-    WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
+    // Future ring segments must match the homepage's future date cells
+    // exactly: both use the same module-independent warm grey-brown
+    // (DailyRecordSurfaceDisabled), not the pale unset fill that the
+    // homepage reserves for past unfilled dates. The weekday/date copy
+    // stays muted separately.
+    WeekRingState.Future -> DailyRecordSurfaceDisabled
+    // Past-unfilled (unrecorded) segments use the same module-specific pale
+    // fill as the homepage's unset cells, so the ring and its legend read
+    // identically to the calendar. The weekday/date copy stays muted.
+    WeekRingState.Unrecorded -> colors.colorsFor(RecordVisualState.Unset).background
     WeekRingState.ExplicitZero -> colors.primary
     WeekRingState.Positive ->
         colors.primary.copy(alpha = .58f + .38f * intensity.coerceIn(0f, 1f))
@@ -398,7 +405,11 @@ private fun WeekRingChart(
                         ),
                     )
                     WeekRingState.Unrecorded -> drawArc(
-                        color = DailyRecordDivider.copy(alpha = .92f),
+                        // Must resolve through weekRingSegmentColor (same as
+                        // the legend marker) so the ring can never drift from
+                        // the legend: past-unfilled segments use the homepage
+                        // unset fill, not the neutral divider grey.
+                        color = weekRingSegmentColor(WeekRingState.Unrecorded, 0f, colors),
                         startAngle = startAngle,
                         sweepAngle = segmentSweep,
                         useCenter = false,

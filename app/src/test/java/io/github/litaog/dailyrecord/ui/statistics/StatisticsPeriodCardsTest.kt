@@ -2,7 +2,7 @@ package io.github.litaog.dailyrecord.ui.statistics
 
 import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import java.time.LocalDate
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -250,12 +250,12 @@ class StatisticsPeriodCardsTest {
                 weekRingColorForBand(WeekRingCountBand.One, colors),
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
-            assertEquals(
+            assertNotEquals(
                 colors.colorsFor(RecordVisualState.Unset).background,
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
-            assertNotEquals(
-                colors.colorsFor(RecordVisualState.Disabled).background,
+            assertEquals(
+                DailyRecordSurfaceDisabled,
                 weekRingSegmentColor(WeekRingState.Future, 0f, colors),
             )
         }
@@ -365,11 +365,14 @@ class StatisticsPeriodCardsTest {
             // Future and one-count arcs must remain visually distinct in color;
             // stroke width and visible copy provide additional state cues.
             assertNotEquals(oneCount, future)
-            assertEquals(colors.colorsFor(RecordVisualState.Unset).background, future)
+            assertEquals(DailyRecordSurfaceDisabled, future)
             assertNotEquals(future, unrecorded)
             assertNotEquals(future, zero)
-            // Unrecorded stays a neutral divider tone for both palettes.
-            assertEquals(DailyRecordDivider.copy(alpha = .92f), unrecorded)
+            // Unrecorded matches the homepage's past-unset cell fill exactly.
+            assertEquals(
+                colors.colorsFor(RecordVisualState.Unset).background,
+                unrecorded,
+            )
             // Zero resolves to the module primary, so both modules keep their identity.
             assertEquals(colors.primary, zero)
         }

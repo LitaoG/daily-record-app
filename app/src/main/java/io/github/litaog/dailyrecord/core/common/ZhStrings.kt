@@ -459,7 +459,7 @@ internal object ZhStrings : AppStrings {
         override val weeklyLegendOne = "1次"
         override val weeklyLegendZero = "0次"
         override val weeklyLegendUnrecorded = "未填写"
-        override val weeklyLegendFuture = "未到"
+        override val weeklyLegendFuture = "未来"
         override val dailyCount = "每日次数"
         override val byDate = "按日期"
         override val countComposition = "次数分布"
