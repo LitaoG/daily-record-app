@@ -135,6 +135,45 @@ class RecordDetailsDraftTest {
     }
 
     @Test
+    fun cleanDraftDeduplicatesBaselineInSavedPayload() {
+        val draft = RecordDetailsDraft().reconcile(emptyList(), 3)
+        val scope = object : SaverScope {
+            override fun canBeSaved(value: Any): Boolean = true
+        }
+
+        val saved = with(RecordDetailsDraft.Saver) { scope.save(draft) }
+            ?: error("draft saver returned null")
+        val payload = saved as List<Any?>
+
+        assertEquals(true, payload[6])
+        assertEquals(emptyList<Any?>(), payload[1])
+        val restored = requireNotNull(RecordDetailsDraft.Saver.restore(saved))
+        assertEquals(draft, restored)
+    }
+
+    @Test
+    fun oversizedDraftKeepsStructureButDropsFeelingText() {
+        val draft = RecordDetailsDraft().reconcile(emptyList(), 2)
+            .update(0) { it.copy(startMinutes = 9 * 60, feeling = "f".repeat(25_000)) }
+            .update(1) { it.copy(endMinutes = 10 * 60, feeling = "g".repeat(25_000)) }
+        val scope = object : SaverScope {
+            override fun canBeSaved(value: Any): Boolean = true
+        }
+
+        val saved = with(RecordDetailsDraft.Saver) { scope.save(draft) }
+            ?: error("draft saver returned null")
+        val payload = saved as List<Any?>
+        val restored = requireNotNull(RecordDetailsDraft.Saver.restore(saved))
+
+        assertEquals(true, payload[5])
+        assertEquals(9 * 60, restored.entries[0].startMinutes)
+        assertEquals(10 * 60, restored.entries[1].endMinutes)
+        assertEquals("", restored.entries[0].feeling)
+        assertEquals("", restored.entries[1].feeling)
+        assertTrue(restored.entries.sumOf { it.feeling.length } <= 40_000)
+    }
+
+    @Test
     fun saverRestoresLegacyFourCellFormatWithoutSwappingFlags() {
         val legacySaved = listOf(
             listOf(listOf(8 * 60, 9 * 60, "legacy entry", true)),
