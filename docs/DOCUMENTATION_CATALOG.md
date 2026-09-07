@@ -1,7 +1,7 @@
 # 文档目录与 AI 阅读索引
 
 状态：`current — authoritative documentation registry`
-最后复核：2026-09-01
+最后复核：2026-09-07
 
 本文是公共仓库中全部 Git 跟踪 Markdown 文档的逐文件索引，也是 AI 开始工作前判断“先读什么、哪些只是历史证据”的唯一入口。当前仓库没有被 Git 跟踪的 `.doc`、`.docx` 或 `.markdown` 文件；如果以后新增或删除任意文档，必须在同一提交中更新本文，`scripts/documentation-catalog.test.mjs` 会检查目录是否完整。当前 README 运行截图及其复现边界单独登记在产品资产目录中，历史审计截图不再冒充首页当前画面。
 
@@ -58,7 +58,7 @@
 | `docs/product/MONTH_STATISTICS_REDESIGN.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 月统计逐日脉冲图、分布和极值规则 |
 | `docs/product/SETTINGS_HUB_GOAL.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已实现设置中心的目标、范围和验收 |
 | `docs/product/I18N_GOAL.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 双语适配（中文默认 + English）的目标、机制、简写策略与阶段证据 |
-| `docs/product/OPTIMIZATION_2026-08_LOG.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 2026-08 性能与测试加固日志（优化任务与验证证据） |
+| `docs/product/OPTIMIZATION_2026-08_LOG.md` | 历史证据 | P3 | 留档 | 否 | 否 | 2026-08 性能与测试加固的当时范围与验证证据（已合入 main） |
 | `docs/product/UI_REDESIGN_RESEARCH_BASELINE.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已接受的竞品研究和设计取舍 |
 | `docs/product/RESEARCH_OPEN_SOURCE.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 开源借鉴、许可证和不引入依赖的边界 |
 | `docs/product/DAILY_USE_FEEDBACK.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 日常使用反馈格式和隐私脱敏要求 |
