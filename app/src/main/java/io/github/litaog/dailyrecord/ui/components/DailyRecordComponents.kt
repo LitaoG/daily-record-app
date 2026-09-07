@@ -137,7 +137,11 @@ internal fun DailyRecordBottomBar(
                 icon = { color ->
                     CalendarGlyph(
                         color,
-                        modifier = Modifier.size(24.dp).offset(y = 2.dp),
+                        // The calendar artwork carries a bottom-right swoosh, so its
+                        // visual mass sits ~2.5dp right of the asset center at this
+                        // size; nudge left so it reads centered over its label.
+                        // Asset pixels are untouched.
+                        modifier = Modifier.size(24.dp).offset(x = (-2).dp, y = 2.dp),
                         theme = colors.brandIconTheme,
                     )
                 },
