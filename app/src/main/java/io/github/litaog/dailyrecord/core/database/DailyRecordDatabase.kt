@@ -23,7 +23,7 @@ private const val HAND_BREW_LEGACY_ICON_KEY = "flight"
         SexRecordEntity::class,
         SexRecordDetailEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)
@@ -35,7 +35,7 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "daily-record.db"
-        const val SCHEMA_VERSION = 5
+        const val SCHEMA_VERSION = 6
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -224,11 +224,28 @@ internal abstract class DailyRecordDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // The pending queue is read with ORDER BY updated_at; the
+                // composite index covers the WHERE and the sort so a large
+                // offline pending queue does not fall back to a filesort.
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_hand_brew_records_owner_id_sync_state_updated_at` " +
+                        "ON `hand_brew_records` (`owner_id`, `sync_state`, `updated_at`)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_sex_records_owner_id_sync_state_updated_at` " +
+                        "ON `sex_records` (`owner_id`, `sync_state`, `updated_at`)",
+                )
+            }
+        }
+
         val MIGRATIONS: Array<Migration> = arrayOf(
             MIGRATION_1_2,
             MIGRATION_2_3,
             MIGRATION_3_4,
             MIGRATION_4_5,
+            MIGRATION_5_6,
         )
 
         fun create(context: Context): DailyRecordDatabase = Room.databaseBuilder(

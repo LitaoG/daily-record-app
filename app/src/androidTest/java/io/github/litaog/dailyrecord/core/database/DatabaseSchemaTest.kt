@@ -98,7 +98,7 @@ class DatabaseSchemaTest {
                 database.handBrewRecordDao()
                     .getByDate(LOCAL_OWNER_ID, java.time.LocalDate.of(2026, 7, 17)),
             )
-            assertEquals(5, database.openHelper.readableDatabase.version)
+            assertEquals(6, database.openHelper.readableDatabase.version)
             assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
             assertEquals(0, database.handBrewRecordDetailDao().countForOwner(LOCAL_OWNER_ID))
             assertEquals(0, database.sexRecordDetailDao().countForOwner(LOCAL_OWNER_ID))
@@ -144,7 +144,7 @@ class DatabaseSchemaTest {
             assertEquals(false, migrated?.isDeleted)
             assertEquals(SYNC_PENDING, migrated?.syncState)
             assertEquals(0L, migrated?.remoteRevision)
-            assertEquals(5, database.openHelper.readableDatabase.version)
+            assertEquals(6, database.openHelper.readableDatabase.version)
             assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
         } finally {
             database.close()
@@ -180,7 +180,7 @@ class DatabaseSchemaTest {
             )
             assertEquals(5, existing?.brewCount)
             assertEquals(0, database.sexRecordDao().countForOwner(LOCAL_OWNER_ID))
-            assertEquals(5, database.openHelper.readableDatabase.version)
+            assertEquals(6, database.openHelper.readableDatabase.version)
             database.openHelper.readableDatabase.query(
                 "SELECT name FROM sqlite_master WHERE type = 'index' " +
                     "AND name = 'index_sex_records_owner_id_local_date'",
@@ -217,9 +217,63 @@ class DatabaseSchemaTest {
                 LOCAL_OWNER_ID,
                 java.time.LocalDate.of(2026, 7, 16),
             )?.brewCount)
-            assertEquals(5, database.openHelper.readableDatabase.version)
+            assertEquals(6, database.openHelper.readableDatabase.version)
             assertEquals(0, database.handBrewRecordDetailDao().countForOwner(LOCAL_OWNER_ID))
             assertEquals(0, database.sexRecordDetailDao().countForOwner(LOCAL_OWNER_ID))
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun versionFiveAddsPendingSyncSortIndexWithoutChangingData() = runBlocking {
+        migrationHelper.createDatabase(V5_TEST_DATABASE, 5).apply {
+            execSQL(
+                """
+                INSERT INTO hand_brew_records (
+                    id, local_date, owner_id, brew_count, created_at, updated_at,
+                    is_deleted, sync_state, remote_revision
+                ) VALUES ('v5-brew', '2026-07-16', '__local__', 6, 1000, 2000,
+                          0, 'PENDING', 0)
+                """.trimIndent(),
+            )
+            execSQL(
+                """
+                INSERT INTO sex_records (
+                    id, local_date, owner_id, sex_count, created_at, updated_at,
+                    is_deleted, sync_state, remote_revision
+                ) VALUES ('v5-sex', '2026-07-16', '__local__', 1, 1000, 2000,
+                          0, 'PENDING', 0)
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        val database = Room.databaseBuilder(
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            DailyRecordDatabase::class.java,
+            V5_TEST_DATABASE,
+        ).addMigrations(*DailyRecordDatabase.MIGRATIONS).build()
+
+        try {
+            assertEquals(6, database.openHelper.readableDatabase.version)
+            assertEquals(6, database.handBrewRecordDao().getByDate(
+                LOCAL_OWNER_ID,
+                java.time.LocalDate.of(2026, 7, 16),
+            )?.brewCount)
+            assertEquals(1, database.sexRecordDao().getByDate(
+                LOCAL_OWNER_ID,
+                java.time.LocalDate.of(2026, 7, 16),
+            )?.sexCount)
+            database.openHelper.readableDatabase.query(
+                "SELECT name FROM sqlite_master WHERE type = 'index' " +
+                    "AND name = 'index_hand_brew_records_owner_id_sync_state_updated_at'",
+            ).use { cursor -> assertTrue(cursor.moveToFirst()) }
+            database.openHelper.readableDatabase.query(
+                "SELECT name FROM sqlite_master WHERE type = 'index' " +
+                    "AND name = 'index_sex_records_owner_id_sync_state_updated_at'",
+            ).use { cursor -> assertTrue(cursor.moveToFirst()) }
         } finally {
             database.close()
         }
@@ -230,5 +284,6 @@ class DatabaseSchemaTest {
         const val V2_TEST_DATABASE = "migration-v2-test.db"
         const val V3_TEST_DATABASE = "migration-v3-test.db"
         const val V4_TEST_DATABASE = "migration-v4-test.db"
+        const val V5_TEST_DATABASE = "migration-v5-test.db"
     }
 }

@@ -32,6 +32,7 @@ Stage 0–6 已关闭；同一时间只执行一个新阶段，后续需求必�
 - [x] 建立 `hand_brew_records` schema v3、账号隔离、墓碑与迁移代码。
 - [x] 新增独立 `SexRecord`、`sex_records` schema v4、DAO/Repository 和 v3→v4 非破坏迁移。
 - [x] 建立 Room v5 逐次详情表并通过 v1→v5、v2→v5、v3→v5、v4→v5 迁移测试。
+- [x] Room v6 增加待同步排序索引并通过 v1→v6 五链迁移测试。
 
 ## P0 日历与记录
 

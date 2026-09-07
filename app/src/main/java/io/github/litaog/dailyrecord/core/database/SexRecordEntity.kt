@@ -12,6 +12,7 @@ import java.time.LocalDate
     indices = [
         Index(value = ["owner_id", "local_date"], unique = true),
         Index(value = ["owner_id", "sync_state"]),
+        Index(value = ["owner_id", "sync_state", "updated_at"]),
     ],
 )
 internal data class SexRecordEntity(

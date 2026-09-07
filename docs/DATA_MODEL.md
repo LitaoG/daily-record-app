@@ -1,6 +1,6 @@
 # 数据模型
 
-当前 schema：Room v5。最后复核：2026-08-16。
+当前 schema：Room v6。最后复核：2026-09-06。
 
 ## 两个独立领域实体
 
@@ -20,7 +20,7 @@
 
 不存在 `Activity`、`activityId`、`MeasurementType`、通用业务状态枚举、活动颜色或归档字段。未来记录类型应使用自己的实体和表，不向现有表追加用于区分活动种类的字段。
 
-## Room schema v5
+## Room schema v6
 
 业务表：`hand_brew_records`、`sex_records`
 
@@ -65,14 +65,20 @@ moduleCount > 0 -> OCCURRED（已发生）
 2. 创建空的 `sex_records`，字段包含 `sex_count` 与完整同步元数据。
 3. 建立 `owner_id + local_date` 唯一索引和 `owner_id + sync_state` 待同步索引。
 4. 不推断或复制任何历史自慰行为为做爱记录。
-5. 自动化测试覆盖 v1→v5、v2→v5、v3→v5、v4→v5，禁止 destructive migration。
+5. 自动化测试覆盖 v1→v6、v2→v6、v3→v6、v4→v6、v5→v6，禁止 destructive migration。
 
 ## v4 → v5 迁移：逐次详情
 
 1. 非破坏地创建独立的 `hand_brew_record_details` 与 `sex_record_details` 表；v4 聚合次数和历史记录保持不变。
 2. 详情以 `owner_id + local_date + occurrence_index` 唯一定位，时间使用当天的 `LocalTime`（分钟精度），感受限制为 100 个可见 Unicode 字符。
 3. 现有记录不自动生成详情行；用户第一次展开详情后按当前次数生成空白草稿，空详情可以保存。
-4. v1→v5、v2→v5、v3→v5、v4→v5 都必须验证聚合记录、legacy 恢复表和两套详情表存在，禁止 destructive migration。
+4. v1→v6、v2→v6、v3→v6、v4→v6、v5→v6 都必须验证聚合记录、legacy 恢复表和两套详情表存在，禁止 destructive migration。
+
+## v5 → v6 迁移：待同步排序索引
+
+1. 非破坏地为 `hand_brew_records` 与 `sex_records` 各增加复合索引 `(owner_id, sync_state, updated_at)`，覆盖 `getPending` 的 `WHERE owner_id = ? AND sync_state = ? ORDER BY updated_at`，避免大批量离线待同步队列的 filesort。
+2. 已有唯一索引 `(owner_id, local_date)` 与待同步计数索引 `(owner_id, sync_state)` 保持不变；行数据、详情表和统计语义不变。
+3. v1→v6、v2→v6、v3→v6、v4→v6、v5→v6 五条链全部覆盖，禁止 destructive migration。
 
 ## Firestore 文档
 
