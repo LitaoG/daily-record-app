@@ -118,7 +118,10 @@ val HandBrewColorTokens = RecordModuleColorTokens(
     // selected surfaces grey or near-black.
     primary = Color(0xFF8A5AA7),
     strong = Color(0xFF693D83),
-    soft = Color(0xFFF1E3F7),
+    // One-count fill sits a quarter step toward medium: clearly separated
+    // from the paler unset fill above it, still clearly lighter than the
+    // two-count medium below it.
+    soft = Color(0xFFEDDBF4),
     medium = Color(0xFFE0C4EB),
     intense = Color(0xFFB48EC9),
     // Past-unset stays the lightest fill of the palette (lighter than the
@@ -132,7 +135,9 @@ val SexColorTokens = RecordModuleColorTokens(
     // muddy brown cast in selected cards and glass controls.
     primary = Color(0xFFAD485C),
     strong = Color(0xFF823447),
-    soft = Color(0xFFF8E4E8),
+    // Same quarter step as hand brew: separated from the unset tint above,
+    // still clearly lighter than the two-count medium below.
+    soft = Color(0xFFF4DADF),
     medium = Color(0xFFEABBC3),
     intense = Color(0xFFCD828E),
     // Keep empty sex dates within the wine-red family without colliding with
