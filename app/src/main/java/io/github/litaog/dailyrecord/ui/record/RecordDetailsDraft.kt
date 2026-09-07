@@ -145,20 +145,52 @@ internal data class RecordDetailsDraft(
         .sortedBy(RecordDetailEntry::occurrenceIndex)
 
     companion object {
+        /**
+         * Combined character budget for feelings persisted through the saved
+         * state binder. A fully saturated 512-row editor (two lists, 100
+         * characters each) can approach the binder transaction limit; past
+         * this budget the saver keeps indices and times but drops unsaved
+         * feeling text instead of crashing the process on recreation.
+         */
+        private const val SAVED_FEELING_CHAR_BUDGET = 40_000
+
         val Saver: Saver<RecordDetailsDraft, Any> = listSaver(
             save = { draft ->
+                val payloadChars = draft.entries.sumOf { it.feeling.length } +
+                    draft.baseline.sumOf { it.feeling.length }
+                val oversized = payloadChars > SAVED_FEELING_CHAR_BUDGET
+                val entriesSaved = if (oversized) {
+                    draft.entries.map { it.copy(feeling = "", feelingExpanded = false) }
+                } else {
+                    draft.entries
+                }
+                // A clean draft stores its baseline once; the restore path
+                // rebuilds it from the entries to halve the payload.
+                val baselineDeduplicated = !oversized && draft.baseline == draft.entries
+                val baselineSaved = when {
+                    baselineDeduplicated -> emptyList()
+                    oversized -> draft.baseline.map { it.copy(feeling = "", feelingExpanded = false) }
+                    else -> draft.baseline
+                }
                 listOf(
-                    draft.entries.map(::saveDetail),
-                    draft.baseline.map(::saveDetail),
+                    entriesSaved.map(::saveDetail),
+                    baselineSaved.map(::saveDetail),
                     draft.count,
                     draft.initialized,
                     draft.expanded,
+                    oversized,
+                    baselineDeduplicated,
                 )
             },
             restore = { values ->
                 val currentFormat = values.getOrNull(2) is Int
                 val restoredEntries = restoreDetails(values.getOrNull(0))
-                val restoredBaseline = restoreDetails(values.getOrNull(1))
+                val baselineDeduplicated = values.getOrNull(6) as? Boolean ?: false
+                val restoredBaseline = if (baselineDeduplicated) {
+                    restoredEntries
+                } else {
+                    restoreDetails(values.getOrNull(1))
+                }
                 RecordDetailsDraft(
                     entries = restoredEntries,
                     baseline = restoredBaseline,
