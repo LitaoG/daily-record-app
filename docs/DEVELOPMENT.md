@@ -6,7 +6,7 @@
 
 - Android Studio 稳定版与内置 JDK 21
 - Android SDK / Platform Tools
-- 当前配置为 `minSdk 26`、`compileSdk 37`、`targetSdk 36`，Room schema 为 v5；版本号以 `gradle.properties` 为准，当前公开版本为 `v1.0.0-beta.3` / `versionCode 4`
+- 当前配置为 `minSdk 26`、`compileSdk 37`、`targetSdk 36`，Room schema 为 v6；版本号以 `gradle.properties` 为准，当前公开版本为 `v1.0.0-beta.3` / `versionCode 4`
 - SDK 版本说明：`compileSdk 37` 是升级 core-ktx 1.19.0 / lifecycle 2.11.0 后的强制要求（AAR 元数据校验），本轮已随库升级同步完成。`targetSdk` 刻意冻结在 36：升级到 37 是运行期行为变化（影响 Android 16+ 设备），需要新版本规划中的 API 34 与 minSdk 26 设备回归后一并评估。compileSdk 37 的新 Lint 版本库还新报告 AGP 9.3.1、Compose BOM 2026.08.00、Firebase BOM 34.17.0：其中 Firebase BOM 升级会改变客户端同步/认证 SDK 行为，需设备回归，统一归入 `v1.0.0-beta.4` 的协调升级矩阵，本轮不追版本。下次复查时间为 `v1.0.0-beta.4` 规划时
 - 至少一台专用 Android 测试模拟器；完整自动化设备套件不得连接日常使用的真机
 - 生产登录联调需要本机私有的 `app/google-services.json`
@@ -52,7 +52,7 @@ Windows 默认使用 `pnpm test:android-connected`；Linux/macOS 使用 `pnpm te
 - 0 次、未填写和清除语义。
 - 周/月/年/全部历史统计一致性。
 - 128 次、74 天固定数据集。
-- Room v1→v2、v2→v3、v3→v4、v4→v5 迁移链，覆盖 v1→v5、v2→v5、v3→v5、v4→v5 四条路径；legacy 表保留、本机 owner 迁移、迁移筛选只依赖冻结的机器键（不引用用户可见文案常量）。
+- Room v1→v2、v2→v3、v3→v4、v4→v5、v5→v6 迁移链，覆盖 v1→v6、v2→v6、v3→v6、v4→v6、v5→v6 五条路径；legacy 表保留、本机 owner 迁移、迁移筛选只依赖冻结的机器键（不引用用户可见文案常量）。
 - 空数据、闰年、月末、跨年周、未来日期。
 - 年月标题快速跳转、日历/统计共享锚点、月份切换后周明细不串月。
 - 当前月网格不暴露相邻月份日期；年月和统计周期标题隐藏辅助副标题后仍可点击并具备 TalkBack 动作语义。

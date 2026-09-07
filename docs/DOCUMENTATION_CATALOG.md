@@ -34,7 +34,7 @@
 | `SECURITY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 漏洞报告、敏感文件边界和安全基线 |
 | `docs/PRODUCT.md` | 当前必读 | P0 | 必需 | 是 | 是 | 当前产品范围、两个模块语义和不做什么 |
 | `docs/ARCHITECTURE.md` | 当前必读 | P0 | 必需 | 是 | 是 | 分层、数据流、同步边界和模块隔离 |
-| `docs/DATA_MODEL.md` | 当前必读 | P0 | 必需 | 是 | 是 | Room v5、Firestore 字段、状态和迁移事实 |
+| `docs/DATA_MODEL.md` | 当前必读 | P0 | 必需 | 是 | 是 | Room v6、Firestore 字段、状态和迁移事实 |
 | `docs/DECISIONS.md` | 当前必读 | P0 | 必需 | 是 | 是 | 已接受 ADR 和不可随意推翻的技术/产品决策 |
 | `docs/STATISTICS.md` | 当前必读 | P1 | 必需 | 是 | 是 | 周/月/年/全部历史统计的唯一口径 |
 | `docs/SYNC_AND_PRIVACY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 本地优先、账号隔离、同步冲突和删除语义 |

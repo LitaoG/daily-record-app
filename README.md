@@ -63,7 +63,7 @@
 
 - Kotlin、Jetpack Compose、Material 3
 - Coroutines、Flow、单向数据流
-- Room v5（schema version）、WorkManager
+- Room v6（schema version）、WorkManager
 - Firebase Authentication、Cloud Firestore
 - `minSdk 26`、`compileSdk 37`、`targetSdk 36`
 - Node.js 22、Cloud Functions 2nd gen、`asia-east1`

@@ -21,9 +21,9 @@
 - 登录后本机数据合并到账号；新设备可恢复，普通登录无短信验证码。
 
 ## 工程门槛
+- Room v6 schema 导出并纳入版本控制。
 
-- Room v5 schema 导出并纳入版本控制。
-- v1→v5、v2→v5、v3→v5、v4→v5 迁移测试通过；旧自慰数据不丢失，做爱数据和两套逐次详情表按非破坏迁移创建。
+- v1→v6、v2→v6、v3→v6、v4→v6、v5→v6 迁移测试通过；旧自慰数据不丢失，做爱数据和两套逐次详情表按非破坏迁移创建，v6 仅新增待同步排序索引。
 - 单元测试、Lint、Debug/Release 编译、设备数据库/Compose 和 Firestore 规则测试通过。
 - 当前维护基线为 `minSdk 26`、`compileSdk 37`、`targetSdk 36`；目标 SDK 不随 compile SDK 自动升级。
 - Functions、Firebase Emulator 和 CI 统一使用 Node.js 22；Functions 使用 2nd gen 并固定在 `asia-east1`。
@@ -42,7 +42,7 @@
 ## 当前状态
 
 - 当前展示名称为“私密日历”；技术包名保持 `io.github.litaog.dailyrecord`，保证覆盖升级。
-- Compose 双模块日历/记录/统计、历史日期跳转、Room v5 逐次详情、邮箱密码登录和双集合云同步基础设施均已实现。
+- Compose 双模块日历/记录/统计、历史日期跳转、Room v6 逐次详情、邮箱密码登录和双集合云同步基础设施均已实现。
 - 旧版 `assets/hand-brew-v2/` 截图包已在 2026-08-11 资源整理中从工作树移除；当前双模块事实以代码、测试和当前文档为准，旧截图仍可从 Git 历史恢复。
 - 完整实现、产品文档与验证证据已纳入 Git 提交链，并通过 Pull Request 同步到 GitHub；以公共 `main` 为唯一当前事实来源，当前提交以 GitHub 页面为准。
 - 发布后的 weekly-chart TalkBack 语义修复已由 PR #90 合并；随后安全、性能、生命周期和文档审计修复已随 `v1.0.0-beta.3` 发布。
