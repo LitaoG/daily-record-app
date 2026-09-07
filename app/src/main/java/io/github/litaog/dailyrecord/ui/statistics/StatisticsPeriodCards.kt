@@ -41,6 +41,7 @@ import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -268,9 +269,12 @@ internal fun weekRingSegmentColor(
     intensity: Float,
     colors: RecordModuleColorTokens,
 ): Color = when (state) {
-    // Future ring segments use the same module-specific pale fill as the
-    // homepage's unset cells. The weekday/date copy stays muted separately.
-    WeekRingState.Future -> colors.colorsFor(RecordVisualState.Unset).background
+    // Future ring segments must match the homepage's future date cells
+    // exactly: both use the same module-independent warm grey-brown
+    // (DailyRecordSurfaceDisabled), not the pale unset fill that the
+    // homepage reserves for past unfilled dates. The weekday/date copy
+    // stays muted separately.
+    WeekRingState.Future -> DailyRecordSurfaceDisabled
     WeekRingState.Unrecorded -> DailyRecordDivider.copy(alpha = .92f)
     WeekRingState.ExplicitZero -> colors.primary
     WeekRingState.Positive ->
