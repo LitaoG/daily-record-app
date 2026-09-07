@@ -106,6 +106,7 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
         )
         var uploaded = 0
         var rejected = initial.rejectedRecordCount
+        var quarantined = 0
 
         val pending = store.pending(ownerId)
         pending.forEach { local ->
@@ -114,7 +115,7 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
             } catch (error: CancellationException) {
                 throw error
             } catch (_: MalformedRemoteRecordException) {
-                rejected += 1
+                quarantined += 1
                 return@forEach
             } catch (error: ClassifiedSyncException) {
                 // A single date the server refuses (bad details, invalid
@@ -122,7 +123,7 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
                 // quarantine the date and keep uploading the remaining rows.
                 // Any other kind still aborts the module attempt.
                 if (error.kind == SyncFailureKind.Data) {
-                    rejected += 1
+                    quarantined += 1
                     return@forEach
                 }
                 throw error
@@ -158,15 +159,15 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
             )
             // The post-upload snapshot is fresher than the initial one: a
             // trigger may have cleaned a malformed document between the two
-            // reads, so its count replaces the initial snapshot's count while
-            // locally quarantined poison dates stay counted.
-            rejected = rejected - initial.rejectedRecordCount + confirmed.rejectedRecordCount
+            // reads, so its count replaces the initial snapshot's count.
+            rejected = confirmed.rejectedRecordCount
         }
         return SyncResult(
             uploaded = uploaded,
             downloaded = downloaded,
             pending = store.pendingCount(ownerId),
             rejectedRemoteRecords = rejected,
+            quarantinedLocalRecords = quarantined,
         )
     }
 }

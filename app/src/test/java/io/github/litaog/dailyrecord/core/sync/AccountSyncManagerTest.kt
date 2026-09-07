@@ -50,7 +50,7 @@ class AccountSyncManagerTest {
     }
 
     @Test
-    fun malformedRemoteSnapshotDoesNotTriggerAutomaticPendingFlush() = runBlocking {
+    fun malformedRemoteSnapshotStillFlushesHealthyPendingRows() = runBlocking {
         val operations = RejectedSnapshotOperations()
         val manager = AccountSyncManager(
             ownerId = "owner",
@@ -62,16 +62,16 @@ class AccountSyncManagerTest {
 
         // The network observer performs one ordinary startup sync. Hold the
         // malformed snapshot until that baseline is complete, then verify that
-        // the rejected snapshot itself does not schedule another automatic
-        // pending flush.
+        // the rejected snapshot still schedules an automatic flush: a malformed
+        // cloud document must not starve healthy pending rows, and the engine
+        // quarantines only the locally refused dates.
         withTimeout(5_000) { operations.initialSyncCompleted.await() }
         val syncCallsBeforeRejectedSnapshot = operations.syncCalls.get()
         operations.emitRejectedSnapshot.complete(Unit)
-        withTimeout(5_000) { operations.snapshotApplied.await() }
-        // A malformed server document must not cause the app to resubmit local
-        // pending rows on every subsequent snapshot. Explicit user retry remains
-        // available through syncNow().
-        assertEquals(syncCallsBeforeRejectedSnapshot, operations.syncCalls.get())
+        withTimeout(5_000) {
+            while (operations.syncCalls.get() == syncCallsBeforeRejectedSnapshot) delay(10)
+        }
+        assertEquals(syncCallsBeforeRejectedSnapshot + 1, operations.syncCalls.get())
         scope.cancel()
     }
 

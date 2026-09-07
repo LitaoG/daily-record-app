@@ -13,20 +13,21 @@ class SyncRetryDecisionTest {
     }
 
     @Test
-    fun pendingWithRejectedRemoteRecordsStopsRetrying() {
-        // A permanently malformed cloud document keeps its row pending but
-        // counts as rejected; retrying would never make progress.
-        assertFalse(
+    fun pendingWithRejectedRemoteRecordsStillRetries() {
+        // A malformed cloud document must not starve healthy pending rows:
+        // the engine quarantines only locally refused dates.
+        assertTrue(
             SyncResult(uploaded = 0, downloaded = 0, pending = 1, rejectedRemoteRecords = 1)
                 .workerShouldRetry(),
         )
     }
 
     @Test
-    fun rejectedCommitsAlsoStopRetrying() {
-        // The engine counts malformed commit results in the same counter.
+    fun locallyQuarantinedRowsStopRetrying() {
+        // The server refused this date with a data error; retrying without a
+        // user edit can never succeed, so the worker stops burning backoff.
         assertFalse(
-            SyncResult(uploaded = 0, downloaded = 1, pending = 2, rejectedRemoteRecords = 1)
+            SyncResult(uploaded = 0, downloaded = 1, pending = 2, quarantinedLocalRecords = 1)
                 .workerShouldRetry(),
         )
     }
