@@ -20,11 +20,11 @@ class DesignTokensTest {
         assertArgb(0xFF8A5AA7, HandBrewColorTokens.primary)
         assertArgb(0xFF693D83, HandBrewColorTokens.strong)
         assertArgb(0xFFB48EC9, HandBrewColorTokens.intense)
-        assertEquals(DailyRecordSurfaceMuted, HandBrewColorTokens.unset)
+        assertArgb(0xFFF3EAF5, HandBrewColorTokens.unset)
         assertArgb(0xFFAD485C, SexColorTokens.primary)
         assertArgb(0xFF823447, SexColorTokens.strong)
         assertArgb(0xFFCD828E, SexColorTokens.intense)
-        assertArgb(0xFFF8EFF1, SexColorTokens.unset)
+        assertArgb(0xFFF8E9EC, SexColorTokens.unset)
         assertArgb(0xFF536078, DailyRecordPeriodInactiveText)
         assertEquals(HandBrewColorTokens.soft, HandBrewColorTokens.periodGlassTint)
         assertEquals(HandBrewColorTokens.primary, HandBrewColorTokens.periodGlassGlow)
@@ -68,8 +68,21 @@ class DesignTokensTest {
     }
 
     @Test
-    fun unsetColorsStayModuleSpecific() {
-        val handBrewUnset = HandBrewColorTokens.colorsFor(RecordVisualState.Unset)
+    fun unsetStaysLightestFillOfItsPalette() {
+        listOf(HandBrewColorTokens, SexColorTokens).forEach { module ->
+            assertTrue(
+                "Expected unset to stay lighter than the one-count fill",
+                relativeLuminance(module.unset) > relativeLuminance(module.soft),
+            )
+            assertTrue(
+                "Expected unset to stay lighter than the future fill",
+                relativeLuminance(module.unset) > relativeLuminance(DailyRecordSurfaceDisabled),
+            )
+        }
+    }
+
+    @Test
+    fun unsetColorsStayModuleSpecific() {        val handBrewUnset = HandBrewColorTokens.colorsFor(RecordVisualState.Unset)
         val sexUnset = SexColorTokens.colorsFor(RecordVisualState.Unset)
 
         assertEquals(HandBrewColorTokens.unset, handBrewUnset.background)

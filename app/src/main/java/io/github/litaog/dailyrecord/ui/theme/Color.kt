@@ -121,7 +121,10 @@ val HandBrewColorTokens = RecordModuleColorTokens(
     soft = Color(0xFFF1E3F7),
     medium = Color(0xFFE0C4EB),
     intense = Color(0xFFB48EC9),
-    unset = DailyRecordSurfaceMuted,
+    // Past-unset stays the lightest fill of the palette (lighter than the
+    // one-count soft fill), one notch deeper than the shared muted surface
+    // so unfilled dates read as module-tinted rather than plain grey.
+    unset = Color(0xFFF3EAF5),
 )
 
 val SexColorTokens = RecordModuleColorTokens(
@@ -133,8 +136,9 @@ val SexColorTokens = RecordModuleColorTokens(
     medium = Color(0xFFEABBC3),
     intense = Color(0xFFCD828E),
     // Keep empty sex dates within the wine-red family without colliding with
-    // the stronger one-count fill.
-    unset = Color(0xFFF8EFF1),
+    // the stronger one-count fill: lighter than soft, one notch deeper than
+    // the previous near-white so the tint actually reads.
+    unset = Color(0xFFF8E9EC),
 )
 
 /**
