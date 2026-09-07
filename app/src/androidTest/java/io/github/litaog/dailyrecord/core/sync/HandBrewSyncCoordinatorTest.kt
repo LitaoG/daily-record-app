@@ -189,8 +189,28 @@ class HandBrewSyncCoordinatorTest {
     }
 
     @Test
-    fun pendingEditRecreatesCloudRecordAfterRemoteDocumentDisappears() = runBlocking {
+    fun confirmedRowStopsDisplayingAfterPhysicalCloudDisappearance() = runBlocking {
         val remote = FakeRemoteDataSource()
+        val database = database()
+        val repository = repository(database, firstInstant)
+        val coordinator = coordinator(database, remote)
+
+        repository.saveRecord(record(3, firstInstant))
+        coordinator.syncOnce(ownerId)
+        assertEquals(3, repository.observeRecord(date).first()?.brewCount)
+
+        // Trusted account-data cleanup or trigger cleanup physically removes
+        // the document while this device has no pending edit. A fresh complete
+        // server snapshot is authoritative about absence (ADR-020): the
+        // confirmed local mirror must stop being displayed.
+        remote.removeRemote(date)
+        coordinator.applySnapshot(ownerId, remote.fetch(ownerId))
+
+        assertNull(repository.observeRecord(date).first())
+    }
+
+    @Test
+    fun pendingEditRecreatesCloudRecordAfterRemoteDocumentDisappears() = runBlocking {        val remote = FakeRemoteDataSource()
         val database = database()
         val repository = repository(database, firstInstant)
         val coordinator = coordinator(database, remote)

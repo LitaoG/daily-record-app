@@ -9,6 +9,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -116,6 +117,61 @@ class DailyCountSyncEngineTest {
         assertEquals(5, afterSecond.brewCount)
         assertEquals(6, afterSecond.remoteRevision)
         assertEquals(5, requireNotNull(remote.server[date]).brewCount)
+    }
+
+    @Test
+    fun predicateOnlyCollectsConfirmedCloudBackedRows() {
+        assertTrue(shouldGcLocallyAbsentRow(SYNCED, 1))
+        assertFalse(shouldGcLocallyAbsentRow(SYNC_PENDING, 5))
+        assertFalse(shouldGcLocallyAbsentRow(SYNCED, 0))
+    }
+
+    @Test
+    fun absentCloudRowsAreCollectedOnlyFromCompleteServerSnapshots() = runSync {
+        val store = FakeStore()
+        val remote = FakeRemote()
+        val engine = DailyCountSyncEngine(store, remote)
+        store.rows[date] = entity(brewCount = 2, updatedAt = t0, remoteRevision = 3)
+            .copy(syncState = SYNCED)
+        val pendingDate = date.plusDays(1)
+        store.rows[pendingDate] = entity(localDate = pendingDate, brewCount = 1, updatedAt = t0, remoteRevision = 0)
+        val neverUploadedDate = date.plusDays(2)
+        store.rows[neverUploadedDate] = entity(
+            localDate = neverUploadedDate,
+            brewCount = 1,
+            updatedAt = t0,
+            remoteRevision = 0,
+        ).copy(syncState = SYNCED)
+
+        engine.applySnapshot(
+            owner,
+            RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0),
+        )
+
+        assertFalse(store.rows.containsKey(date))
+        assertTrue(store.rows.containsKey(pendingDate))
+        assertTrue(store.rows.containsKey(neverUploadedDate))
+    }
+
+    @Test
+    fun cacheAndRejectedSnapshotsNeverCollectLocalMirrors() = runSync {
+        val store = FakeStore()
+        val remote = FakeRemote()
+        val engine = DailyCountSyncEngine(store, remote)
+        store.rows[date] = entity(brewCount = 2, updatedAt = t0, remoteRevision = 3)
+            .copy(syncState = SYNCED)
+
+        engine.applySnapshot(
+            owner,
+            RemoteSnapshot(records = emptyList(), fromCache = true, rejectedRecordCount = 0),
+        )
+        assertTrue(store.rows.containsKey(date))
+
+        engine.applySnapshot(
+            owner,
+            RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 1),
+        )
+        assertTrue(store.rows.containsKey(date))
     }
 
     @Test
@@ -231,7 +287,11 @@ private class FakeStore : DailyCountSyncStore<HandBrewRecordEntity, RemoteHandBr
 
     override suspend fun adoptLocalRecords(ownerId: String): Int = 0
 
-    override suspend fun applyRemote(ownerId: String, records: List<RemoteHandBrewRecord>): Int {
+    override suspend fun applyRemote(
+        ownerId: String,
+        records: List<RemoteHandBrewRecord>,
+        completeServerSnapshot: Boolean,
+    ): Int {
         var changed = 0
         records.forEach { remote ->
             val local = rows[remote.localDate]
@@ -244,6 +304,18 @@ private class FakeStore : DailyCountSyncStore<HandBrewRecordEntity, RemoteHandBr
             }
             rows[remote.localDate] = remote.toEntity()
             changed += 1
+        }
+        // Mirror the production ADR-020 collection rule.
+        if (completeServerSnapshot) {
+            val remoteDates = records.mapTo(mutableSetOf()) { it.localDate }
+            rows.entries
+                .filter { (localDate, row) ->
+                    localDate !in remoteDates &&
+                        shouldGcLocallyAbsentRow(row.syncState, row.remoteRevision)
+                }
+                .map { it.key }
+                .toList()
+                .forEach { rows.remove(it) }
         }
         return changed
     }

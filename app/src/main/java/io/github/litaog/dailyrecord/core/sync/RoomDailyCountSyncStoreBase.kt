@@ -8,6 +8,7 @@ import io.github.litaog.dailyrecord.core.database.DailyCountRecordDetailDao
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.core.database.SYNC_PENDING
+import io.github.litaog.dailyrecord.core.database.SYNCED
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
@@ -92,8 +93,12 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
             changed
         }
 
-    override suspend fun applyRemote(ownerId: String, records: List<R>): Int =
-        database.withTransaction { applyRemoteRecords(ownerId, records) }
+    override suspend fun applyRemote(
+        ownerId: String,
+        records: List<R>,
+        completeServerSnapshot: Boolean,
+    ): Int =
+        database.withTransaction { applyRemoteRecords(ownerId, records, completeServerSnapshot) }
 
     override suspend fun alignUnbasedPendingRevisions(
         ownerId: String,
@@ -228,6 +233,7 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
     private suspend fun applyRemoteRecords(
         ownerId: String,
         records: List<R>,
+        completeServerSnapshot: Boolean,
     ): Int {
         // Fetch the local snapshot once per remote snapshot. The previous
         // implementation queried Room once per remote date, turning a normal
@@ -263,6 +269,27 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
             }
             changed += 1
         }
+        // A fresh, complete server snapshot is authoritative about absence:
+        // cloud documents that physically disappeared (trusted account-data
+        // deletion, trigger cleanup of malformed legacy documents) must stop
+        // being displayed locally too. Only confirmed rows mirroring a real
+        // cloud record are collected; pending edits and rows that never left
+        // the device are untouched (ADR-020).
+        if (completeServerSnapshot) {
+            val remoteDates = records.mapTo(mutableSetOf()) { it.localDateOf() }
+            localByDate.forEach { (localDate, local) ->
+                if (
+                    localDate !in remoteDates &&
+                    shouldGcLocallyAbsentRow(
+                        syncState = recordSyncStateOf(local),
+                        remoteRevision = recordRemoteRevisionOf(local),
+                    )
+                ) {
+                    dao.deleteByOwnerDate(ownerId, localDate)
+                    detailDao.deleteByOwnerDate(ownerId, localDate)
+                }
+            }
+        }
         return changed
     }
 
@@ -275,3 +302,12 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
     protected abstract fun remoteRecordIdOf(remote: R): String
     protected abstract fun remoteRecordRevisionOf(remote: R): Long
 }
+
+/**
+ * Whether a locally mirrored row may be collected when a complete server
+ * snapshot no longer contains its date. Only rows that were confirmed against
+ * a real cloud record (SYNCED with a positive revision) qualify; pending
+ * edits and rows that never left the device must always survive (ADR-020).
+ */
+internal fun shouldGcLocallyAbsentRow(syncState: String, remoteRevision: Long): Boolean =
+    syncState == SYNCED && remoteRevision > 0
