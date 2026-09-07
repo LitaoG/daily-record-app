@@ -5,7 +5,7 @@
 ## 当前 UI v2 入口
 
 - 已确认的视觉目标是[自慰紫色＋做爱深红的三张高保真图](design/quiet-private-journal-v2/README.md)。
-- 唯一实现顺序、暂停点和验收门槛由[分阶段 Goal](QUIET_PRIVATE_JOURNAL_GOALS.md)定义。
+- 当时的实现顺序、暂停点和验收门槛由[分阶段 Goal](QUIET_PRIVATE_JOURNAL_GOALS.md)定义；该 Goal 已关闭，后续改动从新的 Issue/Goal 开始。
 - Stage 0–6 已完成；后续 Compose、数据或发布改动必须从新的 Issue/Goal 和最新公共 `main` 开始，不复用已关闭阶段作为当前执行状态。
 - 生成图不是日期算法、动态字体、触控范围或 TalkBack 的证明；这些事实必须在对应实现阶段通过代码、测试和同视口截图验证。
 

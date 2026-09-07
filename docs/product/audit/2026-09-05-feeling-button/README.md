@@ -1,9 +1,9 @@
 # 2026-09-05 写感受按钮对齐修复证据
 
-状态：`current audit — #254`
+状态：`历史证据 — 写感受按钮对齐修复（已合入 main，PR #255）`
 最后更新：2026-09-05
 
-来源：`agent/fix-feeling-button-align` 分支，API 34 模拟器 `Pixel_4_API_34`，Debug 构建。
+来源：当时的 `agent/fix-feeling-button-align` 临时分支（已清理），API 34 模拟器 `Pixel_4_API_34`，Debug 构建。本页只保留当时的修复证据；当前实现以最新 `main` 与 `UI_UX.md` 为准。
 
 ## 背景
 

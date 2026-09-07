@@ -1,9 +1,9 @@
 # 2026-09-01 双语适配运行证据
 
-状态：`current audit — i18n branch verification`
+状态：`历史证据 — 双语适配运行验证（已合入 main）`
 最后更新：2026-09-01
 
-来源：`agent/optim-perf` 分支，API 34 模拟器 `Pixel_4_API_34`，Debug 构建 `app-debug.apk`。
+来源：当时的双语适配临时分支（正文原记 `agent/optim-perf`，该临时分支已清理），API 34 模拟器 `Pixel_4_API_34`，Debug 构建 `app-debug.apk`。双语实现已随 PR #249 合入公共 `main`；当前双语契约以 ADR-019、`ARCHITECTURE.md` 与 `UI_UX.md` 为准，本页只保留当时的运行证据。
 
 ## 设备与前置
 
