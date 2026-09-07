@@ -196,7 +196,8 @@ class DailyCountSyncEngineTest {
         val result = engine.syncOnce(owner)
 
         assertEquals(1, result.uploaded)
-        assertEquals(1, result.rejectedRemoteRecords)
+        assertEquals(1, result.quarantinedLocalRecords)
+        assertEquals(0, result.rejectedRemoteRecords)
         assertEquals(SYNCED, requireNotNull(store.rows[goodDate]).syncState)
         // The poisoned row stays pending for an explicit user retry instead of
         // wedging the module or being dropped silently.
@@ -214,12 +215,13 @@ class DailyCountSyncEngineTest {
             date to ClassifiedSyncException(SyncFailureKind.Data, IllegalArgumentException("bad details")),
         )
         // A trigger cleans the two initially malformed documents between the
-        // two reads; the locally quarantined date must stay counted.
+        // two reads; the locally quarantined date is counted separately.
         remote.rejectedPerFetch = listOf(2, 0)
 
         val result = engine.syncOnce(owner)
 
-        assertEquals(1, result.rejectedRemoteRecords)
+        assertEquals(0, result.rejectedRemoteRecords)
+        assertEquals(1, result.quarantinedLocalRecords)
         assertEquals(0, result.uploaded)
         assertEquals(SYNC_PENDING, requireNotNull(store.rows[date]).syncState)
     }

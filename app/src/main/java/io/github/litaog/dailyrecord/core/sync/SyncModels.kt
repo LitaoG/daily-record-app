@@ -63,15 +63,18 @@ internal data class RemoteSnapshot(
 )
 
 /**
- * rejectedRemoteRecords counts quarantined dates: malformed remote documents
- * plus local pending rows the server refused with a data error. A non-zero
- * count suppresses blind WorkManager retries of rows that can never succeed.
+ * rejectedRemoteRecords counts malformed cloud documents from the server
+ * snapshots; quarantinedLocalRecords counts local pending dates the server
+ * refused with a data error. Both surface as a sanitized data failure, but
+ * only local quarantines stop WorkManager retries: a malformed cloud document
+ * elsewhere must not starve the healthy pending rows of either module.
  */
 internal data class SyncResult(
     val uploaded: Int,
     val downloaded: Int,
     val pending: Int,
     val rejectedRemoteRecords: Int = 0,
+    val quarantinedLocalRecords: Int = 0,
 )
 
 /** Identity prefix for the local recovery copy of an account's records. */

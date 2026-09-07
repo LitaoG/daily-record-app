@@ -81,4 +81,5 @@ private operator fun SyncResult.plus(other: SyncResult) = SyncResult(
     downloaded = downloaded + other.downloaded,
     pending = pending + other.pending,
     rejectedRemoteRecords = rejectedRemoteRecords + other.rejectedRemoteRecords,
+    quarantinedLocalRecords = quarantinedLocalRecords + other.quarantinedLocalRecords,
 )

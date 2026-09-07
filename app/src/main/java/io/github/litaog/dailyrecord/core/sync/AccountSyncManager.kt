@@ -75,15 +75,16 @@ internal class AccountSyncManager(
                             publishStatus(malformedRemoteRecordsFailure())
                         }
                         if (!snapshot.fromCache && networkAvailable.value) {
-                            if (snapshot.rejectedRecordCount == 0 &&
-                                coordinator.pendingCount(ownerId) > 0
-                            ) {
-                                // A fresh, fully readable server snapshot also proves Firebase is
-                                // reachable. This catches VPN/proxy recovery even when Android's
-                                // network state did not change and flushes edits that remained
-                                // safely in Room. A snapshot with rejected (malformed) records
-                                // never triggers the flush: those rows can never sync, and
-                                // flushing would only repeat the failing commit on every snapshot.
+                            if (coordinator.pendingCount(ownerId) > 0) {
+                                // A fresh server snapshot also proves Firebase is
+                                // reachable. This catches VPN/proxy recovery even
+                                // when Android's network state did not change and
+                                // flushes edits that remained safely in Room.
+                                // A snapshot with rejected (malformed) documents
+                                // still flushes: the engine quarantines only the
+                                // locally refused dates, so healthy pending rows
+                                // of either module are never starved by a bad
+                                // document somewhere in the cloud.
                                 syncNow(queueIfBusy = true)
                             } else if (snapshot.rejectedRecordCount == 0) {
                                 updateIdleStatus()
@@ -205,7 +206,9 @@ internal class AccountSyncManager(
                 val result = cloudWriteGate.withWrite(ownerId) {
                     coordinator.syncOnce(ownerId)
                 }
-                publishStatus(if (result.rejectedRemoteRecords > 0) {
+                publishStatus(if (result.rejectedRemoteRecords > 0 ||
+                    result.quarantinedLocalRecords > 0
+                ) {
                     malformedRemoteRecordsFailure()
                 } else if (result.pending == 0) {
                     SyncStatus.UpToDate
