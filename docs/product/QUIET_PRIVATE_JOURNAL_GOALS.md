@@ -4,11 +4,13 @@
 
 总 Goal：[GitHub Issue #42](https://github.com/LitaoG/daily-record-app/issues/42)
 
-最后更新：2026-08-16
+最后更新：2026-09-30
 
 > 归档说明：本 Goal 的阶段已全部完成，并在后续维护后随公共 `main` 进入当前 `v1.0.0-beta.3`。下文保留阶段当时的执行规则和证据链接；后续需求必须新建 Issue/Goal，不得把已关闭阶段重新打开作为日常实现入口。
 
 维护记录：2026-08-12 的 [Issue #176](https://github.com/LitaoG/daily-record-app/issues/176) 只定向修正逐次详情中时间与感受控件的对齐、框内“开始时间/结束时间”占位文案及居中、重复小标签、尾部箭头和行首占位；不重启任何已关闭 Stage，也不改变详情数据、保存或同步语义。
+
+维护记录：2026-09-30 的 [Issue #278](https://github.com/LitaoG/daily-record-app/issues/278) 定向将顶栏云同步状态胶囊高度恢复至 38dp（`DailyRecordSizes.SyncChipHeight`），移除误扩胶囊尺寸的 `minimumInteractiveComponentSize`，使胶囊背景、边框与点击波纹阴影完全重合一致。
 
 ## 1. 文档职责与权威顺序
 
