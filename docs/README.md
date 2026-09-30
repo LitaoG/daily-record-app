@@ -1,6 +1,6 @@
 # 私密日历文档中心
 
-最后复核：2026-08-16
+最后复核：2026-09-30
 
 仓库级协作规则另见：[开始工作前与完成门槛](../AGENTS.md)、[AI 协作约定](../AI_COLLABORATION.md)、[贡献指南](../CONTRIBUTING.md)。每次开始工作前先看[文档目录与 AI 阅读索引](DOCUMENTATION_CATALOG.md)。
 
@@ -51,6 +51,7 @@
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
 - [明亮渐变玻璃主题 Goal 与当前契约](product/BRIGHT_GLASS_THEME.md)
 - [设置中心 Goal](product/SETTINGS_HUB_GOAL.md)
+- [双语适配 Goal（i18n：中文默认 + English）](product/I18N_GOAL.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)
 - [用户故事与验收](product/USER_STORIES_AND_ACCEPTANCE.md)
 - [实现与发布准备度](product/IMPLEMENTATION_READINESS.md)
@@ -64,6 +65,9 @@
 
 以下内容用于解释某次迭代当时验证了什么，不应覆盖上面的当前规则：
 
+- [2026-09-05 写感受按钮对齐修复](product/audit/2026-09-05-feeling-button/README.md)
+- [2026-09-01 双语适配运行证据](product/audit/2026-09-01-i18n-bilingual/README.md)
+- [2026-08 性能与测试加固日志](product/OPTIMIZATION_2026-08_LOG.md)
 - [2026-08-15 `main` 全面代码审计](product/audit/2026-08-15-main-code-audit/README.md)
 - [2026-08-11 Issues #123–#145 清理审计](product/audit/2026-08-11-issues-123-145/README.md)
 - [2026-08-11 运行时 UX 与统计验收](product/RUNTIME_UX_AUDIT.md)

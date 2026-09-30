@@ -1,6 +1,6 @@
 # 审计与验证证据索引
 
-最后复核：2026-08-16
+最后复核：2026-09-30
 
 本目录只保存某次实现、截图、设备验证或发布链的可追溯证据。它不是当前需求列表；发生冲突时，以代码、`docs/` 当前事实文档和最新公共 `main` 为准。
 
@@ -29,7 +29,10 @@
 | [2026-08-03 copy audit](2026-08-03-copy-audit/README.md) | 集中文案和中文字符串审查 | 历史；实现随 beta.3 延续 |
 | [2026-08-03 Stage 5/6 release](2026-08-03-stage5-stage6-release/README.md) | beta.2 发布、签名和私有镜像 | 历史发布完成 |
 | [2026-08-09 Issue #105 Stage 4–5](2026-08-09-record-details-stage4-stage5/README.md) | 记录页无障碍、窄屏、恢复、跨设备与候选 APK | 历史；PR #119 已合并，后续实现随 beta.3 延续 |
+| [2026-08-11 issues 123-145](2026-08-11-issues-123-145/README.md) | Issues #123–#145 第三轮代码审计与修复 | 历史 |
 | [2026-08-15 main code audit](2026-08-15-main-code-audit/README.md) | `main` 全面代码、安全、性能、生命周期与文档审计 | 历史审计；基线 `82d4111`，修复结果已进入后续公共 `main` |
+| [2026-09-01 i18n bilingual](2026-09-01-i18n-bilingual/README.md) | 双语适配运行证据（API 34 ZH/EN 正常与 200% 字体） | 历史；实现随 main 延续 |
+| [2026-09-05 feeling button](2026-09-05-feeling-button/README.md) | 写感受按钮对齐与图标裁边修复证据 | 历史；实现随 main 延续 |
 
 ## 阅读规则
 

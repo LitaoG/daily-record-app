@@ -1,6 +1,6 @@
 # 安全策略
 
-最后复核：2026-08-16
+最后复核：2026-09-30
 
 ## 报告安全问题
 
@@ -15,7 +15,7 @@
 - 真实 `.env`、`local.properties`、`google-services.json` 或服务账号配置。
 - 真实用户记录、导出文件、数据库快照或含隐私的崩溃日志。
 
-Android Firebase 客户端配置本身不是管理员凭据，但仍不进入此仓库；真正的安全边界是 Firebase Authentication、Firestore Security Rules，以及未来满足侧载识别条件后可能重新评估的 App Check。具备绕过规则能力的服务账号私钥只能存在于受控服务端。即使密钥已从最新提交删除，也必须按泄露处理并立即轮换，因为它可能仍存在于 Git 历史中。
+Android Firebase 客户端配置本身不是管理员凭据，但仍不进入此仓库；真正的安全边界是 Firebase Authentication、Firestore Security Rules，以及未来满足侧载识别条件后可能重新评估的 App Check。具备绕过规则能力的服务账号私钥只能存在于受控服务端。即使密钥已从最新提交删除，也必须按泄露处理并立即轮换，因为它可能仍存在于 Git 历史中。本地开发/测试未提供 `google-services.json` 时所使用的回退 key 采用合成占位符（`A_EMULATOR_DUMMY_KEY_000000000000000000`，详见 ADR-021），无云端访问权限且不匹配 Google API Key 扫描正则，相关历史误报告警已在 Secret Scanning 中处理闭环。
 
 ## 应用安全基线
 
