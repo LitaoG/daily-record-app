@@ -72,9 +72,10 @@ internal data class FirebaseServices(
 
         private fun demoOptions() = FirebaseOptions.Builder()
             .setApplicationId("1:1234567890:android:daily-record-demo")
-            // The emulator accepts any non-empty key; keep a synthetic value that
-            // does not match Google API key regex patterns to avoid secret scanner false positives.
-            .setApiKey("demo-emulator-api-key")
+            // FirebaseInstanceId requires apiKey to match `^A[\w-]{38}$` (39 chars starting with 'A').
+            // We use a synthetic value starting with 'A_' instead of 'AIza' so secret scanners
+            // matching `AIza...` never produce false positives.
+            .setApiKey("A_EMULATOR_DUMMY_KEY_000000000000000000")
             .setProjectId(DEMO_PROJECT_ID)
             .build()
     }
