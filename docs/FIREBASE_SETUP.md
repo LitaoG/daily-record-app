@@ -1,6 +1,6 @@
 # Firebase 配置与运维
 
-最后复核：2026-08-16
+最后复核：2026-09-30
 
 ## 已建立的生产资源
 
@@ -28,7 +28,7 @@
 3. Sync Project with Gradle Files，然后运行 Debug 构建。
 4. 登录页不再显示“云端开发项目尚未完成配置”即表示配置被识别。
 
-没有此文件时，工程仍可编译并进入纯本地模式；会使用 `demo-daily-record-app` 占位配置，生产登录按钮禁用。
+没有此文件时，工程仍可编译并进入纯本地模式；会使用 `demo-daily-record-app` 占位配置，生产登录按钮禁用。占位配置中的 API Key 采用可见合成值 `A_EMULATOR_DUMMY_KEY_000000000000000000`（按 ADR-021，满足 FirebaseInstanceId 内部的 39 字符校验且以前缀 `A_` 避开 Secret Scanner 的 `AIza...` 扫描正则，无安全风险且不触发误报警报）。
 
 ## 本地安全规则测试
 

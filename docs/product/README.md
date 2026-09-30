@@ -1,6 +1,6 @@
 # 私密日历产品交付索引
 
-最后复核：2026-08-16
+最后复核：2026-09-30
 
 完整工程文档请先看[文档中心](../README.md)。本页只索引产品、设计和交付资料。
 
@@ -16,6 +16,7 @@
 - [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
 - [明亮渐变玻璃主题 Goal 与当前契约](BRIGHT_GLASS_THEME.md)
 - [设置中心 Goal](SETTINGS_HUB_GOAL.md)
+- [双语适配 Goal（i18n：中文默认 + English）](I18N_GOAL.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](MONTH_STATISTICS_REDESIGN.md)
 - [实现与发布准备度](IMPLEMENTATION_READINESS.md)
 - [当前 README 运行截图与复现边界](assets/readme/README.md)
@@ -34,6 +35,9 @@
 
 ## 历史交付证据
 
+- [2026-09-05 写感受按钮对齐修复](audit/2026-09-05-feeling-button/README.md)
+- [2026-09-01 双语适配运行证据](audit/2026-09-01-i18n-bilingual/README.md)
+- [2026-08 性能与测试加固日志](OPTIMIZATION_2026-08_LOG.md)
 - [2026-08-15 `main` 全面代码审计](audit/2026-08-15-main-code-audit/README.md)
 - [2026-08-11 Issues #123–#145 清理审计](audit/2026-08-11-issues-123-145/README.md)
 - [2026-08-09 Issue #105 Stage 4–5 记录页验收](audit/2026-08-09-record-details-stage4-stage5/README.md)

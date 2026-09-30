@@ -1,6 +1,6 @@
 # 架构决策记录
 
-最后复核：2026-08-16
+最后复核：2026-09-30
 
 ## ADR-001：Android 原生
 
@@ -138,6 +138,13 @@
 - 决策：当一次**完整**的服务端快照（非缓存、且没有任何文档被判定为格式异常）不再包含某个日期时，本地该日期中 `SYNCED` 且 `remoteRevision > 0` 的镜像行会被移除（连同详情），界面回到“未填写”。其他行永远不受影响。
 - 原因：物理消失（账号数据被 trusted callable 清理、坏文档被写入触发器清理）后，云端文档已经不存在；仅靠“用户再编辑才收敛”会让另一台设备长期显示已删除数据。ADR-017 只定义了“本地 pending 编辑优先重建”，没有定义“无 pending 编辑时的收敛方向”，本决策补齐这一环。普通清除仍写墓碑并继续存在于快照中，因此不会被本决策误删；rejected 文档仍存在于云端，携带 rejected 的快照不触发收集，避免把“解析失败”误当“已消失”。
 - 后果：`RoomDailyCountSyncStoreBase.applyRemoteRecords` 在 `completeServerSnapshot` 时执行收集；缓存快照、带 rejected 的快照、`PENDING` 行和从未上传（`remoteRevision = 0`）的行一律保留。`applySnapshot` 路径已经位于删除写闸门之内（2026-09 加固），账号删除中的迟到快照不会借本决策复活或误删行。
+
+## ADR-021：本地 Firebase 模拟器占位 Key 采用符合 SDK 格式且避开扫描特征的合成值
+
+- 状态：Accepted
+- 决策：在未配置真实 `app/google-services.json` 时，本地 Firebase 模拟器回退配置 `demoOptions()` 采用格式满足 `FirebaseInstanceId` 内部要求（正则 `^A[\w-]{38}$`，即以大写字母 `A` 开头且总长度精确为 39 个字符）、但以前缀 `A_` 开头的可见合成字符串（`A_EMULATOR_DUMMY_KEY_000000000000000000`）。
+- 原因：Firebase Android SDK 内部的 `FirebaseInstanceId.checkRequiredFirebaseOptions` 在向 Callable 等云端服务请求上下文时会强制调用 `isValidApiKeyFormat` 校验 API Key 格式（必须匹配 `\AA[\w-]{38}\z`）；若传入普通的短字符串（如 `demo-api-key`），会导致其抛出 `IllegalArgumentException` 阻断测试。而若写成类似真实 Google API Key 的 `AIza...` 前缀，又会命中 GitHub Secret Scanning 等安全工具的静态扫描正则（`\bAIza[0-9A-Za-z-_]{35}\b`）产生误报告警。
+- 后果：`demoOptions()` 使用 `A_EMULATOR_DUMMY_KEY_000000000000000000` 既严格满足 Firebase SDK 内部的 39 字符校验规则，保证本地与 CI 的全部自动化设备集成测试正常通过；又完全避开以 `AIza` 开头的通用扫描规则，消除代码库中的假阳性误报。
 
 ## 已废止方向
 

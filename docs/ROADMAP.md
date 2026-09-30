@@ -1,8 +1,9 @@
 # 路线图
 
-最后复核：2026-08-16
+最后复核：2026-09-30
 
 ## 已完成：自慰专用产品重构
+
 
 - [x] 从早期通用活动原型收缩为单一 `HandBrewRecord`。
 - [x] 建立 Room v2 专用模型、v1→v2 迁移和旧数据保留。
@@ -53,13 +54,17 @@
 - [x] 发布 [`v1.0.0-beta.3`](https://github.com/LitaoG/daily-record-app/releases/tag/v1.0.0-beta.3)，`versionCode = 4`，并通过当前发布元数据、文档和规则门禁。
 - [x] 进入发布后维护；新问题必须建立新的 Issue/PR，不重新打开已关闭的 UI v2 Stage。
 
-### 发布后公共 main 维护快照（2026-08-16）
+### 发布后公共 main 维护快照（2026-08-16 至 2026-09-30）
 
 - [x] 升级到 `compileSdk 37`，保留 `targetSdk 36`，并把目标 SDK 升级留给单独版本评估。
 - [x] Functions、Firebase Emulator 和 CI 统一到 Node.js 22；Functions 使用 2nd gen 并固定在 `asia-east1`。
 - [x] PR、`main` 和 Release tag 都执行 API 34 `connectedDebugAndroidTest`；失败时上传设备报告和 logcat。
 - [x] Compose 根页、认证、同步和记录 Flow 改用生命周期感知收集，避免后台页面持续重组。
 - [x] 将首页当前运行截图从历史审计目录迁移到脱敏的 API 34 Debug 证据入口，历史审计材料保持不可改写。
+- [x] 引入双语机制（中文默认 + English），保持 `AppCopy` 唯一文案事实源，设置页语言切换即时生效并持久化（ADR-019，PR #249 / #270）。
+- [x] 记录详情行“写感受”按钮裁边与图标间距对齐修复（PR #255 / #271 / #272）。
+- [x] 全量文档事实校准与缺失交叉索引补齐，确立完整快照缺失权威性原则（ADR-020，PR #273）。
+- [x] 本地 Firebase 模拟器合成 API Key 格式规范化（满足 `FirebaseInstanceId` 的 `^A[\w-]{38}$` 校验，同时规避通用 Google API Key 正则扫描误报，ADR-021，PR #275，Issue #274，Secret Scanning Alert #1 关闭）。
 
 ## 已完成：日期记录页逐次详情
 
