@@ -6,22 +6,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 
 /**
  * Settings entry icon backed by the locked Figma brand artwork.
  *
- * Keep the old parameter shape for callers that already supply the active
- * module tint; the Figma asset itself is selected as Purple or Wine rather
- * than being recoloured and losing its 3D shading.
+ * The asset is selected as Purple or Wine rather than being recoloured, so the
+ * only tint callers supply is the active module tint that picks the variant.
  */
-@Suppress("UNUSED_PARAMETER")
 @Composable
 fun PrivateSettingsIcon(
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    calendarTint: Color = DailyRecordTextSecondary,
     moduleTint: Color = DailyRecordDefaultAccent,
 ) {
     BrandIcon(

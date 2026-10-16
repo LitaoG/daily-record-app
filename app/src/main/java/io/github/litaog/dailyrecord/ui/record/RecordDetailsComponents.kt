@@ -533,7 +533,6 @@ internal fun DetailEntryButton(
         ChevronIcon(
             forward = true,
             modifier = Modifier.size(20.dp),
-            color = accent,
             theme = colors.brandIconTheme,
         )
     }

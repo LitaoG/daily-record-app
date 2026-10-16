@@ -466,6 +466,9 @@ internal interface AppStrings {
 
         fun monthLabel(month: Int): String
 
+        /** Joins a list of month labels for display; never hardcode a separator in UI code. */
+        val monthListSeparator: String
+
         fun dateDescription(date: LocalDate, status: String): String
 
         fun weekdayDateLabel(weekday: String, date: LocalDate): String

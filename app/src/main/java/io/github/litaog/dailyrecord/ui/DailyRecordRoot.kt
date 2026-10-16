@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +43,7 @@ import io.github.litaog.dailyrecord.core.sync.AndroidNetworkMonitor
 import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.ui.auth.AuthScreen
+import io.github.litaog.dailyrecord.ui.components.DailyRecordConfirmationDialog
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordCanvas
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
@@ -500,22 +499,16 @@ private fun DeletionRecoveryRoot(
         }
     }
     if (confirmReplace && onReplaceExistingLocal != null) {
-        AlertDialog(
-            onDismissRequest = { confirmReplace = false },
-            title = { Text(AppCopy.Deletion.replaceLocalAndRestoreTitle) },
-            text = { Text(AppCopy.Deletion.replaceLocalAndRestoreMessage) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmReplace = false
-                        onReplaceExistingLocal()
-                    },
-                ) { Text(AppCopy.Deletion.replaceLocalAndRestore) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmReplace = false }) {
-                    Text(AppCopy.Deletion.cancelRecoveryReplacement)
-                }
+        DailyRecordConfirmationDialog(
+            title = AppCopy.Deletion.replaceLocalAndRestoreTitle,
+            message = AppCopy.Deletion.replaceLocalAndRestoreMessage,
+            cancelLabel = AppCopy.Deletion.cancelRecoveryReplacement,
+            confirmLabel = AppCopy.Deletion.replaceLocalAndRestore,
+            testTag = "replace_local_records_dialog",
+            onDismiss = { confirmReplace = false },
+            onConfirm = {
+                confirmReplace = false
+                onReplaceExistingLocal()
             },
         )
     }

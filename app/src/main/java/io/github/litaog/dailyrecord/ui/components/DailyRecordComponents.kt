@@ -134,9 +134,8 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Calendar) },
-                icon = { color ->
+                icon = {
                     CalendarGlyph(
-                        color,
                         // The calendar artwork carries a bottom-right swoosh:
                         // its pixel centroid sits right of the asset center,
                         // so the glyph needs a leftward nudge to line up with
@@ -155,9 +154,8 @@ internal fun DailyRecordBottomBar(
                 accent = colors.primary,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Statistics) },
-                icon = { color ->
+                icon = {
                     StatisticsGlyph(
-                        color,
                         modifier = Modifier.size(24.dp),
                         theme = colors.brandIconTheme,
                     )
@@ -174,7 +172,7 @@ private fun BottomDestination(
     accent: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    icon: @Composable (Color) -> Unit,
+    icon: @Composable () -> Unit,
 ) {
     val contentColor = if (selected) accent else DailyRecordTextSecondary
     Column(
@@ -191,7 +189,7 @@ private fun BottomDestination(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        icon(contentColor)
+        icon()
         Text(text = label, color = contentColor, style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.height(DailyRecordSpacing.Compact))
         Box(
@@ -206,7 +204,6 @@ private fun BottomDestination(
 
 @Composable
 internal fun CalendarGlyph(
-    color: Color,
     modifier: Modifier = Modifier,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
@@ -219,7 +216,6 @@ internal fun CalendarGlyph(
 
 @Composable
 internal fun StatisticsGlyph(
-    color: Color,
     modifier: Modifier = Modifier,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
@@ -230,11 +226,15 @@ internal fun StatisticsGlyph(
     )
 }
 
+/**
+ * Navigation chevron. The artwork ships as two locked brand variants, so
+ * callers pick [theme] instead of a tint; a disabled state is expressed with
+ * [modifier] alpha by the caller.
+ */
 @Composable
 internal fun ChevronIcon(
     forward: Boolean,
     modifier: Modifier = Modifier,
-    color: Color = DailyRecordText,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
     BrandIcon(
@@ -247,10 +247,9 @@ internal fun ChevronIcon(
 @Composable
 internal fun BackChevronIcon(
     modifier: Modifier = Modifier,
-    color: Color = DailyRecordText,
     theme: BrandIconTheme = BrandIconTheme.Purple,
 ) {
-    ChevronIcon(forward = false, modifier = modifier, color = color, theme = theme)
+    ChevronIcon(forward = false, modifier = modifier, theme = theme)
 }
 
 @Composable
@@ -748,7 +747,6 @@ internal fun IconArrowButton(
         ChevronIcon(
             forward = forward,
             modifier = Modifier.size(20.dp),
-            color = DailyRecordText,
             theme = theme,
         )
     }
