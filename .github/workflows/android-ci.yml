@@ -13,7 +13,57 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Documentation-only changes cannot invalidate Room, sync, rules or device
+  # results (docs/TESTING.md), so the expensive Gradle and emulator work is
+  # gated on this classification. The classifier fails safe: if the change set
+  # cannot be computed it reports code=true and the full pipeline runs.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.classify.outputs.code }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed paths
+        id: classify
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            range="${PR_BASE}..${PR_HEAD}"
+          else
+            range="${PUSH_BEFORE}..${PUSH_AFTER}"
+          fi
+          if ! git diff --name-only "$range" > changed.txt 2>/dev/null; then
+            echo "Cannot compute the change set; running the full pipeline."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Changed paths:"
+          cat changed.txt
+          # Only prose, design/audit assets and repository-hygiene files are
+          # treated as documentation. Everything else (Kotlin, Gradle,
+          # Manifest, resources, Rules, Functions, scripts, workflows,
+          # .gitignore/.gitattributes, .editorconfig) counts as code.
+          if grep -vE '^(docs/|LICENSE$|.*\.md$)' changed.txt | grep -q .; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -45,19 +95,23 @@ jobs:
       - name: Install Functions dependencies
         run: pnpm --dir functions install --frozen-lockfile
 
-      - name: Validate copy, documentation, and release metadata
-        run: node --test scripts/copy-integrity.test.mjs scripts/docs-integrity.test.mjs scripts/release-metadata.test.mjs
+      - name: Validate copy, documentation, catalog, and release metadata
+        run: node --test scripts/copy-integrity.test.mjs scripts/docs-integrity.test.mjs scripts/documentation-catalog.test.mjs scripts/release-metadata.test.mjs
 
       - name: Validate Functions log safety
         run: node --test functions/delete-log.test.js
 
       - name: Validate Firestore rules
+        if: needs.changes.outputs.code == 'true'
         run: pnpm test:firestore-rules
 
       - name: Validate and build
+        if: needs.changes.outputs.code == 'true'
         run: ./gradlew testDebugUnitTest compileDebugAndroidTestKotlin lintDebug assembleDebug --stacktrace
 
   connected:
+    needs: [changes, build]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -126,5 +180,7 @@ jobs:
             logcat.txt
             emulator-properties.txt
           if-no-files-found: ignore
+          # Device logs can contain emulator state; keep them short-lived.
+          retention-days: 7
 
 

@@ -20,6 +20,11 @@ keystore.properties
 
 # Log/OS Files
 *.log
+.DS_Store
+
+# Local scratch area for audit runs, screenshots and uiautomator dumps.
+# Task scratch must never be committed, so it is excluded by name.
+work/
 
 # Android Studio generated files and folders
 captures/
