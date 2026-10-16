@@ -69,8 +69,6 @@ internal class AccountDeletionRecoveryCoordinator(
     fun isDeletionBlocked(ownerId: String): Boolean =
         DeletionBarrier.isDeletionBlocked(ownerId)
 
-    fun isAnyDeletionBlocked(): Boolean = DeletionBarrier.isDeletionBlocked(null)
-
     /**
      * Resolves only phases for which Auth was not invoked, then retries until
      * no such durable work remains. This path never initializes Firebase.

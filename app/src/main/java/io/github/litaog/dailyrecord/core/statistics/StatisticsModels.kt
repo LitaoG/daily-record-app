@@ -69,10 +69,7 @@ data class YearStatistics(
     val monthlyAverage: Double,
     val maximumMonths: List<YearMonthStatistics>,
     val minimumMonths: List<YearMonthStatistics>,
-) {
-    val rankedMonthCount: Int
-        get() = months.count { it.complete && it.recorded }
-}
+)
 
 data class StatisticsDetail(
     val label: String,

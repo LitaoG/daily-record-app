@@ -96,7 +96,13 @@ AF:A5:24:1B:F1:3C:9D:AA:6F:45:AE:7C:8D:69:9D:75:40:D0:11:F0:E2:19:E5:4E:5B:97:BF
 4. 用 `apksigner verify --verbose --print-certs` 检查 APK，并记录公开的证书 SHA-256 指纹。
 5. 创建并推送与版本一致的 tag，例如 `v1.0.0-beta.3`。
 6. 等待 `Release signed APK` 工作流完成，下载 APK 与 `.sha256` 后再复算一次。
-7. 从旧 release APK 覆盖安装到测试设备，确认 Room 记录、账号状态和日历统计保持。
+7. 从旧 release APK 覆盖安装到测试模拟器，确认 Room 记录、账号状态和日历统计保持：
+
+   ```powershell
+   pnpm verify-release-upgrade -- --baseline <旧版本.apk> --candidate <新版本.apk>
+   ```
+
+   该脚本只允许在 `emulator-<n>` 设备上运行（会卸载并重装包），按 AppCopy 的默认中文文案定位控件；脚本会自动写入一条记录再覆盖安装，验证 Room 记录仍在。真实账号与云端恢复仍需人工确认。
 
 ## 首次从 Debug 版迁移
 

@@ -3,6 +3,15 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+// Manual pre-release gate for docs/RELEASE.md step 7: install the previous
+// release, write one record, overlay-install the candidate and prove the Room
+// row survived. Destructive (uninstalls and reinstalls the package), so it
+// refuses to run on anything that is not an emulator. Runs through
+// `pnpm verify-release-upgrade -- --baseline <apk> --candidate <apk>`.
+//
+// The node lookups below use the default Chinese app copy, which is what an
+// untouched emulator shows; the verifier never switches the in-app language.
+
 const PACKAGE_NAME = "io.github.litaog.dailyrecord";
 const ACTIVITY_NAME = `${PACKAGE_NAME}/.MainActivity`;
 

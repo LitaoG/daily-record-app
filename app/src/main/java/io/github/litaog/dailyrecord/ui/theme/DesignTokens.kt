@@ -29,7 +29,6 @@ object DailyRecordShapes {
 
 object DailyRecordBorders {
     val Standard = 1.dp
-    val Focused = 2.dp
 }
 
 object DailyRecordElevations {
