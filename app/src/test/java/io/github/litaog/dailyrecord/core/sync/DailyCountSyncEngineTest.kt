@@ -340,8 +340,13 @@ private class FakeStore : DailyCountSyncStore<HandBrewRecordEntity, RemoteHandBr
         var changed = 0
         records.forEach { remote ->
             val local = rows[remote.localDate]
-            // Mirrors the production guard: pending local edits and revisions
-            // at or above the remote one must never be overwritten by a fetch.
+            // Simplified production guard: the real RoomDailyCountSyncStoreBase
+            // also compares the document id and deletes the local row when the
+            // remote generation changed, so a recreated cloud document with a
+            // restarted revision is adopted here even though this fake would
+            // keep the stale row. That branch is covered by the two
+            // syncedPeerAcceptsRecreatedCloudGenerationWithRestartedRevision
+            // coordinator tests; do not read this fake as the full rule.
             if (local?.syncState == SYNC_PENDING ||
                 (local != null && local.remoteRevision >= remote.revision)
             ) {
