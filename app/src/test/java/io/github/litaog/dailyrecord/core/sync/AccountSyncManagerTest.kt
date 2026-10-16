@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.core.sync
+﻿package io.github.litaog.dailyrecord.core.sync
 
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
@@ -261,11 +261,18 @@ private class DeletionBlockingGate : CloudWriteGate {
         throw AccountDeletionInProgressException(ownerId)
 }
 
+private fun testSnapshot(rejectedRecordCount: Int = 0) = RemoteSnapshot(
+    sourceCollection = HAND_BREW_RECORDS_COLLECTION,
+    records = emptyList(),
+    fromCache = false,
+    rejectedRecordCount = rejectedRecordCount,
+)
+
 private class CountingApplyOperations : AccountSyncOperations {
     val applyCalls = AtomicInteger()
 
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        emit(testSnapshot())
         awaitCancellation()
     }
 
@@ -284,7 +291,7 @@ private class CountingApplyOperations : AccountSyncOperations {
 
 private class NonRetryableFailingOperations : AccountSyncOperations {
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        emit(testSnapshot())
         throw IllegalArgumentException("malformed snapshot")
     }
 
@@ -305,9 +312,9 @@ private class FailingApplyOperations : AccountSyncOperations {
     private val applyCalls = AtomicInteger()
 
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        emit(testSnapshot())
         delay(200)
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        emit(testSnapshot())
         awaitCancellation()
     }
 
@@ -336,7 +343,7 @@ private class RejectedSnapshotOperations : AccountSyncOperations {
 
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
         emitRejectedSnapshot.await()
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 1))
+        emit(testSnapshot(rejectedRecordCount = 1))
     }
 
     override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(1)

@@ -31,3 +31,8 @@ internal const val MAX_SUPPORTED_EPOCH_MILLIS = 253_402_300_799_999L
  */
 internal const val MAX_REMOTE_DETAIL_COUNT = 1000
 internal const val USERS_COLLECTION = "users"
+
+// Per-module sub-collections under users/{uid}. Kept beside the shared field
+// names so a module's collection and its snapshot provenance cannot drift.
+internal const val HAND_BREW_RECORDS_COLLECTION = "handBrewRecords"
+internal const val SEX_RECORDS_COLLECTION = "sexRecords"

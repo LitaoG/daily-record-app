@@ -27,7 +27,7 @@ internal open class FirebaseDailyCountRemoteDataSource<E : Any, D : Any, R : Rem
     private val firestore: FirebaseFirestore,
     private val functions: FirebaseFunctions,
     private val detailsProvider: suspend (ownerId: String, localDate: LocalDate) -> List<D>,
-    private val collectionName: String,
+    val collectionName: String,
     private val parseRecord: (documentId: String, values: Map<String, Any?>) -> R,
     private val parseRecords: (List<Pair<String, Map<String, Any?>?>>) -> ParsedRemoteRecords<R>,
     private val entityId: (E) -> String,
@@ -103,6 +103,7 @@ internal open class FirebaseDailyCountRemoteDataSource<E : Any, D : Any, R : Rem
             },
         )
         return RemoteSnapshot(
+            sourceCollection = collectionName,
             records = parsed.records,
             fromCache = metadata.isFromCache,
             rejectedRecordCount = parsed.rejectedRecordCount,
