@@ -66,6 +66,15 @@
 - [x] 全量文档事实校准与缺失交叉索引补齐，确立完整快照缺失权威性原则（ADR-020，PR #273）。
 - [x] 本地 Firebase 模拟器合成 API Key 格式规范化（满足 `FirebaseInstanceId` 的 `^A[\w-]{38}$` 校验，同时规避通用 Google API Key 正则扫描误报，ADR-021，PR #275，Issue #274，Secret Scanning Alert #1 关闭）。
 
+### 工程治理与仓库瘦身（2026-10-16）
+
+- [x] 修复跨模块快照缺陷：`CombinedSyncCoordinator` 把单个模块的快照转发给所有模块后，另一模块会把"空快照"当成自己集合为空而清理本地已确认记录；快照现在携带来源集合，模块只处理属于自己的集合。
+- [x] 对齐文档契约：删除恢复确认改用项目内置弹窗（不再使用默认 `AlertDialog`/`TextButton`）；英文界面不再渲染中文顿号分隔符；`Room schema` 版本只有一处声明。
+- [x] 清理已验证的死代码、无引用版本目录项、无意义测试和两个重复的 `package.json` 别名；把孤立且唯一实现"覆盖升级"门禁的 `verify-release-upgrade.mjs` 接回发布流程。
+- [x] 建立长期文档体系：[`WORKFLOW.md`](WORKFLOW.md)（唯一端到端流程）、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md)（实现规范）、[`AI-PITFALLS.md`](AI-PITFALLS.md)（踩坑与防复发门禁）；`AGENTS.md` 收敛为强制入口，`AI_COLLABORATION.md` 与一次性清理记录已并入后删除。
+- [x] 补齐缺失门禁：文档目录测试接入 CI；`versionCode` 严格递增与 tag 必须包含在 `main` 由发布工作流强制；覆盖/文案/中文标点门禁扩展。
+- [x] 降低 CI 成本：纯文档改动不再启动 Gradle、Rules 与设备回归（分类失败时按有代码改动处理），`connected` 依赖 `build`，发布流先跑零成本门禁再启动模拟器。
+
 ## 已完成：日期记录页逐次详情
 
 - [x] Room v5 非破坏迁移，新增自慰与做爱独立详情表（`hand_brew_record_details` / `sex_record_details`）。
@@ -77,7 +86,6 @@
 - [x] 完成 GitHub Issue [#105](https://github.com/LitaoG/daily-record-app/issues/105)，PR [#119](https://github.com/LitaoG/daily-record-app/pull/119) 合并。
 
 ## 当前状态：安静的私密数据日志 UI v2 已完成，进入维护
-
 总 Goal 与唯一阶段顺序见 [`product/QUIET_PRIVATE_JOURNAL_GOALS.md`](product/QUIET_PRIVATE_JOURNAL_GOALS.md)：
 
 - [x] Stage 0：仓库清理、文档权威层级、设计资产和 GitHub Goal 同步。
