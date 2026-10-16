@@ -2,7 +2,7 @@
 
 最后复核：2026-08-16
 
-本文件只回答环境、命令与配置边界；测试策略以 [`TESTING.md`](TESTING.md) 为唯一事实来源，发布流程以 [`RELEASE.md`](RELEASE.md) 为准。
+本文件只回答环境、命令与配置边界；端到端流程以 [`WORKFLOW.md`](WORKFLOW.md) 为准，测试策略以 [`TESTING.md`](TESTING.md) 为唯一事实来源，代码写法以 [`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 为准，发布流程以 [`RELEASE.md`](RELEASE.md) 为准。
 
 ## 环境
 
@@ -14,7 +14,7 @@
 - 生产登录联调需要本机私有的 `app/google-services.json`
 - Firestore 规则测试需要 Node.js 22 与 pnpm；Cloud Functions 为 2nd gen（Node 22），与 CI 和本地模拟器保持一致，版本不符时测试在启动阶段直接失败（`scripts/check-node-runtime.mjs`），避免运行时漂移让业务断言失真
 
-GitHub `main` 是当前事实来源；从最新 `main` 建立短生命周期分支，通过 Pull Request、自动化检查和审查后使用普通 merge commit 合并，保留分支中的每一笔原始提交；禁止 squash merge、rebase merge 和改写共享历史。
+GitHub `main` 是当前事实来源；从最新 `main` 建立短生命周期分支，通过 Pull Request、自动化检查和审查后使用普通 merge commit 合并，保留分支中的每一笔原始提交；禁止 squash merge、rebase merge 和改写共享历史。完整步骤见 [`WORKFLOW.md`](WORKFLOW.md)。
 
 ## 验证命令
 

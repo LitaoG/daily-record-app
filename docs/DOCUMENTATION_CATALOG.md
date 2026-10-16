@@ -1,9 +1,9 @@
 # 文档目录与 AI 阅读索引
 
 状态：`current — authoritative documentation registry`
-最后复核：2026-09-30
+最后复核：2026-10-16
 
-本文是公共仓库中全部 Git 跟踪 Markdown 文档的逐文件索引，也是 AI 开始工作前判断“先读什么、哪些只是历史证据”的唯一入口。当前仓库没有被 Git 跟踪的 `.doc`、`.docx` 或 `.markdown` 文件；如果以后新增或删除任意文档，必须在同一提交中更新本文，`scripts/documentation-catalog.test.mjs` 会检查目录是否完整。当前 README 运行截图及其复现边界单独登记在产品资产目录中，历史审计截图不再冒充首页当前画面。
+本文是公共仓库中全部 Git 跟踪 Markdown 文档的逐文件索引，也是 AI 开始工作前判断“先读什么、哪些只是历史证据”的唯一入口。当前仓库没有被 Git 跟踪的 `.doc`、`.docx` 或 `.markdown` 文件；如果以后新增或删除任意文档，必须在同一提交中更新本文，`scripts/documentation-catalog.test.mjs` 会检查目录是否完整（并且已在两个 CI 工作流中执行）。当前 README 运行截图及其复现边界单独登记在产品资产目录中，历史审计截图不再冒充首页当前画面。
 
 ## 字段定义
 
@@ -15,19 +15,23 @@
 ## AI 开工最小阅读顺序
 
 1. 本目录，确认任务涉及的当前文档和历史文档边界。
-2. [`AGENTS.md`](../AGENTS.md)、[`AI_COLLABORATION.md`](../AI_COLLABORATION.md)、[`README.md`](../README.md) 和 [`docs/README.md`](README.md)，确认仓库纪律、公共仓库边界和文档权威层级。
-3. [`PRODUCT.md`](PRODUCT.md)、[`ARCHITECTURE.md`](ARCHITECTURE.md)、[`DATA_MODEL.md`](DATA_MODEL.md)、[`DECISIONS.md`](DECISIONS.md)；统计、同步、测试或发布任务再分别加入 [`STATISTICS.md`](STATISTICS.md)、[`SYNC_AND_PRIVACY.md`](SYNC_AND_PRIVACY.md)、[`TESTING.md`](TESTING.md)、[`RELEASE.md`](RELEASE.md)。
-4. 按任务范围阅读表中标记为“AI 必看 = 按范围”的文档；`历史证据` 默认不读，只有需要核对当时实现、截图、提交或发布链时才读。
+2. [`AGENTS.md`](../AGENTS.md) 和 [`docs/README.md`](README.md)，确认仓库纪律、阅读路由和文档权威层级。
+3. [`WORKFLOW.md`](WORKFLOW.md) 和 [`PRODUCT.md`](PRODUCT.md)，确认端到端流程与产品边界。
+4. 按任务范围继续阅读：[`ARCHITECTURE.md`](ARCHITECTURE.md)、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md)、[`DATA_MODEL.md`](DATA_MODEL.md)、[`DECISIONS.md`](DECISIONS.md)；统计、同步、测试或发布任务再分别加入 [`STATISTICS.md`](STATISTICS.md)、[`SYNC_AND_PRIVACY.md`](SYNC_AND_PRIVACY.md)、[`TESTING.md`](TESTING.md)、[`RELEASE.md`](RELEASE.md)。
+5. 排查“以前踩过的坑”时读 [`AI-PITFALLS.md`](AI-PITFALLS.md)。
+6. 按任务范围阅读表中标记为“AI 必看 = 按范围”的文档；`历史证据` 默认不读，只有需要核对当时实现、截图、提交或发布链时才读。
 
 ## 逐文件目录
 
 | 路径 | 状态 | 优先级 | 必要程度 | 必看 | AI 必看 | 主要用途 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `docs/DOCUMENTATION_CATALOG.md` | 当前必读 | P0 | 必需 | 是 | 是 | 全部文档的状态、优先级和阅读路由；新增/删除文档时同步更新 |
-| `AGENTS.md` | 当前必读 | P0 | 必需 | 是 | 是 | 开工检查、产品边界、测试和分支纪律 |
-| `AI_COLLABORATION.md` | 当前必读 | P0 | 必需 | 是 | 是 | AI 分支、提交、公共仓库和保留原始提交历史的约定 |
+| `AGENTS.md` | 当前必读 | P0 | 必需 | 是 | 是 | AI 强制入口：阅读路由、产品边界、分支/测试/清理纪律、高风险操作 |
 | `README.md` | 当前索引 | P0 | 必需 | 是 | 是 | 项目定位、当前版本、技术栈和用户入口 |
 | `docs/README.md` | 当前索引 | P0 | 必需 | 是 | 是 | 当前事实、工程运维和历史证据的导航与冲突优先级 |
+| `docs/WORKFLOW.md` | 当前必读 | P0 | 必需 | 是 | 是 | 从开工到合并清理的唯一权威端到端流程 |
+| `docs/ENGINEERING_STANDARDS.md` | 当前必读 | P0 | 必需 | 是 | 是 | 代码、分层、异步、数据、隐私和测试的实现规范 |
+| `docs/AI-PITFALLS.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 已付出代价的问题、根因与防复发门禁 |
 | `CONTRIBUTING.md` | 当前必读 | P1 | 必需 | 是 | 是 | Issue、分支、PR、测试和隐私边界 |
 | `.github/pull_request_template.md` | 协作模板 | P1 | 按范围 | 按范围 | 按范围 | 创建 PR 时填写变更原因和验证证据 |
 | `PRIVACY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 面向使用者的本机、账号、云端和删除隐私说明 |
@@ -44,8 +48,7 @@
 | `docs/FIREBASE_SETUP.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | Firebase 资源、Rules/Functions 发布和本地配置 |
 | `docs/RELEASE.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 版本号、稳定签名、tag、Release 和恢复边界 |
 | `docs/ROADMAP.md` | 当前索引 | P1 | 建议 | 按范围 | 按范围 | 已完成交付和当前维护方向；不作为旧阶段执行入口 |
-| `docs/REPOSITORY_HYGIENE.md` | 当前必读 | P1 | 必需 | 是 | 是 | 公共/私有边界、文档生命周期、分支和生成物策略 |
-| `docs/RESOURCE_CLEANUP.md` | 历史证据 | P2 | 留档 | 否 | 否 | 资源清理范围、保留理由和可恢复证据 |
+| `docs/REPOSITORY_HYGIENE.md` | 当前必读 | P1 | 必需 | 是 | 是 | 公共/私有边界、文档生命周期、资源分层、分支和生成物策略 |
 | `docs/design/README.md` | 当前索引 | P2 | 按范围 | 按范围 | 按范围 | 设计资产入口与运行时资源边界 |
 | `docs/design/icon-source/README.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 自适应图标源文件和保留的 canonical 导出 |
 | `app/schemas/README.md` | 生成物说明 | P1 | 按范围 | 按范围 | 按范围 | Room schema 快照的来源、用途和禁止手工修改规则 |
@@ -105,4 +108,5 @@
 - 当前文档只能有一个事实入口；若代码、测试和当前文档冲突，先按 `docs/README.md` 的优先级处理，不在历史审计页修正当前状态。
 - 历史文档可以补充“已归档/被哪个版本取代”的状态标记，但不得改写当时的测试数量、截图、分支、提交和失败事实。
 - 删除文档前必须先检查本目录、文档链接、脚本和 Git 历史用途；若它仍是发布、迁移或审计证据，应保留并标为历史，而不是删除。
+- 一次性清理、临时审计和阶段性报告的结论写进提交说明或既有权威文档即可，不新增很快过时的登记项。
 - 公共仓库不记录 `local.properties`、SDK/cache、`google-services.json`、签名材料、真实数据或机器日志；这些文件的本机存在不等于应进入版本控制。

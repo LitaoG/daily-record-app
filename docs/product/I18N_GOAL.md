@@ -57,7 +57,7 @@
 
 - 分支：`agent/optim-perf`（自 `agent/i18n-bilingual`）；提交前缀按模型：`[ds:pro]`/`[kim:k3]`/`[MS:1.2]`（当前模型 `muse-spark-1.2` 使用 `[MS:1.2]`）；合并保留全部提交历史。
 - 测试遵循 `docs/TESTING.md`：开发中只跑定向测试；Stage 5 在最终 head 上跑一次完整套件。
-- 远端恢复后：按下方草稿创建 Issue（一次一个、间隔 60 秒以上，见 `AI_COLLABORATION.md` 教训），推送分支并为每个阶段开 PR。
+- 远端恢复后：按下方草稿创建 Issue（一次一个、间隔 60 秒以上，见 [`AI-PITFALLS.md`](../AI-PITFALLS.md) 的 P1 教训），推送分支并为每个阶段开 PR。
 
 ## GitHub Issue 草稿（远端恢复后按此创建，只写目标）
 
