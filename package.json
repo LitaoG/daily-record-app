@@ -13,6 +13,7 @@
     "test:android-connected": "node scripts/check-node-runtime.mjs && firebase emulators:exec --project demo-daily-record-app --only auth,firestore,functions \"gradlew.bat connectedDebugAndroidTest --no-parallel\"",
     "test:android-connected:unix": "node scripts/check-node-runtime.mjs && firebase emulators:exec --project demo-daily-record-app --only auth,firestore,functions \"./gradlew connectedDebugAndroidTest --no-parallel\"",
     "test:firestore-rules": "node scripts/check-node-runtime.mjs && firebase emulators:exec --project demo-daily-record-app --only firestore,functions \"node scripts/firestore-rules.test.mjs\"",
+    "test:cost-safety": "node --test scripts/firebase-cost-safety.test.mjs",
     "verify-release-upgrade": "node scripts/verify-release-upgrade.mjs"
   },
   "devDependencies": {

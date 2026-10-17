@@ -1,4 +1,4 @@
-﻿package io.github.litaog.dailyrecord.core.sync
+package io.github.litaog.dailyrecord.core.sync
 
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
@@ -98,6 +98,8 @@ class AccountSyncManagerTest {
         assertTrue(isRetryableFirebaseAuthCode("ERROR_USER_TOKEN_EXPIRED"))
         assertFalse(isRetryableFirebaseAuthCode("ERROR_INVALID_CREDENTIAL"))
         assertFalse(isRetryableFirebaseAuthCode("ERROR_USER_DISABLED"))
+        assertFalse(isRetryableFirebaseAuthCode("ERROR_TOO_MANY_REQUESTS"))
+        assertFalse(isRetryableFirebaseAuthCode("ERROR_QUOTA_EXCEEDED"))
     }
 
     @Test

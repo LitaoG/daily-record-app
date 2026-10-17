@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.core.di
 
 import android.content.Context
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -36,6 +37,11 @@ internal object DailyRecordSyncScheduler {
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build(),
+            )
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                30,
+                TimeUnit.SECONDS,
             )
             .setInitialDelay(SYNC_DEBOUNCE_MILLIS, TimeUnit.MILLISECONDS)
             .build()

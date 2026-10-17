@@ -64,6 +64,10 @@ internal fun PasswordResetDialog(
     val scope = rememberCoroutineScope()
     val submit: () -> Unit = submit@{
         if (busy || sent || validationError != null) return@submit
+        if (PasswordResetCooldown.isCoolingDown(normalizedEmail)) {
+            errorText = AppCopy.Auth.resetTooManyRequests
+            return@submit
+        }
         busy = true
         errorText = null
         scope.launch {
@@ -72,6 +76,7 @@ internal fun PasswordResetDialog(
             }.getOrElse { error -> Result.failure(error) }
             if (result.isSuccess || result.exceptionOrNull().isMissingAccountError()) {
                 sent = true
+                PasswordResetCooldown.recordSent(normalizedEmail)
                 onEmailAccepted(normalizedEmail)
             } else {
                 errorText = passwordResetErrorMessage(requireNotNull(result.exceptionOrNull()))

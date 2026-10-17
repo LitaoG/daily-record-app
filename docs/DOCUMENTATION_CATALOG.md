@@ -46,6 +46,9 @@
 | `docs/DEVELOPMENT.md` | 当前必读 | P1 | 必需 | 是 | 是 | 本机环境、命令、配置边界和日常开发流程 |
 | `docs/TESTING.md` | 当前必读 | P1 | 必需 | 是 | 是 | 按影响范围选择测试及小版本完整门禁 |
 | `docs/FIREBASE_SETUP.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | Firebase 资源、Rules/Functions 发布和本地配置 |
+| `docs/operations/firebase-cost-and-quota-inventory.md` | 当前必读 | P1 | 必需 | 是 | 是 | 生产 Firebase 服务计费、免费额度、配额与防滥用清单 |
+| `docs/operations/firebase-abuse-monitoring-and-emergency-runbook.md` | 当前必读 | P1 | 必需 | 是 | 是 | 费用监控架构、告警规则、多级应急响应与止损操作手册 |
+| `docs/operations/firebase-cost-safety-test-matrix.md` | 当前必读 | P1 | 必需 | 是 | 是 | 计费安全攻击场景、分层防御、自动化测试与盲区矩阵 |
 | `docs/RELEASE.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 版本号、稳定签名、tag、Release 和恢复边界 |
 | `docs/ROADMAP.md` | 当前索引 | P1 | 建议 | 按范围 | 按范围 | 已完成交付和当前维护方向；不作为旧阶段执行入口 |
 | `docs/REPOSITORY_HYGIENE.md` | 当前必读 | P1 | 必需 | 是 | 是 | 公共/私有边界、文档生命周期、资源分层、分支和生成物策略 |

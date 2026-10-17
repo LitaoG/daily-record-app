@@ -7,6 +7,8 @@ import io.github.litaog.dailyrecord.core.common.BACKGROUND_CLOUD_TIMEOUT_MILLIS
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.AccountDeletionInProgressException
 import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
+import io.github.litaog.dailyrecord.core.sync.ClassifiedSyncException
+import io.github.litaog.dailyrecord.core.sync.SyncFailureKind
 import io.github.litaog.dailyrecord.core.sync.workerShouldRetry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
@@ -55,22 +57,33 @@ class DailyRecordSyncWorker internal constructor(
                     val coordinator = buildCombinedSyncCoordinator(database, services)
                     val result = withTimeout(BACKGROUND_CLOUD_TIMEOUT_MILLIS) {
                         DeletionBarrier.withCloudWrite(
-            ownerId = ownerId,
+                            ownerId = ownerId,
                         ) {
                             coordinator.syncOnce(ownerId)
                         }
                     }
-                    if (result.workerShouldRetry()) Result.retry() else Result.success()
+                    if (result.workerShouldRetry()) {
+                        if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
+                    } else {
+                        Result.success()
+                    }
                 }
             }
         } catch (_: AccountDeletionInProgressException) {
             Result.success()
         } catch (_: TimeoutCancellationException) {
             // Background reconciliation is bounded independently from the
-            // five-second interactive action, then WorkManager retries it.
-            Result.retry()
+            // five-second interactive action, then WorkManager retries it up to MAX_ATTEMPTS.
+            if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
         } catch (error: CancellationException) {
             throw error
+        } catch (error: ClassifiedSyncException) {
+            // Quota/Rate-limit exhaustion must not be repeatedly retried by WorkManager.
+            if (error.kind == SyncFailureKind.Quota || runAttemptCount >= MAX_ATTEMPTS) {
+                Result.failure()
+            } else {
+                Result.retry()
+            }
         } catch (_: Exception) {
             if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
         } finally {
