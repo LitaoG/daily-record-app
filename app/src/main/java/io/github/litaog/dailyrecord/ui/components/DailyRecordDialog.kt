@@ -29,6 +29,10 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 
+// Copy rule: every visible string arrives as a parameter or from AppCopy (ZhStrings /
+// EnStrings); this file must not hardcode visible text or CJK punctuation. See
+// docs/ENGINEERING_STANDARDS.md section 7.
+
 /** Shared app-native dialog surface for the private-calendar visual language. */
 @Composable
 fun DailyRecordDialog(

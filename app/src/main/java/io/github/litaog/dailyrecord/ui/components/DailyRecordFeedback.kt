@@ -41,6 +41,10 @@ import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordAccentBrush
 
+// Copy rule: every visible string arrives as a parameter or from AppCopy (ZhStrings /
+// EnStrings); this file must not hardcode visible text or CJK punctuation. See
+// docs/ENGINEERING_STANDARDS.md section 7.
+
 /** Branded confirmation surface used instead of a library-default confirmation dialog. */
 @Composable
 fun DailyRecordConfirmationDialog(

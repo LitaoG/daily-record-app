@@ -166,7 +166,7 @@ fun DailyRecordApp(
     val displayedMonth = YearMonth.from(browseDate)
     // The full-history flow drives the statistics screen and the initial
     // loading gate; the calendar and record screen consume a month-scoped
-    // flow so saves outside the consumed month no longer rebuild their models.
+    // flow so saves outside the consumed month do not rebuild their models.
     // The scope follows the record screen's selected date when open, so the
     // month summary can never desync from the edited date.
     val recordsMonth = selectedDate?.let(YearMonth::from) ?: displayedMonth
