@@ -47,14 +47,43 @@ docs/README.md 与文档目录 → 0.3 表中命中的那一份权威文档 → 
 | Gradle 命令、本机环境、SDK 版本 | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
 | 版本号、签名、tag 与 GitHub Release | [`RELEASE.md`](RELEASE.md) |
 | Firebase 资源、Rules 与 Functions 部署 | [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md) |
-| 云端费用、配额、防刷与止损 | [`operations/`](operations/firebase-cost-and-quota-inventory.md) 下的三份成本文档 |
+| 云端费用、配额、防刷与止损 | [`firebase-cost-and-quota-inventory.md`](operations/firebase-cost-and-quota-inventory.md)、[`firebase-abuse-monitoring-and-emergency-runbook.md`](operations/firebase-abuse-monitoring-and-emergency-runbook.md)、[`firebase-cost-safety-test-matrix.md`](operations/firebase-cost-safety-test-matrix.md) |
 | 这个方向以前栽过什么坑（动手前必查） | [`AI-PITFALLS.md`](AI-PITFALLS.md) |
 | 证据等级、汇报格式和停止条件（动手前必查） | [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) |
 | 改码流程：分支、提交、PR、合并、清理（动手前必查） | [`WORKFLOW.md`](WORKFLOW.md) |
+| Issue、PR 和贡献者需要遵守的约定 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | AI 总规则、红线和高风险操作 | [`AGENTS.md`](../AGENTS.md) |
 | 某个文件算不算权威、归谁管 | [`DOCUMENTATION_CATALOG.md`](DOCUMENTATION_CATALOG.md)、[`README.md`](README.md) |
 | 公共/私有边界、文档生命周期、生成物 | [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md) |
 | 面向使用者的隐私说明、漏洞报告 | [`PRIVACY.md`](../PRIVACY.md)、[`SECURITY.md`](../SECURITY.md) |
+
+`scripts/docs-integrity.test.mjs` 检查本表链接到文档目录里每一份“当前必读”文档，并检查 [`docs/README.md`](README.md) 里的同名表与本表逐行一致。
+
+### 0.4 八步标准链路
+
+所有改动（代码或文档）都按这八步走，不跳步直接改 `main`。每一步的细则在后面的章节：
+
+| 步 | 做什么 | 细则 |
+|---|---|---|
+| 0 | 不确定先查文档（0.2、0.3） | §1 |
+| 1 | Issue：立项并写清范围边界 | §2 |
+| 2 | 分支 + worktree：隔离开发，主检出不直接改 | §3 |
+| 3 | 最小实现：按常规档或重构档，不夹带无关修改 | §4 |
+| 4 | 本机验证：定向测试、Lint、文档门禁 | §5–§7 |
+| 5 | 规范提交：`[<模型标识>:<型号>]: <类型>: <内容>` | §8 |
+| 6 | 推送远端分支 | §8 |
+| 7 | 发起 PR，等 CI 通过 | §8 |
+| 8 | 普通 merge 合入 `main`，删除分支、worktree 和全部中间产物，然后汇报 | §9、§10 |
+
+推送、合并和删除远端分支属于不可轻易撤销的远端写操作；AI 只在用户明确同意后执行（见 [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) 第 5 节）。
+
+### 0.5 五条纪律
+
+1. **不确定先查文档**：按 0.2 的顺序查证，不凭印象动手，不编造数值和路径。
+2. **动手前必查踩坑清单**：改代码前按方向查 [`AI-PITFALLS.md`](AI-PITFALLS.md)；清单只增不删，收录门槛见该文。
+3. **多用子代理分工，总代理复核**：大任务拆成互不重叠的子任务分给子代理；子代理汇报的关键结论由总代理亲自抽查后才算数（[`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) 第 3 节）。
+4. **最小改动、优先复用**：分常规档和重构档两档执行，规则见 §4。
+5. **及时清理中间产物**：临时脚本、日志、截图、分析草稿和临时 worktree 用完即删，仓库内外都一样（§9）。
 
 ## 1. 任务开始：先查事实
 
@@ -86,9 +115,11 @@ docs/README.md 与文档目录 → 0.3 表中命中的那一份权威文档 → 
 
 ```powershell
 git fetch origin main
-git switch -c agent/<description> origin/main
+git worktree add -b agent/<description> work/<description> origin/main
 ```
 
+- 优先用 worktree 隔离开发：主检出里可能有用户自己的改动，AI 不在主检出里直接改。worktree 放在被 `.gitignore` 排除的 `work/` 下，不放桌面或其他用户目录。
+- 只需要一个检出时，也可以用 `git switch -c agent/<description> origin/main`。
 - 使用 `agent/<description>` 短生命周期分支；不在 `main` 直接改，也不在别人的分支上改。
 - `main` 是唯一当前基线；旧本地分支不能作为开发基线。
 - 不执行 `git clean -xfd`、`reset --hard`、强制推送等不可恢复操作。
@@ -100,7 +131,16 @@ git switch -c agent/<description> origin/main
 - 遵循 [`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md)。
 - 保持改动最小：不做与本次目标无关的重构、格式化或依赖升级。
 - 发现相邻问题时，记录并单独处理，不要顺手改。
-- 修改业务代码时同步修正过时注释；注释只解释**为什么**，不复述代码。
+- 修改业务代码时在**同一提交**同步修正注释和文档；注释只解释**为什么**，不复述代码。
+
+改动分两档，开工前先确定属于哪一档：
+
+| | 常规档（改行为、修 Bug、调参数） | 重构档（拆文件、解耦、消除重复实现） |
+|---|---|---|
+| 写法 | 在已有逻辑处就地改，不在旁边另写一份平行实现；优先复用已有函数 | 允许新建文件和抽取公共函数，这是消除重复的唯一途径 |
+| 范围 | 不夹带格式化或无关文件 | 纯搬迁和抽取，运行时可观察行为零变化 |
+| 节奏 | 一个提交解决一个明确问题 | 一次只搬一个内聚单元，单独成提交或 PR，测试全绿再搬下一块 |
+| 自检 | `git diff --stat` 明显超出目标时砍回范围内 | 搬迁前后同一组测试都通过 |
 
 **退出条件**：改动可编译，且每处改动都能对应到第 2 步定义的目标。
 
@@ -177,9 +217,19 @@ CI 行为（见 [`.github/workflows/android-ci.yml`](../.github/workflows/androi
 - 合并到 `main` 使用**普通 merge**，保留分支里的每一笔原始提交；禁止 squash、rebase merge 和强推。
 - 合并后确认 `main` 已包含完整提交链，再删除远端临时分支。
 - 删除本次产生的临时产物：临时脚本、截图、UI XML、logcat、构建日志、导出数据、一次性报告。仓库内临时文件统一放 `work/`（已被 `.gitignore` 排除），用完即删。
+- 仓库外同样要清：为本次任务在桌面、用户目录或临时目录建的 worktree、备份快照和探针目录，交付前连目录本身一起删掉。除非用户明确要求，不在桌面生成任何文件或文件夹。
+- 用 `git worktree remove <路径>` 删除本次的 worktree，再用 `git worktree list` 确认没有残留或失效（prunable）的条目。
 - 不把本次审计的推理过程、中间日志和重复报告永久提交。
 
-**退出条件**：分支已合并，临时产物已清理，`git status --short --branch` 干净。
+收尾自检：
+
+```powershell
+node scripts/workspace-hygiene.mjs
+```
+
+它在 `work/` 不为空、存在未跟踪文件或存在失效 worktree 时以非零退出码失败，并列出原因。
+
+**退出条件**：分支已合并，临时产物已清理，`git status --short --branch` 干净，收尾自检通过。
 
 ## 10. 最终汇报
 

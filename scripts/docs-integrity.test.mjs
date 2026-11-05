@@ -101,3 +101,65 @@ test("current documentation matches release and Android configuration", () => {
     `Missing release notes for v${versionName}`,
   );
 });
+
+const LOOKUP_TABLE_HEADER = "| 我不确定的事 | 去查的权威文档 |";
+
+function lookupTable(relativePath) {
+  const lines = read(relativePath).split(/\r?\n/);
+  const start = lines.indexOf(LOOKUP_TABLE_HEADER);
+  assert.notEqual(start, -1, `${relativePath} has no lookup table`);
+  const rows = [];
+  for (let index = start; index < lines.length && lines[index].startsWith("|"); index += 1) {
+    rows.push(lines[index]);
+  }
+  return rows;
+}
+
+function linkedRepoPaths(relativePath, rows) {
+  const directory = path.dirname(path.join(root, relativePath));
+  const linked = new Set();
+  for (const row of rows) {
+    for (const match of row.matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)) {
+      linked.add(path.relative(root, path.resolve(directory, match[1])).replaceAll("\\", "/"));
+    }
+  }
+  return linked;
+}
+
+function currentMustReadDocuments() {
+  const catalog = read("docs/DOCUMENTATION_CATALOG.md");
+  return [...catalog.matchAll(/^\| `([^`]+)` \| 当前必读 \|/gmu)].map((match) => match[1]);
+}
+
+test("workflow lookup table links every current must-read document", () => {
+  const linked = linkedRepoPaths("docs/WORKFLOW.md", lookupTable("docs/WORKFLOW.md"));
+  const mustRead = currentMustReadDocuments();
+  assert.ok(mustRead.length > 0, "catalog lists no current must-read documents");
+  assert.deepEqual(mustRead.filter((file) => !linked.has(file)), []);
+});
+
+test("docs README repeats the workflow lookup table row for row", () => {
+  assert.deepEqual(lookupTable("docs/README.md"), lookupTable("docs/WORKFLOW.md"));
+});
+
+const PITFALL_SECTIONS = ["背景与证据", "影响与代价", "根因", "正确做法", "修复状态", "防复发机制", "权威规则"];
+
+test("AI pitfalls keep sequential ids, one index row per entry and every section", () => {
+  const pitfalls = read("docs/AI-PITFALLS.md").replace(/```[\s\S]*?```/g, "");
+  const indexIds = [...pitfalls.matchAll(/^\| \[(P\d+)\]\(#/gm)].map((match) => match[1]);
+  const headings = [...pitfalls.matchAll(/^## (P\d+) /gm)];
+  const headingIds = headings.map((match) => match[1]);
+  assert.ok(headingIds.length > 0, "no pitfall entries found");
+  assert.deepEqual(
+    headingIds,
+    headingIds.map((_, index) => `P${index + 1}`),
+    "pitfall ids must run P1..Pn without gaps, reuse or reordering",
+  );
+  assert.deepEqual(indexIds, headingIds, "index table rows and entry headings must match");
+  headings.forEach((match, index) => {
+    const end = index + 1 < headings.length ? headings[index + 1].index : pitfalls.length;
+    const body = pitfalls.slice(match.index, end);
+    const missing = PITFALL_SECTIONS.filter((section) => !body.includes(`**${section}**`));
+    assert.deepEqual(missing, [], `${match[1]} is missing sections`);
+  });
+});

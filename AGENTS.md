@@ -8,12 +8,12 @@
 2. 读 [`docs/README.md`](docs/README.md)，确认冲突时的优先级和文档职责边界。
 3. 按任务范围读下表列出的权威文档；`历史证据` 默认不读，只有核对过去的实现、截图、提交或发布链时才读。
 4. 检查当前分支与工作区：`git status --short --branch`。用户未提交的改动必须原样保留。
-5. 从最新公共 `main` 建立短生命周期 `agent/<description>` 分支后再动手。
+5. 从最新公共 `main` 建立短生命周期 `agent/<description>` 分支后再动手，优先用 `work/` 下的 worktree 隔离（[`docs/WORKFLOW.md`](docs/WORKFLOW.md) §3）。
 
 | 任务范围 | 必读（除上面两项外） |
 |---|---|
-| 任何改动 | [`docs/WORKFLOW.md`](docs/WORKFLOW.md)、[`docs/PRODUCT.md`](docs/PRODUCT.md) |
-| 代码实现 | [`docs/ENGINEERING_STANDARDS.md`](docs/ENGINEERING_STANDARDS.md)、[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| 任何改动 | [`docs/WORKFLOW.md`](docs/WORKFLOW.md)（含 §0.3 反查速查表）、[`docs/AI-EVIDENCE-STANDARD.md`](docs/AI-EVIDENCE-STANDARD.md)、[`docs/PRODUCT.md`](docs/PRODUCT.md) |
+| 代码实现 | [`docs/AI-PITFALLS.md`](docs/AI-PITFALLS.md)（动手前必查）、[`docs/ENGINEERING_STANDARDS.md`](docs/ENGINEERING_STANDARDS.md)、[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | 数据模型、Room、迁移 | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) |
 | 统计口径 | [`docs/STATISTICS.md`](docs/STATISTICS.md) |
 | 同步、账号、隐私、删除 | [`docs/SYNC_AND_PRIVACY.md`](docs/SYNC_AND_PRIVACY.md)、[`PRIVACY.md`](PRIVACY.md)、[`SECURITY.md`](SECURITY.md) |
@@ -26,6 +26,13 @@
 | 版本、签名、发布 | [`docs/RELEASE.md`](docs/RELEASE.md) |
 | 提交、PR、分支、清理 | [`docs/WORKFLOW.md`](docs/WORKFLOW.md)、[`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | 排查“以前踩过的坑” | [`docs/AI-PITFALLS.md`](docs/AI-PITFALLS.md) |
+
+## 五条纪律与八步链路
+
+细则只在 [`docs/WORKFLOW.md`](docs/WORKFLOW.md) §0.4、§0.5 维护，这里只列要点：
+
+- **五条纪律**：不确定先查文档；动手前必查踩坑清单；多用子代理分工，关键结论由总代理亲自抽查；最小改动、优先复用（常规档 / 重构档）；及时清理仓库内外的中间产物。
+- **八步链路**：查文档 → Issue → 分支 + worktree → 最小实现 → 本机验证 → 规范提交 → 推送 → PR 与 CI → 普通 merge 与清理。推送、合并和删除远端分支必须先得到用户明确同意。
 
 ## 不可逾越的产品与数据边界
 
@@ -80,6 +87,7 @@
 - 临时脚本、截图、UI XML、logcat、构建日志、分析草稿和一次性报告，任务结束前必须删除，不留在仓库或用户磁盘上。
 - **不要**为了让审计“看起来完整”而新增重复报告、每问题一份 Markdown、或很快过时的文件清单。
 - 临时产物仓库内统一放在被 `.gitignore` 排除的 `work/` 下，用完即删。
+- 仓库外（桌面、用户目录、临时目录）为任务建的 worktree、备份和探针目录，交付前连目录本身一起删除；除非用户明确要求，不在桌面生成文件。收尾运行 `node scripts/workspace-hygiene.mjs`，它必须通过。
 - 有长期价值的内容直接写进既有权威文档；发布事实写进 `docs/releases/`，阶段审计、截图和一次性报告不再入库，验证证据写进 PR 描述（见 [`docs/REPOSITORY_HYGIENE.md`](docs/REPOSITORY_HYGIENE.md)）。
 
 ## 文档维护

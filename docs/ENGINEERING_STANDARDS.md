@@ -118,7 +118,8 @@
 | 门禁 | 保护对象 |
 |---|---|
 | `scripts/documentation-catalog.test.mjs` | 文档目录与实际跟踪文档一致 |
-| `scripts/docs-integrity.test.mjs` | 本地链接/图片有效；版本、SDK、Room schema、Functions 事实一致 |
+| `scripts/docs-integrity.test.mjs` | 本地链接/图片有效；版本、SDK、Room schema、Functions 事实一致；反查速查表覆盖全部当前必读文档且两处一致；踩坑清单编号连续、索引与正文一致、七个小节齐全 |
+| `scripts/workspace-hygiene.mjs`（`pnpm check:hygiene`） | 交付前 `work/` 为空、没有未跟踪文件、没有失效 worktree；手动收尾自检，不进 CI |
 | `scripts/copy-integrity.test.mjs` | 文案只在语言文件；无中文标点外泄；无已退役术语 |
 | `scripts/release-metadata.test.mjs` | 版本、tag、`versionCode` 递增、GitHub 输出键名 |
 | `scripts/firestore-rules.test.mjs` | 规则的所有权、字段形状、修订与删除边界 |

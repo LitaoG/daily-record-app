@@ -24,10 +24,11 @@
 | Gradle 命令、本机环境、SDK 版本 | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
 | 版本号、签名、tag 与 GitHub Release | [`RELEASE.md`](RELEASE.md) |
 | Firebase 资源、Rules 与 Functions 部署 | [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md) |
-| 云端费用、配额、防刷与止损 | [`operations/`](operations/firebase-cost-and-quota-inventory.md) 下的三份成本文档 |
+| 云端费用、配额、防刷与止损 | [`firebase-cost-and-quota-inventory.md`](operations/firebase-cost-and-quota-inventory.md)、[`firebase-abuse-monitoring-and-emergency-runbook.md`](operations/firebase-abuse-monitoring-and-emergency-runbook.md)、[`firebase-cost-safety-test-matrix.md`](operations/firebase-cost-safety-test-matrix.md) |
 | 这个方向以前栽过什么坑（动手前必查） | [`AI-PITFALLS.md`](AI-PITFALLS.md) |
 | 证据等级、汇报格式和停止条件（动手前必查） | [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) |
 | 改码流程：分支、提交、PR、合并、清理（动手前必查） | [`WORKFLOW.md`](WORKFLOW.md) |
+| Issue、PR 和贡献者需要遵守的约定 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | AI 总规则、红线和高风险操作 | [`AGENTS.md`](../AGENTS.md) |
 | 某个文件算不算权威、归谁管 | [`DOCUMENTATION_CATALOG.md`](DOCUMENTATION_CATALOG.md)、[`README.md`](README.md) |
 | 公共/私有边界、文档生命周期、生成物 | [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md) |
