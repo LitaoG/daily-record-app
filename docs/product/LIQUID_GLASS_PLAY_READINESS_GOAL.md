@@ -1,6 +1,6 @@
 # 流体玻璃与 Google Play 就绪 Goal
 
-状态：`in progress — Phase 1 代码已写入 agent/b1-apple-glass-refactor，尚未编译验证`
+状态：`in progress — Phase 1–2 已在 agent/b1-apple-glass-refactor 提交并通过定向编译与单测；Phase 3–6 未开始`
 
 最后更新：2026-11-05
 
@@ -24,8 +24,8 @@
 
 | 阶段 | 内容 | 状态 |
 | --- | --- | --- |
-| 1 | 9 套主题令牌、流体玻璃材质、设置“主题配色” | 代码已写，待编译与 `DesignTokensTest` |
-| 2 | 矢量图标替换 `drawable-nodpi` PNG，矢量自适应启动图标 | 未开始 |
+| 1 | 9 套主题令牌、流体玻璃材质、设置“主题配色” | 已完成；编译与 `DesignTokensTest` 15/15 通过，Lint 与设备截图留到小版本末尾 |
+| 2 | 15 个矢量符号替换 `drawable-nodpi` 的 26 张 PNG，矢量自适应启动图标替换 3 张 WebP | 已完成；编译通过，Play 512px 商店图标待按新图标重新导出 |
 | 3 | 模块切换器滑块、周期胶囊、底栏、今日速记、长按加减、滑动切月、触感 | 未开始 |
 | 4 | 月度脉冲图与年度折线图触控探针 | 未开始 |
 | 5 | 逐次详情卡片化、应用锁、桌面伪装、设置分组 | 未开始 |
@@ -51,10 +51,12 @@
 | 选中态、按钮、次数色阶 | 多色标渐变 | 纯色 |
 | 背景画布 | 两色扩散加两颗浮动光球 | 珍珠底色、顶部 10% 模块淡色和一处静态淡色光晕 |
 | 主题色块 | 渐变预览 | 两个模块主色各占半圆 |
+| 启动图标 | 淡紫至香槟的渐变背景 | 纯色极光紫加白色玻璃高光 |
 
 主题里的多色标渐变仍作为配色来源保存在令牌中，只用于小面积装饰，不铺满表面。“未填写”底色由 1 次档与白色各半混合得到，保证比 1 次更浅、比未来日期更亮。
 
 ## 验证记录
 
 - 2026-11-05：会话临时脚本计算 9 套主题 18 组模块色板，调整上表色值后全部达到 AA；脚本不进入仓库，长期验证由 `DesignTokensTest` 逐套执行。
-- 待执行：`compileDebugKotlin`、`compileDebugUnitTestKotlin`、`testDebugUnitTest --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest`、`lintDebug`。本机可用内存长时间低于 2 GB，Gradle 尚未运行。
+- 2026-11-05：`:app:compileDebugKotlin` 与 `:app:testDebugUnitTest --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest` 通过（15 个测试，0 失败）。本机可用内存约 2 GB，Gradle 以 `--no-daemon --max-workers=1`、1 GB 堆和进程内 Kotlin 编译运行。
+- 待执行：`compileDebugAndroidTestKotlin`、`lintDebug`、`RecordModuleIntegrationTest` 设置图标取色等设备测试与目标页面截图。

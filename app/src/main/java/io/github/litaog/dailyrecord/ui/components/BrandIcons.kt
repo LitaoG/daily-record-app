@@ -1,23 +1,25 @@
 package io.github.litaog.dailyrecord.ui.components
 
-import androidx.compose.foundation.Image
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.R
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 
-/** The two locked colour variants provided by the icon library. */
+/**
+ * The record module an icon belongs to. The actual tint comes from the
+ * selected color theme (ADR-022), so icons never fall back to a fixed palette.
+ */
 internal enum class BrandIconTheme {
-    Purple,
-    Wine,
+    Solo,
+    Duo,
 }
 
-/** Shared icon artwork supplied by the Daily Record Figma icon library. */
+/** Shared vector symbols; see [DailyRecordIcons]. */
 internal enum class BrandIconAsset {
     Calendar,
     Statistics,
@@ -34,59 +36,57 @@ internal enum class BrandIconAsset {
     Shield,
 }
 
-/** Select the icon-library colour that belongs to the active record module. */
+/** Select the icon module that belongs to the active record module colors. */
 internal val RecordModuleColorTokens.brandIconTheme: BrandIconTheme
     get() = if (primary == SexColorTokens.primary) {
-        BrandIconTheme.Wine
+        BrandIconTheme.Duo
     } else {
-        BrandIconTheme.Purple
+        BrandIconTheme.Solo
     }
 
+/** Module accent of the selected theme; white text and icons stay AA on it. */
+internal val BrandIconTheme.tint: Color
+    get() = when (this) {
+        BrandIconTheme.Solo -> HandBrewColorTokens.primary
+        BrandIconTheme.Duo -> SexColorTokens.primary
+    }
+
+internal val BrandIconAsset.vector: ImageVector
+    get() = when (this) {
+        BrandIconAsset.Calendar -> DailyRecordIcons.Calendar
+        BrandIconAsset.Statistics -> DailyRecordIcons.Statistics
+        BrandIconAsset.Previous -> DailyRecordIcons.Previous
+        BrandIconAsset.Next -> DailyRecordIcons.Next
+        BrandIconAsset.Down -> DailyRecordIcons.Down
+        BrandIconAsset.Clock -> DailyRecordIcons.Clock
+        BrandIconAsset.Note -> DailyRecordIcons.Note
+        BrandIconAsset.Edit -> DailyRecordIcons.Edit
+        BrandIconAsset.Settings -> DailyRecordIcons.Settings
+        // Back navigation uses the same iOS-style chevron as "previous".
+        BrandIconAsset.Return -> DailyRecordIcons.Previous
+        BrandIconAsset.CloudSync -> DailyRecordIcons.CloudSync
+        BrandIconAsset.Lock -> DailyRecordIcons.Lock
+        BrandIconAsset.Shield -> DailyRecordIcons.Shield
+    }
+
+/**
+ * Draws a vector symbol tinted with the module accent of the selected theme,
+ * or with [tint] when the caller needs another color (for example white on an
+ * accent fill). Sizing stays with the caller's modifier.
+ */
 @Composable
 internal fun BrandIcon(
     asset: BrandIconAsset,
     modifier: Modifier = Modifier,
-    theme: BrandIconTheme = BrandIconTheme.Purple,
+    theme: BrandIconTheme = BrandIconTheme.Solo,
     contentDescription: String? = null,
     alpha: Float = 1f,
+    tint: Color? = null,
 ) {
-    Image(
-        painter = painterResource(asset.resource(theme)),
+    Icon(
+        imageVector = asset.vector,
         contentDescription = contentDescription,
         modifier = modifier.alpha(alpha),
-        contentScale = ContentScale.Fit,
+        tint = tint ?: theme.tint,
     )
-}
-
-private fun BrandIconAsset.resource(theme: BrandIconTheme): Int = when (theme) {
-    BrandIconTheme.Purple -> when (this) {
-        BrandIconAsset.Calendar -> R.drawable.ic_brand_calendar_purple
-        BrandIconAsset.Statistics -> R.drawable.ic_brand_statistics_purple
-        BrandIconAsset.Previous -> R.drawable.ic_brand_previous_purple
-        BrandIconAsset.Next -> R.drawable.ic_brand_next_purple
-        BrandIconAsset.Down -> R.drawable.ic_brand_down_purple
-        BrandIconAsset.Clock -> R.drawable.ic_brand_clock_purple
-        BrandIconAsset.Note -> R.drawable.ic_brand_note_purple
-        BrandIconAsset.Edit -> R.drawable.ic_brand_edit_purple
-        BrandIconAsset.Settings -> R.drawable.ic_brand_settings_purple
-        BrandIconAsset.Return -> R.drawable.ic_brand_previous_purple
-        BrandIconAsset.CloudSync -> R.drawable.ic_brand_cloud_sync_purple
-        BrandIconAsset.Lock -> R.drawable.ic_brand_lock_purple
-        BrandIconAsset.Shield -> R.drawable.ic_brand_shield_purple
-    }
-    BrandIconTheme.Wine -> when (this) {
-        BrandIconAsset.Calendar -> R.drawable.ic_brand_calendar_wine
-        BrandIconAsset.Statistics -> R.drawable.ic_brand_statistics_wine
-        BrandIconAsset.Previous -> R.drawable.ic_brand_previous_wine
-        BrandIconAsset.Next -> R.drawable.ic_brand_next_wine
-        BrandIconAsset.Down -> R.drawable.ic_brand_down_wine
-        BrandIconAsset.Clock -> R.drawable.ic_brand_clock_wine
-        BrandIconAsset.Note -> R.drawable.ic_brand_note_wine
-        BrandIconAsset.Edit -> R.drawable.ic_brand_edit_wine
-        BrandIconAsset.Settings -> R.drawable.ic_brand_settings_wine
-        BrandIconAsset.Return -> R.drawable.ic_brand_previous_wine
-        BrandIconAsset.CloudSync -> R.drawable.ic_brand_cloud_sync_wine
-        BrandIconAsset.Lock -> R.drawable.ic_brand_lock_wine
-        BrandIconAsset.Shield -> R.drawable.ic_brand_shield_wine
-    }
 }

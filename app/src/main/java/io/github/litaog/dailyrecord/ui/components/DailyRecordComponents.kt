@@ -2,7 +2,6 @@ package io.github.litaog.dailyrecord.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +31,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -50,12 +50,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -64,7 +61,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.R
 import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
@@ -85,6 +81,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordPeriodInactiveText
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
+import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordOnAccent
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
@@ -208,7 +205,7 @@ private fun BottomDestination(
 internal fun CalendarGlyph(
     color: Color,
     modifier: Modifier = Modifier,
-    theme: BrandIconTheme = BrandIconTheme.Purple,
+    theme: BrandIconTheme = BrandIconTheme.Solo,
 ) {
     BrandIcon(
         asset = BrandIconAsset.Calendar,
@@ -221,7 +218,7 @@ internal fun CalendarGlyph(
 internal fun StatisticsGlyph(
     color: Color,
     modifier: Modifier = Modifier,
-    theme: BrandIconTheme = BrandIconTheme.Purple,
+    theme: BrandIconTheme = BrandIconTheme.Solo,
 ) {
     BrandIcon(
         asset = BrandIconAsset.Statistics,
@@ -235,7 +232,7 @@ internal fun ChevronIcon(
     forward: Boolean,
     modifier: Modifier = Modifier,
     color: Color = DailyRecordText,
-    theme: BrandIconTheme = BrandIconTheme.Purple,
+    theme: BrandIconTheme = BrandIconTheme.Solo,
 ) {
     BrandIcon(
         asset = if (forward) BrandIconAsset.Next else BrandIconAsset.Previous,
@@ -248,36 +245,36 @@ internal fun ChevronIcon(
 internal fun BackChevronIcon(
     modifier: Modifier = Modifier,
     color: Color = DailyRecordText,
-    theme: BrandIconTheme = BrandIconTheme.Purple,
+    theme: BrandIconTheme = BrandIconTheme.Solo,
 ) {
     ChevronIcon(forward = false, modifier = modifier, color = color, theme = theme)
 }
 
+/** Masturbation module symbol (paper plane), tinted with the theme accent. */
 @Composable
 fun HandBrewIcon(
     modifier: Modifier = Modifier,
     tint: Color? = null,
 ) {
-    Image(
-        painter = painterResource(R.drawable.ic_module_hand_brew),
+    Icon(
+        imageVector = DailyRecordIcons.SoloModule,
         contentDescription = null,
         modifier = modifier,
-        contentScale = ContentScale.Fit,
-        colorFilter = tint?.let(ColorFilter::tint),
+        tint = tint ?: HandBrewColorTokens.primary,
     )
 }
 
+/** Sex module symbol (two interlocking rings), tinted with the theme accent. */
 @Composable
 fun SexIcon(
     modifier: Modifier = Modifier,
     tint: Color? = null,
 ) {
-    Image(
-        painter = painterResource(R.drawable.ic_module_sex),
+    Icon(
+        imageVector = DailyRecordIcons.DuoModule,
         contentDescription = null,
         modifier = modifier,
-        contentScale = ContentScale.Fit,
-        colorFilter = tint?.let(ColorFilter::tint),
+        tint = tint ?: SexColorTokens.primary,
     )
 }
 

@@ -14,12 +14,14 @@ Figma 页面现在按四个可核对的画板排列：完整预览、`background
 
 ## Android 资源
 
-- `drawable/ic_launcher_background.xml` → `drawable-nodpi/ic_launcher_background_art.webp`：紫红渐变背景层。
-- `drawable/ic_launcher_foreground.xml` → `drawable-nodpi/ic_launcher_foreground_art.webp`：透明霓虹日历、人物、爱心和锁。
-- `drawable/ic_launcher_monochrome.xml` → `drawable-nodpi/ic_launcher_monochrome_art.webp`：单色 alpha 形状，锁孔保持负形。
-- `mipmap-anydpi-v26/ic_launcher.xml` 与 `ic_launcher_round.xml`：自适应图标声明。
+自 ADR-022（2026-11-05）起，启动图标三层都是手写 VectorDrawable，不再引用 `drawable-nodpi` 下的 WebP（已删除）：
 
-运行时使用优化后的 WebP 层是有意的：霓虹光晕、细描边和抗锯齿在 Android 启动器尺寸下用手写 VectorDrawable 无法稳定复现；WebP 比运行时 PNG 更轻，SVG 和 PNG 源稿仍作为可编辑交接源保留。
+- `drawable/ic_launcher_background.xml`：纯色极光紫 `#6D28D9`，左上角一层柔和的白色玻璃高光。
+- `drawable/ic_launcher_foreground.xml`：两枚交叠的磨砂白色圆环和一颗小星点，全部位于 66dp 安全区内。
+- `drawable/ic_launcher_monochrome.xml`：同样的两枚圆环，供 Android 13+ 主题图标着色。
+- `mipmap-anydpi/ic_launcher.xml` 与 `ic_launcher_round.xml`：自适应图标声明，未改动。
+
+上文的霓虹源稿只代表 beta.3 的旧图标；颜色克制规则下，新图标不使用多色渐变。
 
 ## 商店导出
 

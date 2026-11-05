@@ -22,6 +22,6 @@ versions remain recoverable from Git history when an audit needs to compare them
 
 The Figma source is composed on a 108×108dp adaptive-icon canvas. The central artwork stays within the approximately 66×66dp safe area so launchers can apply their own mask and motion. Neither source layer contains a pre-rounded corner or external drop shadow.
 
-The Android adaptive icon uses optimized WebP layers in `drawable-nodpi` because the neon glow and fine anti-aliased edges are not preserved reliably by a hand-authored VectorDrawable at launcher size. The SVG exports and PNG source copies remain available for Figma editing; WebP is the lightweight runtime fallback and keeps the installed icon faithful to the approved source.
+Since ADR-022 (2026-11-05) the installed adaptive icon no longer uses this neon artwork. `res/drawable/ic_launcher_background.xml`, `ic_launcher_foreground.xml` and `ic_launcher_monochrome.xml` are hand-authored VectorDrawables: a flat violet background with a soft white sheen, two interlocking frosted rings and a small star, all inside the 66dp safe zone. The former WebP runtime layers were deleted from `drawable-nodpi`. The SVG/PNG files in this folder, including `google-play-icon-512.png`, describe the previous beta.3 icon and stay only as history until the Play listing icon is re-exported from the vector layers.
 
 Figma source file: https://www.figma.com/design/WP2CrYM0XuAFOeojA46jZY
