@@ -1,6 +1,6 @@
 # 系统架构
 
-最后复核：2026-08-16
+最后复核：2026-11-06
 
 ## 目标
 
@@ -35,9 +35,9 @@ flowchart LR
 
 UI 不直接访问 DAO 或 Firestore。`DailyCountRecord` 与 `DailyCountRecordRepository<T>` 只提供日期、次数和时间戳这组最小公共契约；UI 适配器把强类型的 `HandBrewRecord` / `SexRecord` 投影为共享日期次数组件，保存时仍由对应模块创建领域记录并回到对应 Repository。保存和清除先落 Room，再由组合协调器驱动独立同步链路。Firestore 快照也必须先合并进各自 Room 表，UI 不读取远端缓存。
 
-用户明确选择的本机模式和上次选择的记录模块分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。从本机日历打开登录页是进程内导航状态，只有认证成功后才关闭本机偏好；登录页返回或登录中断不会改变既有本机入口。Firebase 已登录状态仍以 Authentication 为准。
+用户明确选择的本机模式、上次选择的记录模块和所选主题配色（ADR-022）分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。从本机日历打开登录页是进程内导航状态，只有认证成功后才关闭本机偏好；登录页返回或登录中断不会改变既有本机入口。Firebase 已登录状态仍以 Authentication 为准。
 
-设置中心是 Compose 外壳中的次级页面，不进入底部主导航。它复用账号弹窗，只读取构建版本与静态隐私事实；模块选择继续由主页承载，不直接访问 DAO、Firestore，也不引入新的业务数据表或通用设置模型。
+设置中心是 Compose 外壳中的次级页面，不进入底部主导航。它复用账号弹窗，只读取构建版本、静态隐私事实以及语言与主题偏好；模块选择继续由主页承载，不直接访问 DAO、Firestore，也不引入新的业务数据表或通用设置模型。
 
 本轮没有新增记录模块。未来若增加记录类型，仍必须采用独立领域模型、Room 表、Repository 和远端集合；账号同步、账号删除和 UI 外壳通过模块列表聚合，避免把业务字段塞回旧通用活动表。
 
@@ -56,7 +56,7 @@ app
    ├─ core:di          Firebase bootstrap / composition root / WorkManager adapters
    ├─ core:sync        remote source / coordinator / deletion journal / recovery coordinator
    └─ ui
-      ├─ calendar      CalendarScreen
+      ├─ calendar      CalendarScreen / today quick log / long-press adjust / month swipe
       ├─ record        RecordScreen
       ├─ statistics    StatisticsScreen（纯 UI；统计模型在 core:statistics）
       ├─ settings      SettingsScreen
@@ -64,7 +64,7 @@ app
       ├─ auth          AuthScreen / PasswordResetDialog
       ├─ navigation    DateNavigationDialog
       ├─ components    shared Compose components
-      └─ theme         Figma token mapping
+      └─ theme         color themes / liquid glass / motion tokens
 ```
 
 早期保持单一 Gradle 模块；只有构建时间或团队规模证明需要时才拆物理模块。
@@ -87,6 +87,8 @@ Compose 页面、同步层和统计模型只引用这些入口，动态文案由
 `RecordModule.uiSpec()` 与 `StatisticsPeriod.label` 在调用时按当前语言取值，
 不允许在类加载期固化文案。`app_name` 由 `res/values-en` 提供英文桌面名，应用内
 标题仍走文案契约。
+
+主题状态（ADR-022）：`ui/ColorThemePreference` 以 SharedPreferences 只保存主题 id，默认“极光星云”。`MainActivity` 在首帧前把持久化主题写入 `DailyRecordThemeState.current`；`HandBrewColorTokens`、`SexColorTokens` 和默认强调色都在调用时按当前主题取值，不在类加载期固化。设置页切换主题与切换语言一样由主 Activity `recreate()` 重建，`rememberSaveable` 状态保留。两个模块在每套主题里各有独立色板；主题只改变颜色，不改变任何数据或统计。
 
 ## 功能演进边界
 
@@ -137,6 +139,7 @@ Room 当前版本为 6。v1→v2 只提取旧 `flight` 机器图标标识的记�
 - 手动同步被取消时先恢复进入同步前的状态，再继续传播取消，避免账号栏永久停留在“同步中”。
 - 记录页维护“服务端/Room 基线次数”和“本机草稿次数”。跨设备更新到达且用户尚未编辑时刷新草稿；用户已经编辑时保留草稿，并继续以最新基线判断未保存状态。
 - Room 事务提交成功即视为记录成功；后续 WorkManager 调度属于尽力而为，调度异常不会把已经落盘的数据误报为保存失败。
+- 主页“今日速记”和日历长按快速调整（ADR-022）复用所选模块 Controller 的只存次数保存路径：每次点按都在同一把 `Mutex` 内重新读取该日期已保存的次数再写入，快速连点按顺序生效；次数减少时，超出新次数的逐次详情由 Repository 既有的裁剪逻辑删除。从 1 次减到 0 保存为明确 0 次（ADR-004）；未来日期和 1970 年以前的日期在调用前被拒绝；保存失败显示保存失败提示，取消继续向上传播。
 
 ## 逐次详情边界
 
