@@ -50,6 +50,7 @@
 - [月统计改版契约：每日次数、次数分布与单日极值](product/MONTH_STATISTICS_REDESIGN.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
 - [流体玻璃与 Google Play 就绪 Goal（ADR-022）](product/LIQUID_GLASS_PLAY_READINESS_GOAL.md)
+- [Google Play 上架就绪清单](product/PLAY_STORE_READINESS.md)
 - [明亮渐变玻璃主题（beta.3 基线，已被 ADR-022 取代）](product/BRIGHT_GLASS_THEME.md)
 - [设置中心 Goal](product/SETTINGS_HUB_GOAL.md)
 - [双语适配 Goal（i18n：中文默认 + English）](product/I18N_GOAL.md)
