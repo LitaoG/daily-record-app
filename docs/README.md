@@ -6,6 +6,33 @@
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
+## 不确定先查哪里
+
+对任何事实不确定时先查文档，不要先猜。查证顺序：本页与[文档目录](DOCUMENTATION_CATALOG.md) → 下表命中的那一份权威文档 → 代码、测试和实际运行结果 → 仍不确定就停下来问人。本表与 [`WORKFLOW.md`](WORKFLOW.md) §0.3 保持一致。
+
+| 我不确定的事 | 去查的权威文档 |
+|---|---|
+| 自慰与做爱两个模块的边界、能不能加新功能 | [`PRODUCT.md`](PRODUCT.md) |
+| 已接受的长期技术与产品决策（ADR） | [`DECISIONS.md`](DECISIONS.md) |
+| Room 表结构、字段、迁移、聚合记录与详情的关系 | [`DATA_MODEL.md`](DATA_MODEL.md) |
+| 周、月、年、全部历史的统计口径和图表规则 | [`STATISTICS.md`](STATISTICS.md) |
+| 页面交互、颜色令牌、色阶、玻璃材质、无障碍 | [`UI_UX.md`](UI_UX.md) |
+| 文案集中化、命名、中文标点禁令、注释写法 | [`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) |
+| 分层、ViewModel 与 Repository 的调用关系 | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| 云同步、离线行为、账号六阶段删除 | [`SYNC_AND_PRIVACY.md`](SYNC_AND_PRIVACY.md) |
+| 改动后该跑哪些测试、完整门禁何时跑 | [`TESTING.md`](TESTING.md) |
+| Gradle 命令、本机环境、SDK 版本 | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
+| 版本号、签名、tag 与 GitHub Release | [`RELEASE.md`](RELEASE.md) |
+| Firebase 资源、Rules 与 Functions 部署 | [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md) |
+| 云端费用、配额、防刷与止损 | [`operations/`](operations/firebase-cost-and-quota-inventory.md) 下的三份成本文档 |
+| 这个方向以前栽过什么坑（动手前必查） | [`AI-PITFALLS.md`](AI-PITFALLS.md) |
+| 证据等级、汇报格式和停止条件（动手前必查） | [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) |
+| 改码流程：分支、提交、PR、合并、清理（动手前必查） | [`WORKFLOW.md`](WORKFLOW.md) |
+| AI 总规则、红线和高风险操作 | [`AGENTS.md`](../AGENTS.md) |
+| 某个文件算不算权威、归谁管 | [`DOCUMENTATION_CATALOG.md`](DOCUMENTATION_CATALOG.md)、[`README.md`](README.md) |
+| 公共/私有边界、文档生命周期、生成物 | [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md) |
+| 面向使用者的隐私说明、漏洞报告 | [`PRIVACY.md`](../PRIVACY.md)、[`SECURITY.md`](../SECURITY.md) |
+
 当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.3` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 曾对 `main` 做过一次代码、安全、性能、生命周期与文档审计，结论已进入当前文档和[踩坑清单](AI-PITFALLS.md)；其后的公共维护还包括 compileSdk 37、Node.js 22/Functions 2nd gen、`asia-east1` 区域固定、生命周期感知的 Flow 收集、双语适配，以及 PR/`main`/Release tag 的 API 34 connected gate。后续合并后仍以 GitHub `main` 的最新提交为准。
 
 ## 当前事实文档
@@ -24,6 +51,7 @@
 | [架构决策](DECISIONS.md) | 已接受的长期技术与产品决策 |
 | [路线图](ROADMAP.md) | 已完成阶段和持续维护方向 |
 | [踩坑清单](AI-PITFALLS.md) | 已付出代价的问题、根因和防复发门禁 |
+| [AI 证据标准](AI-EVIDENCE-STANDARD.md) | 什么证据算数、汇报必须包含什么、什么时候必须停下问人 |
 
 当前运行画面见[README 运行截图](product/assets/readme/README.md)。这些图片来自 API 34 测试模拟器的本机空数据，只作为当前运行时展示。
 

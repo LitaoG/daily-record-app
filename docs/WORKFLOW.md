@@ -1,7 +1,7 @@
 # 端到端工程工作流
 
 状态：`current — authoritative workflow`
-最后复核：2026-10-16
+最后复核：2026-11-05
 
 本文件是 Daily Record 从任务开始到合并清理的唯一权威流程来源。其他文档（[`AGENTS.md`](../AGENTS.md)、[`CONTRIBUTING.md`](../CONTRIBUTING.md)、[`DEVELOPMENT.md`](DEVELOPMENT.md)、[`TESTING.md`](TESTING.md)）只保留各自职责范围内的简短摘要并链接回本文，不再各自维护一套互相矛盾的步骤。
 
@@ -9,11 +9,52 @@
 
 ## 0. 全流程一览
 
+### 0.1 流程
+
 ```
 读文档 → 定界 → 分支 → 实现 → 定向验证 → 同步文档 → Diff 审查 → 提交/PR → CI → 合并 → 清理 → 汇报
 ```
 
 每一步都有明确的退出条件。缺少任何一步的退出条件时不要进入下一步。
+
+### 0.2 不确定先查文档
+
+对任何事实不确定时，先查文档，不要先猜。查证顺序固定为：
+
+```
+docs/README.md 与文档目录 → 0.3 表中命中的那一份权威文档 → 代码、测试和实际运行结果 → 仍不确定就停下来问人
+```
+
+- 代码优先于文档：当前事实以 `main` 上的代码、测试和运行行为为准。文档与正确运行的代码冲突时改文档，不改代码去迁就旧文档。
+- 不凭印象编造数值、参数、文件路径或命令。历史 PR、Issue 和提交说明里的数字会过期，引用前在现场重新查询，并在汇报里附上查询命令。
+- 证据怎样才算数、什么时候必须停下，见 [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md)。
+
+### 0.3 权威文档反查速查表
+
+按“我不确定的是什么”查找唯一权威文档。表里没有的问题，先查[文档目录](DOCUMENTATION_CATALOG.md)。
+
+| 我不确定的事 | 去查的权威文档 |
+|---|---|
+| 自慰与做爱两个模块的边界、能不能加新功能 | [`PRODUCT.md`](PRODUCT.md) |
+| 已接受的长期技术与产品决策（ADR） | [`DECISIONS.md`](DECISIONS.md) |
+| Room 表结构、字段、迁移、聚合记录与详情的关系 | [`DATA_MODEL.md`](DATA_MODEL.md) |
+| 周、月、年、全部历史的统计口径和图表规则 | [`STATISTICS.md`](STATISTICS.md) |
+| 页面交互、颜色令牌、色阶、玻璃材质、无障碍 | [`UI_UX.md`](UI_UX.md) |
+| 文案集中化、命名、中文标点禁令、注释写法 | [`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) |
+| 分层、ViewModel 与 Repository 的调用关系 | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| 云同步、离线行为、账号六阶段删除 | [`SYNC_AND_PRIVACY.md`](SYNC_AND_PRIVACY.md) |
+| 改动后该跑哪些测试、完整门禁何时跑 | [`TESTING.md`](TESTING.md) |
+| Gradle 命令、本机环境、SDK 版本 | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
+| 版本号、签名、tag 与 GitHub Release | [`RELEASE.md`](RELEASE.md) |
+| Firebase 资源、Rules 与 Functions 部署 | [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md) |
+| 云端费用、配额、防刷与止损 | [`operations/`](operations/firebase-cost-and-quota-inventory.md) 下的三份成本文档 |
+| 这个方向以前栽过什么坑（动手前必查） | [`AI-PITFALLS.md`](AI-PITFALLS.md) |
+| 证据等级、汇报格式和停止条件（动手前必查） | [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) |
+| 改码流程：分支、提交、PR、合并、清理（动手前必查） | [`WORKFLOW.md`](WORKFLOW.md) |
+| AI 总规则、红线和高风险操作 | [`AGENTS.md`](../AGENTS.md) |
+| 某个文件算不算权威、归谁管 | [`DOCUMENTATION_CATALOG.md`](DOCUMENTATION_CATALOG.md)、[`README.md`](README.md) |
+| 公共/私有边界、文档生命周期、生成物 | [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md) |
+| 面向使用者的隐私说明、漏洞报告 | [`PRIVACY.md`](../PRIVACY.md)、[`SECURITY.md`](../SECURITY.md) |
 
 ## 1. 任务开始：先查事实
 

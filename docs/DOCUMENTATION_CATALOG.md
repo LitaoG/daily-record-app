@@ -16,7 +16,7 @@
 
 1. 本目录，确认任务涉及的当前文档和历史文档边界。
 2. [`AGENTS.md`](../AGENTS.md) 和 [`docs/README.md`](README.md)，确认仓库纪律、阅读路由和文档权威层级。
-3. [`WORKFLOW.md`](WORKFLOW.md) 和 [`PRODUCT.md`](PRODUCT.md)，确认端到端流程与产品边界。
+3. [`WORKFLOW.md`](WORKFLOW.md)（含 §0.3 权威文档反查速查表）、[`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) 和 [`PRODUCT.md`](PRODUCT.md)，确认端到端流程、证据标准与产品边界。
 4. 按任务范围继续阅读：[`ARCHITECTURE.md`](ARCHITECTURE.md)、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md)、[`DATA_MODEL.md`](DATA_MODEL.md)、[`DECISIONS.md`](DECISIONS.md)；统计、同步、测试或发布任务再分别加入 [`STATISTICS.md`](STATISTICS.md)、[`SYNC_AND_PRIVACY.md`](SYNC_AND_PRIVACY.md)、[`TESTING.md`](TESTING.md)、[`RELEASE.md`](RELEASE.md)。
 5. 排查“以前踩过的坑”时读 [`AI-PITFALLS.md`](AI-PITFALLS.md)。
 6. 按任务范围阅读表中标记为“AI 必看 = 按范围”的文档；`历史证据` 默认不读，只有需要核对当时实现、截图、提交或发布链时才读。
@@ -32,6 +32,7 @@
 | `docs/WORKFLOW.md` | 当前必读 | P0 | 必需 | 是 | 是 | 从开工到合并清理的唯一权威端到端流程 |
 | `docs/ENGINEERING_STANDARDS.md` | 当前必读 | P0 | 必需 | 是 | 是 | 代码、分层、异步、数据、隐私和测试的实现规范 |
 | `docs/AI-PITFALLS.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 已付出代价的问题、根因与防复发门禁 |
+| `docs/AI-EVIDENCE-STANDARD.md` | 当前必读 | P0 | 必需 | 是 | 是 | 证据三级、汇报必须包含的内容和必须停下问人的条件 |
 | `CONTRIBUTING.md` | 当前必读 | P1 | 必需 | 是 | 是 | Issue、分支、PR、测试和隐私边界 |
 | `.github/pull_request_template.md` | 协作模板 | P1 | 按范围 | 按范围 | 按范围 | 创建 PR 时填写变更原因和验证证据 |
 | `PRIVACY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 面向使用者的本机、账号、云端和删除隐私说明 |
