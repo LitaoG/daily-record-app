@@ -22,7 +22,7 @@ Android 只从 `app/src/main/res` 读取资源。当前自适应图标使用
 - `foreground.svg`
 - `monochrome.svg`
 - `daily-record-icon-1254.png`（用户确认的高分辨率源图）
-- `google-play-icon-512.png`（Play Console 导出）
+- `google-play-icon-512.png`（Play Console 商店图标；2026-11-06 起由 ADR-022 矢量启动图标导出）
 
 三层 PNG 副本、1024px 备份和自适应预览只是派生导出，不被 Android、Figma 或发布
 流程引用，已删除。需要比较旧导出时，使用 Git 历史而不是把副本重新放回当前目录。

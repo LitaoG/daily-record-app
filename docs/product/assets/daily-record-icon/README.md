@@ -1,7 +1,7 @@
 # Daily Record 主图标资源
 
 状态：`current asset handoff reference`
-最后复核：2026-08-16
+最后复核：2026-11-06
 
 本目录是图标交接入口。完整源稿和导出物统一放在 [`docs/design/icon-source`](../../../design/icon-source)，避免同一张图在多个目录重复维护；本目录不再保存运行时副本。
 
@@ -25,7 +25,7 @@ Figma 页面现在按四个可核对的画板排列：完整预览、`background
 
 ## 商店导出
 
-- [`google-play-icon-512.png`](../../../design/icon-source/google-play-icon-512.png)：512×512、32-bit/sRGB、无预先圆角、约 320 KB，供 Play Console 使用。
+- [`google-play-icon-512.png`](../../../design/icon-source/google-play-icon-512.png)：512×512、32-bit/sRGB、无预先圆角、约 48 KB，供 Play Console 使用。2026-11-06 起由上述矢量三层导出：自适应图标可见的 72dp 正方形铺满整张图，颜色与 XML 完全一致，导出方法见 [icon-source 说明](../../../design/icon-source/README.md)。
 
 1024px 备份图、三层 PNG 副本和预览合成图不是运行时或交接输入，已在
 2026-08-11 资源整理中移除；需要复核旧导出时可从 Git 历史恢复。
