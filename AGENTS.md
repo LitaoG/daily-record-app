@@ -80,7 +80,7 @@
 - 临时脚本、截图、UI XML、logcat、构建日志、分析草稿和一次性报告，任务结束前必须删除，不留在仓库或用户磁盘上。
 - **不要**为了让审计“看起来完整”而新增重复报告、每问题一份 Markdown、或很快过时的文件清单。
 - 临时产物仓库内统一放在被 `.gitignore` 排除的 `work/` 下，用完即删。
-- 有长期价值的内容直接写进既有权威文档；只有确实需要追溯的历史证据才进入 `docs/product/audit/` 或 `docs/releases/`。
+- 有长期价值的内容直接写进既有权威文档；发布事实写进 `docs/releases/`，阶段审计、截图和一次性报告不再入库，验证证据写进 PR 描述（见 [`docs/REPOSITORY_HYGIENE.md`](docs/REPOSITORY_HYGIENE.md)）。
 
 ## 文档维护
 

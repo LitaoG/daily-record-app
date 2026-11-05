@@ -1,9 +1,9 @@
 # 文档目录与 AI 阅读索引
 
 状态：`current — authoritative documentation registry`
-最后复核：2026-10-16
+最后复核：2026-11-05
 
-本文是公共仓库中全部 Git 跟踪 Markdown 文档的逐文件索引，也是 AI 开始工作前判断“先读什么、哪些只是历史证据”的唯一入口。当前仓库没有被 Git 跟踪的 `.doc`、`.docx` 或 `.markdown` 文件；如果以后新增或删除任意文档，必须在同一提交中更新本文，`scripts/documentation-catalog.test.mjs` 会检查目录是否完整（并且已在两个 CI 工作流中执行）。当前 README 运行截图及其复现边界单独登记在产品资产目录中，历史审计截图不再冒充首页当前画面。
+本文是公共仓库中全部 Git 跟踪 Markdown 文档的逐文件索引，也是 AI 开始工作前判断“先读什么、哪些只是历史证据”的唯一入口。当前仓库没有被 Git 跟踪的 `.doc`、`.docx` 或 `.markdown` 文件；如果以后新增或删除任意文档，必须在同一提交中更新本文，`scripts/documentation-catalog.test.mjs` 会检查目录是否完整（并且已在两个 CI 工作流中执行）。当前 README 运行截图及其复现边界单独登记在产品资产目录中；2026-07 至 2026-09 的阶段审计目录、UI v2 设计稿和旧主题草案已于 2026-11 移除。
 
 ## 字段定义
 
@@ -60,48 +60,17 @@
 | `docs/product/IMPLEMENTATION_READINESS.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前实现、发布和质量门槛 |
 | `docs/product/PRODUCT_BACKLOG.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | 已完成事项与持续观察项，不是旧阶段启动器 |
 | `docs/product/USER_STORIES_AND_ACCEPTANCE.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 用户行为和可验收条件 |
-| `docs/product/BRIGHT_GLASS_THEME.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前双模块玻璃主题的实现基线 |
 | `docs/product/MONTH_STATISTICS_REDESIGN.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 月统计逐日脉冲图、分布和极值规则 |
 | `docs/product/SETTINGS_HUB_GOAL.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已实现设置中心的目标、范围和验收 |
 | `docs/product/I18N_GOAL.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 双语适配（中文默认 + English）的目标、机制、简写策略与阶段证据 |
 | `docs/product/OPTIMIZATION_2026-08_LOG.md` | 历史证据 | P3 | 留档 | 否 | 否 | 2026-08 性能与测试加固的当时范围与验证证据（已合入 main） |
 | `docs/product/UI_REDESIGN_RESEARCH_BASELINE.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已接受的竞品研究和设计取舍 |
 | `docs/product/RESEARCH_OPEN_SOURCE.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 开源借鉴、许可证和不引入依赖的边界 |
-| `docs/product/DAILY_USE_FEEDBACK.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 日常使用反馈格式和隐私脱敏要求 |
 | `docs/product/GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md` | 历史证据 | P3 | 留档 | 否 | 否 | 早期同步/隐私风险拆分与历史 Issue 背景 |
 | `docs/product/RUNTIME_UX_AUDIT.md` | 历史证据 | P3 | 留档 | 否 | 否 | 2026-07-19 运行时 UX 和统计验收证据 |
-| `docs/product/FIGMA_DESIGN_SYSTEM.md` | 历史证据 | P3 | 留档 | 否 | 否 | 已被双模块 UI v2 取代的旧 Figma 设计系统 |
 | `docs/product/HAND_BREW_REFACTOR_LOG.md` | 历史证据 | P3 | 留档 | 否 | 否 | 已完成的早期重构、提交和发布过程记录 |
 | `docs/product/assets/daily-record-icon/README.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 图标资源交接入口和 canonical 来源 |
 | `docs/product/assets/readme/README.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | 从 API 34 测试模拟器采集的当前 README 运行截图、数据隐私和复现边界 |
-| `docs/product/design/quiet-private-journal-v2/README.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前日历、记录页和统计页的视觉目标 |
-| `docs/product/design/record-details-v1/README.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 逐次详情设计与运行时实现边界 |
-| `docs/product/audit/README.md` | 当前索引 | P1 | 按范围 | 按范围 | 按范围 | 所有审计目录的历史状态和阅读路由 |
-| `docs/product/audit/2026-08-15-main-code-audit/README.md` | 历史证据 | P1 | 按范围 | 按范围 | 按范围 | 最近一次安全、性能、生命周期和测试审计结果 |
-| `docs/product/audit/2026-09-01-i18n-bilingual/README.md` | 历史证据 | P1 | 按范围 | 按范围 | 按范围 | 双语适配运行证据（API 34 模拟器 ZH/EN 与 200% 字体截图、语义抽查） |
-| `docs/product/audit/2026-09-05-feeling-button/README.md` | 历史证据 | P2 | 按范围 | 按范围 | 按范围 | 写感受按钮对齐修复证据（裁边前后对比截图） |
-| `docs/product/audit/2026-08-11-issues-123-145/README.md` | 历史证据 | P2 | 按范围 | 按范围 | 按范围 | Issues #123–#145 的第三轮审计和验证 |
-| `docs/product/audit/2026-08-09-record-details-stage4-stage5/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 记录详情 Stage 4–5 当时的验收和 Draft PR 证据 |
-| `docs/product/audit/2026-08-03-stage5-stage6-release/README.md` | 发布历史 | P3 | 留档 | 否 | 否 | beta.2 的最终测试、合并、签名和发布链 |
-| `docs/product/audit/2026-08-02-month-statistics/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 月统计最终方案当时的模型、设备和视觉验收 |
-| `docs/product/audit/2026-08-02-period-glass-tabs/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 统计周期玻璃控件当时的设计和运行证据 |
-| `docs/product/audit/2026-08-02-year-line-chart/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 年度折线面积图当时的验收证据 |
-| `docs/product/audit/2026-08-02-boundary-fixes/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 统计与日历边界中间方案的修复证据 |
-| `docs/product/audit/2026-08-03-copy-audit/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 中文文案集中化和运行时文案审计 |
-| `docs/product/audit/2026-08-01-ui-v2-stage5/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | Stage 5 候选 APK 集成 QA |
-| `docs/product/audit/2026-08-01-ui-v2-stage4/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | Stage 4 中间统计布局和验收暂停点 |
-| `docs/product/audit/2026-08-01-ui-v2-stage3/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | Stage 3 记录页实现和验收范围 |
-| `docs/product/audit/2026-07-30-ui-v2-stage2-follow-up/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | Stage 2 用户反馈修正和视觉证据 |
-| `docs/product/audit/2026-07-30-ui-v2-stage2/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | Stage 2 初次日历验收证据 |
-| `docs/product/audit/2026-07-30-ui-v2-stage1/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | Stage 1 Token 和共享外壳验收 |
-| `docs/product/audit/2026-07-30-ui-v2-stage1/DESIGN_QA.md` | 历史证据 | P3 | 留档 | 否 | 否 | Stage 1 设计图与运行截图对照附录 |
-| `docs/product/audit/2026-07-28-consistency-hardening/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 局部一致性、扩展边界和安全加固证据 |
-| `docs/product/audit/2026-07-27-quick-runtime/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 快速真实运行和冷启动检查 |
-| `docs/product/audit/2026-07-22-password-reset-sync/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 找回密码、同步和 200% 字体运行证据 |
-| `docs/product/audit/2026-07-22-native-ui/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 应用内 UI 一致性和弹窗反馈审计 |
-| `docs/product/audit/2026-07-22-calendar-statistics/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 月历、统计和日期边界审计 |
-| `docs/product/audit/2026-07-19-deep-ux/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 早期仅自慰版本深度 UX 审计 |
-| `docs/product/audit/2026-07-19-deep-ux/after/360x640/README.md` | 历史证据 | P3 | 留档 | 否 | 否 | 360×640dp 视觉证据附录 |
 | `docs/releases/v1.0.0-beta.3.md` | 发布历史（当前版本） | P1 | 按范围 | 按范围 | 按范围 | 第三次 Beta 的内容、升级和验证说明 |
 | `docs/releases/v1.0.0-beta.2.md` | 发布历史 | P3 | 留档 | 否 | 否 | 第二次 Beta 的不可改写发布说明 |
 | `docs/releases/v1.0.0-beta.1.md` | 发布历史 | P3 | 留档 | 否 | 否 | 首次 Beta 的不可改写发布说明 |
@@ -110,6 +79,6 @@
 
 - 当前文档只能有一个事实入口；若代码、测试和当前文档冲突，先按 `docs/README.md` 的优先级处理，不在历史审计页修正当前状态。
 - 历史文档可以补充“已归档/被哪个版本取代”的状态标记，但不得改写当时的测试数量、截图、分支、提交和失败事实。
-- 删除文档前必须先检查本目录、文档链接、脚本和 Git 历史用途；若它仍是发布、迁移或审计证据，应保留并标为历史，而不是删除。
+- 删除文档前必须先检查本目录、文档链接和脚本；其中仍然有效的规则先并入对应权威文档，再删除。发布事实保留在 `docs/releases/`；阶段审计、截图和一次性报告不再入库，验证证据写进 PR 描述，需要追溯时查 Git 历史（恢复方法见 [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md)）。
 - 一次性清理、临时审计和阶段性报告的结论写进提交说明或既有权威文档即可，不新增很快过时的登记项。
 - 公共仓库不记录 `local.properties`、SDK/cache、`google-services.json`、签名材料、真实数据或机器日志；这些文件的本机存在不等于应进入版本控制。

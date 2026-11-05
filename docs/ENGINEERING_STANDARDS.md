@@ -1,7 +1,7 @@
 # 工程规范
 
 状态：`current — authoritative engineering standards`
-最后复核：2026-10-16
+最后复核：2026-11-05
 
 本文件定义本仓库的代码组织、分层、异步、数据、安全与测试规范。它回答“怎么写”，不重复回答“为什么这样设计”。
 
@@ -78,6 +78,7 @@
 
 ## 7. 隐私与安全
 
+- 密码、重新认证口令，以及登录、找回密码、账号删除弹窗的进行中和错误状态只用 `remember`，不进入 `rememberSaveable` / SavedState；进程恢复后宁可让用户重新输入。邮箱、模式和弹窗是否打开这类非敏感状态可以保存。
 - **生产代码不允许日志输出**。当前 `app/src/` 没有任何日志调用，这是有意的隐私约束，不要为了调试引入 `Log`、`println` 或崩溃上报 SDK；临时排查完成后必须移除。
 - Functions 中唯一的日志点必须经过 `delete-log.js` 的脱敏白名单，且不得包含文档路径、UID 或日期。
 - 用户可见文案只存在于 `ZhStrings.kt` / `EnStrings.kt`；`scripts/copy-integrity.test.mjs` 会拒绝其他源码文件里的中日韩文字与中文标点、全角符号。
