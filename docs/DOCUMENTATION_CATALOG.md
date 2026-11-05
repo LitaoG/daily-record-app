@@ -54,7 +54,8 @@
 | `docs/product/IMPLEMENTATION_READINESS.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前实现、发布和质量门槛 |
 | `docs/product/PRODUCT_BACKLOG.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | 已完成事项与持续观察项，不是旧阶段启动器 |
 | `docs/product/USER_STORIES_AND_ACCEPTANCE.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 用户行为和可验收条件 |
-| `docs/product/BRIGHT_GLASS_THEME.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前双模块玻璃主题的实现基线 |
+| `docs/product/LIQUID_GLASS_PLAY_READINESS_GOAL.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | ADR-022 流体玻璃主题、即时记录、隐私护甲与 Google Play 就绪的范围、阶段状态、与目标书的差异和验证证据 |
+| `docs/product/BRIGHT_GLASS_THEME.md` | 历史证据 | P3 | 留档 | 否 | 否 | v1.0.0-beta.3 的明亮渐变玻璃主题基线；已被 ADR-022 流体玻璃主题取代 |
 | `docs/product/MONTH_STATISTICS_REDESIGN.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 月统计逐日脉冲图、分布和极值规则 |
 | `docs/product/SETTINGS_HUB_GOAL.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已实现设置中心的目标、范围和验收 |
 | `docs/product/I18N_GOAL.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 双语适配（中文默认 + English）的目标、机制、简写策略与阶段证据 |

@@ -1,6 +1,8 @@
 # Daily Record 明亮渐变玻璃主题
 
-状态：`implemented — current visual baseline, verified in v1.0.0-beta.3`
+状态：`superseded — v1.0.0-beta.3 的历史视觉基线；2026-11-05 起由 ADR-022 流体玻璃主题取代`
+
+当前视觉规则、主题令牌和阶段状态见[流体玻璃与 Google Play 就绪 Goal](LIQUID_GLASS_PLAY_READINESS_GOAL.md)；下文令牌表只描述 beta.3 当时的运行时。
 
 最后复核：2026-08-16
 
