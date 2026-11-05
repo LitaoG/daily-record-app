@@ -92,6 +92,11 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodSliderBrush
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodTrackBrush
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.runtime.getValue
+import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
+import io.github.litaog.dailyrecord.ui.theme.LiquidGlassElevation
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
 
 @Composable
 internal fun DailyRecordBottomBar(
@@ -285,71 +290,103 @@ internal fun RecordModuleSelector(
     onSelected: (RecordModule) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    // ADR-022: a glass pill track with a flat module-color slider that springs
+    // to the selected half. Each half keeps its full-width hit and semantics area.
+    val haptic = LocalHapticFeedback.current
+    val selectedIndex = specs.indexOfFirst { it.module == selected }.coerceAtLeast(0)
+    val selectedColors = specs.getOrNull(selectedIndex)?.colors
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
             .heightIn(min = DailyRecordSizes.ModuleSelectorMinHeight)
             .testTag("record_module_selector")
-            .clip(DailyRecordShapes.ModuleSelector)
-            .background(DailyRecordSurface)
-            .border(
-                DailyRecordBorders.Standard,
-                DailyRecordDivider,
-                DailyRecordShapes.ModuleSelector,
+            .appleLiquidGlass(
+                shape = DailyRecordShapes.ModuleSelector,
+                glowColor = selectedColors?.primary ?: Color.Transparent,
+                elevation = LiquidGlassElevation.Subtle,
             )
-            .drawWithContent {
-                drawContent()
-                if (specs.size > 1) {
-                    drawLine(
-                        color = DailyRecordDivider,
-                        start = Offset(size.width / 2f, 0f),
-                        end = Offset(size.width / 2f, size.height),
-                        strokeWidth = DailyRecordBorders.Standard.toPx(),
+            .padding(DailyRecordSpacing.Compact),
+    ) {
+        val segmentWidth = if (specs.isEmpty()) maxWidth else maxWidth / specs.size
+        val sliderOffset by animateDpAsState(
+            targetValue = segmentWidth * selectedIndex,
+            animationSpec = DailyRecordMotion.spatial(),
+            label = "moduleSlider",
+        )
+        if (selectedColors != null) {
+            Box(Modifier.matchParentSize()) {
+                Box(
+                    modifier = Modifier
+                        .offset(x = sliderOffset)
+                        .width(segmentWidth)
+                        .fillMaxHeight()
+                        .shadow(
+                            elevation = 6.dp,
+                            shape = DailyRecordShapes.ModuleSelectorSlider,
+                            ambientColor = Color.Transparent,
+                            spotColor = selectedColors.primary.copy(alpha = .35f),
+                        )
+                        .clip(DailyRecordShapes.ModuleSelectorSlider)
+                        .background(selectedColors.primary),
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+        ) {
+            specs.forEachIndexed { index, spec ->
+                val active = index == selectedIndex
+                val interactionSource = remember { MutableInteractionSource() }
+                val labelColor by animateColorAsState(
+                    targetValue = if (active) spec.colors.onPrimary else DailyRecordTextSecondary,
+                    label = "moduleLabel",
+                )
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
+                        .testTag("record_module_${spec.module.name}")
+                        .pressScale(interactionSource)
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null,
+                            role = Role.Tab,
+                        ) {
+                            if (!active) DailyRecordHaptics.tabSwitch(haptic)
+                            onSelected(spec.module)
+                        }
+                        .padding(
+                            horizontal = DailyRecordSpacing.Inline,
+                            vertical = DailyRecordSpacing.Inline,
+                        )
+                        .semantics {
+                            this.selected = active
+                            role = Role.Tab
+                            contentDescription = AppCopy.selectedState(
+                                AppCopy.RecordModule.recordLabel(spec.semanticCountLabel),
+                                active,
+                            )
+                        },
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    spec.icon(
+                        Modifier.size(DailyRecordSizes.ModuleIcon),
+                        if (active) spec.colors.onPrimary else DailyRecordTextSecondary,
+                    )
+                    Spacer(Modifier.width(DailyRecordSpacing.Inline))
+                    Text(
+                        text = spec.label,
+                        color = labelColor,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
                     )
                 }
-            },
-    ) {
-        specs.forEach { spec ->
-            val active = spec.module == selected
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .heightIn(min = DailyRecordSizes.ModuleSelectorMinHeight)
-                    .testTag("record_module_${spec.module.name}")
-                    // Keep the established full-half hit area and geometry. The
-                    // module selector remains a solid identity surface so the
-                    // current module is unambiguous against the glass shell.
-                    .background(if (active) spec.colors.primary else Color.Transparent)
-                    .clickable(role = Role.Tab) { onSelected(spec.module) }
-                    .padding(
-                        horizontal = DailyRecordSpacing.Inline,
-                        vertical = DailyRecordSpacing.Content,
-                    )
-                    .semantics {
-                        this.selected = active
-                        role = Role.Tab
-                        contentDescription = AppCopy.selectedState(
-                            AppCopy.RecordModule.recordLabel(spec.semanticCountLabel),
-                            active,
-                        )
-                    },
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                spec.icon(
-                    Modifier.size(DailyRecordSizes.ModuleIcon),
-                    if (active) spec.colors.onPrimary else DailyRecordTextSecondary,
-                )
-                Spacer(Modifier.width(DailyRecordSpacing.Inline))
-                Text(
-                    text = spec.label,
-                    color = if (active) spec.colors.onPrimary else DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
             }
         }
     }
