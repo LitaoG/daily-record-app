@@ -52,6 +52,7 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
 
 internal val VPN_SYNC_FAILURE_MESSAGE: String
     get() = AppCopy.vpnSyncFailure
@@ -74,6 +75,7 @@ fun DailyRecordApp(
     onSignOut: () -> Unit = {},
     onSignIn: (() -> Unit)? = null,
     onLanguageChanged: (AppLanguage) -> Unit = {},
+    onColorThemeChanged: (DailyRecordColorTheme) -> Unit = {},
     onDeleteAccount: suspend (String, LocalDataAfterAccountDeletion) -> Result<Unit> = { _, _ ->
         Result.failure(IllegalStateException("Account deletion is unavailable"))
     },
@@ -91,6 +93,17 @@ fun DailyRecordApp(
             languagePreference.setLanguage(selected)
             AppLanguageState.current = selected.strings()
             onLanguageChanged(selected)
+        }
+    }
+    val colorThemePreference = remember(context) { ColorThemePreference(context) }
+    val colorTheme by colorThemePreference.theme.collectAsStateWithLifecycle(
+        initialValue = colorThemePreference.current,
+    )
+    val onColorThemeSelected: (DailyRecordColorTheme) -> Unit = { selected ->
+        // Re-selecting the active theme must not trigger a full recreation.
+        if (selected != colorTheme) {
+            colorThemePreference.setTheme(selected)
+            onColorThemeChanged(selected)
         }
     }
     val handBrewController = remember(repository) { HandBrewModuleController(repository) }
@@ -246,6 +259,8 @@ fun DailyRecordApp(
                 moduleColors = moduleSpec.colors,
                 language = language,
                 onLanguageSelected = onLanguageSelected,
+                colorTheme = colorTheme,
+                onColorThemeSelected = onColorThemeSelected,
                 onBack = { showSettings = false },
                 onOpenAccount = { showAccountDialog = true },
                 onSignIn = onSignIn,

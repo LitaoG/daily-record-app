@@ -598,6 +598,17 @@ internal object AppCopy {
         val languageZh: String get() = AppLanguageState.current.settings.languageZh
         val languageEn: String get() = AppLanguageState.current.settings.languageEn
         val languageDialogTitle: String get() = AppLanguageState.current.settings.languageDialogTitle
+        val themeTitle: String get() = AppLanguageState.current.settings.themeTitle
+        val themeDialogTitle: String get() = AppLanguageState.current.settings.themeDialogTitle
+        val themeAurora: String get() = AppLanguageState.current.settings.themeAurora
+        val themeGlacialCoral: String get() = AppLanguageState.current.settings.themeGlacialCoral
+        val themeTwilightLilac: String get() = AppLanguageState.current.settings.themeTwilightLilac
+        val themeEmeraldBerry: String get() = AppLanguageState.current.settings.themeEmeraldBerry
+        val themeTitaniumChampagne: String get() = AppLanguageState.current.settings.themeTitaniumChampagne
+        val themeCreamLavender: String get() = AppLanguageState.current.settings.themeCreamLavender
+        val themeSpringSky: String get() = AppLanguageState.current.settings.themeSpringSky
+        val themeBuffGlacier: String get() = AppLanguageState.current.settings.themeBuffGlacier
+        val themeDreamBlush: String get() = AppLanguageState.current.settings.themeDreamBlush
         val dataSection: String get() = AppLanguageState.current.settings.dataSection
         val localFirstTitle: String get() = AppLanguageState.current.settings.localFirstTitle
         val localFirstSummary: String get() = AppLanguageState.current.settings.localFirstSummary

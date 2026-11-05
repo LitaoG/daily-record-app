@@ -3,19 +3,24 @@ package io.github.litaog.dailyrecord.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-val DailyRecordCanvas = Color(0xFFFCFAF7)
-val DailyRecordSurface = Color(0xFFFFFEFC)
-val DailyRecordSurfaceMuted = Color(0xFFF5F1F4)
+// Liquid canvas neutrals (ADR-022): pearl canvas, white milk-glass surfaces and
+// graphite text. Every text color keeps WCAG AA on every surface below.
+val DailyRecordCanvas = Color(0xFFF8FAFC)
+val DailyRecordCanvasEnd = Color(0xFFF1F5F9)
+val DailyRecordSurface = Color(0xFFFFFFFF)
+val DailyRecordSurfaceMuted = Color(0xFFF1F5F9)
 /**
  * Disabled/future cells need to read as unavailable rather than as another
- * empty record. Keep this neutral (not module tinted), but give it enough
- * separation from the module-specific past-unset fills.
+ * empty record. Keep this neutral (not module tinted) and darker than every
+ * theme's past-unset fill.
  */
-val DailyRecordSurfaceDisabled = Color(0xFFEEE8E0)
-val DailyRecordText = Color(0xFF2D2926)
-val DailyRecordTextSecondary = Color(0xFF514A45)
-val DailyRecordTextMuted = Color(0xFF706761)
-val DailyRecordDivider = Color(0xFFE0D8D0)
+val DailyRecordSurfaceDisabled = Color(0xFFE6EAF0)
+val DailyRecordText = Color(0xFF1E293B)
+val DailyRecordTextSecondary = Color(0xFF475569)
+// b1 proposed #94A3B8 for muted notes, but it measures 2.57:1 on white; this
+// slate keeps the quiet tone while staying above 4.5:1 on muted surfaces.
+val DailyRecordTextMuted = Color(0xFF586880)
+val DailyRecordDivider = Color(0xFFE2E8F0)
 val DailyRecordOnAccent = Color(0xFFFFFFFF)
 val DailyRecordSuccess = Color(0xFF3F6F5A)
 val DailyRecordWarning = Color(0xFF8A6A18)
@@ -43,6 +48,13 @@ data class RecordVisualColors(
     val outline: Color,
 )
 
+/**
+ * One record module's colors inside the selected theme.
+ *
+ * [primary] and [strong] are the deep accents that carry white text. The count
+ * ladder [unset] > [soft] > [medium] > [intense] > [peak] stays light and airy
+ * and always carries graphite text. [gradient] and [glow] are decorative.
+ */
 @Immutable
 data class RecordModuleColorTokens(
     val primary: Color,
@@ -52,6 +64,13 @@ data class RecordModuleColorTokens(
     val intense: Color,
     val unset: Color,
     val onPrimary: Color = DailyRecordOnAccent,
+    /** Four-or-more count fill. */
+    val peak: Color = primary,
+    val onPeak: Color = onPrimary,
+    /** Multi-stop identity gradient; never placed behind body text. */
+    val gradient: List<Color> = listOf(primary, strong),
+    /** Ambient diffuse glow for liquid glass shadows and canvas orbs. */
+    val glow: Color = primary.copy(alpha = .09f),
 ) {
     fun colorsFor(state: RecordVisualState): RecordVisualColors = when (state) {
         RecordVisualState.Unset -> RecordVisualColors(
@@ -80,9 +99,9 @@ data class RecordModuleColorTokens(
             outline = intense,
         )
         RecordVisualState.FourPlus -> RecordVisualColors(
-            background = primary,
-            content = onPrimary,
-            outline = primary,
+            background = peak,
+            content = onPeak,
+            outline = peak,
         )
         RecordVisualState.Focused -> RecordVisualColors(
             background = strong,
@@ -100,12 +119,8 @@ data class RecordModuleColorTokens(
 }
 
 /**
- * Module-aware glass atmosphere for shared controls.
- *
- * The light tint keeps the surface airy while the primary color gives the
- * selected slider a restrained module-specific glow (purple for hand brew,
- * deep red for intimacy). Keeping this derived from the module token prevents
- * a shared control from silently falling back to the hand-brew palette.
+ * Module-aware glass atmosphere for shared controls: the light tint keeps the
+ * surface airy while the primary gives the selected slider a module glow.
  */
 val RecordModuleColorTokens.periodGlassTint: Color
     get() = soft
@@ -113,43 +128,26 @@ val RecordModuleColorTokens.periodGlassTint: Color
 val RecordModuleColorTokens.periodGlassGlow: Color
     get() = primary
 
-val HandBrewColorTokens = RecordModuleColorTokens(
-    // Brighter, cleaner purple keeps the module expressive without turning
-    // selected surfaces grey or near-black.
-    primary = Color(0xFF8A5AA7),
-    strong = Color(0xFF693D83),
-    // One-count fill sits a quarter step toward medium: clearly separated
-    // from the paler unset fill above it, still clearly lighter than the
-    // two-count medium below it.
-    soft = Color(0xFFEDDBF4),
-    medium = Color(0xFFE0C4EB),
-    intense = Color(0xFFB48EC9),
-    // Past-unset stays the lightest fill of the palette (lighter than the
-    // one-count soft fill), one notch deeper than the shared muted surface
-    // so unfilled dates read as module-tinted rather than plain grey.
-    unset = Color(0xFFF3EAF5),
-)
+/**
+ * Masturbation module tokens of the selected theme. Read at call time (not
+ * cached at class load) so a theme change reaches every screen after the
+ * activity is recreated.
+ */
+val HandBrewColorTokens: RecordModuleColorTokens
+    get() = DailyRecordThemeState.current.palette.solo
 
-val SexColorTokens = RecordModuleColorTokens(
-    // Use a clear wine red with enough warmth and saturation to avoid a
-    // muddy brown cast in selected cards and glass controls.
-    primary = Color(0xFFAD485C),
-    strong = Color(0xFF823447),
-    // Same quarter step as hand brew: separated from the unset tint above,
-    // still clearly lighter than the two-count medium below.
-    soft = Color(0xFFF4DADF),
-    medium = Color(0xFFEABBC3),
-    intense = Color(0xFFCD828E),
-    // Keep empty sex dates within the wine-red family without colliding with
-    // the stronger one-count fill: lighter than soft, one notch deeper than
-    // the previous near-white so the tint actually reads.
-    unset = Color(0xFFF8E9EC),
-)
+/** Sex module tokens of the selected theme. */
+val SexColorTokens: RecordModuleColorTokens
+    get() = DailyRecordThemeState.current.palette.duo
 
 /**
- * Shared controls outside a selected record module use the hand-brew purple as
- * the app-level accent. Module-aware screens must pass their own color tokens.
+ * Shared controls outside a selected record module use the masturbation
+ * module accent of the selected theme. Module-aware screens must pass their
+ * own color tokens.
  */
-val DailyRecordDefaultAccent = HandBrewColorTokens.primary
-val DailyRecordDefaultAccentStrong = HandBrewColorTokens.strong
-val DailyRecordDefaultAccentSoft = HandBrewColorTokens.soft
+val DailyRecordDefaultAccent: Color
+    get() = HandBrewColorTokens.primary
+val DailyRecordDefaultAccentStrong: Color
+    get() = HandBrewColorTokens.strong
+val DailyRecordDefaultAccentSoft: Color
+    get() = HandBrewColorTokens.soft

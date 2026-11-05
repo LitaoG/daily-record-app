@@ -8,9 +8,11 @@ import androidx.compose.runtime.remember
 import io.github.litaog.dailyrecord.core.common.AppLanguageState
 import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
+import io.github.litaog.dailyrecord.ui.ColorThemePreference
 import io.github.litaog.dailyrecord.ui.DailyRecordRoot
 import io.github.litaog.dailyrecord.ui.LanguagePreference
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordThemeState
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +22,9 @@ class MainActivity : ComponentActivity() {
         // Resolve the persisted language before the first composition so both
         // UI and non-UI copy consumers read the same strings set.
         AppLanguageState.current = LanguagePreference(this).current.strings()
+        // The color theme follows the same rule (ADR-022): every token getter
+        // reads the selected theme, so it must be set before the first frame.
+        DailyRecordThemeState.current = ColorThemePreference(this).current
         setContent {
             DailyRecordTheme {
                 // The provider is remembered with the stable app instance, so
@@ -33,6 +38,10 @@ class MainActivity : ComponentActivity() {
                     servicesProvider = servicesProvider,
                     onLanguageChanged = { language ->
                         AppLanguageState.current = language.strings()
+                        recreate()
+                    },
+                    onColorThemeChanged = { theme ->
+                        DailyRecordThemeState.current = theme
                         recreate()
                     },
                 )

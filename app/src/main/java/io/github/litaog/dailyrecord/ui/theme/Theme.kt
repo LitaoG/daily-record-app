@@ -1,10 +1,13 @@
 package io.github.litaog.dailyrecord.ui.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 
-private val DailyRecordColorScheme = lightColorScheme(
+/** Built per selected theme; a theme change recreates the activity. */
+private fun dailyRecordColorScheme(): ColorScheme = lightColorScheme(
     primary = DailyRecordDefaultAccent,
     onPrimary = DailyRecordOnAccent,
     primaryContainer = DailyRecordDefaultAccentSoft,
@@ -31,8 +34,10 @@ private val DailyRecordColorScheme = lightColorScheme(
 
 @Composable
 fun DailyRecordTheme(content: @Composable () -> Unit) {
+    val theme = DailyRecordThemeState.current
+    val colorScheme = remember(theme) { dailyRecordColorScheme() }
     MaterialTheme(
-        colorScheme = DailyRecordColorScheme,
+        colorScheme = colorScheme,
         typography = Typography,
         content = content,
     )

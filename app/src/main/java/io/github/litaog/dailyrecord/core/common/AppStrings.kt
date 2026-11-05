@@ -550,6 +550,17 @@ internal interface AppStrings {
         val languageZh: String
         val languageEn: String
         val languageDialogTitle: String
+        val themeTitle: String
+        val themeDialogTitle: String
+        val themeAurora: String
+        val themeGlacialCoral: String
+        val themeTwilightLilac: String
+        val themeEmeraldBerry: String
+        val themeTitaniumChampagne: String
+        val themeCreamLavender: String
+        val themeSpringSky: String
+        val themeBuffGlacier: String
+        val themeDreamBlush: String
         val dataSection: String
         val localFirstTitle: String
         val localFirstSummary: String
