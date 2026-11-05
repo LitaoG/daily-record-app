@@ -1,6 +1,6 @@
 # 流体玻璃与 Google Play 就绪 Goal
 
-状态：`in progress — Phase 1–2 已在 agent/b1-apple-glass-refactor 提交并通过定向编译与单测；Phase 3–6 未开始`
+状态：`in progress — Phase 1–3 已在 agent/b1-apple-glass-refactor 提交并通过定向编译与单测；Phase 4–6 未开始`
 
 最后更新：2026-11-05
 
@@ -26,7 +26,7 @@
 | --- | --- | --- |
 | 1 | 9 套主题令牌、流体玻璃材质、设置“主题配色” | 已完成；编译与 `DesignTokensTest` 15/15 通过，Lint 与设备截图留到小版本末尾 |
 | 2 | 15 个矢量符号替换 `drawable-nodpi` 的 26 张 PNG，矢量自适应启动图标替换 3 张 WebP | 已完成；编译通过，Play 512px 商店图标待按新图标重新导出 |
-| 3 | 模块切换器滑块、周期胶囊、底栏、今日速记、长按加减、滑动切月、触感 | 未开始 |
+| 3 | 模块切换器滑块、周期胶囊、底栏、今日速记、长按加减、滑动切月、触感 | 已完成；编译通过，今日速记、长按快速调整、滑动切月和日历网格的 4 个测试类 19 个用例与 `DesignTokensTest` 15 个用例通过；设备交互与截图留到小版本末尾 |
 | 4 | 月度脉冲图与年度折线图触控探针 | 未开始 |
 | 5 | 逐次详情卡片化、应用锁、桌面伪装、设置分组 | 未开始 |
 | 6 | 文案审查、Data Safety 与内容分级说明、完整门禁、AAB | 未开始 |
@@ -55,8 +55,13 @@
 
 主题里的多色标渐变仍作为配色来源保存在令牌中，只用于小面积装饰，不铺满表面。“未填写”底色由 1 次档与白色各半混合得到，保证比 1 次更浅、比未来日期更亮。
 
+目标书 4.3 写“计数减到 0 时把主记录标为墓碑”，与 ADR-004“0 次与未填写分离”冲突。实现保持 ADR-004：今日速记和长按加减从 1 减到 0 都保存为明确 0 次；回到“未填写”只能在记录页确认“清除记录”。计数减少时多出的逐次详情由既有的只存次数路径自动裁剪，不新增删除逻辑。
+
+目标书 4.2 写长按弹层“手指松开后 0.8 秒平滑消隐”。实现不设自动消失计时：弹层在点“完成”、点弹层外、按返回或切换月份/模块时关闭。原因是限时消失会让 TalkBack 和开关控制用户来不及操作（WCAG 2.2.1 可调时限）。
+
 ## 验证记录
 
 - 2026-11-05：会话临时脚本计算 9 套主题 18 组模块色板，调整上表色值后全部达到 AA；脚本不进入仓库，长期验证由 `DesignTokensTest` 逐套执行。
 - 2026-11-05：`:app:compileDebugKotlin` 与 `:app:testDebugUnitTest --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest` 通过（15 个测试，0 失败）。本机可用内存约 2 GB，Gradle 以 `--no-daemon --max-workers=1`、1 GB 堆和进程内 Kotlin 编译运行。
+- 2026-11-06：Phase 3 定向验证：`:app:testDebugUnitTest --tests "io.github.litaog.dailyrecord.ui.calendar.*" --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest` 通过（`TodayQuickLogTest` 5、`CalendarQuickAdjustTest` 4、`CalendarMonthSwipeTest` 6、`CalendarGridTest` 4、`DesignTokensTest` 15，共 34 个测试，0 失败），同一次运行完成主代码与单测编译，改动文件无编译警告。
 - 待执行：`compileDebugAndroidTestKotlin`、`lintDebug`、`RecordModuleIntegrationTest` 设置图标取色等设备测试与目标页面截图。

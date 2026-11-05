@@ -219,6 +219,38 @@ internal object AppCopy {
         val zeroDescription: String get() = AppLanguageState.current.calendar.zeroDescription
         val selectedSuffix: String get() = AppLanguageState.current.calendar.selectedSuffix
         val todaySuffix: String get() = AppLanguageState.current.calendar.todaySuffix
+        val quickLogTitle: String get() = AppLanguageState.current.calendar.quickLogTitle
+        val quickLogMarkZero: String get() = AppLanguageState.current.calendar.quickLogMarkZero
+
+        fun quickLogStatus(count: Int?): String =
+            AppLanguageState.current.calendar.quickLogStatus(count)
+
+        fun quickLogStatusDescription(moduleLabel: String, count: Int?): String =
+            AppLanguageState.current.calendar.quickLogStatusDescription(moduleLabel, count)
+
+        fun quickLogIncreaseDescription(moduleLabel: String): String =
+            AppLanguageState.current.calendar.quickLogIncreaseDescription(moduleLabel)
+
+        fun quickLogDecreaseDescription(moduleLabel: String): String =
+            AppLanguageState.current.calendar.quickLogDecreaseDescription(moduleLabel)
+
+        fun quickLogMarkZeroDescription(moduleLabel: String): String =
+            AppLanguageState.current.calendar.quickLogMarkZeroDescription(moduleLabel)
+
+        val quickAdjustAction: String get() = AppLanguageState.current.calendar.quickAdjustAction
+        val quickAdjustDone: String get() = AppLanguageState.current.calendar.quickAdjustDone
+
+        fun quickAdjustTitle(date: LocalDate): String =
+            AppLanguageState.current.calendar.quickAdjustTitle(date)
+
+        fun quickAdjustStatusDescription(date: LocalDate, moduleLabel: String, count: Int?): String =
+            AppLanguageState.current.calendar.quickAdjustStatusDescription(date, moduleLabel, count)
+
+        fun quickAdjustIncreaseDescription(date: LocalDate, moduleLabel: String): String =
+            AppLanguageState.current.calendar.quickAdjustIncreaseDescription(date, moduleLabel)
+
+        fun quickAdjustDecreaseDescription(date: LocalDate, moduleLabel: String): String =
+            AppLanguageState.current.calendar.quickAdjustDecreaseDescription(date, moduleLabel)
 
         fun monthSummary(count: Long, days: Int): String =
             AppLanguageState.current.calendar.monthSummary(count, days)

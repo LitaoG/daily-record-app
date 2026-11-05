@@ -244,6 +244,46 @@ internal object EnStrings : AppStrings {
         override val selectedSuffix = ", selected"
         override val todaySuffix = ", today"
 
+        override val quickLogTitle = "Today"
+        override val quickLogMarkZero = "Log 0"
+
+        override fun quickLogStatus(count: Int?): String = when (count) {
+            null -> "Not logged yet"
+            1 -> "1 time today"
+            else -> "$count times today"
+        }
+
+        override fun quickLogStatusDescription(moduleLabel: String, count: Int?): String = when (count) {
+            null -> "$moduleLabel today: not logged yet"
+            1 -> "$moduleLabel today: 1 time"
+            else -> "$moduleLabel today: $count times"
+        }
+
+        override fun quickLogIncreaseDescription(moduleLabel: String): String = "Add 1 to $moduleLabel today"
+
+        override fun quickLogDecreaseDescription(moduleLabel: String): String = "Remove 1 from $moduleLabel today"
+
+        override fun quickLogMarkZeroDescription(moduleLabel: String): String = "Log $moduleLabel today as 0"
+
+        override val quickAdjustAction = "Quick adjust"
+        override val quickAdjustDone = "Done"
+
+        override fun quickAdjustTitle(date: LocalDate): String =
+            date.format(DateTimeFormatter.ofPattern("MMM d", Locale.US))
+
+        override fun quickAdjustStatusDescription(date: LocalDate, moduleLabel: String, count: Int?): String =
+            when (count) {
+                null -> "$moduleLabel on ${quickAdjustTitle(date)}: not logged yet"
+                1 -> "$moduleLabel on ${quickAdjustTitle(date)}: 1 time"
+                else -> "$moduleLabel on ${quickAdjustTitle(date)}: $count times"
+            }
+
+        override fun quickAdjustIncreaseDescription(date: LocalDate, moduleLabel: String): String =
+            "Add 1 to $moduleLabel on ${quickAdjustTitle(date)}"
+
+        override fun quickAdjustDecreaseDescription(date: LocalDate, moduleLabel: String): String =
+            "Remove 1 from $moduleLabel on ${quickAdjustTitle(date)}"
+
         override fun monthSummary(count: Long, days: Int): String = "This month: $count times · $days days"
 
         override fun monthTitle(month: YearMonth): String =

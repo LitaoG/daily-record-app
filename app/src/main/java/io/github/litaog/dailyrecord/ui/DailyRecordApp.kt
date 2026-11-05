@@ -53,6 +53,14 @@ import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CancellationException
+import io.github.litaog.dailyrecord.ui.calendar.QuickLogAction
+import io.github.litaog.dailyrecord.ui.calendar.nextCount
 
 internal val VPN_SYNC_FAILURE_MESSAGE: String
     get() = AppCopy.vpnSyncFailure
@@ -225,6 +233,35 @@ fun DailyRecordApp(
     }
     val monthRecords = scopedMonthRecordsState ?: fallbackMonthRecords
 
+    // Today quick-log island (ADR-022). Each tap re-reads today's stored count
+    // inside one lock before saving, so fast taps apply in order and a stale
+    // value never overwrites a newer one. Saving reuses the module's
+    // count-only path, which already trims details above the new count.
+    val todayCount = allRecords.asReversed()
+        .firstOrNull { it.localDate == effectiveToday }
+        ?.count
+    val quickLogScope = rememberCoroutineScope()
+    val quickLogMutex = remember { Mutex() }
+    val onQuickLog: (LocalDate, QuickLogAction) -> Unit = quickLog@{ date, action ->
+        // Same bounds as the record page (also used by the long-press
+        // stepper): never write a future or pre-1970 date.
+        if (date.isAfter(effectiveToday) || date.isBefore(EARLIEST_SUPPORTED_DATE)) return@quickLog
+        val controller = selectedController
+        quickLogScope.launch {
+            try {
+                quickLogMutex.withLock {
+                    val current = controller.observeRecord(date).first()?.count
+                    val next = action.nextCount(current)
+                    if (next != null) controller.saveRecord(date, next)
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                snackbarHostState.showSnackbar(AppCopy.Record.saveFailure)
+            }
+        }
+    }
+
     if (selectedDate != null) {
         // Key the record screen by module so each module keeps its own
         // saveable draft slots: a hand-brew draft must never be restored as a
@@ -311,6 +348,8 @@ fun DailyRecordApp(
                         selectedModule = selectedModule,
                         availableModules = availableModuleSpecs,
                         earliestMonth = earliestSupportedMonth,
+                        todayCount = todayCount,
+                        onQuickLog = onQuickLog,
                         modifier = Modifier.padding(contentPadding),
                         onPreviousMonth = {
                             val previous = displayedMonth.minusMonths(1)

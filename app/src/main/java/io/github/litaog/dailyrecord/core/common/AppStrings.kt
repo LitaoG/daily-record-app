@@ -229,6 +229,34 @@ internal interface AppStrings {
         val selectedSuffix: String
         val todaySuffix: String
 
+        // Today quick-log island (ADR-022).
+        val quickLogTitle: String
+        val quickLogMarkZero: String
+
+        /** Visible status line; [count] null means today is not filled yet. */
+        fun quickLogStatus(count: Int?): String
+
+        fun quickLogStatusDescription(moduleLabel: String, count: Int?): String
+
+        fun quickLogIncreaseDescription(moduleLabel: String): String
+
+        fun quickLogDecreaseDescription(moduleLabel: String): String
+
+        fun quickLogMarkZeroDescription(moduleLabel: String): String
+
+        // Long-press quick adjust on a calendar date (ADR-022).
+        /** Accessibility label of the long-press action on a date cell. */
+        val quickAdjustAction: String
+        val quickAdjustDone: String
+
+        fun quickAdjustTitle(date: LocalDate): String
+
+        fun quickAdjustStatusDescription(date: LocalDate, moduleLabel: String, count: Int?): String
+
+        fun quickAdjustIncreaseDescription(date: LocalDate, moduleLabel: String): String
+
+        fun quickAdjustDecreaseDescription(date: LocalDate, moduleLabel: String): String
+
         fun monthSummary(count: Long, days: Int): String
 
         fun monthTitle(month: YearMonth): String

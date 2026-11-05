@@ -236,6 +236,39 @@ internal object ZhStrings : AppStrings {
         override val selectedSuffix = "，已选择"
         override val todaySuffix = "，今天"
 
+        override val quickLogTitle = "今日速记"
+        override val quickLogMarkZero = "记为 0 次"
+
+        override fun quickLogStatus(count: Int?): String =
+            if (count == null) "今天还没记录" else "今天 $count 次"
+
+        override fun quickLogStatusDescription(moduleLabel: String, count: Int?): String =
+            if (count == null) "今天${moduleLabel}还没记录" else "今天${moduleLabel}已记录 $count 次"
+
+        override fun quickLogIncreaseDescription(moduleLabel: String): String = "今天${moduleLabel}加 1 次"
+
+        override fun quickLogDecreaseDescription(moduleLabel: String): String = "今天${moduleLabel}减 1 次"
+
+        override fun quickLogMarkZeroDescription(moduleLabel: String): String = "把今天${moduleLabel}记为 0 次"
+
+        override val quickAdjustAction = "快速调整次数"
+        override val quickAdjustDone = "完成"
+
+        override fun quickAdjustTitle(date: LocalDate): String = "${date.monthValue}月${date.dayOfMonth}日"
+
+        override fun quickAdjustStatusDescription(date: LocalDate, moduleLabel: String, count: Int?): String =
+            if (count == null) {
+                "${quickAdjustTitle(date)}${moduleLabel}还没记录"
+            } else {
+                "${quickAdjustTitle(date)}${moduleLabel}已记录 $count 次"
+            }
+
+        override fun quickAdjustIncreaseDescription(date: LocalDate, moduleLabel: String): String =
+            "${quickAdjustTitle(date)}${moduleLabel}加 1 次"
+
+        override fun quickAdjustDecreaseDescription(date: LocalDate, moduleLabel: String): String =
+            "${quickAdjustTitle(date)}${moduleLabel}减 1 次"
+
         override fun monthSummary(count: Long, days: Int): String = "本月 $count 次 · $days 天有记录"
 
         override fun monthTitle(month: YearMonth): String = "${month.year}年 ${month.monthValue}月"
