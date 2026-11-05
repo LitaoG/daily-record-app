@@ -27,9 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,11 +45,9 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -75,7 +71,6 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordBorders
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordElevations
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
@@ -89,7 +84,6 @@ import io.github.litaog.dailyrecord.ui.theme.periodGlassGlow
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordAccentBrush
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodSliderBrush
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodTrackBrush
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -104,31 +98,33 @@ internal fun DailyRecordBottomBar(
     colors: RecordModuleColorTokens,
     onSelected: (TopDestination) -> Unit,
 ) {
-    Surface(
+    // ADR-022: a floating liquid glass capsule above the system navigation
+    // bar. Each destination keeps a 48dp hit area and full Tab semantics.
+    Box(
         modifier = Modifier
+            .fillMaxWidth()
             .navigationBarsPadding()
-            .dailyRecordGlassBackground(colors, DailyRecordGlassLevel.Muted),
-        color = Color.Transparent,
-        shadowElevation = DailyRecordElevations.Flat,
+            .padding(
+                start = DailyRecordSpacing.ScreenHorizontal,
+                end = DailyRecordSpacing.ScreenHorizontal,
+                bottom = DailyRecordSpacing.Inline,
+            ),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = DailyRecordSizes.BottomBarMinHeight)
-                .drawWithContent {
-                    drawContent()
-                    drawLine(
-                        color = DailyRecordDivider,
-                        start = Offset.Zero,
-                        end = Offset(size.width, 0f),
-                        strokeWidth = DailyRecordBorders.Standard.toPx(),
-                    )
-                }
+                .appleLiquidGlass(
+                    shape = DailyRecordShapes.BottomBar,
+                    glowColor = colors.primary,
+                    elevation = LiquidGlassElevation.Elevated,
+                )
                 .padding(
-                    horizontal = DailyRecordSpacing.ScreenHorizontal,
-                    vertical = DailyRecordSpacing.Inline,
+                    horizontal = DailyRecordSpacing.Content,
+                    vertical = DailyRecordSpacing.Compact,
                 ),
             horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             BottomDestination(
                 label = AppCopy.NavigationBar.calendar,
@@ -137,16 +133,11 @@ internal fun DailyRecordBottomBar(
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Calendar) },
                 icon = { color ->
+                    // The vector calendar symbol is optically centered, so the
+                    // nudge the old PNG artwork needed is gone.
                     CalendarGlyph(
                         color,
-                        // The calendar artwork carries a bottom-right swoosh:
-                        // its pixel centroid sits right of the asset center,
-                        // so the glyph needs a leftward nudge to line up with
-                        // its label. Measured zero-crossing: -1.5dp leaves the
-                        // icon +2.4px right of the label, -2.2dp puts it
-                        // -1.7px left; -1.9dp converges to sub-pixel parity.
-                        // Asset pixels are untouched.
-                        modifier = Modifier.size(24.dp).offset(x = (-1.9).dp, y = 2.dp),
+                        modifier = Modifier.size(24.dp),
                         theme = colors.brandIconTheme,
                     )
                 },
@@ -178,13 +169,32 @@ private fun BottomDestination(
     onClick: () -> Unit,
     icon: @Composable (Color) -> Unit,
 ) {
-    val contentColor = if (selected) accent else DailyRecordTextSecondary
+    val haptic = LocalHapticFeedback.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) accent else DailyRecordTextSecondary,
+        label = "bottomDestinationColor",
+    )
+    // Short underline that springs open from the center when selected.
+    val indicatorWidth by animateDpAsState(
+        targetValue = if (selected) 24.dp else 0.dp,
+        animationSpec = DailyRecordMotion.spatial(),
+        label = "bottomDestinationIndicator",
+    )
     Column(
         modifier = modifier
             .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
             .testTag("bottom_destination_$label")
+            .pressScale(interactionSource)
             .clip(DailyRecordShapes.Control)
-            .clickable(role = Role.Tab, onClick = onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Tab,
+            ) {
+                if (!selected) DailyRecordHaptics.tabSwitch(haptic)
+                onClick()
+            }
             .semantics {
                 this.selected = selected
                 role = Role.Tab
@@ -194,14 +204,19 @@ private fun BottomDestination(
         verticalArrangement = Arrangement.Center,
     ) {
         icon(contentColor)
-        Text(text = label, color = contentColor, style = MaterialTheme.typography.labelSmall)
+        Text(
+            text = label,
+            color = contentColor,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+        )
         Spacer(Modifier.height(DailyRecordSpacing.Compact))
         Box(
             Modifier
-                .width(24.dp)
-                .height(2.dp)
+                .width(indicatorWidth)
+                .height(3.dp)
                 .clip(CircleShape)
-                .background(if (selected) accent else Color.Transparent),
+                .background(accent),
         )
     }
 }
@@ -216,6 +231,7 @@ internal fun CalendarGlyph(
         asset = BrandIconAsset.Calendar,
         theme = theme,
         modifier = modifier,
+        tint = color,
     )
 }
 
@@ -229,6 +245,7 @@ internal fun StatisticsGlyph(
         asset = BrandIconAsset.Statistics,
         theme = theme,
         modifier = modifier,
+        tint = color,
     )
 }
 
@@ -405,6 +422,7 @@ fun PeriodTabs(
     val sliderShape = RoundedCornerShape(percent = 50)
     val sliderInset = DailyRecordSpacing.Compact
     val glassGlow = colors.periodGlassGlow
+    val haptic = LocalHapticFeedback.current
 
     Surface(
         modifier = modifier
@@ -436,10 +454,8 @@ fun PeriodTabs(
                 val sliderWidth = (segmentWidth - (sliderInset * 2f)).coerceAtLeast(1.dp)
                 val animatedOffset = animateDpAsState(
                     targetValue = (segmentWidth * selectedIndex) + sliderInset,
-                    animationSpec = spring(
-                        dampingRatio = .88f,
-                        stiffness = 480f,
-                    ),
+                    // Same spatial spring as the module selector (ADR-022).
+                    animationSpec = DailyRecordMotion.spatial(),
                     label = "period_slider_offset",
                 ).value
 
@@ -505,11 +521,15 @@ fun PeriodTabs(
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .testTag("statistics_period_${period.name}")
+                                .pressScale(interactionSource)
                                 .clickable(
                                     interactionSource = interactionSource,
                                     indication = null,
                                     role = Role.Tab,
-                                    onClick = { onSelected(period) },
+                                    onClick = {
+                                        if (!active) DailyRecordHaptics.tabSwitch(haptic)
+                                        onSelected(period)
+                                    },
                                 )
                                 .semantics {
                                     this.selected = active
@@ -579,8 +599,9 @@ fun DailyCountControl(
     }
 }
 
+/** Round -1 / +1 step button shared by the record page and the today island. */
 @Composable
-private fun CountButton(
+internal fun CountButton(
     description: String,
     enabled: Boolean,
     primary: Boolean,
@@ -597,10 +618,13 @@ private fun CountButton(
         primary -> DailyRecordOnAccent
         else -> colors.primary
     }
+    val haptic = LocalHapticFeedback.current
+    val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
             .sizeIn(minWidth = DailyRecordSizes.MinimumTouchTarget, minHeight = DailyRecordSizes.MinimumTouchTarget)
             .size(DailyRecordSizes.MinimumTouchTarget)
+            .pressScale(interactionSource)
             .clip(CircleShape)
             .background(background)
             .border(
@@ -608,7 +632,17 @@ private fun CountButton(
                 color = if (enabled) colors.primary else DailyRecordDivider,
                 shape = CircleShape,
             )
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .clickable(
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = null,
+            ) {
+                // One light tick per step; the count change itself stays with
+                // the caller so drafts and saving keep their existing rules.
+                DailyRecordHaptics.tick(haptic)
+                onClick()
+            }
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {

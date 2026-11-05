@@ -33,6 +33,8 @@ object DailyRecordShapes {
     val Compact = RoundedCornerShape(12.dp)
     /** Large glass cards such as the today island and chart containers. */
     val Card = RoundedCornerShape(24.dp)
+    /** Floating liquid glass bottom navigation capsule. */
+    val BottomBar = RoundedCornerShape(28.dp)
 }
 
 object DailyRecordBorders {
