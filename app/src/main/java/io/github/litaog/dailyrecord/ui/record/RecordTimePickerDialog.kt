@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
+import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.rememberWheelMotion
@@ -206,10 +208,15 @@ private fun TimeWheelColumn(
     val wheelMotion = rememberWheelMotion(minimumFlingVelocity)
     val wheelHeight = rowHeight * 3
     val shape = RoundedCornerShape(16.dp)
+    // One light tick each time a new value reaches the center line (b1 4.6).
+    // A fast fling ticks at most once per frame, because each frame applies
+    // its whole offset in one call.
+    val haptic = LocalHapticFeedback.current
 
     fun commitDelta(delta: Int) {
         selectedValue = wrapTimeWheelValue(selectedValue + delta, valueCount)
         latestOnValueChanged.value(selectedValue)
+        DailyRecordHaptics.tick(haptic)
     }
 
     fun applyOffsetDelta(delta: Float) {
@@ -222,6 +229,7 @@ private fun TimeWheelColumn(
         if (nextState.value != selectedValue) {
             selectedValue = nextState.value
             latestOnValueChanged.value(nextState.value)
+            DailyRecordHaptics.tick(haptic)
         }
         dragOffsetPx = nextState.offsetPx
     }
