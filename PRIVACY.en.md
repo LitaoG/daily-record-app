@@ -23,6 +23,12 @@ Private Calendar is an Android calendar journal for the developer and a small gr
 - While the lock is on, recent apps do not show the app's content. Below Android 13 the only way to do this also blocks screenshots.
 - The app lock only covers the app's screens. It does not encrypt the database on the device; the Android app sandbox still protects that data.
 
+## Optional home screen disguise
+
+- The home screen disguise is off by default. The user can turn it on under "Data & privacy" in Settings. While it is on, the home screen shows the app with the neutral name "Journal" and a plain notebook icon; opening it still opens the same app.
+- This choice is stored only on the device and is never uploaded.
+- The disguise only changes the home screen icon and name. It does not hide the app in system settings, the list of installed apps or Google Play.
+
 ## Optional account and cloud sync
 
 The user can choose a Firebase email-and-password account to restore records on another device. When the user signs in, the app processes:

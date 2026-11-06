@@ -25,17 +25,43 @@
             android:name="com.google.firebase.provider.FirebaseInitProvider"
             android:authorities="${applicationId}.firebaseinitprovider"
             tools:node="remove" />
+        <!-- The only activity. It has no launcher entry of its own: the two
+            aliases below are the home screen identities (ADR-024), and only
+            they are ever enabled or disabled. -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
+            android:name=".ui.MainActivity"
+            android:exported="false"
             android:theme="@style/Theme.DailyRecord"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize" />
+        <!-- Default identity. It keeps the component name of earlier
+            releases, so icons pinned to the home screen survive the update. -->
+        <activity-alias
+            android:name=".MainActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:targetActivity=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <!-- Optional neutral "Journal" identity, off until the user turns the
+            disguise on in settings. -->
+        <activity-alias
+            android:name=".JournalLauncher"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_journal"
+            android:label="@string/app_name_journal"
+            android:roundIcon="@mipmap/ic_launcher_journal_round"
+            android:targetActivity=".ui.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
     </application>
 
 </manifest>

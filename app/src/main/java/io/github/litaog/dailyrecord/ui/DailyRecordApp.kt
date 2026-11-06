@@ -62,6 +62,7 @@ import kotlinx.coroutines.CancellationException
 import io.github.litaog.dailyrecord.ui.calendar.QuickLogAction
 import io.github.litaog.dailyrecord.ui.calendar.nextCount
 import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
+import io.github.litaog.dailyrecord.ui.settings.LauncherDisguiseSettings
 
 internal val VPN_SYNC_FAILURE_MESSAGE: String
     get() = AppCopy.vpnSyncFailure
@@ -86,6 +87,7 @@ fun DailyRecordApp(
     onLanguageChanged: (AppLanguage) -> Unit = {},
     onColorThemeChanged: (DailyRecordColorTheme) -> Unit = {},
     appLockSettings: AppLockSettings? = null,
+    launcherDisguiseSettings: LauncherDisguiseSettings? = null,
     onDeleteAccount: suspend (String, LocalDataAfterAccountDeletion) -> Result<Unit> = { _, _ ->
         Result.failure(IllegalStateException("Account deletion is unavailable"))
     },
@@ -301,6 +303,7 @@ fun DailyRecordApp(
                 colorTheme = colorTheme,
                 onColorThemeSelected = onColorThemeSelected,
                 appLockSettings = appLockSettings,
+                launcherDisguiseSettings = launcherDisguiseSettings,
                 onBack = { showSettings = false },
                 onOpenAccount = { showAccountDialog = true },
                 onSignIn = onSignIn,

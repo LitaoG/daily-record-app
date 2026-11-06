@@ -34,6 +34,7 @@ internal interface AppStrings {
     val navigationBar: NavigationBarStrings
     val components: ComponentStrings
     val appLock: AppLockStrings
+    val disguise: DisguiseStrings
 
     fun weekdayName(dayOfWeek: Int): String
 
@@ -637,6 +638,13 @@ internal interface AppStrings {
         val delayFiveMinutes: String
         val needsScreenLock: String
         val turnedOffNoScreenLock: String
+    }
+
+    /** Optional home screen disguise (ADR-024); the switch reuses the app lock's on/off words. */
+    interface DisguiseStrings {
+        val settingTitle: String
+        val settingSummary: String
+        val settingNote: String
     }
 }
 

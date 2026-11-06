@@ -5,6 +5,7 @@ import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.security.AppLockPreference
 import io.github.litaog.dailyrecord.core.security.AppLockSession
+import io.github.litaog.dailyrecord.core.security.LauncherDisguise
 import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
 
 class DailyRecordApplication : Application() {
@@ -25,6 +26,11 @@ class DailyRecordApplication : Application() {
 
     internal val appLockPreference: AppLockPreference by lazy {
         AppLockPreference(applicationContext)
+    }
+
+    /** Process-wide home screen disguise (ADR-024), so every screen sees one choice. */
+    internal val launcherDisguise: LauncherDisguise by lazy {
+        LauncherDisguise(applicationContext)
     }
 
     /**

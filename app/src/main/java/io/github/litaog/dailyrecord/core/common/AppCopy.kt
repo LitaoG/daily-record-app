@@ -684,6 +684,12 @@ internal object AppCopy {
         val turnedOffNoScreenLock: String get() = AppLanguageState.current.appLock.turnedOffNoScreenLock
     }
 
+    object Disguise {
+        val settingTitle: String get() = AppLanguageState.current.disguise.settingTitle
+        val settingSummary: String get() = AppLanguageState.current.disguise.settingSummary
+        val settingNote: String get() = AppLanguageState.current.disguise.settingNote
+    }
+
     object Components {
         val decrease: String get() = AppLanguageState.current.components.decrease
         val increase: String get() = AppLanguageState.current.components.increase

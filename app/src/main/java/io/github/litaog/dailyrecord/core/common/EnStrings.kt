@@ -37,6 +37,7 @@ internal object EnStrings : AppStrings {
     override val navigationBar: AppStrings.NavigationBarStrings = NavigationBar
     override val components: AppStrings.ComponentStrings = Components
     override val appLock: AppStrings.AppLockStrings = AppLock
+    override val disguise: AppStrings.DisguiseStrings = Disguise
 
     private val weekdayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -738,6 +739,12 @@ internal object EnStrings : AppStrings {
         override val delayFiveMinutes = "After 5 minutes away"
         override val needsScreenLock = "Set a screen lock in system settings first"
         override val turnedOffNoScreenLock = "This device has no screen lock, so app lock was turned off"
+    }
+
+    private object Disguise : AppStrings.DisguiseStrings {
+        override val settingTitle = "Home screen disguise"
+        override val settingSummary = "When on, the home screen shows the app as \"Journal\""
+        override val settingNote = "The home screen takes a few seconds to update. Add the icon to your home screen again."
     }
 
     private object Components : AppStrings.ComponentStrings {

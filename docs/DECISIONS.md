@@ -174,16 +174,17 @@
 
 ## ADR-024：桌面伪装只切换到一个如实的中性身份
 
-- 状态：Proposed（2026-11-06），待产品负责人确认（决策 D6，见 [Google Play 上架就绪清单](product/PLAY_STORE_READINESS.md)）；确认前不改清单文件和代码。细化 ADR-022 的可选桌面伪装，进度见[流体玻璃与 Google Play 就绪 Goal](product/LIQUID_GLASS_PLAY_READINESS_GOAL.md)。
-- 决策：只提供一个伪装身份：名称“日记 / Journal”，图标是不带品牌光环的中性笔记本。它如实说明应用用途，不冒充计算器、备忘录或任何其他应用、品牌与系统功能。打开后仍是同一个应用，应用内名称、数据和统计不变，照常遵守应用锁（ADR-023）。
-- 机制：清单中 `MainActivity` 去掉启动器入口，改由两个 `activity-alias`（默认身份、伪装身份）指向它，默认身份初始启用。设置中切换时用 `PackageManager.setComponentEnabledSetting(..., DONT_KILL_APP)` 先启用新入口、再停用旧入口，任何时刻至少有一个启动器入口。选择保存在 SharedPreferences；每次启动按保存值校正两个入口，修复切换中途进程被杀造成的双图标。
+- 状态：Accepted（2026-11-06）。产品负责人把决策 D6（见 [Google Play 上架就绪清单](product/PLAY_STORE_READINESS.md)）交给代理决定，代理采用本方案。细化 ADR-022 的可选桌面伪装，进度见[流体玻璃与 Google Play 就绪 Goal](product/LIQUID_GLASS_PLAY_READINESS_GOAL.md)。
+- 决策：只提供一个伪装身份：名称“日记 / Journal”，图标是石板灰底上的白色笔记本，不带品牌色和光环。它如实说明应用用途，不冒充计算器、备忘录或任何其他应用、品牌与系统功能。打开后仍是同一个应用，应用内名称、数据和统计不变，照常遵守应用锁（ADR-023）。开关位于设置“数据与隐私”，默认关闭。
+- 机制：唯一的 Activity 移到 `ui.MainActivity`，不导出，也没有自己的启动器入口。清单用两个 `activity-alias` 指向它：默认身份沿用旧组件名 `.MainActivity` 并初始启用，伪装身份 `.JournalLauncher` 初始停用。设置中切换时用 `PackageManager.setComponentEnabledSetting(..., DONT_KILL_APP)` 先启用新入口、再停用旧入口，任何时刻至少有一个启动器入口。只切换别名，从不停用 Activity 本身，所以系统不会结束正在显示的页面。选择先同步写入 SharedPreferences 再切换；每次启动按保存值校正两个入口，修复切换中途进程被杀造成的双图标或无图标。最近任务的名称和图标用 `setTaskDescription` 跟随当前身份。
 - 不采用：目标书模式 A“简易计算器，输入 `1234=` 解锁”。它需要应用自管的数字口令，与 ADR-023“不提供应用自己的 PIN”冲突；Google Play 的欺骗行为政策禁止模仿其他应用，仿冒政策禁止歪曲应用的主要用途，假计算器两条都可能触及，而做成真正的计算器又超出 PRODUCT.md 范围。也不采用模式 B“日常备忘录”：它暗示另一类应用，而“日记”同样低调且如实。
 - 后果：
-  1. 现有安装升级后，启动器组件从 `MainActivity` 变为别名，多数桌面会移除已固定的旧图标，用户需要在应用列表中重新固定一次；每次切换伪装也会如此。设置说明必须提前告知。
-  2. 部分桌面刷新图标需要几秒；最近任务中的应用名称是否随入口变化需要设备验证，必要时用 `setTaskDescription` 统一。
+  1. 默认身份沿用 `.MainActivity` 组件名，所以升级到本版本不会丢失已固定在桌面上的图标，`scripts/verify-release-upgrade.mjs` 的 `am start -n …/.MainActivity` 也继续可用。每次开启或关闭伪装时，多数桌面会移除旧入口的图标，用户需要从应用列表重新添加；设置说明提前告知。
+  2. 部分桌面刷新图标需要几秒；个别厂商系统可能在停用组件时仍结束应用进程，需要设备验证。
   3. 伪装只改桌面图标和名称，不隐藏通知、系统设置中的应用信息或 Google Play 中的条目；隐私说明和商店说明要如实写明。
   4. Play 政策结论未经官方确认：上架前由负责人对照[欺骗行为政策](https://support.google.com/googleplay/android-developer/answer/16680223)和[仿冒政策](https://play.google.com/about/ip-deception-spam/impersonation-ip/)复核，并在商店说明中披露该功能（政策为转述，以官方页面为准）。
-- 测试后果：入口切换逻辑写成纯函数并由 JVM 测试覆盖（目标入口、启用顺序、启动校正）；清单合并和两个入口在 API 26、29、34 桌面上的显示与切换由设备测试验证。
+  5. 桌面名称只能由清单引用，所以伪装名放在字符串资源 `app_name_journal` 中，与 `app_name` 一样跟随系统语言；应用内文案仍只在 `ZhStrings.kt` / `EnStrings.kt`。
+- 测试后果：入口切换逻辑是纯函数，由 `LauncherIdentityTest` 在 JVM 上覆盖（标识与组件名、启用顺序、中断修复、任一步骤都至少留一个入口）。`LauncherDisguiseTest` 在设备上验证真实组件状态以及启动器只列出一个入口，`SettingsPrivacyControlsTest` 验证设置行的开关语义；两个入口在 API 26、29、34 桌面上的显示与切换仍需手工设备回归。
 
 ## 已废止方向
 

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">私密日历</string>
+    <!-- Neutral launcher name of the optional home screen disguise (ADR-024). -->
+    <string name="app_name_journal">日记</string>
 </resources>

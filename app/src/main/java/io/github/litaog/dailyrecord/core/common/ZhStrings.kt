@@ -31,6 +31,7 @@ internal object ZhStrings : AppStrings {
     override val navigationBar: AppStrings.NavigationBarStrings = NavigationBar
     override val components: AppStrings.ComponentStrings = Components
     override val appLock: AppStrings.AppLockStrings = AppLock
+    override val disguise: AppStrings.DisguiseStrings = Disguise
 
     private val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
@@ -702,6 +703,12 @@ internal object ZhStrings : AppStrings {
         override val delayFiveMinutes = "离开 5 分钟后"
         override val needsScreenLock = "请先在系统设置中设置锁屏密码"
         override val turnedOffNoScreenLock = "设备已没有锁屏密码，应用锁已关闭"
+    }
+
+    private object Disguise : AppStrings.DisguiseStrings {
+        override val settingTitle = "桌面伪装"
+        override val settingSummary = "开启后，桌面图标和名称显示为“日记”"
+        override val settingNote = "切换后桌面要几秒才更新；已放到桌面上的图标需要重新添加"
     }
 
     private object Components : AppStrings.ComponentStrings {

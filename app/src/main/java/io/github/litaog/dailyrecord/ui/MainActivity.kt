@@ -1,5 +1,6 @@
-package io.github.litaog.dailyrecord
+package io.github.litaog.dailyrecord.ui
 
+import android.app.ActivityManager
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
@@ -20,17 +21,18 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.withResumed
+import io.github.litaog.dailyrecord.DailyRecordApplication
+import io.github.litaog.dailyrecord.R
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguageState
 import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.security.AppLockAuthenticator
 import io.github.litaog.dailyrecord.core.security.AppLockDelay
-import io.github.litaog.dailyrecord.ui.ColorThemePreference
-import io.github.litaog.dailyrecord.ui.DailyRecordRoot
-import io.github.litaog.dailyrecord.ui.LanguagePreference
+import io.github.litaog.dailyrecord.core.security.LauncherIdentity
 import io.github.litaog.dailyrecord.ui.lock.AppLockScreen
 import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
+import io.github.litaog.dailyrecord.ui.settings.LauncherDisguiseSettings
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordThemeState
 
@@ -61,6 +63,10 @@ class MainActivity : ComponentActivity() {
         appLockAuthenticator = AppLockAuthenticator(this, app.appLockSession)
         deviceSecure = appLockAuthenticator.isDeviceSecure
         applyRecentsPrivacy(app.appLockPreference.enabled)
+        // Home screen disguise (ADR-024): repair the launcher aliases if a
+        // switch was interrupted, and name the recent-apps entry to match.
+        app.launcherDisguise.reconcile()
+        applyTaskIdentity(app.launcherDisguise.identity)
         setContent {
             DailyRecordTheme {
                 val locked by app.appLockSession.locked.collectAsStateWithLifecycle()
@@ -75,6 +81,13 @@ class MainActivity : ComponentActivity() {
                         blocksScreenshots = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU,
                         onEnabledChange = ::setAppLockEnabled,
                         onDelayChange = ::setAppLockDelay,
+                    )
+                }
+                val launcherIdentity by app.launcherDisguise.identityState.collectAsStateWithLifecycle()
+                val launcherDisguiseSettings = remember(launcherIdentity) {
+                    LauncherDisguiseSettings(
+                        identity = launcherIdentity,
+                        onIdentityChange = ::setLauncherIdentity,
                     )
                 }
                 // The provider is remembered with the stable app instance, so
@@ -102,6 +115,7 @@ class MainActivity : ComponentActivity() {
                             recreateForSettings()
                         },
                         appLockSettings = appLockSettings,
+                        launcherDisguiseSettings = launcherDisguiseSettings,
                     )
                 }
                 if (locked) {
@@ -173,6 +187,39 @@ class MainActivity : ComponentActivity() {
         app.appLockPreference.setDelay(delay)
         app.appLockSession.setDelay(delay)
     }
+
+    private fun setLauncherIdentity(identity: LauncherIdentity) {
+        dailyRecordApp.launcherDisguise.setIdentity(identity)
+        applyTaskIdentity(identity)
+    }
+
+    /**
+     * Recent apps show the label and icon of the current launcher identity, so
+     * switching the disguise while the app is open takes effect there too.
+     */
+    private fun applyTaskIdentity(identity: LauncherIdentity) {
+        val (labelRes, iconRes) = when (identity) {
+            LauncherIdentity.Default -> R.string.app_name to R.mipmap.ic_launcher
+            LauncherIdentity.Journal -> R.string.app_name_journal to R.mipmap.ic_launcher_journal
+        }
+        val label = getString(labelRes)
+        val description = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityManager.TaskDescription.Builder().setLabel(label).setIcon(iconRes).build()
+        } else {
+            legacyTaskDescription(label, iconRes)
+        }
+        setTaskDescription(description)
+    }
+
+    /** The constructors replaced by TaskDescription.Builder in Android 13. */
+    @Suppress("DEPRECATION")
+    private fun legacyTaskDescription(label: String, iconRes: Int): ActivityManager.TaskDescription =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            ActivityManager.TaskDescription(label, iconRes)
+        } else {
+            // Android 8.x only takes a bitmap icon; the label is enough there.
+            ActivityManager.TaskDescription(label)
+        }
 
     /**
      * Hides the recent-apps preview while the lock is on (ADR-023). Before

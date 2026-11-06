@@ -47,7 +47,9 @@ test("production Chinese copy stays in the language files or Android resources",
 
     for (const [index, line] of text.split(/\r?\n/).entries()) {
       if (!cjk.test(line)) continue;
-      if (file === appNameResource && /<string\s+name="app_name">/.test(line)) continue;
+      // Launcher labels must be Android resources because only the manifest
+      // can reference them: the app name and the disguise name (ADR-024).
+      if (file === appNameResource && /<string\s+name="app_name(?:_journal)?">/.test(line)) continue;
       // The English set intentionally shows the Chinese option in its own script.
       if (
         file === englishLanguageFile &&
@@ -63,7 +65,8 @@ test("production Chinese copy stays in the language files or Android resources",
   assert.deepEqual(
     violations,
     [],
-    "Move user-facing Chinese copy into ZhStrings.kt; keep only app_name in strings.xml" +
+    "Move user-facing Chinese copy into ZhStrings.kt; keep only the launcher labels" +
+      " app_name and app_name_journal in strings.xml" +
       " and the self-named 中文 option in EnStrings.kt.",
   );
 });

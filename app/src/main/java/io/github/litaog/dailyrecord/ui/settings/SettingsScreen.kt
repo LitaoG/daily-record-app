@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
 import io.github.litaog.dailyrecord.core.security.AppLockDelay
+import io.github.litaog.dailyrecord.core.security.LauncherIdentity
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.color
 import io.github.litaog.dailyrecord.ui.account.label
@@ -100,6 +101,7 @@ internal fun SettingsScreen(
     colorTheme: DailyRecordColorTheme = DailyRecordThemeState.current,
     onColorThemeSelected: (DailyRecordColorTheme) -> Unit = {},
     appLockSettings: AppLockSettings? = null,
+    launcherDisguiseSettings: LauncherDisguiseSettings? = null,
     onBack: () -> Unit,
     onOpenAccount: () -> Unit,
     onSignIn: (() -> Unit)?,
@@ -182,26 +184,41 @@ internal fun SettingsScreen(
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 }
-                if (appLockSettings != null) {
+                if (appLockSettings != null || launcherDisguiseSettings != null) {
                     item {
-                        // The only control of this section gets its own card,
-                        // above the cards that only explain.
+                        // The section's controls share one card, above the
+                        // cards that only explain.
                         SettingsCard(contentSpacing = 0.dp) {
-                            AppLockSettingsRow(
-                                settings = appLockSettings,
-                                theme = moduleColors.brandIconTheme,
-                                tint = moduleColors.primary,
-                            )
-                            if (appLockSettings.enabled) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(start = 52.dp),
-                                    color = DailyRecordDivider,
-                                )
-                                AppLockDelayRow(
-                                    delay = appLockSettings.delay,
+                            if (appLockSettings != null) {
+                                AppLockSettingsRow(
+                                    settings = appLockSettings,
                                     theme = moduleColors.brandIconTheme,
                                     tint = moduleColors.primary,
-                                    onClick = { showAppLockDelayDialog = true },
+                                )
+                                if (appLockSettings.enabled) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 52.dp),
+                                        color = DailyRecordDivider,
+                                    )
+                                    AppLockDelayRow(
+                                        delay = appLockSettings.delay,
+                                        theme = moduleColors.brandIconTheme,
+                                        tint = moduleColors.primary,
+                                        onClick = { showAppLockDelayDialog = true },
+                                    )
+                                }
+                            }
+                            if (launcherDisguiseSettings != null) {
+                                if (appLockSettings != null) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 52.dp),
+                                        color = DailyRecordDivider,
+                                    )
+                                }
+                                LauncherDisguiseRow(
+                                    settings = launcherDisguiseSettings,
+                                    theme = moduleColors.brandIconTheme,
+                                    tint = moduleColors.primary,
                                 )
                             }
                         }
@@ -977,14 +994,82 @@ private fun AppLockSettingsRow(
             // The row handles the tap and the semantics.
             onCheckedChange = null,
             enabled = available,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = tint,
-                checkedBorderColor = tint,
-                uncheckedThumbColor = DailyRecordTextMuted,
-                uncheckedTrackColor = Color.Transparent,
-                uncheckedBorderColor = DailyRecordTextMuted,
-            ),
+            colors = settingsSwitchColors(tint),
+        )
+    }
+}
+
+/** Flat module color when on, a muted outline when off; no gradients (ADR-022). */
+@Composable
+private fun settingsSwitchColors(tint: Color) = SwitchDefaults.colors(
+    checkedThumbColor = Color.White,
+    checkedTrackColor = tint,
+    checkedBorderColor = tint,
+    uncheckedThumbColor = DailyRecordTextMuted,
+    uncheckedTrackColor = Color.Transparent,
+    uncheckedBorderColor = DailyRecordTextMuted,
+)
+
+/**
+ * Home screen disguise switch (ADR-024). On means the launcher shows the
+ * neutral "Journal" identity; the whole row toggles, like the app lock row.
+ */
+@Composable
+private fun LauncherDisguiseRow(
+    settings: LauncherDisguiseSettings,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+) {
+    val disguised = settings.identity == LauncherIdentity.Journal
+    // The same on / off words as the app lock switch in this card.
+    val state = if (disguised) AppCopy.AppLock.settingOn else AppCopy.AppLock.settingOff
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_launcher_disguise_row")
+            .toggleable(
+                value = disguised,
+                role = Role.Switch,
+                onValueChange = { on ->
+                    settings.onIdentityChange(
+                        if (on) LauncherIdentity.Journal else LauncherIdentity.Default,
+                    )
+                },
+            )
+            .semantics { stateDescription = state }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(icon = BrandIconAsset.Note, theme = theme, tint = tint)
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text(
+                text = AppCopy.Disguise.settingTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = AppCopy.Disguise.settingSummary,
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                text = AppCopy.Disguise.settingNote,
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Switch(
+            checked = disguised,
+            // The row handles the tap and the semantics.
+            onCheckedChange = null,
+            colors = settingsSwitchColors(tint),
         )
     }
 }

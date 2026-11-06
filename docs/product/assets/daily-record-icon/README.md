@@ -20,6 +20,7 @@ Figma 页面现在按四个可核对的画板排列：完整预览、`background
 - `drawable/ic_launcher_foreground.xml`：两枚交叠的磨砂白色圆环和一颗小星点，全部位于 66dp 安全区内。
 - `drawable/ic_launcher_monochrome.xml`：同样的两枚圆环，供 Android 13+ 主题图标着色。
 - `mipmap-anydpi/ic_launcher.xml` 与 `ic_launcher_round.xml`：自适应图标声明，未改动。
+- `drawable/ic_launcher_journal_*.xml` 与 `mipmap-anydpi/ic_launcher_journal*.xml`：桌面伪装（ADR-024）入口的中性图标，石板灰 `#475569` 底色上一本白色笔记本，不含品牌色和光环；同样分三层并带单色层。
 
 上文的霓虹源稿只代表 beta.3 的旧图标；颜色克制规则下，新图标不使用多色渐变。
 
