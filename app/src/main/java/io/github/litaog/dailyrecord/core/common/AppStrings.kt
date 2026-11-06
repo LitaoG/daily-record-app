@@ -598,6 +598,9 @@ internal interface AppStrings {
         val version: String
         val license: String
         val licenseValue: String
+        val privacyPolicy: String
+        /** Spoken after the privacy policy label: the row leaves the app. */
+        val privacyPolicyAction: String
 
         fun accountDescription(title: String, status: String): String
     }

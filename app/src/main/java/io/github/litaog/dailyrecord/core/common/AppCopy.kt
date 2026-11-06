@@ -650,6 +650,8 @@ internal object AppCopy {
         val version: String get() = AppLanguageState.current.settings.version
         val license: String get() = AppLanguageState.current.settings.license
         val licenseValue: String get() = AppLanguageState.current.settings.licenseValue
+        val privacyPolicy: String get() = AppLanguageState.current.settings.privacyPolicy
+        val privacyPolicyAction: String get() = AppLanguageState.current.settings.privacyPolicyAction
 
         fun accountDescription(title: String, status: String): String =
             AppLanguageState.current.settings.accountDescription(title, status)

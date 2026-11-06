@@ -34,7 +34,7 @@
 | [测试策略与执行矩阵](TESTING.md) | 每类代码改动何时跑定向测试、何时在小版本末尾跑一次全量验证 |
 | [Firebase 配置与运维](FIREBASE_SETUP.md) | 生产资源、本地配置、规则发布和网络限制 |
 | [签名与 GitHub Release](RELEASE.md) | 版本、稳定签名、Secrets、发布和灾难恢复 |
-| [隐私说明](../PRIVACY.md) | 面向使用者的数据处理说明 |
+| [隐私说明](../PRIVACY.md)（[English](../PRIVACY.en.md)） | 面向使用者的数据处理说明 |
 | [安全策略](../SECURITY.md) | 漏洞报告、敏感材料和安全基线 |
 | [参与贡献](../CONTRIBUTING.md) | 分支、代码、测试和隐私要求 |
 | [仓库维护与文档生命周期](REPOSITORY_HYGIENE.md) | 公共/私有边界、分支清理、文档分类和生成物策略 |

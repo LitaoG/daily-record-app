@@ -165,16 +165,18 @@ internal object EnStrings : AppStrings {
     }
 
     private object RecordModule : AppStrings.RecordModuleStrings {
+        // ADR-022: English uses neutral journal wording (Solo / Duo); the
+        // Chinese labels stay direct until the Play listing decision (D1).
         override val handBrewLabel = "Solo"
-        override val handBrewAccessibilityLabel = "Masturbation"
-        override val handBrewQuestionToday = "How many times did you masturbate today?"
+        override val handBrewAccessibilityLabel = "Solo journal"
+        override val handBrewQuestionToday = "How many solo moments today?"
         override val handBrewQuestionPast = "How many times that day?"
-        override val handBrewZero = "No masturbation that day"
-        override val sexLabel = "Sex"
-        override val sexAccessibilityLabel = "Sex"
-        override val sexQuestionToday = "How many times did you have sex today?"
+        override val handBrewZero = "No solo moments that day"
+        override val sexLabel = "Duo"
+        override val sexAccessibilityLabel = "Intimate journal"
+        override val sexQuestionToday = "How many intimate moments today?"
         override val sexQuestionPast = "How many times that day?"
-        override val sexZero = "No sex that day"
+        override val sexZero = "No intimate moments that day"
 
         override fun recordLabel(label: String): String = "$label records"
     }
@@ -704,6 +706,8 @@ internal object EnStrings : AppStrings {
         override val version = "Version"
         override val license = "License"
         override val licenseValue = "Apache 2.0"
+        override val privacyPolicy = "Privacy policy"
+        override val privacyPolicyAction = "Opens in browser"
 
         override fun accountDescription(title: String, status: String): String = "$title, $status"
     }

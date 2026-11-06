@@ -670,6 +670,8 @@ internal object ZhStrings : AppStrings {
         override val version = "版本"
         override val license = "开源许可"
         override val licenseValue = "Apache 2.0"
+        override val privacyPolicy = "隐私政策"
+        override val privacyPolicyAction = "在浏览器中打开"
 
         override fun accountDescription(title: String, status: String): String = "$title，$status"
     }

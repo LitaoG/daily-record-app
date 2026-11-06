@@ -20,9 +20,9 @@ class AppStringsLocalizationTest {
     @Test
     fun englishModuleLabelsAreShortAndAccessibilityUsesFullTerms() = inEnglish {
         assertEquals("Solo", AppCopy.RecordModule.handBrewLabel)
-        assertEquals("Sex", AppCopy.RecordModule.sexLabel)
-        assertEquals("Masturbation", AppCopy.RecordModule.handBrewAccessibilityLabel)
-        assertEquals("Sex", AppCopy.RecordModule.sexAccessibilityLabel)
+        assertEquals("Duo", AppCopy.RecordModule.sexLabel)
+        assertEquals("Solo journal", AppCopy.RecordModule.handBrewAccessibilityLabel)
+        assertEquals("Intimate journal", AppCopy.RecordModule.sexAccessibilityLabel)
     }
 
     @Test

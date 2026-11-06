@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -78,6 +79,10 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 
 private val SettingsCardShape = RoundedCornerShape(18.dp)
 
+/** Public privacy notices of this open-source repository (Play listing requirement). */
+private const val PRIVACY_POLICY_URL_ZH = "https://github.com/LitaoG/daily-record-app/blob/main/PRIVACY.md"
+private const val PRIVACY_POLICY_URL_EN = "https://github.com/LitaoG/daily-record-app/blob/main/PRIVACY.en.md"
+
 @Composable
 internal fun SettingsScreen(
     versionName: String,
@@ -96,6 +101,7 @@ internal fun SettingsScreen(
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showColorThemeDialog by rememberSaveable { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
     val backdropBrush = remember(moduleColors) { dailyRecordBackdropBrush(moduleColors) }
     Box(
         modifier = Modifier
@@ -207,6 +213,23 @@ internal fun SettingsScreen(
                         AboutRow(
                             label = AppCopy.Settings.license,
                             value = AppCopy.Settings.licenseValue,
+                        )
+                        HorizontalDivider(color = DailyRecordDivider)
+                        AboutLinkRow(
+                            label = AppCopy.Settings.privacyPolicy,
+                            actionDescription = AppCopy.Settings.privacyPolicyAction,
+                            theme = moduleColors.brandIconTheme,
+                            testTag = "settings_privacy_policy",
+                            onClick = {
+                                // Open the notice in the language the app shows.
+                                val url = when (language) {
+                                    AppLanguage.ZH -> PRIVACY_POLICY_URL_ZH
+                                    AppLanguage.EN -> PRIVACY_POLICY_URL_EN
+                                }
+                                // Only a device without any browser fails here;
+                                // the row then simply does nothing.
+                                runCatching { uriHandler.openUri(url) }
+                            },
                         )
                     }
                 }
@@ -502,6 +525,43 @@ private fun AboutRow(
             text = value,
             color = DailyRecordTextMuted,
             style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
+
+/** About row that opens an external page; the chevron marks it as tappable. */
+@Composable
+private fun AboutLinkRow(
+    label: String,
+    actionDescription: String,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    testTag: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .testTag(testTag)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = AppCopy.Components.joinSemantics(label, actionDescription)
+            }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = DailyRecordText,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        BrandIcon(
+            asset = BrandIconAsset.Next,
+            theme = theme,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
         )
     }
 }
