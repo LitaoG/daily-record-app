@@ -235,9 +235,9 @@ internal abstract class RoomDailyCountSyncStoreBase<L : Any, R, LD : Any, RD>(
         records: List<R>,
         completeServerSnapshot: Boolean,
     ): Int {
-        // Fetch the local snapshot once per remote snapshot. The previous
-        // implementation queried Room once per remote date, turning a normal
-        // account sync into an N+1 read pattern.
+        // Fetch the local snapshot once per remote snapshot; querying Room once
+        // per remote date would turn a normal account sync into an N+1 read
+        // pattern.
         val localByDate = dao.getAllForSync(ownerId)
             .associateBy(::recordLocalDateOf)
             .toMutableMap()

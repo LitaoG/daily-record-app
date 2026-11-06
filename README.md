@@ -13,7 +13,7 @@
   <img src="docs/product/assets/readme/statistics-current.png" alt="当前统计运行画面" width="31%">
 </p>
 
-三张图是 2026-08-16 从当前公共 `main` 基线构建的 API 34 Debug 本机模式运行截图，使用空的测试数据，不是 Release APK 或设计稿。截图采集边界和复现命令见 [当前 README 运行截图](docs/product/assets/readme/README.md)；双模块视觉目标见 [UI v2 设计基线](docs/product/design/quiet-private-journal-v2/README.md)。历史审计目录中的旧截图只用于追溯当时状态，不再作为首页当前画面。
+三张图是 2026-08-16 从当前公共 `main` 基线构建的 API 34 Debug 本机模式运行截图，使用空的测试数据，不是 Release APK 或设计稿。截图采集边界和复现命令见 [当前 README 运行截图](docs/product/assets/readme/README.md)；当前界面、视觉令牌和图表规则见 [界面与交互](docs/UI_UX.md)。
 
 ## 已实现
 

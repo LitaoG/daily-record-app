@@ -50,7 +50,10 @@ internal interface DeletionStateStore {
     fun writeJournal(entries: Map<String, DeletionJournalEntry>)
 }
 
-/** Legacy keys retained only as a one-time migration source. */
+/**
+ * SharedPreferences names for the deletion journal. [PREFERENCES_NAME] is the current journal
+ * file; every `LEGACY_*` key is read only as a one-time migration source.
+ */
 internal object DeletionJournalPreferenceKeys {
     const val PREFERENCES_NAME = "daily_record_deletion_state"
     const val LEGACY_CLEANUP_PREFERENCES_NAME = "daily_record_pending_local_cleanup"

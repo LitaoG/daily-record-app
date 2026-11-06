@@ -1,72 +1,43 @@
 # 私密日历产品交付索引
 
-最后复核：2026-09-30
+最后复核：2026-11-05
 
 完整工程文档请先看[文档中心](../README.md)。本页只索引产品、设计和交付资料。
 
-公开 Release 仍为 `v1.0.0-beta.3`；当前公共 `main` 在该版本之后继续维护 SDK、生命周期、Functions 运行时和 CI 门禁。首页使用的最新运行时画面集中在[README 运行截图](assets/readme/README.md)，不要从历史审计目录挑选旧图作为当前状态。
+公开 Release 仍为 `v1.0.0-beta.3`；当前公共 `main` 在该版本之后继续维护 SDK、生命周期、Functions 运行时和 CI 门禁。首页使用的最新运行时画面集中在[README 运行截图](assets/readme/README.md)。
 
 ## 当前产品资料
 
 - [产品契约](../PRODUCT.md)
-- [界面与交互](../UI_UX.md)
+- [界面与交互](../UI_UX.md)（含视觉材质与令牌）
 - [统计口径](../STATISTICS.md)
 - [UI v2 分阶段执行计划](QUIET_PRIVATE_JOURNAL_GOALS.md)
-- [已确认的 UI v2 设计基线与三张高保真图](design/quiet-private-journal-v2/README.md)
 - [UI 视觉重构竞品研究与决策基线](UI_REDESIGN_RESEARCH_BASELINE.md)
-- [明亮渐变玻璃主题 Goal 与当前契约](BRIGHT_GLASS_THEME.md)
 - [设置中心 Goal](SETTINGS_HUB_GOAL.md)
 - [双语适配 Goal（i18n：中文默认 + English）](I18N_GOAL.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](MONTH_STATISTICS_REDESIGN.md)
 - [实现与发布准备度](IMPLEMENTATION_READINESS.md)
 - [当前 README 运行截图与复现边界](assets/readme/README.md)
+- [每日记录图标资源说明](assets/daily-record-icon/README.md)
 - [产品 Backlog](PRODUCT_BACKLOG.md)
 - [用户故事与验收](USER_STORIES_AND_ACCEPTANCE.md)
-- [日常使用反馈](DAILY_USE_FEEDBACK.md)
 - [仓库维护与文档生命周期](../REPOSITORY_HYGIENE.md)
-- [审计与验证证据索引](audit/README.md)
-- [记录页逐次详情设计基线](design/record-details-v1/README.md)
 - [开源借鉴边界](RESEARCH_OPEN_SOURCE.md)
 - [隐私说明](../../PRIVACY.md)
 - [签名与 GitHub Release](../RELEASE.md)
 - [当前发布说明：v1.0.0-beta.3](../releases/v1.0.0-beta.3.md)
 
-后续实现只能从新的 Issue/Goal 和当前事实文档进入。Stage 1 至 Stage 6 已完成，当前公开发布为 `v1.0.0-beta.3`；当前运行行为仍以代码与事实文档为准，真人日常反馈只通过后续 Issue 进入定向修复。旧 beta.1、beta.2 和阶段审计只用于追溯，不是当前执行入口。
+后续实现只能从新的 Issue/Goal 和当前事实文档进入。Stage 1 至 Stage 6 已完成，当前公开发布为 `v1.0.0-beta.3`；当前运行行为仍以代码与事实文档为准，真人日常反馈只通过后续 Issue 进入定向修复。旧 beta.1、beta.2 发布说明只用于追溯，不是当前执行入口。
 
 ## 历史交付证据
 
-- [2026-09-05 写感受按钮对齐修复](audit/2026-09-05-feeling-button/README.md)
-- [2026-09-01 双语适配运行证据](audit/2026-09-01-i18n-bilingual/README.md)
 - [2026-08 性能与测试加固日志](OPTIMIZATION_2026-08_LOG.md)
-- [2026-08-15 `main` 全面代码审计](audit/2026-08-15-main-code-audit/README.md)
-- [2026-08-11 Issues #123–#145 清理审计](audit/2026-08-11-issues-123-145/README.md)
-- [2026-08-09 Issue #105 Stage 4–5 记录页验收](audit/2026-08-09-record-details-stage4-stage5/README.md)
-- [2026-08-03 应用内中文文案审查](audit/2026-08-03-copy-audit/README.md)
-- [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](audit/2026-08-03-stage5-stage6-release/README.md)
-- [2026-08-02 统计与日历边界修复](audit/2026-08-02-boundary-fixes/README.md)
-- [2026-08-02 统计周期玻璃分段控件](audit/2026-08-02-period-glass-tabs/README.md)
-- [2026-08-02 月统计改版验收](audit/2026-08-02-month-statistics/README.md)
-- [2026-08-02 年度折线图验收](audit/2026-08-02-year-line-chart/README.md)
-- [2026-08-01 Stage 4 月度热力图与年度月份分析](audit/2026-08-01-ui-v2-stage4/README.md)
-- [2026-08-01 Stage 3 统计与日历基础视觉验收](audit/2026-08-01-ui-v2-stage3/README.md)
-- [2026-08-01 Stage 5 集成 QA 与候选 APK](audit/2026-08-01-ui-v2-stage5/README.md)
-- [2026-07-30 UI v2 Stage 2 用户反馈修正](audit/2026-07-30-ui-v2-stage2-follow-up/README.md)
-- [2026-07-30 UI v2 Stage 2 方形次数热力日历](audit/2026-07-30-ui-v2-stage2/README.md)
-- [2026-07-30 UI v2 Stage 1 设计 Token 与共享外壳](audit/2026-07-30-ui-v2-stage1/README.md)
-- [历史 Figma Hand-brew-only v2 设计系统](FIGMA_DESIGN_SYSTEM.md)
-- [历史 Figma 设计文件](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
-- [历史 Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
-- 仅自慰 v2 截图包已在 2026-08-11 资源整理中移除；旧版本仍可从 Git 历史恢复。
 - [交付与验证日志](HAND_BREW_REFACTOR_LOG.md)
-- [2026-07-28 局部一致性、扩展边界与安全加固](audit/2026-07-28-consistency-hardening/README.md)
-- [2026-07-27 快速真实运行审计](audit/2026-07-27-quick-runtime/README.md)
-- [2026-07-22 找回密码与同步可靠性审计](audit/2026-07-22-password-reset-sync/README.md)
-- [2026-07-22 应用内 UI 一致性审计](audit/2026-07-22-native-ui/README.md)
-- [2026-07-22 月历与统计审计](audit/2026-07-22-calendar-statistics/README.md)
-- [2026-07-19 深度 UX 审计](audit/2026-07-19-deep-ux/README.md)
 - [早期运行时 UX 与统计验收](RUNTIME_UX_AUDIT.md)
 - [同步、隐私与统计一致性加固 Goal](GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
-- [每日记录图标资源说明](assets/daily-record-icon/README.md)
-- [2026-08-02 Stage 1 设计 QA 附录](audit/2026-07-30-ui-v2-stage1/DESIGN_QA.md)
+- [历史 Figma 设计文件](https://www.figma.com/design/PMtsNNL81BHl9HyJYhjbdw)
+- [历史 Canva 产品概览](https://www.canva.com/d/In7LZUcRTdAXbFU)
 
-这些材料记录特定日期的截图、测试数量和阶段结论，不代表当前待办，也不能覆盖 UI v2 设计基线。旧“通用活动记录器”产品包已从当前文件树移除；未来记录模块也不会恢复旧通用活动模型。
+2026-07 至 2026-09 的阶段审计目录、UI v2 设计稿与截图、明亮玻璃主题草案、日常使用反馈草案和旧 Figma 设计系统说明已于 2026-11 从仓库移除；仅自慰 v2 截图包更早已在 2026-08-11 移除。仍然有效的规则已并入当前事实文档，原始材料可从 Git 历史恢复（见[仓库维护与文档生命周期](../REPOSITORY_HYGIENE.md)）。
+
+这些材料记录特定日期的截图、测试数量和阶段结论，不代表当前待办。旧“通用活动记录器”产品包已从当前文件树移除；未来记录模块也不会恢复旧通用活动模型。

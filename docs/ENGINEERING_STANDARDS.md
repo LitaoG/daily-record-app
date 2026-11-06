@@ -1,7 +1,7 @@
 # 工程规范
 
 状态：`current — authoritative engineering standards`
-最后复核：2026-10-16
+最后复核：2026-11-05
 
 本文件定义本仓库的代码组织、分层、异步、数据、安全与测试规范。它回答“怎么写”，不重复回答“为什么这样设计”。
 
@@ -78,6 +78,7 @@
 
 ## 7. 隐私与安全
 
+- 密码、重新认证口令，以及登录、找回密码、账号删除弹窗的进行中和错误状态只用 `remember`，不进入 `rememberSaveable` / SavedState；进程恢复后宁可让用户重新输入。邮箱、模式和弹窗是否打开这类非敏感状态可以保存。
 - **生产代码不允许日志输出**。当前 `app/src/` 没有任何日志调用，这是有意的隐私约束，不要为了调试引入 `Log`、`println` 或崩溃上报 SDK；临时排查完成后必须移除。
 - Functions 中唯一的日志点必须经过 `delete-log.js` 的脱敏白名单，且不得包含文档路径、UID 或日期。
 - 用户可见文案只存在于 `ZhStrings.kt` / `EnStrings.kt`；`scripts/copy-integrity.test.mjs` 会拒绝其他源码文件里的中日韩文字与中文标点、全角符号。
@@ -117,7 +118,8 @@
 | 门禁 | 保护对象 |
 |---|---|
 | `scripts/documentation-catalog.test.mjs` | 文档目录与实际跟踪文档一致 |
-| `scripts/docs-integrity.test.mjs` | 本地链接/图片有效；版本、SDK、Room schema、Functions 事实一致 |
+| `scripts/docs-integrity.test.mjs` | 本地链接/图片有效；版本、SDK、Room schema、Functions 事实一致；反查速查表覆盖全部当前必读文档且两处一致；踩坑清单编号连续、索引与正文一致、七个小节齐全 |
+| `scripts/workspace-hygiene.mjs`（`pnpm check:hygiene`） | 交付前 `work/` 为空、没有未跟踪文件、没有失效 worktree；手动收尾自检，不进 CI |
 | `scripts/copy-integrity.test.mjs` | 文案只在语言文件；无中文标点外泄；无已退役术语 |
 | `scripts/release-metadata.test.mjs` | 版本、tag、`versionCode` 递增、GitHub 输出键名 |
 | `scripts/firestore-rules.test.mjs` | 规则的所有权、字段形状、修订与删除边界 |
