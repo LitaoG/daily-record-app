@@ -190,6 +190,17 @@ internal object DailyRecordIcons {
         }
     }
 
+    /** A phone outline: records that stay on this device. */
+    val Device: ImageVector by lazy {
+        lineIcon("Device") {
+            stroke { roundRect(6.5f, 3f, 17.5f, 21f, 3f) }
+            stroke {
+                moveTo(10.5f, 17.8f)
+                horizontalLineTo(13.5f)
+            }
+        }
+    }
+
     val Shield: ImageVector by lazy {
         lineIcon("Shield") {
             stroke {

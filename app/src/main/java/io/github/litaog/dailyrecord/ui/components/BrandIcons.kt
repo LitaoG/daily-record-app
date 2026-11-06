@@ -33,6 +33,7 @@ internal enum class BrandIconAsset {
     Return,
     CloudSync,
     Lock,
+    Device,
     Shield,
 }
 
@@ -66,6 +67,7 @@ internal val BrandIconAsset.vector: ImageVector
         BrandIconAsset.Return -> DailyRecordIcons.Previous
         BrandIconAsset.CloudSync -> DailyRecordIcons.CloudSync
         BrandIconAsset.Lock -> DailyRecordIcons.Lock
+        BrandIconAsset.Device -> DailyRecordIcons.Device
         BrandIconAsset.Shield -> DailyRecordIcons.Shield
     }
 

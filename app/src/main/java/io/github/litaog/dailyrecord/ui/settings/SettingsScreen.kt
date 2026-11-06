@@ -210,7 +210,8 @@ internal fun SettingsScreen(
                 item {
                     SettingsCard(contentSpacing = 0.dp) {
                         SettingsInfoRow(
-                            icon = BrandIconAsset.Lock,
+                            // The lock symbol now belongs to the app lock row.
+                            icon = BrandIconAsset.Device,
                             theme = moduleColors.brandIconTheme,
                             title = AppCopy.Settings.localFirstTitle,
                             summary = AppCopy.Settings.localFirstSummary,
