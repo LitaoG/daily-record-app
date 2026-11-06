@@ -36,6 +36,7 @@ internal object EnStrings : AppStrings {
     override val settings: AppStrings.SettingsStrings = Settings
     override val navigationBar: AppStrings.NavigationBarStrings = NavigationBar
     override val components: AppStrings.ComponentStrings = Components
+    override val appLock: AppStrings.AppLockStrings = AppLock
 
     private val weekdayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -715,6 +716,28 @@ internal object EnStrings : AppStrings {
     private object NavigationBar : AppStrings.NavigationBarStrings {
         override val calendar = "Calendar"
         override val statistics = "Stats"
+    }
+
+    private object AppLock : AppStrings.AppLockStrings {
+        override val lockedTitle = "Locked"
+        override val lockedBody = "Verify it's you to continue"
+        override val unlock = "Unlock"
+        override val notCompleted = "Verification wasn't completed. Try again."
+        override val promptTitle = "Verify it's you"
+        override val promptSubtitle = "Use your fingerprint, face or screen lock"
+        override val settingTitle = "App lock"
+        override val settingSummary = "Ask for verification when the app opens"
+        override val settingOn = "On"
+        override val settingOff = "Off"
+        override val recentsNote = "When on, recent apps don't show the content"
+        override val recentsAndScreenshotNote = "When on, recent apps don't show the content and screenshots are blocked"
+        override val delayTitle = "Lock again"
+        override val delayDialogTitle = "When to lock again"
+        override val delayImmediately = "Immediately"
+        override val delayOneMinute = "After 1 minute away"
+        override val delayFiveMinutes = "After 5 minutes away"
+        override val needsScreenLock = "Set a screen lock in system settings first"
+        override val turnedOffNoScreenLock = "This device has no screen lock, so app lock was turned off"
     }
 
     private object Components : AppStrings.ComponentStrings {

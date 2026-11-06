@@ -662,6 +662,28 @@ internal object AppCopy {
         val statistics: String get() = AppLanguageState.current.navigationBar.statistics
     }
 
+    object AppLock {
+        val lockedTitle: String get() = AppLanguageState.current.appLock.lockedTitle
+        val lockedBody: String get() = AppLanguageState.current.appLock.lockedBody
+        val unlock: String get() = AppLanguageState.current.appLock.unlock
+        val notCompleted: String get() = AppLanguageState.current.appLock.notCompleted
+        val promptTitle: String get() = AppLanguageState.current.appLock.promptTitle
+        val promptSubtitle: String get() = AppLanguageState.current.appLock.promptSubtitle
+        val settingTitle: String get() = AppLanguageState.current.appLock.settingTitle
+        val settingSummary: String get() = AppLanguageState.current.appLock.settingSummary
+        val settingOn: String get() = AppLanguageState.current.appLock.settingOn
+        val settingOff: String get() = AppLanguageState.current.appLock.settingOff
+        val recentsNote: String get() = AppLanguageState.current.appLock.recentsNote
+        val recentsAndScreenshotNote: String get() = AppLanguageState.current.appLock.recentsAndScreenshotNote
+        val delayTitle: String get() = AppLanguageState.current.appLock.delayTitle
+        val delayDialogTitle: String get() = AppLanguageState.current.appLock.delayDialogTitle
+        val delayImmediately: String get() = AppLanguageState.current.appLock.delayImmediately
+        val delayOneMinute: String get() = AppLanguageState.current.appLock.delayOneMinute
+        val delayFiveMinutes: String get() = AppLanguageState.current.appLock.delayFiveMinutes
+        val needsScreenLock: String get() = AppLanguageState.current.appLock.needsScreenLock
+        val turnedOffNoScreenLock: String get() = AppLanguageState.current.appLock.turnedOffNoScreenLock
+    }
+
     object Components {
         val decrease: String get() = AppLanguageState.current.components.decrease
         val increase: String get() = AppLanguageState.current.components.increase

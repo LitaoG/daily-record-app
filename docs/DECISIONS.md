@@ -170,6 +170,7 @@
 - 界面后果：锁屏层是盖在所有应用弹窗之上的全屏窗口；底层内容保持组合，进行中的保存、同步和账号删除不会因锁定被取消，锁定期间底层内容不进入 TalkBack 焦点，输入法焦点被清除。
 - 安全后果：只有设备已设置安全锁屏时才能开启；设备之后移除了锁屏密码时，应用锁自动关闭并提示，避免用户被永久挡在自己的数据之外。开启后，Android 13+ 用 `setRecentsScreenshotEnabled(false)` 隐藏最近任务预览，更低版本使用 `FLAG_SECURE`，后者同时禁止截屏，设置页需要说明。应用锁只保护界面入口，不加密数据库；数据仍由系统应用沙箱保护。
 - 测试后果：锁定判断写成纯函数，由 JVM 测试覆盖；三条认证路径需要在 API 34 模拟器和 Android 8/9 设备上手工回归，列入 ADR-022 小版本末尾的设备验证。
+- Lint 后果：Firebase Auth 经 `play-services-auth` 20.7.0 传递引入 `androidx.fragment` 1.1.0，lint 因此对 Android 8–9 路径的 `registerForActivityResult` 报 `InvalidFragmentVersionForActivityResult`。该检查针对 1.3.0 以前的 `FragmentActivity`；`MainActivity` 是 `ComponentActivity`，启动器由它自己的 `ActivityResultRegistry` 处理，所以只在注册处局部抑制，不为此新增或升级 Fragment 依赖。
 
 ## 已废止方向
 

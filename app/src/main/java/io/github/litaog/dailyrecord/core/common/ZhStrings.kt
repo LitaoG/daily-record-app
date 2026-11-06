@@ -30,6 +30,7 @@ internal object ZhStrings : AppStrings {
     override val settings: AppStrings.SettingsStrings = Settings
     override val navigationBar: AppStrings.NavigationBarStrings = NavigationBar
     override val components: AppStrings.ComponentStrings = Components
+    override val appLock: AppStrings.AppLockStrings = AppLock
 
     private val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
@@ -679,6 +680,28 @@ internal object ZhStrings : AppStrings {
     private object NavigationBar : AppStrings.NavigationBarStrings {
         override val calendar = "日历"
         override val statistics = "统计"
+    }
+
+    private object AppLock : AppStrings.AppLockStrings {
+        override val lockedTitle = "已锁定"
+        override val lockedBody = "验证身份后继续使用"
+        override val unlock = "解锁"
+        override val notCompleted = "验证未完成，可以再试一次"
+        override val promptTitle = "验证身份"
+        override val promptSubtitle = "使用指纹、面容或锁屏密码"
+        override val settingTitle = "应用锁"
+        override val settingSummary = "打开应用时需要验证身份"
+        override val settingOn = "已开启"
+        override val settingOff = "已关闭"
+        override val recentsNote = "开启后，最近任务中不显示内容"
+        override val recentsAndScreenshotNote = "开启后，最近任务中不显示内容，也无法截屏"
+        override val delayTitle = "重新锁定"
+        override val delayDialogTitle = "何时重新锁定"
+        override val delayImmediately = "立即"
+        override val delayOneMinute = "离开 1 分钟后"
+        override val delayFiveMinutes = "离开 5 分钟后"
+        override val needsScreenLock = "请先在系统设置中设置锁屏密码"
+        override val turnedOffNoScreenLock = "设备已没有锁屏密码，应用锁已关闭"
     }
 
     private object Components : AppStrings.ComponentStrings {

@@ -35,9 +35,9 @@ flowchart LR
 
 UI 不直接访问 DAO 或 Firestore。`DailyCountRecord` 与 `DailyCountRecordRepository<T>` 只提供日期、次数和时间戳这组最小公共契约；UI 适配器把强类型的 `HandBrewRecord` / `SexRecord` 投影为共享日期次数组件，保存时仍由对应模块创建领域记录并回到对应 Repository。保存和清除先落 Room，再由组合协调器驱动独立同步链路。Firestore 快照也必须先合并进各自 Room 表，UI 不读取远端缓存。
 
-用户明确选择的本机模式、上次选择的记录模块和所选主题配色（ADR-022）分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。从本机日历打开登录页是进程内导航状态，只有认证成功后才关闭本机偏好；登录页返回或登录中断不会改变既有本机入口。Firebase 已登录状态仍以 Authentication 为准。
+用户明确选择的本机模式、上次选择的记录模块、所选主题配色（ADR-022）以及应用锁开关与重新锁定时长（ADR-023）分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。从本机日历打开登录页是进程内导航状态，只有认证成功后才关闭本机偏好；登录页返回或登录中断不会改变既有本机入口。Firebase 已登录状态仍以 Authentication 为准。
 
-设置中心是 Compose 外壳中的次级页面，不进入底部主导航。它复用账号弹窗，只读取构建版本、静态隐私事实以及语言与主题偏好；模块选择继续由主页承载，不直接访问 DAO、Firestore，也不引入新的业务数据表或通用设置模型。
+设置中心是 Compose 外壳中的次级页面，不进入底部主导航。它复用账号弹窗，只读取构建版本、静态隐私事实、语言与主题偏好以及 `MainActivity` 传入的应用锁设置快照；模块选择继续由主页承载，不直接访问 DAO、Firestore，也不引入新的业务数据表或通用设置模型。
 
 本轮没有新增记录模块。未来若增加记录类型，仍必须采用独立领域模型、Room 表、Repository 和远端集合；账号同步、账号删除和 UI 外壳通过模块列表聚合，避免把业务字段塞回旧通用活动表。
 
@@ -55,6 +55,7 @@ app
    ├─ core:common      shared invariants and user-facing copy
    ├─ core:di          Firebase bootstrap / composition root / WorkManager adapters
    ├─ core:sync        remote source / coordinator / deletion journal / recovery coordinator
+   ├─ core:security    app lock session / preference / platform authenticator
    └─ ui
       ├─ calendar      CalendarScreen / today quick log / long-press adjust / month swipe
       ├─ record        RecordScreen
@@ -63,6 +64,7 @@ app
       ├─ account       AccountDialog / AccountDeletionDialog
       ├─ auth          AuthScreen / PasswordResetDialog
       ├─ navigation    DateNavigationDialog
+      ├─ lock          AppLockScreen / AppLockSettings
       ├─ components    shared Compose components
       └─ theme         color themes / liquid glass / motion tokens
 ```
@@ -140,6 +142,15 @@ Room 当前版本为 6。v1→v2 只提取旧 `flight` 机器图标标识的记�
 - 记录页维护“服务端/Room 基线次数”和“本机草稿次数”。跨设备更新到达且用户尚未编辑时刷新草稿；用户已经编辑时保留草稿，并继续以最新基线判断未保存状态。
 - Room 事务提交成功即视为记录成功；后续 WorkManager 调度属于尽力而为，调度异常不会把已经落盘的数据误报为保存失败。
 - 主页“今日速记”和日历长按快速调整（ADR-022）复用所选模块 Controller 的只存次数保存路径：每次点按都在同一把 `Mutex` 内重新读取该日期已保存的次数再写入，快速连点按顺序生效；次数减少时，超出新次数的逐次详情由 Repository 既有的裁剪逻辑删除。从 1 次减到 0 保存为明确 0 次（ADR-004）；未来日期和 1970 年以前的日期在调用前被拒绝；保存失败显示保存失败提示，取消继续向上传播。
+
+## 应用锁边界
+
+- `core/security/AppLockSession`（ADR-023）是纯 Kotlin 状态机，暴露 `locked` 与 `attemptFailed` 两个 StateFlow，规则由 JVM 测试覆盖。它和 `AppLockPreference` 都是 `DailyRecordApplication` 的惰性单例，所以应用为语言或主题执行的 `recreate()` 不会丢失解锁状态；进程被回收后按偏好重新锁定。
+- `MainActivity` 是唯一的生命周期入口：`onStart` 先重新读取设备是否设有安全锁屏，没有时自动关闭应用锁并提示，再以 `SystemClock.elapsedRealtime()` 调用 `onForeground`；`onStop` 调用 `onBackground`，配置变化和应用自身的 `recreate()` 不计为离开。
+- `AppLockAuthenticator` 在 `onCreate` 中创建，因为 Android 8–9 的锁屏密码确认需要提前注册 Activity Result 启动器；API 29+ 使用平台 `BiometricPrompt`。每次验证请求带递增编号，旋转等原因被取消的旧请求结果会被忽略；验证进行中的停止与恢复不会再次锁定。
+- 锁定层 `ui/lock/AppLockScreen` 是盖在 `DailyRecordRoot` 之上的全屏 `Dialog`。底层内容保持组合，进行中的 Room 写入、同步和账号删除协程不会因锁定取消；锁定时底层通过 `clearAndSetSemantics` 移出无障碍树，并清除输入焦点。
+- 设置页只接收 `AppLockSettings` 快照：开关、时长、设备是否有锁屏、低版本是否同时禁止截屏和两个回调，不直接读写偏好。`MainActivity` 收到回调后同时更新 `AppLockPreference`、`AppLockSession` 和最近任务隐私（API 33+ 用 `setRecentsScreenshotEnabled(false)`，更低版本用 `FLAG_SECURE`）。
+- 应用锁不加密 Room 数据库，也不进入同步、Firestore 或账号删除路径。
 
 ## 逐次详情边界
 

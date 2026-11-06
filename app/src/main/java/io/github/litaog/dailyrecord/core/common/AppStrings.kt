@@ -33,6 +33,7 @@ internal interface AppStrings {
     val settings: SettingsStrings
     val navigationBar: NavigationBarStrings
     val components: ComponentStrings
+    val appLock: AppLockStrings
 
     fun weekdayName(dayOfWeek: Int): String
 
@@ -613,6 +614,29 @@ internal interface AppStrings {
     interface ComponentStrings {
         val decrease: String
         val increase: String
+    }
+
+    /** App lock screen, system prompt and settings rows (ADR-023). */
+    interface AppLockStrings {
+        val lockedTitle: String
+        val lockedBody: String
+        val unlock: String
+        val notCompleted: String
+        val promptTitle: String
+        val promptSubtitle: String
+        val settingTitle: String
+        val settingSummary: String
+        val settingOn: String
+        val settingOff: String
+        val recentsNote: String
+        val recentsAndScreenshotNote: String
+        val delayTitle: String
+        val delayDialogTitle: String
+        val delayImmediately: String
+        val delayOneMinute: String
+        val delayFiveMinutes: String
+        val needsScreenLock: String
+        val turnedOffNoScreenLock: String
     }
 }
 

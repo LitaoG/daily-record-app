@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -27,6 +28,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,10 +49,12 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
+import io.github.litaog.dailyrecord.core.security.AppLockDelay
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.color
 import io.github.litaog.dailyrecord.ui.account.label
@@ -58,6 +63,7 @@ import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordThemeState
@@ -93,6 +99,7 @@ internal fun SettingsScreen(
     onLanguageSelected: (AppLanguage) -> Unit,
     colorTheme: DailyRecordColorTheme = DailyRecordThemeState.current,
     onColorThemeSelected: (DailyRecordColorTheme) -> Unit = {},
+    appLockSettings: AppLockSettings? = null,
     onBack: () -> Unit,
     onOpenAccount: () -> Unit,
     onSignIn: (() -> Unit)?,
@@ -101,6 +108,7 @@ internal fun SettingsScreen(
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showColorThemeDialog by rememberSaveable { mutableStateOf(false) }
+    var showAppLockDelayDialog by rememberSaveable { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
     val backdropBrush = remember(moduleColors) { dailyRecordBackdropBrush(moduleColors) }
     Box(
@@ -173,6 +181,31 @@ internal fun SettingsScreen(
                         text = AppCopy.Settings.dataSection,
                         modifier = Modifier.padding(top = 8.dp),
                     )
+                }
+                if (appLockSettings != null) {
+                    item {
+                        // The only control of this section gets its own card,
+                        // above the cards that only explain.
+                        SettingsCard(contentSpacing = 0.dp) {
+                            AppLockSettingsRow(
+                                settings = appLockSettings,
+                                theme = moduleColors.brandIconTheme,
+                                tint = moduleColors.primary,
+                            )
+                            if (appLockSettings.enabled) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(start = 52.dp),
+                                    color = DailyRecordDivider,
+                                )
+                                AppLockDelayRow(
+                                    delay = appLockSettings.delay,
+                                    theme = moduleColors.brandIconTheme,
+                                    tint = moduleColors.primary,
+                                    onClick = { showAppLockDelayDialog = true },
+                                )
+                            }
+                        }
+                    }
                 }
                 item {
                     SettingsCard(contentSpacing = 0.dp) {
@@ -262,6 +295,18 @@ internal fun SettingsScreen(
                 // activity, so the restored dialog must already be closed.
                 showColorThemeDialog = false
                 onColorThemeSelected(selected)
+            },
+        )
+    }
+
+    if (showAppLockDelayDialog && appLockSettings?.enabled == true) {
+        AppLockDelaySelectionDialog(
+            currentDelay = appLockSettings.delay,
+            tint = moduleColors.primary,
+            onDismiss = { showAppLockDelayDialog = false },
+            onSelected = { selected ->
+                showAppLockDelayDialog = false
+                appLockSettings.onDelayChange(selected)
             },
         )
     }
@@ -629,28 +674,31 @@ private fun LanguageSelectionDialog(
         onDismissRequest = onDismiss,
     ) {
         AppLanguage.entries.forEach { language ->
-            LanguageOptionRow(
+            SettingsOptionRow(
                 label = languageDisplayName(language),
                 selected = language == currentLanguage,
                 tint = tint,
+                testTag = "settings_language_option",
                 onClick = { onSelected(language) },
             )
         }
     }
 }
 
+/** One choice in a single-choice dialog (language, relock delay). */
 @Composable
-private fun LanguageOptionRow(
+private fun SettingsOptionRow(
     label: String,
     selected: Boolean,
     tint: Color,
+    testTag: String,
     onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .testTag("settings_language_option")
+            .testTag(testTag)
             .clickable(role = Role.RadioButton, onClick = onClick)
             .semantics(mergeDescendants = true) {
                 this.selected = selected
@@ -854,4 +902,166 @@ internal fun DailyRecordColorTheme.displayName(): String = when (this) {
     DailyRecordColorTheme.SpringSky -> AppCopy.Settings.themeSpringSky
     DailyRecordColorTheme.BuffGlacier -> AppCopy.Settings.themeBuffGlacier
     DailyRecordColorTheme.DreamBlush -> AppCopy.Settings.themeDreamBlush
+}
+
+/**
+ * App lock switch (ADR-023). The whole row toggles; the switch only shows the
+ * state, and its thumb position and size carry it besides the color.
+ */
+@Composable
+private fun AppLockSettingsRow(
+    settings: AppLockSettings,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+) {
+    // Without a secure screen lock nothing could unlock the app, so the lock
+    // can then only be turned off, never on.
+    val available = settings.deviceSecure || settings.enabled
+    val summary = if (settings.deviceSecure) {
+        AppCopy.AppLock.settingSummary
+    } else {
+        AppCopy.AppLock.needsScreenLock
+    }
+    val note = if (settings.blocksScreenshots) {
+        AppCopy.AppLock.recentsAndScreenshotNote
+    } else {
+        AppCopy.AppLock.recentsNote
+    }
+    val state = if (settings.enabled) AppCopy.AppLock.settingOn else AppCopy.AppLock.settingOff
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_app_lock_row")
+            .toggleable(
+                value = settings.enabled,
+                enabled = available,
+                role = Role.Switch,
+                onValueChange = settings.onEnabledChange,
+            )
+            // App copy instead of the system "On" / "Off", which follow the
+            // device language rather than the app language.
+            .semantics { stateDescription = state }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(icon = BrandIconAsset.Lock, theme = theme, tint = tint)
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text(
+                text = AppCopy.AppLock.settingTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = summary,
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            if (available) {
+                Text(
+                    text = note,
+                    color = DailyRecordTextMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Switch(
+            checked = settings.enabled,
+            // The row handles the tap and the semantics.
+            onCheckedChange = null,
+            enabled = available,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = tint,
+                checkedBorderColor = tint,
+                uncheckedThumbColor = DailyRecordTextMuted,
+                uncheckedTrackColor = Color.Transparent,
+                uncheckedBorderColor = DailyRecordTextMuted,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun AppLockDelayRow(
+    delay: AppLockDelay,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    val value = delay.displayName()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_app_lock_delay_row")
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = AppCopy.Components.joinSemantics(
+                    AppCopy.AppLock.delayTitle,
+                    value,
+                )
+            }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(icon = BrandIconAsset.Clock, theme = theme, tint = tint)
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = AppCopy.AppLock.delayTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = value,
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        BrandIcon(
+            asset = BrandIconAsset.Next,
+            theme = theme,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun AppLockDelaySelectionDialog(
+    currentDelay: AppLockDelay,
+    tint: Color,
+    onDismiss: () -> Unit,
+    onSelected: (AppLockDelay) -> Unit,
+) {
+    DailyRecordDialog(
+        title = AppCopy.AppLock.delayDialogTitle,
+        testTag = "settings_app_lock_delay_dialog",
+        onDismissRequest = onDismiss,
+    ) {
+        AppLockDelay.entries.forEach { option ->
+            SettingsOptionRow(
+                label = option.displayName(),
+                selected = option == currentDelay,
+                tint = tint,
+                testTag = "settings_app_lock_delay_option_${option.id}",
+                onClick = { onSelected(option) },
+            )
+        }
+    }
+}
+
+private fun AppLockDelay.displayName(): String = when (this) {
+    AppLockDelay.Immediately -> AppCopy.AppLock.delayImmediately
+    AppLockDelay.OneMinute -> AppCopy.AppLock.delayOneMinute
+    AppLockDelay.FiveMinutes -> AppCopy.AppLock.delayFiveMinutes
 }

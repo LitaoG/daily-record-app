@@ -15,6 +15,14 @@ Private Calendar is an Android calendar journal for the developer and a small gr
 - The app turns off Android system cloud backup, so the system does not copy its database to another device.
 - Uninstalling the app normally deletes the data on that device.
 
+## Optional app lock
+
+- The app lock is off by default. The user can turn it on under "Data & privacy" in Settings; the device must already have a screen lock.
+- Android itself verifies the user (fingerprint, face or screen lock). The app never reads or stores biometric data or the screen-lock secret. It keeps only two settings on the device, whether the lock is on and when to lock again, and never uploads them.
+- The app requests the `USE_BIOMETRIC` permission only to show the system verification prompt; this permission gives no access to biometric data.
+- While the lock is on, recent apps do not show the app's content. Below Android 13 the only way to do this also blocks screenshots.
+- The app lock only covers the app's screens. It does not encrypt the database on the device; the Android app sandbox still protects that data.
+
 ## Optional account and cloud sync
 
 The user can choose a Firebase email-and-password account to restore records on another device. When the user signs in, the app processes:

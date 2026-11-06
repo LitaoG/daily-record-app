@@ -29,6 +29,7 @@ import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
+import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
 import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.di.buildAccountDeletionCoordinator
@@ -62,6 +63,7 @@ internal fun DailyRecordRoot(
     servicesProvider: () -> FirebaseServices,
     onLanguageChanged: (AppLanguage) -> Unit = {},
     onColorThemeChanged: (DailyRecordColorTheme) -> Unit = {},
+    appLockSettings: AppLockSettings? = null,
 ) {
     val context = LocalContext.current
     val rootScope = rememberCoroutineScope()
@@ -125,6 +127,7 @@ internal fun DailyRecordRoot(
                 },
                 onLanguageChanged = onLanguageChanged,
                 onColorThemeChanged = onColorThemeChanged,
+                appLockSettings = appLockSettings,
             )
         }
         return
@@ -233,6 +236,7 @@ internal fun DailyRecordRoot(
                 hasRecoveryConflict = recoveryConflictOwners.isNotEmpty(),
                 onLanguageChanged = onLanguageChanged,
                 onColorThemeChanged = onColorThemeChanged,
+                appLockSettings = appLockSettings,
                 onReplaceExistingLocal = {
                     val ownerId = recoveryConflictOwners.firstOrNull() ?: return@SignedInRoot
                     rootScope.launch {
@@ -260,6 +264,7 @@ private fun LocalRoot(
     onSignIn: () -> Unit,
     onLanguageChanged: (AppLanguage) -> Unit,
     onColorThemeChanged: (DailyRecordColorTheme) -> Unit,
+    appLockSettings: AppLockSettings?,
 ) {
     val handBrewRepository = remember(database) {
         RoomHandBrewRecordRepository(database = database, ownerId = LOCAL_OWNER_ID)
@@ -273,6 +278,7 @@ private fun LocalRoot(
         onSignIn = onSignIn,
         onLanguageChanged = onLanguageChanged,
         onColorThemeChanged = onColorThemeChanged,
+        appLockSettings = appLockSettings,
     )
 }
 
@@ -292,6 +298,7 @@ private fun SignedInRoot(
     onAccountDeletedWithLocalRecords: () -> Unit,
     onLanguageChanged: (AppLanguage) -> Unit,
     onColorThemeChanged: (DailyRecordColorTheme) -> Unit,
+    appLockSettings: AppLockSettings?,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val ownerId = state.account.uid
@@ -429,6 +436,7 @@ private fun SignedInRoot(
         onSignOut = services.authRepository::signOut,
         onLanguageChanged = onLanguageChanged,
         onColorThemeChanged = onColorThemeChanged,
+        appLockSettings = appLockSettings,
         onDeleteAccount = { password, localData ->
             val completion = CompletableDeferred<Result<Unit>>()
             accountDeletionScope.launch {
