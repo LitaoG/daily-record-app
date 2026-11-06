@@ -31,7 +31,7 @@
 | --- | --- | --- |
 | 应用名 | 私密日历 | Private Calendar（与英文桌面名一致） |
 | 简短说明 | 本机优先的私密习惯日记：日历记录、周月年统计，可选账号同步。 | Private, offline-first habit journal with calendar, stats and optional sync. |
-| 完整说明要点 | 两个独立的私密记录模块；离线可用；周、月、年与全部历史统计；可选邮箱账号换机恢复；无广告、无分析或崩溃上报 SDK。 | Two separate private journals; works offline; weekly, monthly, yearly and all-time stats; optional email account for restoring on a new phone; no ads, analytics or crash-reporting SDKs. |
+| 完整说明要点 | 两个独立的私密记录模块；离线可用；周、月、年与全部历史统计；可选邮箱账号换机恢复；可选应用锁；可选桌面伪装，桌面图标和名称会显示为“日记”；无广告、无分析或崩溃上报 SDK。 | Two separate private journals; works offline; weekly, monthly, yearly and all-time stats; optional email account for restoring on a new phone; optional app lock; optional home screen disguise that shows the app as "Journal"; no ads, analytics or crash-reporting SDKs. |
 
 ## 3. Data safety 表单建议答案
 
@@ -53,6 +53,7 @@
 - IP 地址与用户代理：Firebase Authentication 和 Cloud Functions 用它们做安全与防滥用，本应用不用它们定位。是否需要单独申报由负责人按 Play 指引判断（决策 D3）。
 - 不收集：位置、联系人、照片、通话、短信、广告 ID、崩溃日志、分析或使用行为数据。
 - 应用锁（ADR-023）不新增申报项：验证由系统完成，应用拿不到生物识别数据或锁屏密码；开关和重新锁定时长只存在本机 SharedPreferences，不传出设备。
+- 桌面伪装（ADR-024）同样不新增申报项：选择只存在本机 SharedPreferences，不传出设备。
 
 ## 4. 账号删除要求
 
@@ -77,7 +78,8 @@
 - Play Console 需要填写隐私政策链接：中文商店页用[隐私说明](../../PRIVACY.md)，英文商店页用[英文译本](../../PRIVACY.en.md)。
 - 2026-11-06 起隐私说明写明了 Firebase 自动接收的技术信息、云函数和逐次详情，并改正了旧版“不收集具体时间、备注”的说法（逐次时间和感受由 ADR-016 引入）。
 - 两份隐私说明已加入“可选应用锁”一节：系统负责验证、本机只存两项设置、隐藏最近任务预览、不加密数据库（待设备验证后定稿）。
-- 上架前仍需补充：网页删除入口、面向公开发布的受众说明，以及桌面伪装实现后的说明。
+- 两份隐私说明已加入“可选桌面伪装”一节：只改桌面图标和名称、选择只存本机、不在系统设置或 Google Play 中隐藏应用。商店完整说明也要披露这一功能（见第 2 节草稿）。
+- 上架前仍需补充：网页删除入口和面向公开发布的受众说明。
 - 设置“关于”的隐私政策入口按界面语言打开中文或英文版本（编译与单测通过，待设备验证）。
 
 ## 8. 待办与决策
@@ -86,7 +88,7 @@
 | --- | --- | --- |
 | 签名 AAB（`bundleRelease`） | 负责人（需要签名材料） | 待做 |
 | Play App Signing 方式 | 负责人 | 决策 D5 |
-| 桌面伪装方案（ADR-024） | 负责人 | 决策 D6 |
+| 桌面伪装方案（ADR-024） | 代理（负责人授权） | 已决定并实现为“日记 / Journal”入口，待设备测试 |
 | 网页删除入口与接收邮箱 | 负责人 | 决策 D4 |
 | 填写 Data safety、健康应用声明、内容分级、目标受众 | 负责人 | 按本文建议 |
 | 英文模块名中性化（Solo / Duo） | 代理 | 已提交，单测通过，待设备测试 |
@@ -104,7 +106,7 @@
 - D3：IP 地址是否单独申报。
 - D4：网页删除入口的发布位置和接收邮箱。
 - D5：Play App Signing 让 Google 生成新密钥，还是上传现有签名密钥。只有上传现有密钥，GitHub 版和 Play 版才能互相覆盖升级；签名边界见[签名与 GitHub Release](../RELEASE.md)。
-- D6：是否接受 [ADR-024](../DECISIONS.md) 的桌面伪装方案：唯一伪装身份“日记 / Journal”，不做目标书的假计算器；代价是升级和每次切换后，已固定在桌面的图标需要重新固定一次。
+- D6（2026-11-06 已决定）：负责人把决定交给代理，代理采用 [ADR-024](../DECISIONS.md) 的唯一伪装身份“日记 / Journal”，不做目标书的假计算器。默认入口沿用旧组件名，升级不会丢失已固定的桌面图标；只有每次开关伪装后，桌面图标需要重新添加。
 
 ## 来源
 

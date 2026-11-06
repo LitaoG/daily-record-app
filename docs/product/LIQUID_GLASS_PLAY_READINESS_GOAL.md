@@ -1,6 +1,6 @@
 # 流体玻璃与 Google Play 就绪 Goal
 
-状态：`in progress — Phase 1–4 与 Phase 5 的应用锁、逐次详情已在 agent/b1-apple-glass-refactor 提交；2026-11-06 完整单测 51 个测试类 333 个用例、Android 测试编译与 Lint（0 错误）通过；设备测试、桌面伪装（ADR-024 待确认）与 AAB 未完成`
+状态：`in progress — Phase 1–5 的代码已在 agent/b1-apple-glass-refactor 提交（桌面伪装按 ADR-024 实现）；完整单测、Android 测试编译与 Lint 通过；设备测试与签名 AAB 未完成`
 
 最后更新：2026-11-06
 
@@ -28,8 +28,8 @@
 | 2 | 15 个矢量符号替换 `drawable-nodpi` 的 26 张 PNG，矢量自适应启动图标替换 3 张 WebP | 已完成；编译通过，Play 512px 商店图标已于 2026-11-06 按新矢量图标重新导出 |
 | 3 | 模块切换器滑块、周期胶囊、底栏、今日速记、长按加减、滑动切月、触感 | 已完成；编译通过，今日速记、长按快速调整、滑动切月和日历网格的 4 个测试类 19 个用例与 `DesignTokensTest` 15 个用例通过；设备交互与截图留到小版本末尾 |
 | 4 | 月度脉冲图与年度折线图触控探针 | 已完成；探针、玻璃气泡与逐点触感已提交，`ChartScrubTest` 7/7 与完整单测通过；设备手势与截图留到小版本末尾 |
-| 5 | 逐次详情卡片化、应用锁、桌面伪装、设置分组 | 进行中：应用锁（[ADR-023](../DECISIONS.md)）的锁定规则、系统认证、锁屏层、启动/返回接入和设置“数据与隐私”中的开关与“重新锁定”时长已提交，`AppLockSessionTest` 13/13、Android 测试编译与 Lint 通过，三条认证路径待设备测试；逐次详情改为每次一张轻玻璃卡片、感受框随文字增高，时间与日期滚轮加了逐值轻触感和停下时的回弹，已提交并通过编译，待设备测试；设置页保持四组玻璃卡片，“数据与隐私”新增独立的应用锁卡片，“本机优先”改用新增的手机符号；桌面伪装方案写成 [ADR-024](../DECISIONS.md)（Proposed，待负责人确认 D6 后再改清单和代码） |
-| 6 | 文案审查、Data Safety 与内容分级说明、完整门禁、AAB | 进行中：[Google Play 上架就绪清单](PLAY_STORE_READINESS.md)已写，列出建议答案与决策项 D1–D6；英文模块名已按目标书 5.1 改为中性的 Solo / Duo，设置“关于”的隐私政策入口（按界面语言打开中文或英文版本）已提交，二者编译与单测通过、待设备测试；隐私说明已补齐 Firebase 技术信息、逐次详情和可选应用锁并新增英文译本；512px 商店图标已从矢量图层导出，待负责人目视确认；2026-11-06 完整单测、Android 测试编译与 Lint 通过，设备测试（`connectedDebugAndroidTest`）与签名 AAB 未做 |
+| 5 | 逐次详情卡片化、应用锁、桌面伪装、设置分组 | 进行中：应用锁（[ADR-023](../DECISIONS.md)）的锁定规则、系统认证、锁屏层、启动/返回接入和设置“数据与隐私”中的开关与“重新锁定”时长已提交，`AppLockSessionTest` 13/13、Android 测试编译与 Lint 通过，三条认证路径待设备测试；逐次详情改为每次一张轻玻璃卡片、感受框随文字增高，时间与日期滚轮加了逐值轻触感和停下时的回弹，已提交并通过编译，待设备测试；设置页保持四组玻璃卡片，“数据与隐私”新增应用锁与桌面伪装卡片，“本机优先”改用新增的手机符号；桌面伪装按 [ADR-024](../DECISIONS.md) 实现为中性的“日记 / Journal”入口（默认入口沿用旧组件名，只切换别名），`LauncherIdentityTest` 通过，入口切换与桌面显示待设备测试 |
+| 6 | 文案审查、Data Safety 与内容分级说明、完整门禁、AAB | 进行中：[Google Play 上架就绪清单](PLAY_STORE_READINESS.md)已写，列出建议答案与决策项 D1–D6；英文模块名已按目标书 5.1 改为中性的 Solo / Duo，设置“关于”的隐私政策入口（按界面语言打开中文或英文版本）已提交，二者编译与单测通过、待设备测试；隐私说明已补齐 Firebase 技术信息、逐次详情、可选应用锁和可选桌面伪装并新增英文译本；商店说明草稿已披露桌面伪装；512px 商店图标已从矢量图层导出，待负责人目视确认；2026-11-06 完整单测、Android 测试编译与 Lint 通过，设备测试（`connectedDebugAndroidTest`）与签名 AAB 未做 |
 
 ## 与目标书的差异
 
@@ -63,10 +63,13 @@
 
 目标书 5.3 写“通过 `androidx.biometric` 接入”并提供“备用 PIN 锁”。实现按 ADR-023 使用平台认证接口：androidx.biometric 的稳定版仍是 2021 年的 1.1.0 且要求 `FragmentActivity`，新版仍在 beta；备用方式使用设备锁屏密码，不另设应用 PIN，避免自管密码的存储、找回和防暴力破解问题。
 
+目标书 5.4 提供“简易计算器（输入 `1234=` 解锁）”和“日常备忘录”两种伪装。实现按 ADR-024 只提供一个如实的中性身份“日记 / Journal”：假计算器需要应用自管口令，与 ADR-023 冲突，也可能触及 Google Play 的欺骗行为与仿冒政策；“备忘录”暗示另一类应用。
+
 ## 验证记录
 
 - 2026-11-05：会话临时脚本计算 9 套主题 18 组模块色板，调整上表色值后全部达到 AA；脚本不进入仓库，长期验证由 `DesignTokensTest` 逐套执行。
 - 2026-11-05：`:app:compileDebugKotlin` 与 `:app:testDebugUnitTest --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest` 通过（15 个测试，0 失败）。本机可用内存约 2 GB，Gradle 以 `--no-daemon --max-workers=1`、1 GB 堆和进程内 Kotlin 编译运行。
 - 2026-11-06：Phase 3 定向验证：`:app:testDebugUnitTest --tests "io.github.litaog.dailyrecord.ui.calendar.*" --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest` 通过（`TodayQuickLogTest` 5、`CalendarQuickAdjustTest` 4、`CalendarMonthSwipeTest` 6、`CalendarGridTest` 4、`DesignTokensTest` 15，共 34 个测试，0 失败），同一次运行完成主代码与单测编译，改动文件无编译警告。
 - 2026-11-06：完整门禁：`:app:testDebugUnitTest`（51 个测试类、333 个用例，0 失败）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过。Lint 0 个错误，唯一的警告是 ADR-018 既有的 `OldTargetApi`（targetSdk 36）。首次 Lint 报出的 `InvalidFragmentVersionForActivityResult` 错误（见 ADR-023 的 Lint 后果）和两条 b1 新增警告已修复。Gradle 以 `--no-daemon --max-workers=1`、1–1.5 GB 堆和进程内 Kotlin 编译运行。
-- 待执行：`connectedDebugAndroidTest` 等设备测试（含 `RecordModuleIntegrationTest` 设置图标取色和应用锁三条认证路径）、TalkBack 与 200% 字体实机检查、目标页面截图、桌面伪装（ADR-024 待确认）和签名 `bundleRelease`。
+- 2026-11-06：桌面伪装（ADR-024）完成后再跑完整门禁：`:app:testDebugUnitTest`（52 个测试类、340 个用例，0 失败，含 `LauncherIdentityTest` 7 个）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过，Lint 仍只有 `OldTargetApi` 一条既有警告。合并后的清单只有两个启动器入口：默认启用的 `.MainActivity` 别名和默认停用的 `.JournalLauncher` 别名，`ui.MainActivity` 本身不导出。
+- 待执行：`connectedDebugAndroidTest` 等设备测试（含 `RecordModuleIntegrationTest` 设置图标取色、应用锁三条认证路径、`LauncherDisguiseTest` 与 `SettingsPrivacyControlsTest`）、桌面伪装在 API 26、29、34 桌面上的切换与图标显示、TalkBack 与 200% 字体实机检查、目标页面截图和签名 `bundleRelease`。
