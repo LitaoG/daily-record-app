@@ -68,4 +68,5 @@
 - 2026-11-05：会话临时脚本计算 9 套主题 18 组模块色板，调整上表色值后全部达到 AA；脚本不进入仓库，长期验证由 `DesignTokensTest` 逐套执行。
 - 2026-11-05：`:app:compileDebugKotlin` 与 `:app:testDebugUnitTest --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest` 通过（15 个测试，0 失败）。本机可用内存约 2 GB，Gradle 以 `--no-daemon --max-workers=1`、1 GB 堆和进程内 Kotlin 编译运行。
 - 2026-11-06：Phase 3 定向验证：`:app:testDebugUnitTest --tests "io.github.litaog.dailyrecord.ui.calendar.*" --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest` 通过（`TodayQuickLogTest` 5、`CalendarQuickAdjustTest` 4、`CalendarMonthSwipeTest` 6、`CalendarGridTest` 4、`DesignTokensTest` 15，共 34 个测试，0 失败），同一次运行完成主代码与单测编译，改动文件无编译警告。
-- 待执行：`compileDebugAndroidTestKotlin`、`lintDebug`、`RecordModuleIntegrationTest` 设置图标取色等设备测试与目标页面截图。
+- 2026-11-06：完整门禁：`:app:testDebugUnitTest`（51 个测试类、333 个用例，0 失败）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过。Lint 0 个错误，唯一的警告是 ADR-018 既有的 `OldTargetApi`（targetSdk 36）。首次 Lint 报出的 `InvalidFragmentVersionForActivityResult` 错误（见 ADR-023 的 Lint 后果）和两条 b1 新增警告已修复。Gradle 以 `--no-daemon --max-workers=1`、1–1.5 GB 堆和进程内 Kotlin 编译运行。
+- 待执行：`connectedDebugAndroidTest` 等设备测试（含 `RecordModuleIntegrationTest` 设置图标取色和应用锁三条认证路径）、TalkBack 与 200% 字体实机检查、目标页面截图、桌面伪装（ADR-024 待确认）和签名 `bundleRelease`。
