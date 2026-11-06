@@ -12,7 +12,7 @@
 | --- | --- | --- | --- |
 | 目标 API | `targetSdk 36`（ADR-018） | 新应用和更新需要 API 36 或更高 | 满足 |
 | 发布格式 | GitHub Release 签名 APK（ADR-012） | 新应用上传 AAB，并使用 Play App Signing | 待做：负责人在本机用签名材料执行 `bundleRelease` |
-| 权限 | 只有 `INTERNET` 与 `ACCESS_NETWORK_STATE` | — | 不需要敏感权限声明 |
+| 权限 | `INTERNET`、`ACCESS_NETWORK_STATE`，以及应用锁使用的普通权限 `USE_BIOMETRIC`（ADR-023，无需运行时请求） | — | 不需要敏感权限声明 |
 | 系统备份 | `allowBackup="false"` | — | 与隐私说明一致 |
 | 明文流量 | Release `usesCleartextTraffic="false"` | — | 满足 |
 | 原生库 | 未核实 | 含原生库的应用需要满足 Play 的内存页大小要求 | 待核实：检查 AAB 内是否有 `lib/` 目录 |
@@ -21,7 +21,7 @@
 
 - Play 不允许包含或宣传色情内容的应用，并把商店页或应用内的露骨文字、成人或性相关关键词列为常见违规示例。
 - 本应用没有图片、视频、插画或露骨描述。它只保存用户自己填写的日期、次数、可选的开始/结束时间和 100 字以内的感受。
-- 风险：中文模块名“自慰 / 做爱”和英文无障碍全称是直接的性相关词汇。目标书要求中文保持直观，英文与商店元数据改用中性词；Play 版是否也把中文界面改成中性词由负责人决定（决策 D1）。
+- 风险：中文模块名“自慰 / 做爱”是直接的性相关词汇。目标书要求中文保持直观，英文与商店元数据改用中性词；英文界面已改为 Solo / Duo，TalkBack 全称为 Solo journal / Intimate journal。Play 版是否也把中文界面改成中性词由负责人决定（决策 D1）。
 - 商店截图只用空数据或中性示例，不出现模块名以外的性相关文字。
 - 目标受众只选 18 岁及以上；应用不面向儿童，不参与家庭计划。
 
@@ -29,7 +29,7 @@
 
 | 字段 | 中文 | English |
 | --- | --- | --- |
-| 应用名 | 私密日历 | Daily Record |
+| 应用名 | 私密日历 | Private Calendar（与英文桌面名一致） |
 | 简短说明 | 本机优先的私密习惯日记：日历记录、周月年统计，可选账号同步。 | Private, offline-first habit journal with calendar, stats and optional sync. |
 | 完整说明要点 | 两个独立的私密记录模块；离线可用；周、月、年与全部历史统计；可选邮箱账号换机恢复；无广告、无分析或崩溃上报 SDK。 | Two separate private journals; works offline; weekly, monthly, yearly and all-time stats; optional email account for restoring on a new phone; no ads, analytics or crash-reporting SDKs. |
 
@@ -52,6 +52,7 @@
 - 删除：用户可以申请删除，应用内已有入口，另需网页入口（见第 4 节）。
 - IP 地址与用户代理：Firebase Authentication 和 Cloud Functions 用它们做安全与防滥用，本应用不用它们定位。是否需要单独申报由负责人按 Play 指引判断（决策 D3）。
 - 不收集：位置、联系人、照片、通话、短信、广告 ID、崩溃日志、分析或使用行为数据。
+- 应用锁（ADR-023）不新增申报项：验证由系统完成，应用拿不到生物识别数据或锁屏密码；开关和重新锁定时长只存在本机 SharedPreferences，不传出设备。
 
 ## 4. 账号删除要求
 
@@ -73,9 +74,11 @@
 
 ## 7. 隐私政策
 
-- Play Console 需要填写隐私政策链接，可以使用仓库中的[隐私说明](../../PRIVACY.md)。
-- 上架前需要补充：Firebase 自动收集项、网页删除入口，以及应用锁和桌面伪装实现后的说明。
-- 建议在设置“关于”中加入隐私政策入口（待做）。
+- Play Console 需要填写隐私政策链接：中文商店页用[隐私说明](../../PRIVACY.md)，英文商店页用[英文译本](../../PRIVACY.en.md)。
+- 2026-11-06 起隐私说明写明了 Firebase 自动接收的技术信息、云函数和逐次详情，并改正了旧版“不收集具体时间、备注”的说法（逐次时间和感受由 ADR-016 引入）。
+- 两份隐私说明已加入“可选应用锁”一节：系统负责验证、本机只存两项设置、隐藏最近任务预览、不加密数据库（待设备验证后定稿）。
+- 上架前仍需补充：网页删除入口、面向公开发布的受众说明，以及桌面伪装实现后的说明。
+- 设置“关于”的隐私政策入口按界面语言打开中文或英文版本（编译与单测通过，待设备验证）。
 
 ## 8. 待办与决策
 
@@ -83,11 +86,14 @@
 | --- | --- | --- |
 | 签名 AAB（`bundleRelease`） | 负责人（需要签名材料） | 待做 |
 | Play App Signing 方式 | 负责人 | 决策 D5 |
+| 桌面伪装方案（ADR-024） | 负责人 | 决策 D6 |
 | 网页删除入口与接收邮箱 | 负责人 | 决策 D4 |
 | 填写 Data safety、健康应用声明、内容分级、目标受众 | 负责人 | 按本文建议 |
-| 英文模块名与商店文案中性化 | 代理 | 待做 |
-| 设置页隐私政策入口 | 代理 | 待做 |
-| 按新矢量图标导出 512px 商店图标 | 代理 | 待做 |
+| 英文模块名中性化（Solo / Duo） | 代理 | 已提交，单测通过，待设备测试 |
+| 商店文案定稿 | 负责人 | 按第 2 节草稿 |
+| 设置页隐私政策入口 | 代理 | 已提交，编译与单测通过，待设备测试 |
+| 英文隐私政策 | 代理 | 已写（`PRIVACY.en.md`） |
+| 按新矢量图标导出 512px 商店图标 | 代理 | 已导出到 `docs/design/icon-source/google-play-icon-512.png`，待负责人目视确认 |
 | 核实 AAB 是否含原生库 | 代理 | 待做 |
 | 空数据商店截图 | 代理（需要模拟器内存） | 待做 |
 
@@ -98,6 +104,7 @@
 - D3：IP 地址是否单独申报。
 - D4：网页删除入口的发布位置和接收邮箱。
 - D5：Play App Signing 让 Google 生成新密钥，还是上传现有签名密钥。只有上传现有密钥，GitHub 版和 Play 版才能互相覆盖升级；签名边界见[签名与 GitHub Release](../RELEASE.md)。
+- D6：是否接受 [ADR-024](../DECISIONS.md) 的桌面伪装方案：唯一伪装身份“日记 / Journal”，不做目标书的假计算器；代价是升级和每次切换后，已固定在桌面的图标需要重新固定一次。
 
 ## 来源
 
@@ -106,6 +113,8 @@
 - [Understanding Google Play's app account deletion requirements](https://support.google.com/googleplay/android-developer/answer/13327111)
 - [Inappropriate Content: Sexual Content and Profanity](https://support.google.com/googleplay/android-developer/answer/9878810)
 - [Provide information for the Health apps declaration form](https://support.google.com/googleplay/android-developer/answer/14738291)
+- [Deceptive Behavior](https://support.google.com/googleplay/android-developer/answer/16680223)
+- [Impersonation](https://play.google.com/about/ip-deception-spam/impersonation-ip/)
 - [Firebase: data disclosure for Google Play's Data safety section](https://firebase.google.com/docs/android/play-data-disclosure)
 
 以上 Google Play 与 Firebase 的要求均为转述，以官方页面的最新版本为准（Content was rephrased for compliance with licensing restrictions）。

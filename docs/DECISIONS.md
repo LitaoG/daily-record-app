@@ -172,6 +172,19 @@
 - 测试后果：锁定判断写成纯函数，由 JVM 测试覆盖；三条认证路径需要在 API 34 模拟器和 Android 8/9 设备上手工回归，列入 ADR-022 小版本末尾的设备验证。
 - Lint 后果：Firebase Auth 经 `play-services-auth` 20.7.0 传递引入 `androidx.fragment` 1.1.0，lint 因此对 Android 8–9 路径的 `registerForActivityResult` 报 `InvalidFragmentVersionForActivityResult`。该检查针对 1.3.0 以前的 `FragmentActivity`；`MainActivity` 是 `ComponentActivity`，启动器由它自己的 `ActivityResultRegistry` 处理，所以只在注册处局部抑制，不为此新增或升级 Fragment 依赖。
 
+## ADR-024：桌面伪装只切换到一个如实的中性身份
+
+- 状态：Proposed（2026-11-06），待产品负责人确认（决策 D6，见 [Google Play 上架就绪清单](product/PLAY_STORE_READINESS.md)）；确认前不改清单文件和代码。细化 ADR-022 的可选桌面伪装，进度见[流体玻璃与 Google Play 就绪 Goal](product/LIQUID_GLASS_PLAY_READINESS_GOAL.md)。
+- 决策：只提供一个伪装身份：名称“日记 / Journal”，图标是不带品牌光环的中性笔记本。它如实说明应用用途，不冒充计算器、备忘录或任何其他应用、品牌与系统功能。打开后仍是同一个应用，应用内名称、数据和统计不变，照常遵守应用锁（ADR-023）。
+- 机制：清单中 `MainActivity` 去掉启动器入口，改由两个 `activity-alias`（默认身份、伪装身份）指向它，默认身份初始启用。设置中切换时用 `PackageManager.setComponentEnabledSetting(..., DONT_KILL_APP)` 先启用新入口、再停用旧入口，任何时刻至少有一个启动器入口。选择保存在 SharedPreferences；每次启动按保存值校正两个入口，修复切换中途进程被杀造成的双图标。
+- 不采用：目标书模式 A“简易计算器，输入 `1234=` 解锁”。它需要应用自管的数字口令，与 ADR-023“不提供应用自己的 PIN”冲突；Google Play 的欺骗行为政策禁止模仿其他应用，仿冒政策禁止歪曲应用的主要用途，假计算器两条都可能触及，而做成真正的计算器又超出 PRODUCT.md 范围。也不采用模式 B“日常备忘录”：它暗示另一类应用，而“日记”同样低调且如实。
+- 后果：
+  1. 现有安装升级后，启动器组件从 `MainActivity` 变为别名，多数桌面会移除已固定的旧图标，用户需要在应用列表中重新固定一次；每次切换伪装也会如此。设置说明必须提前告知。
+  2. 部分桌面刷新图标需要几秒；最近任务中的应用名称是否随入口变化需要设备验证，必要时用 `setTaskDescription` 统一。
+  3. 伪装只改桌面图标和名称，不隐藏通知、系统设置中的应用信息或 Google Play 中的条目；隐私说明和商店说明要如实写明。
+  4. Play 政策结论未经官方确认：上架前由负责人对照[欺骗行为政策](https://support.google.com/googleplay/android-developer/answer/16680223)和[仿冒政策](https://play.google.com/about/ip-deception-spam/impersonation-ip/)复核，并在商店说明中披露该功能（政策为转述，以官方页面为准）。
+- 测试后果：入口切换逻辑写成纯函数并由 JVM 测试覆盖（目标入口、启用顺序、启动校正）；清单合并和两个入口在 API 26、29、34 桌面上的显示与切换由设备测试验证。
+
 ## 已废止方向
 
 旧版通用活动表、三种预设计量方式、活动身份色、活动归档、短信验证码、端到端加密和通用日历标记均由本次产品收缩废止，只存在于 Git 历史，不再指导实现。健身等其他记录不属于当前范围；若未来立项，应采用 ADR-002 的独立垂直模块方式重新定义，而不是恢复旧模型。
