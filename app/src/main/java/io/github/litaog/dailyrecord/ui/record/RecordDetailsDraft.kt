@@ -31,9 +31,6 @@ internal data class RecordDetailDraft(
     val hasContent: Boolean
         get() = startMinutes != null || endMinutes != null || feeling.isNotEmpty()
 
-    val feelingCharacterCount: Int
-        get() = feeling.codePointCount(0, feeling.length)
-
     fun withFeeling(value: String): RecordDetailDraft = copy(
         feeling = value.truncateVisibleCharacters(MAX_RECORD_DETAIL_FEELING_CHARACTERS),
     )

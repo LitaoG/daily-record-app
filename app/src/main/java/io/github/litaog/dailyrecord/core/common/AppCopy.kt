@@ -487,6 +487,8 @@ internal object AppCopy {
 
         fun monthLabel(month: Int): String = AppLanguageState.current.statistics.monthLabel(month)
 
+        val monthListSeparator: String get() = AppLanguageState.current.statistics.monthListSeparator
+
         fun dateDescription(date: LocalDate, status: String): String =
             AppLanguageState.current.statistics.dateDescription(date, status)
 

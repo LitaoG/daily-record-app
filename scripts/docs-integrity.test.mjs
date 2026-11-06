@@ -72,7 +72,7 @@ test("current documentation matches release and Android configuration", () => {
   const minSdk = build.match(/\bminSdk\s*=\s*(\d+)/)?.[1];
   const compileSdk = build.match(/release\((\d+)\)/)?.[1];
   const targetSdk = build.match(/\btargetSdk\s*=\s*(\d+)/)?.[1];
-  const roomVersion = database.match(/\bversion\s*=\s*(\d+)/)?.[1];
+  const roomVersion = database.match(/const val SCHEMA_VERSION\s*=\s*(\d+)/)?.[1];
   assert.ok(minSdk, "Could not read minSdk");
   assert.ok(compileSdk, "Could not read compileSdk");
   assert.ok(targetSdk, "Could not read targetSdk");

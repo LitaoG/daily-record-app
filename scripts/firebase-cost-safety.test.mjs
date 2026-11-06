@@ -1,0 +1,192 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  InMemoryRateLimiter,
+  WRITE_RULES,
+  DELETION_RULES,
+} from "../functions/rate-limiter.js";
+import {
+  getCircuitBreakerState,
+  requireWritesAllowed,
+  requireDeletionsAllowed,
+  areTriggersAllowed,
+  resetCircuitBreakerCacheForTesting,
+} from "../functions/circuit-breaker.js";
+import { verifyAppCheck } from "../functions/app-check-gate.js";
+
+test("Rate limiter allows requests within threshold and blocks bursts", () => {
+  const limiter = new InMemoryRateLimiter();
+  const uid = "test-user-1";
+
+  // First 5 requests within 5s window should succeed
+  for (let i = 0; i < 5; i++) {
+    assert.doesNotThrow(() => {
+      limiter.checkRateLimit(`write:${uid}`, WRITE_RULES, "writeDailyCountRecord", uid);
+    });
+  }
+
+  // 6th request within 5s window should be blocked with resource-exhausted
+  assert.throws(
+    () => {
+      limiter.checkRateLimit(`write:${uid}`, WRITE_RULES, "writeDailyCountRecord", uid);
+    },
+    (err) => {
+      assert.equal(err.code, "resource-exhausted");
+      return true;
+    },
+  );
+
+  // A different user is NOT blocked (per-UID isolation)
+  const otherUid = "test-user-2";
+  assert.doesNotThrow(() => {
+    limiter.checkRateLimit(`write:${otherUid}`, WRITE_RULES, "writeDailyCountRecord", otherUid);
+  });
+});
+
+test("Rate limiter hashes UIDs and never reveals cleartext identity", () => {
+  const limiter = new InMemoryRateLimiter();
+  const uid = "sensitive-user-uid-12345";
+  const hash = limiter.hashUid(uid);
+
+  assert.notEqual(hash, uid);
+  assert.equal(typeof hash, "string");
+  assert.equal(hash.length, 16);
+  assert.equal(limiter.hashUid(uid), hash); // Deterministic
+});
+
+test("Deletion rate limiter enforces strict low-frequency calling", () => {
+  const limiter = new InMemoryRateLimiter();
+  const uid = "deletion-user";
+
+  // Max 2 calls per minute
+  assert.doesNotThrow(() => {
+    limiter.checkRateLimit(`delete:${uid}`, DELETION_RULES, "deleteAccountData", uid);
+  });
+  assert.doesNotThrow(() => {
+    limiter.checkRateLimit(`delete:${uid}`, DELETION_RULES, "deleteAccountData", uid);
+  });
+
+  // 3rd call in same minute must be rejected
+  assert.throws(
+    () => {
+      limiter.checkRateLimit(`delete:${uid}`, DELETION_RULES, "deleteAccountData", uid);
+    },
+    (err) => {
+      assert.equal(err.code, "resource-exhausted");
+      return true;
+    },
+  );
+});
+
+test("Circuit breaker defaults to open/allowed when no kill switch is set", async () => {
+  resetCircuitBreakerCacheForTesting();
+  const mockDb = null; // No Firestore config doc
+  const state = await getCircuitBreakerState(mockDb);
+
+  assert.equal(state.writesAllowed, true);
+  assert.equal(state.deletionsAllowed, true);
+  assert.equal(state.triggersAllowed, true);
+
+  await assert.doesNotReject(requireWritesAllowed(mockDb));
+  await assert.doesNotReject(requireDeletionsAllowed(mockDb));
+  assert.equal(await areTriggersAllowed(mockDb), true);
+});
+
+test("Circuit breaker emergency environment kill switch blocks writes and deletions", async () => {
+  resetCircuitBreakerCacheForTesting();
+  process.env.DAILY_RECORD_KILL_SWITCH_WRITES = "true";
+
+  try {
+    const mockDb = null;
+    await assert.rejects(
+      requireWritesAllowed(mockDb),
+      (err) => {
+        assert.equal(err.code, "unavailable");
+        return true;
+      },
+    );
+    // Deletions are not disabled by writes kill switch
+    await assert.doesNotReject(requireDeletionsAllowed(mockDb));
+  } finally {
+    delete process.env.DAILY_RECORD_KILL_SWITCH_WRITES;
+    resetCircuitBreakerCacheForTesting();
+  }
+});
+
+test("Circuit breaker global kill switch blocks all operations immediately", async () => {
+  resetCircuitBreakerCacheForTesting();
+  process.env.DAILY_RECORD_KILL_SWITCH_ALL = "true";
+
+  try {
+    const mockDb = null;
+    await assert.rejects(
+      requireWritesAllowed(mockDb),
+      (err) => {
+        assert.equal(err.code, "unavailable");
+        return true;
+      },
+    );
+    await assert.rejects(
+      requireDeletionsAllowed(mockDb),
+      (err) => {
+        assert.equal(err.code, "unavailable");
+        return true;
+      },
+    );
+    assert.equal(await areTriggersAllowed(mockDb), false);
+  } finally {
+    delete process.env.DAILY_RECORD_KILL_SWITCH_ALL;
+    resetCircuitBreakerCacheForTesting();
+  }
+});
+
+test("Circuit breaker Firestore doc overrides runtime when cached", async () => {
+  resetCircuitBreakerCacheForTesting();
+  const mockDbWithKillSwitch = {
+    collection: () => ({
+      doc: () => ({
+        get: async () => ({
+          exists: true,
+          data: () => ({ writesDisabled: true, deletionsDisabled: true, triggersDisabled: true }),
+        }),
+      }),
+    }),
+  };
+
+  const state = await getCircuitBreakerState(mockDbWithKillSwitch);
+  assert.equal(state.writesAllowed, false);
+  assert.equal(state.deletionsAllowed, false);
+  assert.equal(state.triggersAllowed, false);
+
+  await assert.rejects(requireWritesAllowed(mockDbWithKillSwitch), (err) => err.code === "unavailable");
+  await assert.rejects(requireDeletionsAllowed(mockDbWithKillSwitch), (err) => err.code === "unavailable");
+  resetCircuitBreakerCacheForTesting();
+});
+
+test("App Check gate allows unverified requests in monitoring mode with log", () => {
+  const requestWithoutAppCheck = { auth: { uid: "user-test" } };
+  const verified = verifyAppCheck(requestWithoutAppCheck, "testOperation", { mode: "monitoring" });
+  assert.equal(verified, false); // Returned false (unverified), but didn't throw
+});
+
+test("App Check gate rejects unverified requests in enforced mode", () => {
+  const requestWithoutAppCheck = { auth: { uid: "user-test" } };
+  assert.throws(
+    () => {
+      verifyAppCheck(requestWithoutAppCheck, "testOperation", { mode: "enforced" });
+    },
+    (err) => {
+      assert.equal(err.code, "unauthenticated");
+      return true;
+    },
+  );
+});
+
+test("App Check gate accepts valid attestation token in enforced mode", () => {
+  const requestWithAppCheck = {
+    auth: { uid: "user-test" },
+    app: { appId: "io.github.litaog.dailyrecord", alreadyConsumed: false },
+  };
+  const verified = verifyAppCheck(requestWithAppCheck, "testOperation", { mode: "enforced" });
+  assert.equal(verified, true);
+});

@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -654,8 +655,9 @@ private fun YearArrow(
     ) {
         ChevronIcon(
             forward = forward,
-            modifier = Modifier.size(20.dp),
-            color = if (enabled) colors.primary else DailyRecordDivider,
+            // The locked brand artwork cannot be tinted, so the disabled state
+            // is carried by alpha plus the disabled() semantics above.
+            modifier = Modifier.size(20.dp).alpha(if (enabled) 1f else .3f),
             theme = colors.brandIconTheme,
         )
     }

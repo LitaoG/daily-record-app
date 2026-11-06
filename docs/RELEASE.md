@@ -9,8 +9,9 @@
 ## 版本规则
 
 - `gradle.properties` 中的 `dailyRecord.versionName` 使用语义化版本；预发布版本使用 `-beta.N`。
-- `dailyRecord.versionCode` 每次发布必须严格递增，即使只修改文案或重新发布候选版。
+- `dailyRecord.versionCode` 每次发布必须严格递增，即使只修改文案或重新发布候选版。`scripts/release-metadata.mjs` 会在构建前读取上一个 release tag 的 `versionCode` 并拒绝复用或降低（因此发布工作流使用 `fetch-depth: 0` 取回 tag 历史）。
 - Git tag 必须等于 `v${dailyRecord.versionName}`；发布脚本会在构建前拒绝不匹配的 tag。
+- Tag 必须包含在 `main` 中；发布工作流会在启动模拟器回归前用 GitHub compare API 验证，避免从未审查的提交产出正式 APK。
 - 已经发布的 tag、APK 和校验文件不覆盖；需要修复时发布新版本。
 
 ## 稳定签名
@@ -79,7 +80,7 @@ AF:A5:24:1B:F1:3C:9D:AA:6F:45:AE:7C:8D:69:9D:75:40:D0:11:F0:E2:19:E5:4E:5B:97:BF
 | `RELEASE_KEY_PASSWORD` | key 密码 |
 | `GOOGLE_SERVICES_JSON_BASE64` | 生产 `app/google-services.json` 的单行 Base64 |
 
-工作流不会回显 secret。Tag 推送后，`.github/workflows/release.yml` 会先在被打 tag 的源码上运行 API 34 Android connected instrumentation（使用隔离 Firebase Emulator），再验证版本、运行 JVM 测试和 Lint、构建并验证签名 APK、生成 SHA-256 文件，并用仓库范围的短期 `GITHUB_TOKEN` 创建 GitHub prerelease。Connected 失败时会上传 JUnit 报告、logcat 和 emulator properties。
+工作流不会回显 secret。Tag 推送后，`.github/workflows/release.yml` 会先做零成本的版本、tag、`main` 包含关系与文档门禁，再在被打 tag 的源码上运行 API 34 Android connected instrumentation（使用隔离 Firebase Emulator），随后运行 JVM 测试和 Lint、构建并验证签名 APK、生成 SHA-256 文件，并用仓库范围的短期 `GITHUB_TOKEN` 创建 GitHub prerelease。Connected 失败时会上传 JUnit 报告、logcat 和 emulator properties；失败产物保留 7 天，发布 artifact 保留 90 天。顺序如此安排是为了让 tag 错误在数秒内失败，而不是先花掉一次完整模拟器回归。
 
 ## 发布步骤
 
@@ -96,7 +97,13 @@ AF:A5:24:1B:F1:3C:9D:AA:6F:45:AE:7C:8D:69:9D:75:40:D0:11:F0:E2:19:E5:4E:5B:97:BF
 4. 用 `apksigner verify --verbose --print-certs` 检查 APK，并记录公开的证书 SHA-256 指纹。
 5. 创建并推送与版本一致的 tag，例如 `v1.0.0-beta.3`。
 6. 等待 `Release signed APK` 工作流完成，下载 APK 与 `.sha256` 后再复算一次。
-7. 从旧 release APK 覆盖安装到测试设备，确认 Room 记录、账号状态和日历统计保持。
+7. 从旧 release APK 覆盖安装到测试模拟器，确认 Room 记录、账号状态和日历统计保持：
+
+   ```powershell
+   pnpm verify-release-upgrade -- --baseline <旧版本.apk> --candidate <新版本.apk>
+   ```
+
+   该脚本只允许在 `emulator-<n>` 设备上运行（会卸载并重装包），按 AppCopy 的默认中文文案定位控件；脚本会自动写入一条记录再覆盖安装，验证 Room 记录仍在。真实账号与云端恢复仍需人工确认。
 
 ## 首次从 Debug 版迁移
 

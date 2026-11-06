@@ -27,7 +27,10 @@ const allowedCopyFiles = new Set([
 const englishLanguageFile = path.join(commonRoot, "EnStrings.kt");
 const appNameResource = path.join(productionRoot, "res", "values", "strings.xml");
 const textExtensions = new Set([".kt", ".java", ".xml", ".kts", ".gradle", ".properties"]);
-const cjk = /[\u3400-\u9fff]/u;
+// Han ideographs plus CJK punctuation/fullwidth forms. The punctuation ranges
+// matter: a hardcoded "、" is not user-facing copy in the same way a word is,
+// but it is Chinese typography leaking into shared or English UI code.
+const cjk = /[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/u;
 const legacyHandBrewTerm = String.fromCodePoint(0x624b, 0x51b2);
 
 function filesUnder(directory) {

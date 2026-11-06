@@ -56,7 +56,18 @@ internal data class RemoteSexRecord(
     val details: List<RemoteSexDetail> = emptyList(),
 ) : RemoteDailyCountRecord
 
+/**
+ * One collection read at a remote boundary.
+ *
+ * [sourceCollection] names the collection the documents were actually read
+ * from, and must never be guessed from [records]: a collection that currently
+ * holds nothing still produces an empty snapshot, and only the reader knows
+ * which collection an absence refers to. Modules receive the account-level
+ * merged stream, so every module checks this field before trusting an empty
+ * snapshot as proof that its own rows were deleted in the cloud.
+ */
 internal data class RemoteSnapshot(
+    val sourceCollection: String,
     val records: List<RemoteDailyCountRecord> = emptyList(),
     val fromCache: Boolean,
     val rejectedRecordCount: Int = 0,

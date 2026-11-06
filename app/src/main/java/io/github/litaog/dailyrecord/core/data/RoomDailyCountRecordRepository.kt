@@ -13,7 +13,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** Matches the server-side delete batch size; see deleteDetailsByIds. */
+/** Bound-variable budget per `IN(:ids)` delete; see chunkDetailIdsForDelete. */
 internal const val DETAIL_DELETE_CHUNK_SIZE = 400
 
 /**

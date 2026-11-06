@@ -145,7 +145,12 @@ class DailyCountSyncEngineTest {
 
         engine.applySnapshot(
             owner,
-            RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0),
+            RemoteSnapshot(
+                sourceCollection = HAND_BREW_RECORDS_COLLECTION,
+                records = emptyList(),
+                fromCache = false,
+                rejectedRecordCount = 0,
+            ),
         )
 
         assertFalse(store.rows.containsKey(date))
@@ -163,14 +168,52 @@ class DailyCountSyncEngineTest {
 
         engine.applySnapshot(
             owner,
-            RemoteSnapshot(records = emptyList(), fromCache = true, rejectedRecordCount = 0),
+            RemoteSnapshot(
+                sourceCollection = HAND_BREW_RECORDS_COLLECTION,
+                records = emptyList(),
+                fromCache = true,
+                rejectedRecordCount = 0,
+            ),
         )
         assertTrue(store.rows.containsKey(date))
 
         engine.applySnapshot(
             owner,
-            RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 1),
+            RemoteSnapshot(
+                sourceCollection = HAND_BREW_RECORDS_COLLECTION,
+                records = emptyList(),
+                fromCache = false,
+                rejectedRecordCount = 1,
+            ),
         )
+        assertTrue(store.rows.containsKey(date))
+    }
+
+    /**
+     * The account-level realtime stream merges both modules, so a complete
+     * snapshot of the sibling collection reaches this engine with no records in
+     * it. Reading that as "my collection is empty" would delete this module's
+     * confirmed mirrors; see ADR-020 and RemoteSnapshot.sourceCollection.
+     */
+    @Test
+    fun completeSnapshotOfTheSiblingCollectionNeverCollectsThisModuleRows() = runSync {
+        val store = FakeStore()
+        val remote = FakeRemote()
+        val engine = DailyCountSyncEngine(store, remote)
+        store.rows[date] = entity(brewCount = 2, updatedAt = t0, remoteRevision = 3)
+            .copy(syncState = SYNCED)
+
+        val changed = engine.applySnapshot(
+            owner,
+            RemoteSnapshot(
+                sourceCollection = SEX_RECORDS_COLLECTION,
+                records = emptyList(),
+                fromCache = false,
+                rejectedRecordCount = 0,
+            ),
+        )
+
+        assertEquals(0, changed)
         assertTrue(store.rows.containsKey(date))
     }
 
@@ -297,8 +340,13 @@ private class FakeStore : DailyCountSyncStore<HandBrewRecordEntity, RemoteHandBr
         var changed = 0
         records.forEach { remote ->
             val local = rows[remote.localDate]
-            // Mirrors the production guard: pending local edits and revisions
-            // at or above the remote one must never be overwritten by a fetch.
+            // Simplified production guard: the real RoomDailyCountSyncStoreBase
+            // also compares the document id and deletes the local row when the
+            // remote generation changed, so a recreated cloud document with a
+            // restarted revision is adopted here even though this fake would
+            // keep the stale row. That branch is covered by the two
+            // syncedPeerAcceptsRecreatedCloudGenerationWithRestartedRevision
+            // coordinator tests; do not read this fake as the full rule.
             if (local?.syncState == SYNC_PENDING ||
                 (local != null && local.remoteRevision >= remote.revision)
             ) {
@@ -353,6 +401,7 @@ private class FakeStore : DailyCountSyncStore<HandBrewRecordEntity, RemoteHandBr
 private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, RemoteHandBrewRecord> {
     val server = mutableMapOf<LocalDate, RemoteHandBrewRecord>()
     var fetchCalls = 0
+    override val collectionName: String = HAND_BREW_RECORDS_COLLECTION
 
     /** Simulates a user edit landing while the commit request is in flight. */
     var onCommit: (() -> Unit)? = null
@@ -408,6 +457,7 @@ private class FakeRemote : DailyCountRemoteDataSource<HandBrewRecordEntity, Remo
     }
 
     private fun fetchSnapshot(rejected: Int = 0) = RemoteSnapshot(
+        sourceCollection = collectionName,
         records = server.values.toList(),
         fromCache = false,
         rejectedRecordCount = rejected,

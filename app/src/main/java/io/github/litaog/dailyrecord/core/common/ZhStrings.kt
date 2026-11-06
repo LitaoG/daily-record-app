@@ -505,6 +505,8 @@ internal object ZhStrings : AppStrings {
 
         override fun monthLabel(month: Int): String = "${month}月"
 
+        override val monthListSeparator = "、"
+
         override fun dateDescription(date: LocalDate, status: String): String =
             "${date.year}年${date.monthValue}月${date.dayOfMonth}日，$status"
 
