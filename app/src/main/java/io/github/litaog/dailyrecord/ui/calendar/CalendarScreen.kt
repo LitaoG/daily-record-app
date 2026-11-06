@@ -260,11 +260,11 @@ private fun CalendarMonthGrid(
     cellHeight: androidx.compose.ui.unit.Dp,
     largeText: Boolean,
     onDateSelected: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
     /** Date whose quick-adjust stepper is open, if any. */
     quickAdjustDate: LocalDate? = null,
     onLongPress: ((LocalDate) -> Unit)? = null,
     quickAdjustPopup: (@Composable (LocalDate) -> Unit)? = null,
-    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         gridDates.chunked(7).forEach { week ->

@@ -56,6 +56,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.RecordModule
@@ -334,7 +335,9 @@ internal fun RecordModuleSelector(
             Box(Modifier.matchParentSize()) {
                 Box(
                     modifier = Modifier
-                        .offset(x = sliderOffset)
+                        // Lambda overload: the animated value is read during
+                        // layout, so the slide never recomposes the selector.
+                        .offset { IntOffset(sliderOffset.roundToPx(), 0) }
                         .width(segmentWidth)
                         .fillMaxHeight()
                         .shadow(
