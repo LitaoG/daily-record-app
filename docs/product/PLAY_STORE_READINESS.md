@@ -15,7 +15,7 @@
 | 权限 | `INTERNET`、`ACCESS_NETWORK_STATE`，以及应用锁使用的普通权限 `USE_BIOMETRIC`（ADR-023，无需运行时请求） | — | 不需要敏感权限声明 |
 | 系统备份 | `allowBackup="false"` | — | 与隐私说明一致 |
 | 明文流量 | Release `usesCleartextTraffic="false"` | — | 满足 |
-| 原生库 | 未核实 | 含原生库的应用需要满足 Play 的内存页大小要求 | 待核实：检查 AAB 内是否有 `lib/` 目录 |
+| 原生库 | 包含 2 个依赖自带的 .so 库 | 含原生库的应用需要满足 Play 的 16 KB 内存页大小要求 | 已核实：AAB 与 APK 内部包含 libandroidx.graphics.path.so 与 libdatastore_shared_counter.so，经 zipalign -c -P 16 -v 4 验证 100% 对齐 |
 
 ## 2. 内容政策定位
 
@@ -89,14 +89,14 @@
 | 签名 AAB（`bundleRelease`） | 负责人（需要签名材料） | 待做 |
 | Play App Signing 方式 | 负责人 | 决策 D5 |
 | 桌面伪装方案（ADR-024） | 代理（负责人授权） | 已决定并实现为“日记 / Journal”入口，待设备测试 |
-| 网页删除入口与接收邮箱 | 负责人 | 决策 D4 |
+| 网页删除入口与接收邮箱 | 负责人 / 代理 | 代理已提供 `docs/ACCOUNT_DELETION.md` 规范与模板，负责人确定接收邮箱并在 Play Console 填入 URL（决策 D4） |
 | 填写 Data safety、健康应用声明、内容分级、目标受众 | 负责人 | 按本文建议 |
 | 英文模块名中性化（Solo / Duo） | 代理 | 已提交，单测通过，待设备测试 |
 | 商店文案定稿 | 负责人 | 按第 2 节草稿 |
 | 设置页隐私政策入口 | 代理 | 已提交，编译与单测通过，待设备测试 |
 | 英文隐私政策 | 代理 | 已写（`PRIVACY.en.md`） |
 | 按新矢量图标导出 512px 商店图标 | 代理 | 已导出到 `docs/design/icon-source/google-play-icon-512.png`，待负责人目视确认 |
-| 核实 AAB 是否含原生库 | 代理 | 待做 |
+| 核实 AAB 是否含原生库 | 代理 | 已核实：AAB 与 APK 含 2 个 .so 库，经 `zipalign -c -P 16 -v 4` 验证 100% 满足 16 KB 对齐 |
 | 空数据商店截图 | 代理（需要模拟器内存） | 待做 |
 
 决策项：

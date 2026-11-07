@@ -39,6 +39,7 @@
 | `docs/DECISIONS.md` | 当前必读 | P0 | 必需 | 是 | 是 | 已接受 ADR 和不可随意推翻的技术/产品决策 |
 | `docs/STATISTICS.md` | 当前必读 | P1 | 必需 | 是 | 是 | 周/月/年/全部历史统计的唯一口径 |
 | `docs/SYNC_AND_PRIVACY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 本地优先、账号隔离、同步冲突和删除语义 |
+| `docs/ACCOUNT_DELETION.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | Google Play 政策合规：应用内与网页/邮件账号及云端数据删除指引 |
 | `docs/UI_UX.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前 Compose 页面、状态、文案和无障碍规则 |
 | `docs/DEVELOPMENT.md` | 当前必读 | P1 | 必需 | 是 | 是 | 本机环境、命令、配置边界和日常开发流程 |
 | `docs/TESTING.md` | 当前必读 | P1 | 必需 | 是 | 是 | 按影响范围选择测试及小版本完整门禁 |

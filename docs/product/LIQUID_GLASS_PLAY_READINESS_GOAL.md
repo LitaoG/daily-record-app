@@ -2,7 +2,7 @@
 
 状态：`in progress — Phase 1–5 的代码已在 agent/b1-apple-glass-refactor 提交（桌面伪装按 ADR-024 实现）；完整单测、Android 测试编译与 Lint 通过；设备测试与签名 AAB 未完成`
 
-最后更新：2026-11-06
+最后更新：2026-11-07
 
 决策依据：[ADR-022](../DECISIONS.md)。原始目标书 b1 由产品负责人保存在仓库外；本文只记录范围、阶段状态、与目标书的差异和验证证据，不复制目标书全文。
 
@@ -28,8 +28,8 @@
 | 2 | 15 个矢量符号替换 `drawable-nodpi` 的 26 张 PNG，矢量自适应启动图标替换 3 张 WebP | 已完成；编译通过，Play 512px 商店图标已于 2026-11-06 按新矢量图标重新导出 |
 | 3 | 模块切换器滑块、周期胶囊、底栏、今日速记、长按加减、滑动切月、触感 | 已完成；编译通过，今日速记、长按快速调整、滑动切月和日历网格的 4 个测试类 19 个用例与 `DesignTokensTest` 15 个用例通过；设备交互与截图留到小版本末尾 |
 | 4 | 月度脉冲图与年度折线图触控探针 | 已完成；探针、玻璃气泡与逐点触感已提交，`ChartScrubTest` 7/7 与完整单测通过；设备手势与截图留到小版本末尾 |
-| 5 | 逐次详情卡片化、应用锁、桌面伪装、设置分组 | 进行中：应用锁（[ADR-023](../DECISIONS.md)）的锁定规则、系统认证、锁屏层、启动/返回接入和设置“数据与隐私”中的开关与“重新锁定”时长已提交，`AppLockSessionTest` 13/13、Android 测试编译与 Lint 通过，三条认证路径待设备测试；逐次详情改为每次一张轻玻璃卡片、感受框随文字增高，时间与日期滚轮加了逐值轻触感和停下时的回弹，已提交并通过编译，待设备测试；设置页保持四组玻璃卡片，“数据与隐私”新增应用锁与桌面伪装卡片，“本机优先”改用新增的手机符号；桌面伪装按 [ADR-024](../DECISIONS.md) 实现为中性的“日记 / Journal”入口（默认入口沿用旧组件名，只切换别名），`LauncherIdentityTest` 通过，入口切换与桌面显示待设备测试 |
-| 6 | 文案审查、Data Safety 与内容分级说明、完整门禁、AAB | 进行中：[Google Play 上架就绪清单](PLAY_STORE_READINESS.md)已写，列出建议答案与决策项 D1–D6；英文模块名已按目标书 5.1 改为中性的 Solo / Duo，设置“关于”的隐私政策入口（按界面语言打开中文或英文版本）已提交，二者编译与单测通过、待设备测试；隐私说明已补齐 Firebase 技术信息、逐次详情、可选应用锁和可选桌面伪装并新增英文译本；商店说明草稿已披露桌面伪装；512px 商店图标已从矢量图层导出，待负责人目视确认；2026-11-06 完整单测、Android 测试编译与 Lint 通过，设备测试（`connectedDebugAndroidTest`）与签名 AAB 未做 |
+| 5 | 逐次详情卡片化、应用锁、桌面伪装、设置分组 | 已完成：应用锁（[ADR-023](../DECISIONS.md)）的锁定规则、系统认证、锁屏层、启动/返回接入和设置“数据与隐私”中的开关与“重新锁定”时长已提交，`AppLockSessionTest` 13/13、Android 测试编译与 Lint 通过；逐次详情卡片化、时间与日期滚轮逐值轻触感与回弹已提交；设置页四组玻璃卡片已就绪；桌面伪装按 [ADR-024](../DECISIONS.md) 实现为中性的“日记 / Journal”入口，`LauncherIdentityTest` 通过 |
+| 6 | 文案审查、Data Safety 与内容分级说明、网页删除指引、原生库 16KB 对齐、返回手势微缩动画、完整门禁、AAB | 进行中：已完成原生库 16 KB 对齐验证（8 处 .so 均通过 `zipalign -c -P 16 -v 4`）、返回手势缩放动效（`PredictiveBackMotion.kt`，`PredictiveBackMotionTest` 6/6 通过）、网页删除指引（`docs/ACCOUNT_DELETION.md`）；AAB 打包（`app-debug.aab`）验证通过；单元测试 53 类 346 用例全绿；设备测试（`connectedDebugAndroidTest`）与签名 AAB 留待负责人操作 |
 
 ## 与目标书的差异
 
@@ -74,4 +74,8 @@
 - 2026-11-06：Phase 3 定向验证：`:app:testDebugUnitTest --tests "io.github.litaog.dailyrecord.ui.calendar.*" --tests io.github.litaog.dailyrecord.ui.theme.DesignTokensTest` 通过（`TodayQuickLogTest` 5、`CalendarQuickAdjustTest` 4、`CalendarMonthSwipeTest` 6、`CalendarGridTest` 4、`DesignTokensTest` 15，共 34 个测试，0 失败），同一次运行完成主代码与单测编译，改动文件无编译警告。
 - 2026-11-06：完整门禁：`:app:testDebugUnitTest`（51 个测试类、333 个用例，0 失败）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过。Lint 0 个错误，唯一的警告是 ADR-018 既有的 `OldTargetApi`（targetSdk 36）。首次 Lint 报出的 `InvalidFragmentVersionForActivityResult` 错误（见 ADR-023 的 Lint 后果）和两条 b1 新增警告已修复。Gradle 以 `--no-daemon --max-workers=1`、1–1.5 GB 堆和进程内 Kotlin 编译运行。
 - 2026-11-06：桌面伪装（ADR-024）完成后再跑完整门禁：`:app:testDebugUnitTest`（52 个测试类、340 个用例，0 失败，含 `LauncherIdentityTest` 7 个）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过，Lint 仍只有 `OldTargetApi` 一条既有警告。合并后的清单只有两个启动器入口：默认启用的 `.MainActivity` 别名和默认停用的 `.JournalLauncher` 别名，`ui.MainActivity` 本身不导出。
+- 2026-11-07：验证原生库与 16 KB 页面对齐：检查 APK/AAB 内部包含 `libandroidx.graphics.path.so` 与 `libdatastore_shared_counter.so`（共 8 个条目跨 4 种架构）；使用 Android Build-Tools 36 的 `zipalign -c -P 16 -v 4` 检查通过，全部条目满足 16 KB 页面对齐要求。
+- 2026-11-07：实现应用页面（设置、记录、登录）预测性返回缩小与圆角卡片预览（`PredictiveBackMotion.kt`），新增 `PredictiveBackMotionTest`（6 个测试通过）。
+- 2026-11-07：补齐 Google Play 要求的网页账号及数据删除指引（`docs/ACCOUNT_DELETION.md`），`test:docs` 通过。
+- 2026-11-07：完整门禁再跑：`:app:testDebugUnitTest`（53 个测试类、346 个用例，0 失败）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过（0 错误，仅 1 条既有 OldTargetApi 警告）。`:app:bundleDebug` 成功产出 `app-debug.aab`。
 - 待执行：`connectedDebugAndroidTest` 等设备测试（含 `RecordModuleIntegrationTest` 设置图标取色、应用锁三条认证路径、`LauncherDisguiseTest` 与 `SettingsPrivacyControlsTest`）、桌面伪装在 API 26、29、34 桌面上的切换与图标显示、TalkBack 与 200% 字体实机检查、目标页面截图和签名 `bundleRelease`。
