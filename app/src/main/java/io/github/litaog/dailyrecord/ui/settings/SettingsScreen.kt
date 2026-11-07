@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.settings
 
-import androidx.activity.compose.BackHandler
+import io.github.litaog.dailyrecord.ui.components.predictiveBackPreview
+import io.github.litaog.dailyrecord.ui.components.rememberPredictiveBackState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -106,7 +107,7 @@ internal fun SettingsScreen(
     onOpenAccount: () -> Unit,
     onSignIn: (() -> Unit)?,
 ) {
-    BackHandler(onBack = onBack)
+    val backState = rememberPredictiveBackState(onBack = onBack)
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showColorThemeDialog by rememberSaveable { mutableStateOf(false) }
@@ -116,6 +117,7 @@ internal fun SettingsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .predictiveBackPreview(backState)
             .background(backdropBrush),
     ) {
         Scaffold(
