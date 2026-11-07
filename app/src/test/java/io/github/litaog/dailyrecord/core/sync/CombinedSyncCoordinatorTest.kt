@@ -19,7 +19,10 @@ class CombinedSyncCoordinatorTest {
             FakeModule(pending = 100, prepared = 200, applied = 300, uploaded = 400),
         )
         val coordinator = CombinedSyncCoordinator(modules)
-        val snapshot = RemoteSnapshot(fromCache = false)
+        val snapshot = RemoteSnapshot(
+            sourceCollection = HAND_BREW_RECORDS_COLLECTION,
+            fromCache = false,
+        )
 
         assertEquals(111, coordinator.observePendingCount("owner").first())
         assertEquals(111, coordinator.pendingCount("owner"))
@@ -77,7 +80,10 @@ class CombinedSyncCoordinatorTest {
         val failing = FakeModule(1, 1, 1, 1, applyFailure = failure)
         val healthy = FakeModule(2, 2, 2, 2)
         val coordinator = CombinedSyncCoordinator(listOf(failing, healthy))
-        val snapshot = RemoteSnapshot(fromCache = false)
+        val snapshot = RemoteSnapshot(
+            sourceCollection = HAND_BREW_RECORDS_COLLECTION,
+            fromCache = false,
+        )
 
         val result = runCatching { coordinator.applySnapshot("owner", snapshot) }
 
@@ -141,7 +147,9 @@ private class FakeModule(
     private val prepareFailure: Exception? = null,
     private val pendingFailure: Exception? = null,
 ) : ModuleSyncCoordinator {
-    private val remote = MutableStateFlow(RemoteSnapshot(fromCache = false))
+    private val remote = MutableStateFlow(
+        RemoteSnapshot(sourceCollection = HAND_BREW_RECORDS_COLLECTION, fromCache = false),
+    )
     private val pendingFlow = MutableStateFlow(pending)
     var syncCalls = 0
         private set

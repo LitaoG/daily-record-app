@@ -411,6 +411,71 @@ class AccountDeletionCoordinatorTest {
     }
 
     @Test
+    fun authDeletionMarkersBracketTheAuthDeletionRequest() = runBlocking {
+        val calls = mutableListOf<String>()
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+
+        val result = coordinator(
+            auth = auth,
+            remote = remote,
+            local = local,
+            markAuthDeletionStarted = { calls += "mark-auth-started" },
+            markAuthDeletionComplete = { calls += "mark-auth-complete" },
+        ).deleteAccount(
+            ownerId = OWNER,
+            password = "correct-password",
+            localData = LocalDataAfterAccountDeletion.Keep,
+        )
+
+        // The started marker must land before the Auth request (so a crash
+        // mid-request is recoverable as an unknown outcome) and the complete
+        // marker immediately after it succeeds (it is the durable proof that
+        // startup may finish local cleanup without guessing).
+        assertEquals(
+            listOf(
+                "reauth",
+                "delete-cloud",
+                "stage-local",
+                "mark-auth-started",
+                "delete-auth",
+                "mark-auth-complete",
+                "delete-owner-cache",
+                "promote-local",
+            ),
+            calls,
+        )
+        assertTrue(result is AccountDeletionResult.Completed)
+    }
+
+    @Test
+    fun authDeletionCompleteMarkerFailureLeavesLocalCleanupPending() = runBlocking {
+        val calls = mutableListOf<String>()
+        val auth = FakeAuthRepository(calls)
+        val remote = FakeRemote(calls)
+        val local = FakeLocalStore(calls)
+        val markerFailure = IllegalStateException("journal write failed")
+
+        val result = runCatching {
+            coordinator(
+                auth = auth,
+                remote = remote,
+                local = local,
+                markAuthDeletionComplete = { throw markerFailure },
+            ).deleteAccount(
+                ownerId = OWNER,
+                password = "correct-password",
+                localData = LocalDataAfterAccountDeletion.Keep,
+            )
+        }
+
+        assertTrue(result.exceptionOrNull() is AccountDeletionLocalCleanupPendingException)
+        assertTrue(auth.accountDeleted)
+        assertFalse(local.ownerCacheDeleted)
+    }
+
+    @Test
     fun cancellationDuringLocalCleanupPropagatesWithoutPendingState() = runBlocking {
         val calls = mutableListOf<String>()
         val cancellation = kotlinx.coroutines.CancellationException("cancelled")

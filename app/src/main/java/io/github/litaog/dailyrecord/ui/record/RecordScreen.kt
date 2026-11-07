@@ -638,7 +638,6 @@ private fun RecordHeader(
             ) {
                 BackChevronIcon(
                     modifier = Modifier.size(20.dp),
-                    color = DailyRecordText,
                     theme = moduleSpec.colors.brandIconTheme,
                 )
             }

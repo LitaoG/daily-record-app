@@ -166,8 +166,10 @@ internal class AccountSyncManager(
             return
         }
         var mutexReleased = false
+        var attempts = 0
         try {
-            while (true) {
+            while (attempts < MAX_SYNC_BURST_ATTEMPTS) {
+                attempts++
                 performSyncAttempt(
                     timeoutMillis = if (queueIfBusy) {
                         backgroundSyncTimeoutMillis
@@ -176,7 +178,7 @@ internal class AccountSyncManager(
                     },
                 )
                 val continueForQueuedRequest = synchronized(syncHandoffMonitor) {
-                    if (followUpSyncRequested) {
+                    if (followUpSyncRequested && attempts < MAX_SYNC_BURST_ATTEMPTS) {
                         followUpSyncRequested = false
                         true
                     } else {
@@ -184,6 +186,7 @@ internal class AccountSyncManager(
                         // A new caller can either acquire the now-free mutex,
                         // or (if it arrived before this block) set the flag
                         // that was consumed above; neither request is lost.
+                        followUpSyncRequested = false
                         mutex.unlock()
                         mutexReleased = true
                         false
@@ -288,16 +291,18 @@ internal fun Throwable.isRetryableRemoteObservation(): Boolean =
             cause is FirebaseFirestoreException && cause.code in RETRYABLE_FIRESTORE_CODES
     }
 
+private const val MAX_SYNC_BURST_ATTEMPTS = 3
+
 private val RETRYABLE_FIRESTORE_CODES: Set<FirebaseFirestoreException.Code> by lazy {
     // Keep Firebase enum initialization off the file class initializer. JVM
     // tests use Firebase exceptions as optional inputs and should not load the
     // Firestore static state merely to classify IOException failures.
+    // RESOURCE_EXHAUSTED is excluded to prevent hammering depleted quotas.
     setOf(
         FirebaseFirestoreException.Code.ABORTED,
         FirebaseFirestoreException.Code.CANCELLED,
         FirebaseFirestoreException.Code.DEADLINE_EXCEEDED,
         FirebaseFirestoreException.Code.INTERNAL,
-        FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED,
         FirebaseFirestoreException.Code.UNAVAILABLE,
         FirebaseFirestoreException.Code.UNKNOWN,
         FirebaseFirestoreException.Code.UNAUTHENTICATED,
@@ -306,7 +311,6 @@ private val RETRYABLE_FIRESTORE_CODES: Set<FirebaseFirestoreException.Code> by l
 
 private val RETRYABLE_FIREBASE_AUTH_CODES = setOf(
     FirebaseAuthErrorCodes.NETWORK_REQUEST_FAILED,
-    FirebaseAuthErrorCodes.TOO_MANY_REQUESTS,
     FirebaseAuthErrorCodes.USER_TOKEN_EXPIRED,
     FirebaseAuthErrorCodes.INVALID_USER_TOKEN,
     FirebaseAuthErrorCodes.ID_TOKEN_REVOKED,

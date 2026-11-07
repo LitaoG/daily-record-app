@@ -147,7 +147,9 @@ class SexSyncCoordinatorTest {
 
     @Test
     fun realtimeSubscriptionResubscribesAfterUnauthenticatedRecovers() = runBlocking {
-        val recovered = MutableStateFlow(RemoteSnapshot(fromCache = false))
+        val recovered = MutableStateFlow(
+            RemoteSnapshot(sourceCollection = SEX_RECORDS_COLLECTION, fromCache = false),
+        )
         val operations = object : AccountSyncOperations {
             val subscriptions = MutableStateFlow(0)
 
@@ -747,6 +749,7 @@ class SexSyncCoordinatorTest {
             RemoteHandBrewRecord,
             RemoteHandBrewDetail,
         >(
+            collectionName = HAND_BREW_RECORDS_COLLECTION,
             entityId = { it.id },
             entityLocalDate = { it.localDate },
             entityCount = { it.brewCount },
@@ -801,6 +804,7 @@ class SexSyncCoordinatorTest {
         failFetchAttempts: Int = 0,
         rejectedRecordCount: Int = 0,
     ) = FakeDailyCountRemoteDataSource<SexRecordEntity, RemoteSexRecord, RemoteSexDetail>(
+        collectionName = SEX_RECORDS_COLLECTION,
         failFirstObservation = failFirstObservation,
         failFetchAttempts = failFetchAttempts,
         rejectedRecordCount = rejectedRecordCount,

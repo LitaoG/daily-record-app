@@ -53,9 +53,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-internal val VPN_SYNC_FAILURE_MESSAGE: String
-    get() = AppCopy.vpnSyncFailure
-
 private val earliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
 
 internal enum class TopDestination {

@@ -19,6 +19,7 @@ import kotlinx.coroutines.sync.withLock
  * recreated from the local pending edit; ordinary clears keep tombstones.
  */
 internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecord, RD>(
+    override val collectionName: String,
     private val failFirstObservation: Boolean = false,
     private val failFetchAttempts: Int = 0,
     private val rejectedRecordCount: Int = 0,
@@ -73,6 +74,7 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
         emitAll(
             values.map { allOwners ->
                 RemoteSnapshot(
+                    sourceCollection = collectionName,
                     records = allOwners[ownerId].orEmpty().values.toList(),
                     fromCache = false,
                     rejectedRecordCount = rejectedRecordCount,
@@ -86,6 +88,7 @@ internal class FakeDailyCountRemoteDataSource<E : Any, R : RemoteDailyCountRecor
         if (fetchCalls <= failFetchAttempts) throw IOException("temporary fetch failure")
         fetchGate?.await()
         return RemoteSnapshot(
+            sourceCollection = collectionName,
             records = values.value[ownerId].orEmpty().values.toList(),
             fromCache = false,
             rejectedRecordCount = rejectedRecordCount,

@@ -2,14 +2,17 @@
 
 感谢参与 Daily Record。当前项目只记录自慰和做爱两个固定、独立模块的每日次数，优先保证数据正确、离线可用、隐私安全和交互简单；不得为尚未立项的记录类型预先建立通用活动抽象。
 
+完整的端到端流程（查事实、定界、分支、实现、定向验证、文档同步、Diff 审查、提交、CI、合并清理）以 [`docs/WORKFLOW.md`](docs/WORKFLOW.md) 为唯一权威来源，本文件只列出贡献者最容易踩到的要点。
+
 ## 工作流程
 
-1. 先在 Issue 中说明需求或问题。
-2. 从最新 `main` 创建功能分支。所有代码、文档或测试改动都必须在分支上进行，禁止直接在 `main` 上修改。
+1. 先在 Issue 中说明需求或问题，写清目标、范围边界与验收步骤。
+2. 从最新 `main` 创建 `agent/<name>` 分支（见 [`docs/WORKFLOW.md`](docs/WORKFLOW.md) 第 3 节）。
 3. 保持提交聚焦，避免混入无关格式化或重构。
 4. 新功能补充测试和相关文档。
 5. 创建 Pull Request，并填写模板中的验证结果。
 6. 新增、移动、重命名或删除文档时，同步更新 [`docs/DOCUMENTATION_CATALOG.md`](docs/DOCUMENTATION_CATALOG.md)。
+7. 合并后清理临时产物和远端临时分支。
 
 ## 分支与提交
 
@@ -25,12 +28,14 @@
 
 ## 代码要求
 
-- Kotlin 代码遵循官方 Kotlin 风格。
-- Compose UI 使用状态提升和单向数据流。
+代码与测试的具体写法和分层约束以 [`docs/ENGINEERING_STANDARDS.md`](docs/ENGINEERING_STANDARDS.md) 为准。最低要求：
+
+- Kotlin 遵循官方风格；Compose 使用状态提升和单向数据流。
 - Repository 是 UI/领域层访问数据的唯一入口。
 - 日期计算显式使用 `LocalDate`；周固定从星期一开始。
 - 当前功能不引入 `Activity`、`MeasurementType` 或活动筛选。未来记录类型需要先有产品契约和 ADR，并作为独立垂直模块实现，不能污染现有自慰或做爱领域模型。
 - 不允许用数据库清空重建代替正式迁移。
+- 用户可见文案只放在 `ZhStrings.kt` / `EnStrings.kt`，并遵守双语文案契约。
 
 ## 测试要求
 

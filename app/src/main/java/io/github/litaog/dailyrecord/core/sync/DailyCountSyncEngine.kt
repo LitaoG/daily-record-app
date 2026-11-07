@@ -49,6 +49,8 @@ internal interface DailyCountSyncStore<LocalRecord, RemoteRecord> {
 }
 
 internal interface DailyCountRemoteDataSource<LocalRecord, RemoteRecord> {
+    /** The Firestore sub-collection this module owns; see [RemoteSnapshot.sourceCollection]. */
+    val collectionName: String
     fun observe(ownerId: String): Flow<RemoteSnapshot>
     suspend fun fetch(ownerId: String): RemoteSnapshot
     fun recordsFrom(snapshot: RemoteSnapshot): List<RemoteRecord>
@@ -58,12 +60,17 @@ internal interface DailyCountRemoteDataSource<LocalRecord, RemoteRecord> {
 
 /**
  * A snapshot is authoritative about document absence only when it is a fresh
- * server read that parsed without rejecting any malformed document: a rejected
- * document is still present server-side, so it must never collect its local
- * mirror (ADR-020).
+ * server read of *this module's own* collection that parsed without rejecting
+ * any malformed document: a rejected document is still present server-side, so
+ * it must never collect its local mirror (ADR-020).
+ *
+ * The collection check is not defensive. The account-level realtime stream
+ * merges both modules, so a complete snapshot of the sibling collection also
+ * arrives here with no records in it; treating that as this module's empty
+ * collection would delete this module's confirmed rows.
  */
-internal fun RemoteSnapshot.isCompleteServerSnapshot(): Boolean =
-    !fromCache && rejectedRecordCount == 0
+internal fun RemoteSnapshot.isCompleteServerSnapshotFor(collectionName: String): Boolean =
+    sourceCollection == collectionName && !fromCache && rejectedRecordCount == 0
 
 /**
  * Shared conflict/retry algorithm for daily-count modules. Runs commits,
@@ -81,12 +88,20 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
 
     suspend fun pendingCount(ownerId: String): Int = store.pendingCount(ownerId)
 
-    suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int =
-        store.applyRemote(
+    /**
+     * The account-level realtime stream merges every module, so this module also
+     * receives the sibling module's snapshots. Those are ignored rather than
+     * rejected: "not about me" is a normal condition on a merged stream, and an
+     * empty foreign snapshot must never be read as "my collection is empty".
+     */
+    suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int {
+        if (snapshot.sourceCollection != remote.collectionName) return 0
+        return store.applyRemote(
             ownerId,
             remote.recordsFrom(snapshot),
-            completeServerSnapshot = snapshot.isCompleteServerSnapshot(),
+            completeServerSnapshot = snapshot.isCompleteServerSnapshotFor(remote.collectionName),
         )
+    }
 
     suspend fun prepareLocalAccount(ownerId: String): Int {
         require(ownerId.isNotBlank()) { "ownerId must not be blank" }
@@ -102,7 +117,7 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
         var downloaded = store.applyRemote(
             ownerId,
             initialRecords,
-            completeServerSnapshot = initial.isCompleteServerSnapshot(),
+            completeServerSnapshot = initial.isCompleteServerSnapshotFor(remote.collectionName),
         )
         var uploaded = 0
         var rejected = initial.rejectedRecordCount
@@ -155,7 +170,7 @@ internal class DailyCountSyncEngine<LocalRecord, RemoteRecord>(
             downloaded += store.applyRemote(
                 ownerId,
                 remote.recordsFrom(confirmed),
-                completeServerSnapshot = confirmed.isCompleteServerSnapshot(),
+                completeServerSnapshot = confirmed.isCompleteServerSnapshotFor(remote.collectionName),
             )
             // The post-upload snapshot is fresher than the initial one: a
             // trigger may have cleaned a malformed document between the two

@@ -21,7 +21,7 @@ internal class FirebaseHandBrewRemoteDataSource(
         firestore = firestore,
         functions = functions,
         detailsProvider = detailsProvider,
-        collectionName = "handBrewRecords",
+        collectionName = HAND_BREW_RECORDS_COLLECTION,
         parseRecord = ::parseRemoteHandBrewRecord,
         parseRecords = ::parseRemoteHandBrewRecords,
         entityId = { it.id },

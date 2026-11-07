@@ -23,7 +23,7 @@ private const val HAND_BREW_LEGACY_ICON_KEY = "flight"
         SexRecordEntity::class,
         SexRecordDetailEntity::class,
     ],
-    version = 6,
+    version = DailyRecordDatabase.SCHEMA_VERSION,
     exportSchema = true,
 )
 @TypeConverters(DatabaseConverters::class)

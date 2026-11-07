@@ -252,7 +252,9 @@ private fun ExtremesRow(
         ) {
             Text(label, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelMedium)
             Text(
-                months.joinToString("、") { AppCopy.Statistics.monthLabel(it.month.monthValue) },
+                months.joinToString(AppCopy.Statistics.monthListSeparator) {
+                    AppCopy.Statistics.monthLabel(it.month.monthValue)
+                },
                 color = accent,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,

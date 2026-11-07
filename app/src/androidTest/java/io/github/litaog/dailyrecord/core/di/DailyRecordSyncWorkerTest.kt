@@ -29,7 +29,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -162,7 +161,7 @@ class DailyRecordSyncWorkerTest {
 
     @Test
     fun workerRecoversPendingEditAfterCloudDocumentDisappears() = runBlocking {
-        assumeAuthEmulatorReachable()
+        requireAuthEmulatorReachable()
         val services = FirebaseServices.create(context, emulatorHost = "10.0.2.2")
         services.authRepository.signOut()
         var ownerId: String? = null
@@ -246,7 +245,14 @@ class DailyRecordSyncWorkerTest {
         }
     }
 
-    private fun assumeAuthEmulatorReachable() {
+    /**
+     * Fails loudly when the Auth emulator is not up. This suite runs under
+     * `firebase emulators:exec --only auth,firestore,functions`, so an
+     * unreachable emulator is a broken run, not an excuse to skip. The
+     * physical-deletion recovery regression below is declared mandatory in
+     * docs/TESTING.md, and JUnit reports `assumeTrue(false)` as a pass.
+     */
+    private fun requireAuthEmulatorReachable() {
         val connection = URL(
             "http://10.0.2.2:9099/emulator/v1/projects/demo-daily-record-app/config",
         ).openConnection() as HttpURLConnection
@@ -254,9 +260,11 @@ class DailyRecordSyncWorkerTest {
             connection.connectTimeout = 1_000
             connection.readTimeout = 1_000
             connection.connect()
-            assumeTrue(connection.responseCode in 200..499)
-        } catch (_: Exception) {
-            assumeTrue("Firebase Auth emulator is not running", false)
+            assertEquals(
+                "Firebase Auth emulator must answer on 10.0.2.2:9099",
+                200,
+                connection.responseCode,
+            )
         } finally {
             connection.disconnect()
         }

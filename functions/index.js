@@ -5,6 +5,21 @@ const admin = require("firebase-admin");
 const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { randomUUID } = require("node:crypto");
 const { deleteLogEntry } = require("./delete-log");
+const {
+  CALLABLE_OPTIONS,
+  DELETION_CALLABLE_OPTIONS,
+  TRIGGER_OPTIONS,
+} = require("./resource-config");
+const {
+  requireWritesAllowed,
+  requireDeletionsAllowed,
+  areTriggersAllowed,
+} = require("./circuit-breaker");
+const {
+  enforceWriteRateLimit,
+  enforceDeletionRateLimit,
+} = require("./rate-limiter");
+const { verifyAppCheck } = require("./app-check-gate");
 
 setGlobalOptions({ region: "asia-east1" });
 
@@ -16,6 +31,7 @@ const MAX_DETAIL_ID_LENGTH = 160;
 const MAX_FEELING_CODE_POINTS = 100;
 const MAX_DETAIL_COUNT = 1000;
 const DELETE_BATCH_SIZE = 400;
+const MAX_TOTAL_DELETIONS_PER_INVOCATION = 2000;
 const MAX_AUTH_AGE_SECONDS = 5 * 60;
 
 const MODULES = Object.freeze({
@@ -230,8 +246,12 @@ function callableRecord(data, module) {
   };
 }
 
-exports.writeDailyCountRecord = onCall(async (request) => {
+exports.writeDailyCountRecord = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuthenticated(request);
+  await requireWritesAllowed(db);
+  enforceWriteRateLimit(auth.uid);
+  verifyAppCheck(request, "writeDailyCountRecord");
+
   const data = request.data;
   let validated;
   try {
@@ -293,27 +313,41 @@ exports.writeDailyCountRecord = onCall(async (request) => {
   return result;
 });
 
-exports.deleteAccountData = onCall(async (request) => {
+exports.deleteAccountData = onCall(DELETION_CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuthenticated(request);
   requireRecentlyAuthenticated(auth);
+  await requireDeletionsAllowed(db);
+  enforceDeletionRateLimit(auth.uid);
+  verifyAppCheck(request, "deleteAccountData");
+
   const data = request.data;
   if (!data || data.ownerId !== auth.uid) {
     throw httpsError("permission-denied", "The owner id must match the signed-in account.");
   }
 
   let deleted = 0;
+  let hasMore = false;
   for (const collectionName of Object.keys(MODULES)) {
     const collection = db.collection("users").doc(auth.uid).collection(collectionName);
-    while (true) {
-      const snapshot = await collection.limit(DELETE_BATCH_SIZE).get();
+    while (deleted < MAX_TOTAL_DELETIONS_PER_INVOCATION) {
+      const remainingQuota = MAX_TOTAL_DELETIONS_PER_INVOCATION - deleted;
+      const batchLimit = Math.min(DELETE_BATCH_SIZE, remainingQuota);
+      const snapshot = await collection.limit(batchLimit).get();
       if (snapshot.empty) break;
       const batch = db.batch();
       snapshot.docs.forEach((document) => batch.delete(document.ref));
       await batch.commit();
       deleted += snapshot.size;
     }
+    if (deleted >= MAX_TOTAL_DELETIONS_PER_INVOCATION) {
+      const probe = await collection.limit(1).get();
+      if (!probe.empty) {
+        hasMore = true;
+        break;
+      }
+    }
   }
-  return { ownerId: auth.uid, deleted };
+  return { ownerId: auth.uid, deleted, hasMore };
 });
 
 async function deleteMalformedDocument(after, collectionName, reason) {
@@ -330,6 +364,16 @@ async function deleteMalformedDocument(after, collectionName, reason) {
 
 async function validateWrittenRecord(change, collectionName) {
   if (!change.after.exists) return;
+  const triggersAllowed = await areTriggersAllowed(db);
+  if (!triggersAllowed) {
+    console.warn(JSON.stringify({
+      severity: "WARNING",
+      event: "CIRCUIT_BREAKER_TRIGGER_SKIPPED",
+      collection: collectionName,
+      message: "Document write validation trigger skipped by circuit breaker",
+    }));
+    return;
+  }
   const after = change.after;
   const data = after.data();
   const module = MODULES[collectionName];
@@ -341,11 +385,17 @@ async function validateWrittenRecord(change, collectionName) {
 }
 
 exports.validateHandBrewRecord = onDocumentWritten(
-  "users/{userId}/handBrewRecords/{date}",
+  {
+    document: "users/{userId}/handBrewRecords/{date}",
+    ...TRIGGER_OPTIONS,
+  },
   (event) => validateWrittenRecord(event.data, "handBrewRecords"),
 );
 
 exports.validateSexRecord = onDocumentWritten(
-  "users/{userId}/sexRecords/{date}",
+  {
+    document: "users/{userId}/sexRecords/{date}",
+    ...TRIGGER_OPTIONS,
+  },
   (event) => validateWrittenRecord(event.data, "sexRecords"),
 );

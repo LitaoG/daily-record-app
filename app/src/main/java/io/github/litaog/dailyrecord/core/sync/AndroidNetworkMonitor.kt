@@ -28,6 +28,10 @@ internal class AndroidNetworkMonitor(context: Context) : AutoCloseable {
     }
 
     init {
+        // Registration can only fail for a missing permission or an exhausted
+        // callback budget. The app never logs and must still start, so a
+        // failure is swallowed deliberately: availability then stops tracking
+        // changes and keeps the truthful snapshot taken just above.
         runCatching {
             connectivityManager.registerNetworkCallback(
                 NetworkRequest.Builder()

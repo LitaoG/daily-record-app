@@ -531,6 +531,8 @@ internal object EnStrings : AppStrings {
 
         override fun monthLabel(month: Int): String = monthNames.getOrElse(month - 1) { "$month" }
 
+        override val monthListSeparator = ", "
+
         override fun dateDescription(date: LocalDate, status: String): String =
             "${dateText(date)}, $status"
 

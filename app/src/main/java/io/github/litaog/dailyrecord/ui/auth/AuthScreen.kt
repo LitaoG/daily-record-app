@@ -133,7 +133,7 @@ internal fun AuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            CalendarGlyph(color = DailyRecordDefaultAccent, modifier = Modifier.size(36.dp))
+            CalendarGlyph(modifier = Modifier.size(36.dp))
             Text(AppCopy.Auth.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
             Text(
                 if (mode == AuthMode.SignIn) AppCopy.Auth.signInSubtitle else AppCopy.Auth.registerSubtitle,

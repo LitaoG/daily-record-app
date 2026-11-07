@@ -143,7 +143,9 @@ class HandBrewSyncCoordinatorTest {
 
     @Test
     fun realtimeSubscriptionResubscribesAfterUnauthenticatedRecovers() = runBlocking {
-        val recovered = MutableStateFlow(RemoteSnapshot(fromCache = false))
+        val recovered = MutableStateFlow(
+            RemoteSnapshot(sourceCollection = HAND_BREW_RECORDS_COLLECTION, fromCache = false),
+        )
         val operations = object : AccountSyncOperations {
             val subscriptions = MutableStateFlow(0)
 
@@ -754,6 +756,7 @@ private class FakeRemoteDataSource(
     private val failFetchAttempts: Int = 0,
     private val rejectedRecordCount: Int = 0,
 ) : HandBrewRemoteDataSource {
+    override val collectionName: String = HAND_BREW_RECORDS_COLLECTION
     private val mutex = Mutex()
     private val values = MutableStateFlow<Map<LocalDate, RemoteHandBrewRecord>>(emptyMap())
     val observationAttempts = MutableStateFlow(0)
@@ -771,6 +774,7 @@ private class FakeRemoteDataSource(
         emitAll(
             values.map {
                 RemoteSnapshot(
+                    sourceCollection = collectionName,
                     records = it.values.toList(),
                     fromCache = false,
                     rejectedRecordCount = rejectedRecordCount,
@@ -784,6 +788,7 @@ private class FakeRemoteDataSource(
         if (fetchCalls <= failFetchAttempts) throw IOException("temporary fetch failure")
         fetchGate?.await()
         return RemoteSnapshot(
+            sourceCollection = collectionName,
             records = values.value.values.toList(),
             fromCache = false,
             rejectedRecordCount = rejectedRecordCount,

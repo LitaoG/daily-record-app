@@ -12,8 +12,6 @@ internal const val FIELD_CREATED_AT = "createdAtMillis"
 internal const val FIELD_CLIENT_UPDATED_AT = "clientUpdatedAtMillis"
 internal const val FIELD_DELETED = "deleted"
 internal const val FIELD_REVISION = "revision"
-internal const val FIELD_SCHEMA_VERSION = "schemaVersion"
-internal const val FIELD_SERVER_UPDATED_AT = "serverUpdatedAt"
 internal const val FIELD_DETAILS = "details"
 
 internal const val DETAIL_ID = "id"
@@ -22,7 +20,6 @@ internal const val DETAIL_START_TIME = "startTime"
 internal const val DETAIL_END_TIME = "endTime"
 internal const val DETAIL_FEELING = "feeling"
 
-internal const val DELETE_BATCH_SIZE = 400L
 internal const val MAX_SUPPORTED_EPOCH_MILLIS = 253_402_300_799_999L
 /**
  * Trusted server-side cap for a single date's detail list (mirrors the
@@ -31,3 +28,8 @@ internal const val MAX_SUPPORTED_EPOCH_MILLIS = 253_402_300_799_999L
  */
 internal const val MAX_REMOTE_DETAIL_COUNT = 1000
 internal const val USERS_COLLECTION = "users"
+
+// Per-module sub-collections under users/{uid}. Kept beside the shared field
+// names so a module's collection and its snapshot provenance cannot drift.
+internal const val HAND_BREW_RECORDS_COLLECTION = "handBrewRecords"
+internal const val SEX_RECORDS_COLLECTION = "sexRecords"

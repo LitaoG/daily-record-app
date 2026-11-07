@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import kotlinx.coroutines.CompletableDeferred
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -27,6 +28,15 @@ import com.google.firebase.auth.FirebaseAuthException
 class AuthScreenTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    // PasswordResetCooldown is a process-wide object and every reset test here
+    // uses brew@example.com, so a send recorded by one test would put the next
+    // tests into the 60 s cooldown. Restore it after each test
+    // (docs/ENGINEERING_STANDARDS.md section 8).
+    @After
+    fun clearPasswordResetCooldown() {
+        PasswordResetCooldown.resetForTesting()
+    }
 
     @Test
     fun loginValidatesEmailAndPasswordBeforeSubmitting() {

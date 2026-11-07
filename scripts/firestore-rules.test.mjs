@@ -302,6 +302,101 @@ try {
   );
   await assertFails(deleteDoc(sexRecord));
   await assertSucceeds(getDoc(sexRecord));
+
+  // Rules cannot iterate arrays, so the size/type boundaries below are the
+  // only synchronous protection the client has against a malformed or hostile
+  // document; each of these must be rejected at write time.
+  const recordWithDetails = (details, overrides = {}) => ({
+    ...validRecord,
+    ...overrides,
+    details,
+  });
+  const oneDetail = [
+    { id: "detail-1", occurrenceIndex: 1, startTime: null, endTime: null, feeling: "" },
+  ];
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/handBrewRecords/2026-08-01"),
+      recordWithDetails([], { localDate: "2026-08-01", schemaVersion: 2 }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/handBrewRecords/2026-08-02"),
+      recordWithDetails([], { localDate: "2026-08-02", id: "x".repeat(161) }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/handBrewRecords/2026-08-03"),
+      recordWithDetails([], { localDate: "2026-08-03", id: "" }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/handBrewRecords/2026-08-04"),
+      recordWithDetails([], { localDate: "2026-08-04", id: 42 }),
+    ),
+  );
+  // A non-deleted record may never carry more detail rows than its count.
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/handBrewRecords/2026-08-05"),
+      recordWithDetails(oneDetail, { localDate: "2026-08-05", brewCount: 0 }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/handBrewRecords/2026-08-06"),
+      recordWithDetails([], {
+        localDate: "2026-08-06",
+        createdAtMillis: 1784160000000,
+        clientUpdatedAtMillis: 253402300800000,
+      }),
+    ),
+  );
+
+  // The sex module keeps its own count field and its own detail ceiling; the
+  // same shape rules must hold there instead of only on the hand-brew path.
+  const sexWithDetails = (details, overrides = {}) => ({
+    ...validSexRecord,
+    ...overrides,
+    details,
+  });
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/sexRecords/2026-08-07"),
+      sexWithDetails(oneDetail, { localDate: "2026-08-07", sexCount: 0 }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/sexRecords/2026-08-08"),
+      sexWithDetails(oneDetail, {
+        localDate: "2026-08-08",
+        sexCount: 1,
+        deleted: true,
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(userA, "users/user-a/sexRecords/2026-08-09"),
+      sexWithDetails(
+        Array.from({ length: 1001 }, (_, index) => ({
+          id: `detail-${index}`,
+          occurrenceIndex: index + 1,
+        })),
+        { localDate: "2026-08-09", sexCount: 1001 },
+      ),
+    ),
+  );
+  await assertSucceeds(
+    setDoc(
+      doc(userA, "users/user-a/sexRecords/2026-08-10"),
+      sexWithDetails(oneDetail, { localDate: "2026-08-10", sexCount: 1 }),
+    ),
+  );
   console.log("Firestore security rules and Functions validation: ownership, shape, revision, server detail validation, and delete restrictions passed.");
 } finally {
   await testEnv.cleanup();

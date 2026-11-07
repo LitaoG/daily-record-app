@@ -21,7 +21,7 @@ internal class FirebaseSexRemoteDataSource(
         firestore = firestore,
         functions = functions,
         detailsProvider = detailsProvider,
-        collectionName = "sexRecords",
+        collectionName = SEX_RECORDS_COLLECTION,
         parseRecord = ::parseRemoteSexRecord,
         parseRecords = ::parseRemoteSexRecords,
         entityId = { it.id },

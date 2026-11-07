@@ -98,6 +98,8 @@ class AccountSyncManagerTest {
         assertTrue(isRetryableFirebaseAuthCode("ERROR_USER_TOKEN_EXPIRED"))
         assertFalse(isRetryableFirebaseAuthCode("ERROR_INVALID_CREDENTIAL"))
         assertFalse(isRetryableFirebaseAuthCode("ERROR_USER_DISABLED"))
+        assertFalse(isRetryableFirebaseAuthCode("ERROR_TOO_MANY_REQUESTS"))
+        assertFalse(isRetryableFirebaseAuthCode("ERROR_QUOTA_EXCEEDED"))
     }
 
     @Test
@@ -261,11 +263,18 @@ private class DeletionBlockingGate : CloudWriteGate {
         throw AccountDeletionInProgressException(ownerId)
 }
 
+private fun testSnapshot(rejectedRecordCount: Int = 0) = RemoteSnapshot(
+    sourceCollection = HAND_BREW_RECORDS_COLLECTION,
+    records = emptyList(),
+    fromCache = false,
+    rejectedRecordCount = rejectedRecordCount,
+)
+
 private class CountingApplyOperations : AccountSyncOperations {
     val applyCalls = AtomicInteger()
 
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        emit(testSnapshot())
         awaitCancellation()
     }
 
@@ -284,7 +293,7 @@ private class CountingApplyOperations : AccountSyncOperations {
 
 private class NonRetryableFailingOperations : AccountSyncOperations {
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        emit(testSnapshot())
         throw IllegalArgumentException("malformed snapshot")
     }
 
@@ -305,9 +314,9 @@ private class FailingApplyOperations : AccountSyncOperations {
     private val applyCalls = AtomicInteger()
 
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        emit(testSnapshot())
         delay(200)
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 0))
+        emit(testSnapshot())
         awaitCancellation()
     }
 
@@ -336,7 +345,7 @@ private class RejectedSnapshotOperations : AccountSyncOperations {
 
     override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
         emitRejectedSnapshot.await()
-        emit(RemoteSnapshot(records = emptyList(), fromCache = false, rejectedRecordCount = 1))
+        emit(testSnapshot(rejectedRecordCount = 1))
     }
 
     override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(1)

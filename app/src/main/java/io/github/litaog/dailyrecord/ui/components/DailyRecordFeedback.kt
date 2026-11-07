@@ -45,13 +45,13 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordAccentBrush
 @Composable
 fun DailyRecordConfirmationDialog(
     title: String,
-    subtitle: String,
     message: String,
     cancelLabel: String,
     confirmLabel: String,
     testTag: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    subtitle: String? = null,
     confirmEnabled: Boolean = true,
 ) {
     val stackActions = LocalDensity.current.fontScale >= 1.35f
