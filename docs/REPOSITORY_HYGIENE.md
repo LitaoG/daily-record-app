@@ -1,7 +1,7 @@
 # 仓库整理与文档生命周期
 
 状态：`current — repository and documentation policy`
-最后复核：2026-08-16
+最后复核：2026-11-05
 
 本文是 Daily Record 的公共仓库维护说明，回答四个问题：当前事实在哪里、历史材料如何保留、机器相关文件为什么不入库、什么时候清理分支和生成物。它不替代产品、架构、数据模型或统计契约；文档的逐文件状态和阅读路由以[文档目录与 AI 阅读索引](DOCUMENTATION_CATALOG.md)为准。
 
@@ -18,11 +18,13 @@
 
 `README.md`、根目录协作规则、`docs/PRODUCT.md`、`docs/UI_UX.md`、`docs/ARCHITECTURE.md`、`docs/DATA_MODEL.md`、`docs/STATISTICS.md`、`docs/SYNC_AND_PRIVACY.md`、`docs/DECISIONS.md`、`docs/DEVELOPMENT.md`、`docs/TESTING.md`、`docs/FIREBASE_SETUP.md`、`docs/RELEASE.md` 和 `docs/ROADMAP.md` 描述当前行为或当前流程，必须随代码、测试、配置和发布变化同步更新。
 
-`docs/product/IMPLEMENTATION_READINESS.md`、`MONTH_STATISTICS_REDESIGN.md`、`BRIGHT_GLASS_THEME.md`、`USER_STORIES_AND_ACCEPTANCE.md` 和当前设计基线是当前产品协作契约。代码与其中任一项冲突时，先确认代码/测试事实，再修正文档或建立 ADR；不能默默带着冲突继续开发。
+`docs/product/IMPLEMENTATION_READINESS.md`、`MONTH_STATISTICS_REDESIGN.md` 和 `USER_STORIES_AND_ACCEPTANCE.md` 是当前产品协作契约；视觉令牌和界面规则只写在 `docs/UI_UX.md`。代码与其中任一项冲突时，先确认代码/测试事实，再修正文档或建立 ADR；不能默默带着冲突继续开发。
 
 ### 历史审计与发布证据
 
-`docs/product/audit/`、`docs/product/HAND_BREW_REFACTOR_LOG.md`、旧 Figma 设计说明和 `docs/releases/` 中的旧版本记录保留截图、命令、提交、分支、测试数量和当时结论。它们必须标明“历史/已取代/发布历史”，不能作为当前待办或当前分支状态。
+`docs/product/HAND_BREW_REFACTOR_LOG.md`、`OPTIMIZATION_2026-08_LOG.md`、`RUNTIME_UX_AUDIT.md`、`GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md` 和 `docs/releases/` 中的旧版本记录保留命令、提交、分支、测试数量和当时结论。它们必须标明“历史/已取代/发布历史”，不能作为当前待办或当前分支状态。
+
+2026-11 起仓库不再新增阶段审计目录、审计截图或一次性报告：验证证据写进 PR 描述，仍然有效的规则写进对应权威文档，发布事实写进 `docs/releases/`。2026-07 至 2026-09 的 `docs/product/audit/`、`docs/product/design/` 以及明亮玻璃主题、日常使用反馈和旧 Figma 设计说明草案已在 2026-11 移除，恢复方法见下文“文档删除与历史保留”。
 
 历史文档允许补充归档说明和指向当前事实的链接，但不得为了与现在一致而改写当时的证据。需要确认过去发生了什么时，才按目录中的 AI 阅读标记读取它们。
 
@@ -30,7 +32,7 @@
 
 `app/schemas/README.md` 说明 Room 自动导出的 schema 快照；`docs/design/` 和产品资产 README 说明设计源和运行时轻量资源。它们不是业务事实的替代品，也不能把导出图、预览图或机器截图误当作当前实现证明。
 
-首页展示的运行截图集中在 [`docs/product/assets/readme/README.md`](product/assets/readme/README.md)。它们是经过脱敏的专用模拟器 Debug 产物，可以作为当前 UI 展示提交；采集命令输出、UI XML、logcat、模拟器缓存和真实账号状态仍是机器临时文件，不入库。历史审计目录继续保留原始证据，但不再被首页引用。
+首页展示的运行截图集中在 [`docs/product/assets/readme/README.md`](product/assets/readme/README.md)。它们是经过脱敏的专用模拟器 Debug 产物，可以作为当前 UI 展示提交；采集命令输出、UI XML、logcat、模拟器缓存和真实账号状态仍是机器临时文件，不入库。
 
 ## 资源分层
 
@@ -38,9 +40,9 @@
 
 1. **运行时资源**：只有 `app/src/main/res` 会进入 APK。`docs/` 下的任何图片都不会被打包，也不被 Android 引用。
 2. **当前设计源**：`docs/design/icon-source/` 只保留自适应图标的交接输入（`background.svg`、`foreground.svg`、`monochrome.svg`）和用户确认的高分辨率导出（`daily-record-icon-1254.png`、`google-play-icon-512.png`）。三层 PNG 副本、1024px 备份和自适应预览都只是派生导出：它们不被 Android、设计工具或发布流程引用，需要比较旧版本时用 Git 历史而不是把副本放回当前目录。
-3. **历史证据**：`docs/product/audit/` 保留审计报告及其必要截图，因为它们记录了当时的测试输入、设备和结论。
+3. **历史证据**：工作树只保留少量历史文档和 `docs/releases/` 发布说明；审计截图不再入库，需要时从 Git 历史查看。
 
-判断规则：一个资源如果既不被运行时代码引用，也不是唯一的当前设计源，也没有独立验收或合规作用，就应当从工作树移除并由 Git 历史保存。删除时必须确认引用关系，且不得无差别删除整个审计目录、当前 README 截图、Room schema 快照或唯一的发布与安全证据。
+判断规则：一个资源如果既不被运行时代码引用，也不是唯一的当前设计源，也没有独立验收或合规作用，就应当从工作树移除并由 Git 历史保存。删除时必须确认引用关系，且不得删除当前 README 截图、Room schema 快照或唯一的发布与安全证据。
 
 ## 为什么 `local.properties`、SDK/cache 等不入库
 
@@ -63,9 +65,19 @@
 ## 文档删除与历史保留
 
 - 删除前检查 `DOCUMENTATION_CATALOG.md`、本地链接、脚本、Issue/PR 引用和发布/迁移用途。
-- 仍包含发布、迁移、截图、测试或安全证据的文件应保留并标为历史，不因“看起来旧”直接删除。
-- 只有无引用、可由其他文档完整替代且不承载审计事实的临时文档才可删除；删除范围必须写入提交说明和 PR。
+- 仍然有效的规则先并入对应权威文档，再删除；`docs/releases/` 发布说明、Room schema 快照和当前 README 截图不删除。
+- 删除范围必须写入提交说明和 PR，并保证 `scripts/docs-integrity.test.mjs` 没有悬空链接。
 - 一次性清理的范围和结论写在提交说明里即可，不再单独创建一份很快过时的清理记录；资源判废规则见上方“资源分层”。
+
+已删除的历史材料可以只读找回，不需要放回仓库：
+
+```powershell
+git log --oneline --diff-filter=D -- docs/product/audit docs/product/design
+git show <删除提交>^:docs/product/audit/README.md
+git restore --source <删除提交>^ --worktree -- docs/product/audit
+```
+
+最后一条只用于本机临时查看；看完用 `git clean -n` 确认范围后再清理，不要把它们重新提交。
 
 ## 最小验证
 

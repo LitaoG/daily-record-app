@@ -15,7 +15,7 @@ import kotlinx.coroutines.CancellationException
  * The account deletion state machine, extracted from the composable so it can
  * be unit-tested and survives configuration changes at the call site.
  *
- * Contract (unchanged from the previous in-composable flow):
+ * Contract:
  * - the durable barrier is persisted before workers are cancelled,
  * - an interrupted deletion keeps its in-progress marker,
  * - a retryable failure re-enables background sync,

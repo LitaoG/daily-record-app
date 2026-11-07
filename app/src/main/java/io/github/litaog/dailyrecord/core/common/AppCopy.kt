@@ -10,6 +10,10 @@ import java.util.Locale
  * The facade delegates every member to the active [AppStrings] implementation
  * selected by [AppLanguageState.current]; call sites keep their historical
  * shape, so switching languages never touches individual Composables.
+ *
+ * Visible text lives only in ZhStrings and EnStrings and reaches the UI through
+ * this facade (docs/ENGINEERING_STANDARDS.md section 7); no other source file may
+ * hardcode visible text or CJK punctuation.
  */
 internal object AppCopy {
     val privateRecordSubtitle: String get() = AppLanguageState.current.privateRecordSubtitle

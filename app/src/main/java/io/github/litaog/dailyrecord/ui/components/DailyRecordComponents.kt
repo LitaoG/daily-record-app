@@ -96,6 +96,10 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodSliderBrush
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordPeriodTrackBrush
 
+// Copy rule for the shared components: visible text arrives as a parameter or from AppCopy
+// (ZhStrings / EnStrings). Never hardcode visible text or CJK punctuation here; see
+// docs/ENGINEERING_STANDARDS.md section 7. scripts/copy-integrity.test.mjs rejects CJK leaks.
+
 @Composable
 internal fun DailyRecordBottomBar(
     selected: TopDestination,

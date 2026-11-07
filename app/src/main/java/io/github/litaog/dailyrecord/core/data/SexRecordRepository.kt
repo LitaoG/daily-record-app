@@ -10,7 +10,10 @@ interface SexRecordRepository : DailyCountRecordRepository<SexRecord> {
     /** Optional per-occurrence details stay in the sex module boundary. */
     fun observeDetails(localDate: LocalDate): Flow<List<SexRecordDetail>> = flowOf(emptyList())
 
-    /** The overload is additive; legacy callers can continue saving the count only. */
+    /**
+     * Saves the count together with its per-occurrence details. Count-only edits keep using
+     * `saveRecord(record)`; this default ignores [details] and the Room repository overrides it.
+     */
     suspend fun saveRecord(
         record: SexRecord,
         details: List<SexRecordDetail>,

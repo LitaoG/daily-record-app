@@ -141,8 +141,8 @@ val SexColorTokens = RecordModuleColorTokens(
     medium = Color(0xFFEABBC3),
     intense = Color(0xFFCD828E),
     // Keep empty sex dates within the wine-red family without colliding with
-    // the stronger one-count fill: lighter than soft, one notch deeper than
-    // the previous near-white so the tint actually reads.
+    // the stronger one-count fill: lighter than soft, yet tinted enough to
+    // read as wine red against the white surface.
     unset = Color(0xFFF8E9EC),
 )
 

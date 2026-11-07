@@ -81,7 +81,7 @@ pnpm test:android-connected
 - 对本小版本实际改变的主流程做一次截图或手工运行回归，并检查 Crash Buffer。
 - 若涉及 Release，再按 [`RELEASE.md`](RELEASE.md) 验证签名、版本、覆盖升级与 SHA-256。
 
-测试日志只写入仓库下的临时目录，解析完成后删除；不在桌面或公共文档中留下机器日志。审计文档只保留可复核的命令、计数、结论和候选 APK 校验值。beta.2 的最终结果见[Stage 5/6 最终审查与发布审计](product/audit/2026-08-03-stage5-stage6-release/README.md)，当前发布事实见 [`RELEASE.md`](RELEASE.md) 和 beta.3 发布说明。
+测试日志只写入仓库下的临时目录，解析完成后删除；不在桌面或公共文档中留下机器日志。PR 描述和发布说明只保留可复核的命令、计数、结论和候选 APK 校验值。beta.2 的最终结果见 [beta.2 发布说明](releases/v1.0.0-beta.2.md)，当前发布事实见 [`RELEASE.md`](RELEASE.md) 和 beta.3 发布说明。
 
 如果完整验证之后只修改说明文字或审计截图，只重跑文档检查和 CI；不重复 Room、Firestore 或设备全套。若之后又修改了运行时代码，则重跑该代码影响的定向测试；只有改动跨越多个核心边界或无法可靠界定影响时，才重新执行完整套件。
 

@@ -1,12 +1,40 @@
 # 私密日历文档中心
 
-最后复核：2026-10-16
+最后复核：2026-11-05
 
 仓库级协作规则另见：[AI 强制入口](../AGENTS.md)、[贡献指南](../CONTRIBUTING.md)。每次开始工作前先看[文档目录与 AI 阅读索引](DOCUMENTATION_CATALOG.md)，按任务范围读[端到端工作流](WORKFLOW.md)与[工程规范](ENGINEERING_STANDARDS.md)。
 
 本页用于区分当前有效规则、工程运维说明和历史审计证据。发生冲突时，优先级依次为：当前代码与测试、架构决策记录、当前事实文档、历史记录。
 
-当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.3` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 的 `main` 代码、安全、性能、生命周期与文档审计见[审计报告](product/audit/2026-08-15-main-code-audit/README.md)；其后的公共维护还包括 compileSdk 37、Node.js 22/Functions 2nd gen、`asia-east1` 区域固定、生命周期感知的 Flow 收集、双语适配，以及 PR/`main`/Release tag 的 API 34 connected gate。后续合并后仍以 GitHub `main` 的最新提交为准。
+## 不确定先查哪里
+
+对任何事实不确定时先查文档，不要先猜。查证顺序：本页与[文档目录](DOCUMENTATION_CATALOG.md) → 下表命中的那一份权威文档 → 代码、测试和实际运行结果 → 仍不确定就停下来问人。本表与 [`WORKFLOW.md`](WORKFLOW.md) §0.3 保持一致。
+
+| 我不确定的事 | 去查的权威文档 |
+|---|---|
+| 自慰与做爱两个模块的边界、能不能加新功能 | [`PRODUCT.md`](PRODUCT.md) |
+| 已接受的长期技术与产品决策（ADR） | [`DECISIONS.md`](DECISIONS.md) |
+| Room 表结构、字段、迁移、聚合记录与详情的关系 | [`DATA_MODEL.md`](DATA_MODEL.md) |
+| 周、月、年、全部历史的统计口径和图表规则 | [`STATISTICS.md`](STATISTICS.md) |
+| 页面交互、颜色令牌、色阶、玻璃材质、无障碍 | [`UI_UX.md`](UI_UX.md) |
+| 文案集中化、命名、中文标点禁令、注释写法 | [`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) |
+| 分层、ViewModel 与 Repository 的调用关系 | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| 云同步、离线行为、账号六阶段删除 | [`SYNC_AND_PRIVACY.md`](SYNC_AND_PRIVACY.md) |
+| 改动后该跑哪些测试、完整门禁何时跑 | [`TESTING.md`](TESTING.md) |
+| Gradle 命令、本机环境、SDK 版本 | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
+| 版本号、签名、tag 与 GitHub Release | [`RELEASE.md`](RELEASE.md) |
+| Firebase 资源、Rules 与 Functions 部署 | [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md) |
+| 云端费用、配额、防刷与止损 | [`firebase-cost-and-quota-inventory.md`](operations/firebase-cost-and-quota-inventory.md)、[`firebase-abuse-monitoring-and-emergency-runbook.md`](operations/firebase-abuse-monitoring-and-emergency-runbook.md)、[`firebase-cost-safety-test-matrix.md`](operations/firebase-cost-safety-test-matrix.md) |
+| 这个方向以前栽过什么坑（动手前必查） | [`AI-PITFALLS.md`](AI-PITFALLS.md) |
+| 证据等级、汇报格式和停止条件（动手前必查） | [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) |
+| 改码流程：分支、提交、PR、合并、清理（动手前必查） | [`WORKFLOW.md`](WORKFLOW.md) |
+| Issue、PR 和贡献者需要遵守的约定 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
+| AI 总规则、红线和高风险操作 | [`AGENTS.md`](../AGENTS.md) |
+| 某个文件算不算权威、归谁管 | [`DOCUMENTATION_CATALOG.md`](DOCUMENTATION_CATALOG.md)、[`README.md`](README.md) |
+| 公共/私有边界、文档生命周期、生成物 | [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md) |
+| 面向使用者的隐私说明、漏洞报告 | [`PRIVACY.md`](../PRIVACY.md)、[`SECURITY.md`](../SECURITY.md) |
+
+当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.3` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 曾对 `main` 做过一次代码、安全、性能、生命周期与文档审计，结论已进入当前文档和[踩坑清单](AI-PITFALLS.md)；其后的公共维护还包括 compileSdk 37、Node.js 22/Functions 2nd gen、`asia-east1` 区域固定、生命周期感知的 Flow 收集、双语适配，以及 PR/`main`/Release tag 的 API 34 connected gate。后续合并后仍以 GitHub `main` 的最新提交为准。
 
 ## 当前事实文档
 
@@ -24,10 +52,11 @@
 | [架构决策](DECISIONS.md) | 已接受的长期技术与产品决策 |
 | [路线图](ROADMAP.md) | 已完成阶段和持续维护方向 |
 | [踩坑清单](AI-PITFALLS.md) | 已付出代价的问题、根因和防复发门禁 |
+| [AI 证据标准](AI-EVIDENCE-STANDARD.md) | 什么证据算数、汇报必须包含什么、什么时候必须停下问人 |
 
-当前运行画面见[README 运行截图](product/assets/readme/README.md)。这些图片来自 API 34 测试模拟器的本机空数据，只作为当前运行时展示；历史审计图片仍按原目录保留，不与首页当前画面混用。
+当前运行画面见[README 运行截图](product/assets/readme/README.md)。这些图片来自 API 34 测试模拟器的本机空数据，只作为当前运行时展示。
 
-当前公开发布：[`v1.0.0-beta.3`](releases/v1.0.0-beta.3.md)，GitHub 下载入口见 [`RELEASE.md`](RELEASE.md)。beta.1、beta.2 及各阶段发布审计只作为不可改写的历史记录。
+当前公开发布：[`v1.0.0-beta.3`](releases/v1.0.0-beta.3.md)，GitHub 下载入口见 [`RELEASE.md`](RELEASE.md)。beta.1、beta.2 发布说明只作为不可改写的历史记录。
 
 ## 开发与运维
 
@@ -45,20 +74,15 @@
 ## 产品协作资料
 
 - [产品交付索引](product/README.md)
-- [审计与验证证据索引](product/audit/README.md)
 - [设计资产索引](design/README.md)
 - [UI v2 分阶段执行计划](product/QUIET_PRIVATE_JOURNAL_GOALS.md)
-- [已确认的 UI v2 设计基线与三张高保真图](product/design/quiet-private-journal-v2/README.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](product/MONTH_STATISTICS_REDESIGN.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
-- [明亮渐变玻璃主题 Goal 与当前契约](product/BRIGHT_GLASS_THEME.md)
 - [设置中心 Goal](product/SETTINGS_HUB_GOAL.md)
 - [双语适配 Goal（i18n：中文默认 + English）](product/I18N_GOAL.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)
 - [用户故事与验收](product/USER_STORIES_AND_ACCEPTANCE.md)
 - [实现与发布准备度](product/IMPLEMENTATION_READINESS.md)
-- [日常使用反馈](product/DAILY_USE_FEEDBACK.md)
-- [2026-08-09 记录页逐次详情设计基线](product/design/record-details-v1/README.md)
 - [开源借鉴边界](product/RESEARCH_OPEN_SOURCE.md)
 - [每日记录图标资源说明](product/assets/daily-record-icon/README.md)
 - [当前 README 运行截图与复现边界](product/assets/readme/README.md)
@@ -67,36 +91,13 @@
 
 以下内容用于解释某次迭代当时验证了什么，不应覆盖上面的当前规则：
 
-- [2026-09-05 写感受按钮对齐修复](product/audit/2026-09-05-feeling-button/README.md)
-- [2026-09-01 双语适配运行证据](product/audit/2026-09-01-i18n-bilingual/README.md)
 - [2026-08 性能与测试加固日志](product/OPTIMIZATION_2026-08_LOG.md)
-- [2026-08-15 `main` 全面代码审计](product/audit/2026-08-15-main-code-audit/README.md)
-- [2026-08-11 Issues #123–#145 清理审计](product/audit/2026-08-11-issues-123-145/README.md)
 - [2026-08-11 运行时 UX 与统计验收](product/RUNTIME_UX_AUDIT.md)
-- [2026-08-09 Issue #105 Stage 4–5 记录页验收](product/audit/2026-08-09-record-details-stage4-stage5/README.md)
-- [2026-08-03 应用内中文文案审查](product/audit/2026-08-03-copy-audit/README.md)
-- [2026-08-03 Stage 5/6 最终审查与 beta.2 发布](product/audit/2026-08-03-stage5-stage6-release/README.md)
-- [2026-08-02 统计与日历边界修复](product/audit/2026-08-02-boundary-fixes/README.md)
-- [2026-08-02 统计周期玻璃分段控件](product/audit/2026-08-02-period-glass-tabs/README.md)
-- [2026-08-02 月统计改版验收](product/audit/2026-08-02-month-statistics/README.md)
-- [2026-08-02 年度折线图验收](product/audit/2026-08-02-year-line-chart/README.md)
-- [2026-08-01 Stage 4 月度热力图与年度月份分析](product/audit/2026-08-01-ui-v2-stage4/README.md)
-- [2026-08-01 Stage 3 统计与日历基础视觉验收](product/audit/2026-08-01-ui-v2-stage3/README.md)
-- [2026-08-01 Stage 5 集成 QA 与候选 APK](product/audit/2026-08-01-ui-v2-stage5/README.md)
-- [2026-07-30 UI v2 Stage 2 用户反馈修正](product/audit/2026-07-30-ui-v2-stage2-follow-up/README.md)
-- [2026-07-30 UI v2 Stage 2 方形次数热力日历](product/audit/2026-07-30-ui-v2-stage2/README.md)
-- [2026-07-30 UI v2 Stage 1 设计 Token 与共享外壳](product/audit/2026-07-30-ui-v2-stage1/README.md)
-- [2026-07-30 Stage 1 设计 QA 附录](product/audit/2026-07-30-ui-v2-stage1/DESIGN_QA.md)
-- [历史 Figma Hand-brew-only v2 设计系统](product/FIGMA_DESIGN_SYSTEM.md)
 - [重构与交付日志](product/HAND_BREW_REFACTOR_LOG.md)
-- [2026-07-28 局部一致性、扩展边界与安全加固](product/audit/2026-07-28-consistency-hardening/README.md)
-- [2026-07-27 快速运行审计](product/audit/2026-07-27-quick-runtime/README.md)
-- [2026-07-22 找回密码与同步审计](product/audit/2026-07-22-password-reset-sync/README.md)
-- [2026-07-22 应用内 UI 一致性审计](product/audit/2026-07-22-native-ui/README.md)
-- [2026-07-22 月历与统计审计](product/audit/2026-07-22-calendar-statistics/README.md)
-- [2026-07-19 深度 UX 审计](product/audit/2026-07-19-deep-ux/README.md)
 - [同步、隐私与统计一致性加固 Goal](product/GOAL_SYNC_PRIVACY_HARDENING_AUDIT.md)
 - [v1.0.0-beta.1 发布说明](releases/v1.0.0-beta.1.md)
 - [v1.0.0-beta.2 发布说明](releases/v1.0.0-beta.2.md)
+
+2026-07 至 2026-09 的阶段审计目录（`docs/product/audit/`）、UI v2 设计稿（`docs/product/design/`）、明亮玻璃主题草案、日常使用反馈草案和旧 Figma 设计系统已于 2026-11 从仓库移除；仍然有效的规则已并入 [`UI_UX.md`](UI_UX.md)、[`STATISTICS.md`](STATISTICS.md)、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 和 [`AI-PITFALLS.md`](AI-PITFALLS.md)。需要追溯原始证据时查 Git 历史，恢复方法见 [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md)。
 
 历史文档中的测试数量、截图日期、分支名和“下一步”只描述当时状态。当前版本、发布物和 CI 状态以仓库首页、GitHub Releases 与 `main` 为准。
