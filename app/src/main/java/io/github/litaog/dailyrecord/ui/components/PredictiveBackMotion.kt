@@ -7,16 +7,16 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
@@ -33,6 +33,7 @@ fun rememberPredictiveBackState(
     enabled: Boolean = true,
     onBack: () -> Unit,
 ): PredictiveBackState {
+    val currentOnBack by rememberUpdatedState(onBack)
     val coroutineScope = rememberCoroutineScope()
     val progressAnimatable = remember { Animatable(0f) }
 
@@ -41,7 +42,7 @@ fun rememberPredictiveBackState(
             progress.collect { backEvent ->
                 progressAnimatable.snapTo(backEvent.progress)
             }
-            onBack()
+            currentOnBack()
             progressAnimatable.snapTo(0f)
         } catch (_: CancellationException) {
             coroutineScope.launch {
@@ -98,6 +99,7 @@ fun Modifier.predictiveBackPreview(state: PredictiveBackState): Modifier = this
         scaleX = calculatePredictiveBackScale(p)
         scaleY = calculatePredictiveBackScale(p)
         alpha = calculatePredictiveBackAlpha(p)
+        shape = RoundedCornerShape(calculatePredictiveBackCornerRadius(p))
+        clip = p > 0f
         transformOrigin = TransformOrigin(0.5f, 0.5f)
     }
-    .clip(RoundedCornerShape(calculatePredictiveBackCornerRadius(state.progress)))

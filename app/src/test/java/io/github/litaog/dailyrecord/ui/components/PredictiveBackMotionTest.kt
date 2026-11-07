@@ -45,4 +45,11 @@ class PredictiveBackMotionTest {
         assertEquals(0.dp, calculatePredictiveBackCornerRadius(-0.2f))
         assertEquals(24.dp, calculatePredictiveBackCornerRadius(1.2f))
     }
+
+    @Test
+    fun predictiveBackStateReflectsAnimatableProgress() {
+        val animatable = androidx.compose.animation.core.Animatable(0.42f)
+        val state = PredictiveBackState(animatable)
+        assertEquals(0.42f, state.progress, 0.001f)
+    }
 }

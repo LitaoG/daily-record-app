@@ -69,6 +69,7 @@ The project does not sell data, show ads or build social profiles. Cloud feature
 - Deletion first removes the user's own records of both journals from Firestore, then deletes the Firebase Authentication account.
 - Records on the device are kept as offline records by default; the user can explicitly choose to delete them as well.
 - If the network or a permission fails, the app never reports the deletion as successful; the records on the device stay and the user can retry.
+- If the app is uninstalled or device access is lost, users can request permanent deletion of their account and all cloud data by following the [Account and Data Deletion Guide](docs/ACCOUNT_DELETION.md).
 
 ## Network limits
 

@@ -1,4 +1,4 @@
-﻿package io.github.litaog.dailyrecord.ui
+package io.github.litaog.dailyrecord.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -266,33 +266,30 @@ fun DailyRecordApp(
         }
     }
 
-    if (selectedDate != null) {
-        // Key the record screen by module so each module keeps its own
-        // saveable draft slots: a hand-brew draft must never be restored as a
-        // sex draft for the same date (and vice versa).
-        key(selectedModule) {
-            DailyCountRecordScreen(
-                date = selectedDate,
-                today = effectiveToday,
-                controller = selectedController,
-                moduleSpec = moduleSpec,
-                monthRecords = monthRecords,
-                onBack = { selectedDateText = null },
-                // Saving is an in-place action. Keep the record page mounted so
-                // the user can see the saved feeling and continue editing this
-                // date; leaving the page remains an explicit back action.
-                onSaved = {},
-            )
-        }
-        return
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(backdropBrush),
     ) {
-        if (showSettings) {
+        if (selectedDate != null) {
+            // Key the record screen by module so each module keeps its own
+            // saveable draft slots: a hand-brew draft must never be restored as a
+            // sex draft for the same date (and vice versa).
+            key(selectedModule) {
+                DailyCountRecordScreen(
+                    date = selectedDate,
+                    today = effectiveToday,
+                    controller = selectedController,
+                    moduleSpec = moduleSpec,
+                    monthRecords = monthRecords,
+                    onBack = { selectedDateText = null },
+                    // Saving is an in-place action. Keep the record page mounted so
+                    // the user can see the saved feeling and continue editing this
+                    // date; leaving the page remains an explicit back action.
+                    onSaved = {},
+                )
+            }
+        } else if (showSettings) {
             SettingsScreen(
                 versionName = BuildConfig.VERSION_NAME,
                 accountEmail = accountEmail,

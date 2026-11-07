@@ -75,7 +75,7 @@
 - 2026-11-06：完整门禁：`:app:testDebugUnitTest`（51 个测试类、333 个用例，0 失败）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过。Lint 0 个错误，唯一的警告是 ADR-018 既有的 `OldTargetApi`（targetSdk 36）。首次 Lint 报出的 `InvalidFragmentVersionForActivityResult` 错误（见 ADR-023 的 Lint 后果）和两条 b1 新增警告已修复。Gradle 以 `--no-daemon --max-workers=1`、1–1.5 GB 堆和进程内 Kotlin 编译运行。
 - 2026-11-06：桌面伪装（ADR-024）完成后再跑完整门禁：`:app:testDebugUnitTest`（52 个测试类、340 个用例，0 失败，含 `LauncherIdentityTest` 7 个）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过，Lint 仍只有 `OldTargetApi` 一条既有警告。合并后的清单只有两个启动器入口：默认启用的 `.MainActivity` 别名和默认停用的 `.JournalLauncher` 别名，`ui.MainActivity` 本身不导出。
 - 2026-11-07：验证原生库与 16 KB 页面对齐：检查 APK/AAB 内部包含 `libandroidx.graphics.path.so` 与 `libdatastore_shared_counter.so`（共 8 个条目跨 4 种架构）；使用 Android Build-Tools 36 的 `zipalign -c -P 16 -v 4` 检查通过，全部条目满足 16 KB 页面对齐要求。
-- 2026-11-07：实现应用页面（设置、记录、登录）预测性返回缩小与圆角卡片预览（`PredictiveBackMotion.kt`），新增 `PredictiveBackMotionTest`（6 个测试通过）。
-- 2026-11-07：补齐 Google Play 要求的网页账号及数据删除指引（`docs/ACCOUNT_DELETION.md`），`test:docs` 通过。
-- 2026-11-07：完整门禁再跑：`:app:testDebugUnitTest`（53 个测试类、346 个用例，0 失败）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过（0 错误，仅 1 条既有 OldTargetApi 警告）。`:app:bundleDebug` 成功产出 `app-debug.aab`。
+- 2026-11-07：实现应用页面（设置、记录、登录）预测性返回缩小与圆角卡片预览（`PredictiveBackMotion.kt`），修复 `graphicsLayer` 内部动态圆角剪裁与 `rememberUpdatedState` 回调防过期机制，将记录页挂载入环境光底衬以保证缩放露底一致性，更新 `PredictiveBackMotionTest`（7 个测试通过）。
+- 2026-11-07：补齐 Google Play 要求的网页账号及数据删除指引（`docs/ACCOUNT_DELETION.md`），并在 `PRIVACY.md` 与 `PRIVACY.en.md` 建立引用，`test:docs` 通过。
+- 2026-11-07：完整门禁再跑：`:app:testDebugUnitTest`（53 个测试类、347 个用例，0 失败）、`:app:compileDebugAndroidTestKotlin` 与 `:app:lintDebug` 通过（0 错误，仅 1 条既有 OldTargetApi 警告）。`:app:bundleDebug` 成功产出 `app-debug.aab`。
 - 待执行：`connectedDebugAndroidTest` 等设备测试（含 `RecordModuleIntegrationTest` 设置图标取色、应用锁三条认证路径、`LauncherDisguiseTest` 与 `SettingsPrivacyControlsTest`）、桌面伪装在 API 26、29、34 桌面上的切换与图标显示、TalkBack 与 200% 字体实机检查、目标页面截图和签名 `bundleRelease`。
