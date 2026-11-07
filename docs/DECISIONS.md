@@ -186,6 +186,17 @@
   5. 桌面名称只能由清单引用，所以伪装名放在字符串资源 `app_name_journal` 中，与 `app_name` 一样跟随系统语言；应用内文案仍只在 `ZhStrings.kt` / `EnStrings.kt`。
 - 测试后果：入口切换逻辑是纯函数，由 `LauncherIdentityTest` 在 JVM 上覆盖（标识与组件名、启用顺序、中断修复、任一步骤都至少留一个入口）。`LauncherDisguiseTest` 在设备上验证真实组件状态以及启动器只列出一个入口，`SettingsPrivacyControlsTest` 验证设置行的开关语义；两个入口在 API 26、29、34 桌面上的显示与切换仍需手工设备回归。
 
+## ADR-025：亲密用语中性化与用语风格双模式
+
+- 状态：Accepted（2026-11-07）。实现 Google Play 就绪决策 D1（见 [Google Play 上架就绪清单](product/PLAY_STORE_READINESS.md)）。
+- 决策：
+  1. 中文默认采用典雅风格（「个人私密」与「伴侣亲密」），替换生硬的“自我亲密”；英文保持「Solo」与「Duo」。
+  2. 在设置中提供「用语风格」切换，允许用户自由选择直白模式（「自慰」与「做爱」）。偏好保存在 `SharedPreferences`（`daily_record_terminology_style`）中，切换即时重组刷新。
+  3. 首次进入主页时，在日历上方呈现轻量流体玻璃引导卡（「用语说明」），解释两模块含义；用户点击“我知道了”后关闭并持久化记录，不再重复弹出。
+- 原因：Google Play 政策禁止在商品详情、截图及默认审核元数据中包含露骨性词汇。默认采用典雅中性词确保上架审核 100% 合规；同时提供直白模式与引导卡片，消除歧义并尊重用户的真实直观偏好。
+- 边界：底层数据模型、Room 数据库表及字段（`hand_brew_records`、`sex_records`）保持严格不变；文案严格集中在 `ZhStrings.kt` 与 `EnStrings.kt` 中。
+- 后果：`TerminologyStyle` 枚举与 `TerminologyStylePreference` 管理偏好，`AppLanguageState.current` 按选定风格生成动态文案。
+
 ## 已废止方向
 
 旧版通用活动表、三种预设计量方式、活动身份色、活动归档、短信验证码、端到端加密和通用日历标记均由本次产品收缩废止，只存在于 Git 历史，不再指导实现。健身等其他记录不属于当前范围；若未来立项，应采用 ADR-002 的独立垂直模块方式重新定义，而不是恢复旧模型。

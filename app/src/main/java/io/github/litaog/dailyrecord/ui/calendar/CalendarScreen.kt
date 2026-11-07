@@ -115,6 +115,8 @@ internal fun DailyCountCalendarScreen(
      * island is shown and past/today cells offer the long-press stepper.
      */
     onQuickLog: ((LocalDate, QuickLogAction) -> Unit)? = null,
+    showOnboardingCard: Boolean = false,
+    onDismissOnboarding: () -> Unit = {},
     onModuleSelected: (RecordModule) -> Unit,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
@@ -164,6 +166,12 @@ internal fun DailyCountCalendarScreen(
                         specs = availableModules,
                         onSelected = onModuleSelected,
                     )
+                    if (showOnboardingCard) {
+                        IntimacyOnboardingCard(
+                            colors = moduleSpec.colors,
+                            onDismiss = onDismissOnboarding,
+                        )
+                    }
                     if (onQuickLog != null) {
                         TodayQuickLogIsland(
                             count = todayCount,

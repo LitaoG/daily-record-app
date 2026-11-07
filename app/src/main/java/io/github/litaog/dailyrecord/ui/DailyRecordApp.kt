@@ -30,6 +30,7 @@ import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
 import io.github.litaog.dailyrecord.core.common.AppLanguageState
+import io.github.litaog.dailyrecord.core.common.TerminologyStyle
 import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
@@ -99,11 +100,25 @@ fun DailyRecordApp(
     val language by languagePreference.language.collectAsStateWithLifecycle(
         initialValue = languagePreference.current,
     )
+    val terminologyStylePreference = remember(context) { TerminologyStylePreference(context) }
+    val terminologyStyle by terminologyStylePreference.style.collectAsStateWithLifecycle(
+        initialValue = terminologyStylePreference.current,
+    )
+    val onTerminologyStyleSelected: (TerminologyStyle) -> Unit = { selected ->
+        if (selected != terminologyStyle) {
+            terminologyStylePreference.setStyle(selected)
+            AppLanguageState.current = language.strings(selected)
+        }
+    }
+    val intimacyOnboardingPreference = remember(context) { IntimacyOnboardingPreference(context) }
+    val intimacyOnboardingDismissed by intimacyOnboardingPreference.dismissed.collectAsStateWithLifecycle(
+        initialValue = intimacyOnboardingPreference.isDismissed,
+    )
     val onLanguageSelected: (AppLanguage) -> Unit = { selected ->
         // Tapping the active language must not trigger a full recreation.
         if (selected != language) {
             languagePreference.setLanguage(selected)
-            AppLanguageState.current = selected.strings()
+            AppLanguageState.current = selected.strings(terminologyStyle)
             onLanguageChanged(selected)
         }
     }
@@ -125,7 +140,7 @@ fun DailyRecordApp(
     val availableControllers = remember(handBrewController, sexController) {
         listOfNotNull(handBrewController, sexController)
     }
-    val availableModuleSpecs = remember(availableControllers, language) {
+    val availableModuleSpecs = remember(availableControllers, language, terminologyStyle) {
         availableControllers.map { it.module.uiSpec() }
     }
     var selectedModuleName by rememberSaveable {
@@ -299,6 +314,8 @@ fun DailyRecordApp(
                 onLanguageSelected = onLanguageSelected,
                 colorTheme = colorTheme,
                 onColorThemeSelected = onColorThemeSelected,
+                terminologyStyle = terminologyStyle,
+                onTerminologyStyleSelected = onTerminologyStyleSelected,
                 appLockSettings = appLockSettings,
                 launcherDisguiseSettings = launcherDisguiseSettings,
                 onBack = { showSettings = false },
@@ -353,6 +370,8 @@ fun DailyRecordApp(
                         earliestMonth = earliestSupportedMonth,
                         todayCount = todayCount,
                         onQuickLog = onQuickLog,
+                        showOnboardingCard = !intimacyOnboardingDismissed,
+                        onDismissOnboarding = { intimacyOnboardingPreference.dismiss() },
                         modifier = Modifier.padding(contentPadding),
                         onPreviousMonth = {
                             val previous = displayedMonth.minusMonths(1)

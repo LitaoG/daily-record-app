@@ -52,9 +52,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val app = dailyRecordApp
-        // Resolve the persisted language before the first composition so both
-        // UI and non-UI copy consumers read the same strings set.
-        AppLanguageState.current = LanguagePreference(this).current.strings()
+        // Resolve the persisted language and terminology style before the first composition
+        // so both UI and non-UI copy consumers read the same strings set.
+        val terminologyStyle = TerminologyStylePreference(this).current
+        AppLanguageState.current = LanguagePreference(this).current.strings(terminologyStyle)
         // The color theme follows the same rule (ADR-022): every token getter
         // reads the selected theme, so it must be set before the first frame.
         DailyRecordThemeState.current = ColorThemePreference(this).current

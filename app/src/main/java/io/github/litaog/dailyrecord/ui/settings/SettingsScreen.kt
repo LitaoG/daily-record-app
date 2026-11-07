@@ -55,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
+import io.github.litaog.dailyrecord.core.common.TerminologyStyle
 import io.github.litaog.dailyrecord.core.security.AppLockDelay
 import io.github.litaog.dailyrecord.core.security.LauncherIdentity
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
@@ -101,6 +102,8 @@ internal fun SettingsScreen(
     onLanguageSelected: (AppLanguage) -> Unit,
     colorTheme: DailyRecordColorTheme = DailyRecordThemeState.current,
     onColorThemeSelected: (DailyRecordColorTheme) -> Unit = {},
+    terminologyStyle: TerminologyStyle = TerminologyStyle.ELEGANT,
+    onTerminologyStyleSelected: (TerminologyStyle) -> Unit = {},
     appLockSettings: AppLockSettings? = null,
     launcherDisguiseSettings: LauncherDisguiseSettings? = null,
     onBack: () -> Unit,
@@ -111,6 +114,7 @@ internal fun SettingsScreen(
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showColorThemeDialog by rememberSaveable { mutableStateOf(false) }
+    var showTerminologyStyleDialog by rememberSaveable { mutableStateOf(false) }
     var showAppLockDelayDialog by rememberSaveable { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
     val backdropBrush = remember(moduleColors) { dailyRecordBackdropBrush(moduleColors) }
@@ -168,6 +172,16 @@ internal fun SettingsScreen(
                             theme = moduleColors.brandIconTheme,
                             tint = moduleColors.primary,
                             onClick = { showLanguageDialog = true },
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 52.dp),
+                            color = DailyRecordDivider,
+                        )
+                        TerminologyStyleSettingsRow(
+                            terminologyStyle = terminologyStyle,
+                            theme = moduleColors.brandIconTheme,
+                            tint = moduleColors.primary,
+                            onClick = { showTerminologyStyleDialog = true },
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(start = 52.dp),
@@ -315,6 +329,18 @@ internal fun SettingsScreen(
                 // activity, so the restored dialog must already be closed.
                 showColorThemeDialog = false
                 onColorThemeSelected(selected)
+            },
+        )
+    }
+
+    if (showTerminologyStyleDialog) {
+        TerminologyStyleSelectionDialog(
+            currentStyle = terminologyStyle,
+            tint = moduleColors.primary,
+            onDismiss = { showTerminologyStyleDialog = false },
+            onSelected = { selected ->
+                showTerminologyStyleDialog = false
+                onTerminologyStyleSelected(selected)
             },
         )
     }
@@ -754,6 +780,91 @@ private fun SettingsOptionRow(
 private fun languageDisplayName(language: AppLanguage): String = when (language) {
     AppLanguage.ZH -> AppCopy.Settings.languageZh
     AppLanguage.EN -> AppCopy.Settings.languageEn
+}
+
+@Composable
+private fun TerminologyStyleSettingsRow(
+    terminologyStyle: TerminologyStyle,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    val styleLabel = terminologyStyleDisplayName(terminologyStyle)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_terminology_row")
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = AppCopy.Components.joinSemantics(
+                    AppCopy.Settings.terminologyTitle,
+                    styleLabel,
+                )
+            }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(
+            icon = BrandIconAsset.Note,
+            theme = theme,
+            tint = tint,
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = AppCopy.Settings.terminologyTitle,
+            color = DailyRecordText,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = styleLabel,
+            color = DailyRecordTextSecondary,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        BrandIcon(
+            asset = BrandIconAsset.Next,
+            theme = theme,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+private fun terminologyStyleDisplayName(style: TerminologyStyle): String = when (style) {
+    TerminologyStyle.ELEGANT -> AppCopy.Settings.terminologyElegant
+    TerminologyStyle.DIRECT -> AppCopy.Settings.terminologyDirect
+}
+
+private fun terminologyStyleOptionLabel(style: TerminologyStyle): String = when (style) {
+    TerminologyStyle.ELEGANT -> AppCopy.Settings.terminologyElegantOption
+    TerminologyStyle.DIRECT -> AppCopy.Settings.terminologyDirectOption
+}
+
+@Composable
+private fun TerminologyStyleSelectionDialog(
+    currentStyle: TerminologyStyle,
+    tint: Color,
+    onDismiss: () -> Unit,
+    onSelected: (TerminologyStyle) -> Unit,
+) {
+    DailyRecordDialog(
+        title = AppCopy.Settings.terminologyDialogTitle,
+        testTag = "settings_terminology_dialog",
+        onDismissRequest = onDismiss,
+    ) {
+        TerminologyStyle.entries.forEach { style ->
+            SettingsOptionRow(
+                label = terminologyStyleOptionLabel(style),
+                selected = style == currentStyle,
+                tint = tint,
+                testTag = "settings_terminology_option",
+                onClick = { onSelected(style) },
+            )
+        }
+    }
 }
 
 @Composable

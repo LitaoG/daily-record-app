@@ -1,11 +1,17 @@
 package io.github.litaog.dailyrecord.core.common
 
 import java.time.LocalDate
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class AppCopyTest {
+    @After
+    fun resetState() {
+        AppLanguageState.current = ZhStrings
+    }
+
     @Test
     fun historyStatusIsACompactDateRangeWithoutDuplicateStartLabel() {
         val copy = AppCopy.Statistics.historyStatus(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 3))
@@ -25,20 +31,20 @@ class AppCopyTest {
     @Test
     fun zeroHintExplainsTheDifferenceFromAnUnsetDay() {
         assertEquals(
-            "填 0 表示当天没有自慰，会保留记录。",
+            "填 0 表示当天没有个人私密，会保留记录。",
             AppCopy.Record.explicitZeroHint(AppCopy.RecordModule.handBrewZero),
         )
     }
 
     @Test
-    fun copyUsesDirectTermsAndKeepsZeroStatusUnambiguous() {
+    fun copyUsesElegantTermsByDefaultAndKeepsZeroStatusUnambiguous() {
         assertEquals("登录并同步", AppCopy.Account.signInSync)
         assertEquals("次数分布", AppCopy.Statistics.countComposition)
         assertEquals("发生天数", AppCopy.Statistics.recordedDaysLabel)
         assertEquals("3 天", AppCopy.Statistics.categoryDays(3))
         assertEquals("月均 0.6 次", AppCopy.Statistics.annualAverage(.6))
         assertEquals(
-            "自慰，记录为 0 次，今天",
+            "个人私密，记录为 0 次，今天",
             AppCopy.Calendar.statusDescription(
                 date = LocalDate.of(2026, 8, 2),
                 today = LocalDate.of(2026, 8, 2),
@@ -60,28 +66,28 @@ class AppCopyTest {
         // TalkBack and the visible cell must share the exact same bucketing:
         // 1..8 stay exact, 9+ collapses to "9 次以上".
         assertEquals(
-            "自慰，1 次",
+            "个人私密，1 次",
             AppCopy.Calendar.statusDescription(
                 pastDate, today, unsupported = false, future = false,
                 count = 1, moduleLabel = moduleLabel,
             ),
         )
         assertEquals(
-            "自慰，8 次",
+            "个人私密，8 次",
             AppCopy.Calendar.statusDescription(
                 pastDate, today, unsupported = false, future = false,
                 count = 8, moduleLabel = moduleLabel,
             ),
         )
         assertEquals(
-            "自慰，9 次以上",
+            "个人私密，9 次以上",
             AppCopy.Calendar.statusDescription(
                 pastDate, today, unsupported = false, future = false,
                 count = 9, moduleLabel = moduleLabel,
             ),
         )
         assertEquals(
-            "自慰，9 次以上",
+            "个人私密，9 次以上",
             AppCopy.Calendar.statusDescription(
                 pastDate, today, unsupported = false, future = false,
                 count = 10, moduleLabel = moduleLabel,
@@ -91,5 +97,25 @@ class AppCopyTest {
         assertEquals("9 次以上", AppCopy.Calendar.countDescription(9))
         assertEquals("9 次以上", AppCopy.Calendar.countDescription(10))
         assertEquals("8 次", AppCopy.Calendar.countDescription(8))
+    }
+
+    @Test
+    fun appCopyDelegatesToActiveTerminologyStyle() {
+        val previous = AppLanguageState.current
+        try {
+            AppLanguageState.current = ZhStrings(TerminologyStyle.ELEGANT)
+            assertEquals("个人私密", AppCopy.RecordModule.handBrewLabel)
+            assertEquals("伴侣亲密", AppCopy.RecordModule.sexLabel)
+
+            AppLanguageState.current = ZhStrings(TerminologyStyle.DIRECT)
+            assertEquals("自慰", AppCopy.RecordModule.handBrewLabel)
+            assertEquals("做爱", AppCopy.RecordModule.sexLabel)
+            assertEquals(
+                "填 0 表示当天没有自慰，会保留记录。",
+                AppCopy.Record.explicitZeroHint(AppCopy.RecordModule.handBrewZero),
+            )
+        } finally {
+            AppLanguageState.current = previous
+        }
     }
 }

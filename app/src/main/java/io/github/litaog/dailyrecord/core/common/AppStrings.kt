@@ -35,6 +35,7 @@ internal interface AppStrings {
     val components: ComponentStrings
     val appLock: AppLockStrings
     val disguise: DisguiseStrings
+    val onboarding: OnboardingStrings
 
     fun weekdayName(dayOfWeek: Int): String
 
@@ -576,6 +577,12 @@ internal interface AppStrings {
         val localAccountSummary: String
         val signedInAccountSummary: String
         val generalSection: String
+        val terminologyTitle: String
+        val terminologyDialogTitle: String
+        val terminologyElegant: String
+        val terminologyDirect: String
+        val terminologyElegantOption: String
+        val terminologyDirectOption: String
         val languageTitle: String
         val languageZh: String
         val languageEn: String
@@ -646,6 +653,17 @@ internal interface AppStrings {
         val settingSummary: String
         val settingNote: String
     }
+
+    /** First-launch onboarding explanatory card for intimacy modules (ADR-025). */
+    interface OnboardingStrings {
+        val title: String
+        val soloLabel: String
+        val soloDescription: String
+        val duoLabel: String
+        val duoDescription: String
+        val settingsHint: String
+        val dismissAction: String
+    }
 }
 
 /** Single mutable source of the active copy set, readable from non-UI layers. */
@@ -654,7 +672,7 @@ internal object AppLanguageState {
     var current: AppStrings = ZhStrings
 }
 
-internal fun AppLanguage.strings(): AppStrings = when (this) {
-    AppLanguage.ZH -> ZhStrings
-    AppLanguage.EN -> EnStrings
+internal fun AppLanguage.strings(style: TerminologyStyle = TerminologyStyle.ELEGANT): AppStrings = when (this) {
+    AppLanguage.ZH -> ZhStrings(style)
+    AppLanguage.EN -> EnStrings(style)
 }

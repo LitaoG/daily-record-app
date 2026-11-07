@@ -38,6 +38,11 @@ internal object EnStrings : AppStrings {
     override val components: AppStrings.ComponentStrings = Components
     override val appLock: AppStrings.AppLockStrings = AppLock
     override val disguise: AppStrings.DisguiseStrings = Disguise
+    override val onboarding: AppStrings.OnboardingStrings = Onboarding
+
+    fun withStyle(style: TerminologyStyle): AppStrings = this
+
+    operator fun invoke(style: TerminologyStyle = TerminologyStyle.ELEGANT): AppStrings = this
 
     private val weekdayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -684,6 +689,12 @@ internal object EnStrings : AppStrings {
         override val localAccountSummary = "Stored on this device only; sign in to sync and restore."
         override val signedInAccountSummary = "Check sync status, sync manually, or manage your account"
         override val generalSection = "General"
+        override val terminologyTitle = "Terminology Style"
+        override val terminologyDialogTitle = "Choose terminology style"
+        override val terminologyElegant = "Elegant"
+        override val terminologyDirect = "Direct"
+        override val terminologyElegantOption = "Elegant (Solo / Partner Intimacy)"
+        override val terminologyDirectOption = "Direct (Direct Terms)"
         override val languageTitle = "Language"
         override val languageZh = "中文"
         override val languageEn = "English"
@@ -750,5 +761,15 @@ internal object EnStrings : AppStrings {
     private object Components : AppStrings.ComponentStrings {
         override val decrease = "Decrease by 1"
         override val increase = "Increase by 1"
+    }
+
+    private object Onboarding : AppStrings.OnboardingStrings {
+        override val title = "Terminology Guide"
+        override val soloLabel = "Solo Intimacy"
+        override val soloDescription = "Track personal rhythm and solo moments"
+        override val duoLabel = "Partner Intimacy"
+        override val duoDescription = "Track couple intimacy and shared moments"
+        override val settingsHint = "You can switch between Elegant and Direct styles anytime in Settings."
+        override val dismissAction = "Got it"
     }
 }

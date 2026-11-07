@@ -626,6 +626,12 @@ internal object AppCopy {
         val localAccountSummary: String get() = AppLanguageState.current.settings.localAccountSummary
         val signedInAccountSummary: String get() = AppLanguageState.current.settings.signedInAccountSummary
         val generalSection: String get() = AppLanguageState.current.settings.generalSection
+        val terminologyTitle: String get() = AppLanguageState.current.settings.terminologyTitle
+        val terminologyDialogTitle: String get() = AppLanguageState.current.settings.terminologyDialogTitle
+        val terminologyElegant: String get() = AppLanguageState.current.settings.terminologyElegant
+        val terminologyDirect: String get() = AppLanguageState.current.settings.terminologyDirect
+        val terminologyElegantOption: String get() = AppLanguageState.current.settings.terminologyElegantOption
+        val terminologyDirectOption: String get() = AppLanguageState.current.settings.terminologyDirectOption
         val languageTitle: String get() = AppLanguageState.current.settings.languageTitle
         val languageZh: String get() = AppLanguageState.current.settings.languageZh
         val languageEn: String get() = AppLanguageState.current.settings.languageEn
@@ -699,6 +705,16 @@ internal object AppCopy {
 
         fun joinSemantics(parts: Iterable<String>): String =
             AppLanguageState.current.joinSemantics(parts)
+    }
+
+    object Onboarding {
+        val title: String get() = AppLanguageState.current.onboarding.title
+        val soloLabel: String get() = AppLanguageState.current.onboarding.soloLabel
+        val soloDescription: String get() = AppLanguageState.current.onboarding.soloDescription
+        val duoLabel: String get() = AppLanguageState.current.onboarding.duoLabel
+        val duoDescription: String get() = AppLanguageState.current.onboarding.duoDescription
+        val settingsHint: String get() = AppLanguageState.current.onboarding.settingsHint
+        val dismissAction: String get() = AppLanguageState.current.onboarding.dismissAction
     }
 
     /** Locale used for user-visible date/weekday formatting. */
