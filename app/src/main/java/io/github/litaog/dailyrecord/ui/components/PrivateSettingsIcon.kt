@@ -1,18 +1,18 @@
 package io.github.litaog.dailyrecord.ui.components
 
-import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
-import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 
 /**
- * Settings entry icon backed by the locked Figma brand artwork.
+ * Settings entry icon: the vector gear tinted with the active module accent
+ * of the selected theme.
  *
- * The asset is selected as Purple or Wine rather than being recoloured, so the
- * only tint callers supply is the active module tint that picks the variant.
+ * Keeps the old parameter shape so callers that already pass the module tint
+ * stay unchanged; [calendarTint] is no longer drawn.
  */
 @Composable
 fun PrivateSettingsIcon(
@@ -22,12 +22,9 @@ fun PrivateSettingsIcon(
 ) {
     BrandIcon(
         asset = BrandIconAsset.Settings,
-        theme = if (moduleTint == SexColorTokens.primary) {
-            BrandIconTheme.Wine
-        } else {
-            BrandIconTheme.Purple
-        },
+        tint = moduleTint,
         modifier = modifier.size(DailyRecordSizes.SettingsIcon),
         contentDescription = contentDescription,
     )
 }
+

@@ -1,7 +1,8 @@
 package io.github.litaog.dailyrecord.ui.auth
 
 import android.util.Patterns
-import androidx.activity.compose.BackHandler
+import io.github.litaog.dailyrecord.ui.components.predictiveBackPreview
+import io.github.litaog.dailyrecord.ui.components.rememberPredictiveBackState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -111,15 +112,17 @@ internal fun AuthScreen(
         }
     }
 
-    BackHandler(enabled = onBack != null && !busy) {
-        onBack?.invoke()
-    }
+    val backState = rememberPredictiveBackState(
+        enabled = onBack != null && !busy,
+        onBack = { onBack?.invoke() },
+    )
 
     val backdropBrush = remember { dailyRecordBackdropBrush(HandBrewColorTokens) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .predictiveBackPreview(backState)
             .background(backdropBrush)
             .verticalScroll(rememberScrollState())
             .imePadding()
@@ -133,7 +136,7 @@ internal fun AuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            CalendarGlyph(modifier = Modifier.size(36.dp))
+            CalendarGlyph(color = DailyRecordDefaultAccent, modifier = Modifier.size(36.dp))
             Text(AppCopy.Auth.title, color = DailyRecordText, style = MaterialTheme.typography.headlineLarge)
             Text(
                 if (mode == AuthMode.SignIn) AppCopy.Auth.signInSubtitle else AppCopy.Auth.registerSubtitle,

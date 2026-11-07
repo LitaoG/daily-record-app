@@ -1,6 +1,6 @@
 # 系统架构
 
-最后复核：2026-08-16
+最后复核：2026-11-06
 
 ## 目标
 
@@ -35,9 +35,9 @@ flowchart LR
 
 UI 不直接访问 DAO 或 Firestore。`DailyCountRecord` 与 `DailyCountRecordRepository<T>` 只提供日期、次数和时间戳这组最小公共契约；UI 适配器把强类型的 `HandBrewRecord` / `SexRecord` 投影为共享日期次数组件，保存时仍由对应模块创建领域记录并回到对应 Repository。保存和清除先落 Room，再由组合协调器驱动独立同步链路。Firestore 快照也必须先合并进各自 Room 表，UI 不读取远端缓存。
 
-用户明确选择的本机模式和上次选择的记录模块分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。从本机日历打开登录页是进程内导航状态，只有认证成功后才关闭本机偏好；登录页返回或登录中断不会改变既有本机入口。Firebase 已登录状态仍以 Authentication 为准。
+用户明确选择的本机模式、上次选择的记录模块、所选主题配色（ADR-022）、应用锁开关与重新锁定时长（ADR-023）以及桌面伪装选择（ADR-024）分别使用专用 SharedPreferences 持久化；它们不存业务记录、邮箱或密码。从本机日历打开登录页是进程内导航状态，只有认证成功后才关闭本机偏好；登录页返回或登录中断不会改变既有本机入口。Firebase 已登录状态仍以 Authentication 为准。
 
-设置中心是 Compose 外壳中的次级页面，不进入底部主导航。它复用账号弹窗，只读取构建版本与静态隐私事实；模块选择继续由主页承载，不直接访问 DAO、Firestore，也不引入新的业务数据表或通用设置模型。
+设置中心是 Compose 外壳中的次级页面，不进入底部主导航。它复用账号弹窗，只读取构建版本、静态隐私事实、语言与主题偏好以及 `MainActivity` 传入的应用锁设置快照；模块选择继续由主页承载，不直接访问 DAO、Firestore，也不引入新的业务数据表或通用设置模型。
 
 本轮没有新增记录模块。未来若增加记录类型，仍必须采用独立领域模型、Room 表、Repository 和远端集合；账号同步、账号删除和 UI 外壳通过模块列表聚合，避免把业务字段塞回旧通用活动表。
 
@@ -55,16 +55,18 @@ app
    ├─ core:common      shared invariants and user-facing copy
    ├─ core:di          Firebase bootstrap / composition root / WorkManager adapters
    ├─ core:sync        remote source / coordinator / deletion journal / recovery coordinator
+   ├─ core:security    app lock session / preference / platform authenticator / launcher disguise
    └─ ui
-      ├─ calendar      CalendarScreen
+      ├─ calendar      CalendarScreen / today quick log / long-press adjust / month swipe
       ├─ record        RecordScreen
       ├─ statistics    StatisticsScreen（纯 UI；统计模型在 core:statistics）
       ├─ settings      SettingsScreen
       ├─ account       AccountDialog / AccountDeletionDialog
       ├─ auth          AuthScreen / PasswordResetDialog
       ├─ navigation    DateNavigationDialog
+      ├─ lock          AppLockScreen / AppLockSettings
       ├─ components    shared Compose components
-      └─ theme         Figma token mapping
+      └─ theme         color themes / liquid glass / motion tokens
 ```
 
 早期保持单一 Gradle 模块；只有构建时间或团队规模证明需要时才拆物理模块。
@@ -86,7 +88,10 @@ Compose 页面、同步层和统计模型只引用这些入口，动态文案由
 （`recreate()`），`rememberSaveable` 持有的浏览日期、模块与导航状态在重建后保留。
 `RecordModule.uiSpec()` 与 `StatisticsPeriod.label` 在调用时按当前语言取值，
 不允许在类加载期固化文案。`app_name` 由 `res/values-en` 提供英文桌面名，应用内
-标题仍走文案契约。
+标题仍走文案契约。桌面伪装的入口名 `app_name_journal`（ADR-024）同样放在字符串
+资源中，因为清单只能引用资源。
+
+主题状态（ADR-022）：`ui/ColorThemePreference` 以 SharedPreferences 只保存主题 id，默认“极光星云”。`MainActivity` 在首帧前把持久化主题写入 `DailyRecordThemeState.current`；`HandBrewColorTokens`、`SexColorTokens` 和默认强调色都在调用时按当前主题取值，不在类加载期固化。设置页切换主题与切换语言一样由主 Activity `recreate()` 重建，`rememberSaveable` 状态保留。两个模块在每套主题里各有独立色板；主题只改变颜色，不改变任何数据或统计。
 
 ## 功能演进边界
 
@@ -137,6 +142,24 @@ Room 当前版本为 6。v1→v2 只提取旧 `flight` 机器图标标识的记�
 - 手动同步被取消时先恢复进入同步前的状态，再继续传播取消，避免账号栏永久停留在“同步中”。
 - 记录页维护“服务端/Room 基线次数”和“本机草稿次数”。跨设备更新到达且用户尚未编辑时刷新草稿；用户已经编辑时保留草稿，并继续以最新基线判断未保存状态。
 - Room 事务提交成功即视为记录成功；后续 WorkManager 调度属于尽力而为，调度异常不会把已经落盘的数据误报为保存失败。
+- 主页“今日速记”和日历长按快速调整（ADR-022）复用所选模块 Controller 的只存次数保存路径：每次点按都在同一把 `Mutex` 内重新读取该日期已保存的次数再写入，快速连点按顺序生效；次数减少时，超出新次数的逐次详情由 Repository 既有的裁剪逻辑删除。从 1 次减到 0 保存为明确 0 次（ADR-004）；未来日期和 1970 年以前的日期在调用前被拒绝；保存失败显示保存失败提示，取消继续向上传播。
+
+## 应用锁边界
+
+- `core/security/AppLockSession`（ADR-023）是纯 Kotlin 状态机，暴露 `locked` 与 `attemptFailed` 两个 StateFlow，规则由 JVM 测试覆盖。它和 `AppLockPreference` 都是 `DailyRecordApplication` 的惰性单例，所以应用为语言或主题执行的 `recreate()` 不会丢失解锁状态；进程被回收后按偏好重新锁定。
+- `MainActivity` 是唯一的生命周期入口：`onStart` 先重新读取设备是否设有安全锁屏，没有时自动关闭应用锁并提示，再以 `SystemClock.elapsedRealtime()` 调用 `onForeground`；`onStop` 调用 `onBackground`，配置变化和应用自身的 `recreate()` 不计为离开。
+- `AppLockAuthenticator` 在 `onCreate` 中创建，因为 Android 8–9 的锁屏密码确认需要提前注册 Activity Result 启动器；API 29+ 使用平台 `BiometricPrompt`。每次验证请求带递增编号，旋转等原因被取消的旧请求结果会被忽略；验证进行中的停止与恢复不会再次锁定。
+- 锁定层 `ui/lock/AppLockScreen` 是盖在 `DailyRecordRoot` 之上的全屏 `Dialog`。底层内容保持组合，进行中的 Room 写入、同步和账号删除协程不会因锁定取消；锁定时底层通过 `clearAndSetSemantics` 移出无障碍树，并清除输入焦点。
+- 设置页只接收 `AppLockSettings` 快照：开关、时长、设备是否有锁屏、低版本是否同时禁止截屏和两个回调，不直接读写偏好。`MainActivity` 收到回调后同时更新 `AppLockPreference`、`AppLockSession` 和最近任务隐私（API 33+ 用 `setRecentsScreenshotEnabled(false)`，更低版本用 `FLAG_SECURE`）。
+- 应用锁不加密 Room 数据库，也不进入同步、Firestore 或账号删除路径。
+
+## 桌面伪装边界
+
+- 唯一的 Activity 是 `ui.MainActivity`（ADR-024），不导出，也没有自己的启动器入口。清单里的两个 `activity-alias` 才是桌面入口：默认身份沿用旧组件名 `.MainActivity`，伪装身份 `.JournalLauncher` 默认停用。沿用旧组件名让已固定的桌面图标和按组件名启动的发布验证脚本在升级后仍然有效。
+- `core/security/LauncherIdentity` 定义两个身份；`launcherAliasChanges` 是纯函数，只给出“先启用目标、再停用其他”的步骤，由 JVM 测试覆盖。
+- `LauncherDisguise` 是 `DailyRecordApplication` 的惰性单例：把选择同步写入专用 SharedPreferences，再用 `PackageManager.setComponentEnabledSetting(..., DONT_KILL_APP)` 只切换两个别名。Activity 本身从不停用，所以系统不会结束正在显示的页面。
+- `MainActivity.onCreate` 每次启动先调用 `reconcile()`，修复切换中途被打断的入口状态，再用 `setTaskDescription` 让最近任务的名称和图标跟随当前身份。设置页只接收 `LauncherDisguiseSettings` 快照，不直接接触 `PackageManager`。
+- 伪装不进入 Room、同步、Firestore 或账号删除路径。
 
 ## 逐次详情边界
 

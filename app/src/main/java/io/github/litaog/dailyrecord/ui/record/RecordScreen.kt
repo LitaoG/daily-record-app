@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.record
 
-import androidx.activity.compose.BackHandler
+import io.github.litaog.dailyrecord.ui.components.predictiveBackPreview
+import io.github.litaog.dailyrecord.ui.components.rememberPredictiveBackState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -229,13 +230,14 @@ internal fun DailyCountRecordScreen(
         }
     }
 
-    BackHandler(onBack = requestBack)
+    val backState = rememberPredictiveBackState(enabled = !saving, onBack = requestBack)
 
     val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
+            .predictiveBackPreview(backState)
             .background(backdropBrush)
             .testTag("record_screen"),
         containerColor = Color.Transparent,

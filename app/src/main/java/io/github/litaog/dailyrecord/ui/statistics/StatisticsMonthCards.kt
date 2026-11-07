@@ -20,7 +20,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +64,7 @@ internal data class MonthDailyChartScale(
 private val monthDailyChartHeight = 164.dp
 private val monthDailyPlotTop = 24.dp
 private val monthDailyPlotBottom = 154.dp
+private val monthDailyHorizontalInset = 5.dp
 
 /**
  * Stable date anchors used on the compact month chart's x-axis.
@@ -311,15 +316,31 @@ private fun MonthDailyChartPlot(
     colors: RecordModuleColorTokens,
     modifier: Modifier = Modifier,
 ) {
+    // Touch scrubbing (ADR-022): only press and release recompose the plot;
+    // the probe itself is drawn from state read in the draw phase.
+    val scrub = rememberChartScrubState()
+    val scrubbing by remember(scrub) { derivedStateOf { scrub.activeIndex != null } }
+    val probeAlpha by animateFloatAsState(
+        targetValue = if (scrubbing) 1f else 0f,
+        animationSpec = tween(durationMillis = if (scrubbing) 120 else 300),
+        label = "monthProbeAlpha",
+    )
+    val dayCount = month.days.size
+    val scrubInsetPx = with(LocalDensity.current) { monthDailyHorizontalInset.toPx() }
     BoxWithConstraints(
         modifier = modifier
             .height(monthDailyChartHeight)
-            .testTag("month_daily_count_chart"),
+            .testTag("month_daily_count_chart")
+            .chartScrub(
+                key = dayCount,
+                indexAt = { x, width -> monthDailyChartIndexAt(x, dayCount, width, scrubInsetPx) },
+                onScrub = scrub::update,
+            ),
     ) {
         val density = LocalDensity.current
         val plotTop = monthDailyPlotTop
         val plotBottom = monthDailyPlotBottom
-        val horizontalInset = 5.dp
+        val horizontalInset = monthDailyHorizontalInset
         val plotTopPx = with(density) { plotTop.toPx() }
         val plotBottomPx = with(density) { plotBottom.toPx() }
         val horizontalInsetPx = with(density) { horizontalInset.toPx() }
@@ -438,6 +459,20 @@ private fun MonthDailyChartPlot(
                     center = baseline,
                 )
             }
+
+            // Scrub probe above the data. Unfilled, 0 and future days sit on
+            // the baseline, which is where their offsets already point.
+            val shown = scrub.shownIndex
+            if (shown != null && shown in offsets.indices) {
+                drawChartProbe(
+                    x = offsets[shown].x,
+                    pointY = offsets[shown].y,
+                    topY = plotTopPx,
+                    bottomY = plotBottomPx,
+                    color = colors.primary,
+                    alpha = probeAlpha,
+                )
+            }
         }
 
         month.days.forEachIndexed { index, day ->
@@ -460,7 +495,40 @@ private fun MonthDailyChartPlot(
                 )
             }
         }
+
+        MonthScrubBubble(
+            scrub = scrub,
+            month = month,
+            offsets = offsets,
+            colors = colors,
+            alpha = { probeAlpha },
+        )
     }
+}
+
+/** Separate restart scope: moving between days recomposes only the bubble. */
+@Composable
+private fun MonthScrubBubble(
+    scrub: ChartScrubState,
+    month: MonthStatistics,
+    offsets: List<Offset>,
+    colors: RecordModuleColorTokens,
+    alpha: () -> Float,
+) {
+    val shown = scrub.shownIndex ?: return
+    val day = month.days.getOrNull(shown) ?: return
+    val anchor = offsets.getOrNull(shown) ?: return
+    ChartScrubBubble(
+        text = AppCopy.Statistics.dayChartValue(
+            day = day.date.dayOfMonth,
+            count = day.count,
+            future = day.future,
+            recorded = day.recorded,
+        ),
+        anchorX = anchor.x,
+        colors = colors,
+        alpha = alpha,
+    )
 }
 
 @Composable

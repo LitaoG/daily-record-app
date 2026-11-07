@@ -1,4 +1,4 @@
-﻿package io.github.litaog.dailyrecord.ui
+package io.github.litaog.dailyrecord.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -30,6 +30,7 @@ import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
 import io.github.litaog.dailyrecord.core.common.AppLanguageState
+import io.github.litaog.dailyrecord.core.common.TerminologyStyle
 import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
@@ -52,6 +53,17 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CancellationException
+import io.github.litaog.dailyrecord.ui.calendar.QuickLogAction
+import io.github.litaog.dailyrecord.ui.calendar.nextCount
+import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
+import io.github.litaog.dailyrecord.ui.settings.LauncherDisguiseSettings
 
 private val earliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
 
@@ -71,6 +83,9 @@ fun DailyRecordApp(
     onSignOut: () -> Unit = {},
     onSignIn: (() -> Unit)? = null,
     onLanguageChanged: (AppLanguage) -> Unit = {},
+    onColorThemeChanged: (DailyRecordColorTheme) -> Unit = {},
+    appLockSettings: AppLockSettings? = null,
+    launcherDisguiseSettings: LauncherDisguiseSettings? = null,
     onDeleteAccount: suspend (String, LocalDataAfterAccountDeletion) -> Result<Unit> = { _, _ ->
         Result.failure(IllegalStateException("Account deletion is unavailable"))
     },
@@ -82,12 +97,37 @@ fun DailyRecordApp(
     val language by languagePreference.language.collectAsStateWithLifecycle(
         initialValue = languagePreference.current,
     )
+    val terminologyStylePreference = remember(context) { TerminologyStylePreference(context) }
+    val terminologyStyle by terminologyStylePreference.style.collectAsStateWithLifecycle(
+        initialValue = terminologyStylePreference.current,
+    )
+    val onTerminologyStyleSelected: (TerminologyStyle) -> Unit = { selected ->
+        if (selected != terminologyStyle) {
+            terminologyStylePreference.setStyle(selected)
+            AppLanguageState.current = language.strings(selected)
+        }
+    }
+    val intimacyOnboardingPreference = remember(context) { IntimacyOnboardingPreference(context) }
+    val intimacyOnboardingDismissed by intimacyOnboardingPreference.dismissed.collectAsStateWithLifecycle(
+        initialValue = intimacyOnboardingPreference.isDismissed,
+    )
     val onLanguageSelected: (AppLanguage) -> Unit = { selected ->
         // Tapping the active language must not trigger a full recreation.
         if (selected != language) {
             languagePreference.setLanguage(selected)
-            AppLanguageState.current = selected.strings()
+            AppLanguageState.current = selected.strings(terminologyStyle)
             onLanguageChanged(selected)
+        }
+    }
+    val colorThemePreference = remember(context) { ColorThemePreference(context) }
+    val colorTheme by colorThemePreference.theme.collectAsStateWithLifecycle(
+        initialValue = colorThemePreference.current,
+    )
+    val onColorThemeSelected: (DailyRecordColorTheme) -> Unit = { selected ->
+        // Re-selecting the active theme must not trigger a full recreation.
+        if (selected != colorTheme) {
+            colorThemePreference.setTheme(selected)
+            onColorThemeChanged(selected)
         }
     }
     val handBrewController = remember(repository) { HandBrewModuleController(repository) }
@@ -97,7 +137,7 @@ fun DailyRecordApp(
     val availableControllers = remember(handBrewController, sexController) {
         listOfNotNull(handBrewController, sexController)
     }
-    val availableModuleSpecs = remember(availableControllers, language) {
+    val availableModuleSpecs = remember(availableControllers, language, terminologyStyle) {
         availableControllers.map { it.module.uiSpec() }
     }
     var selectedModuleName by rememberSaveable {
@@ -209,25 +249,33 @@ fun DailyRecordApp(
     }
     val monthRecords = scopedMonthRecordsState ?: fallbackMonthRecords
 
-    if (selectedDate != null) {
-        // Key the record screen by module so each module keeps its own
-        // saveable draft slots: a hand-brew draft must never be restored as a
-        // sex draft for the same date (and vice versa).
-        key(selectedModule) {
-            DailyCountRecordScreen(
-                date = selectedDate,
-                today = effectiveToday,
-                controller = selectedController,
-                moduleSpec = moduleSpec,
-                monthRecords = monthRecords,
-                onBack = { selectedDateText = null },
-                // Saving is an in-place action. Keep the record page mounted so
-                // the user can see the saved feeling and continue editing this
-                // date; leaving the page remains an explicit back action.
-                onSaved = {},
-            )
+    // Today quick-log island (ADR-022). Each tap re-reads today's stored count
+    // inside one lock before saving, so fast taps apply in order and a stale
+    // value never overwrites a newer one. Saving reuses the module's
+    // count-only path, which already trims details above the new count.
+    val todayCount = allRecords.asReversed()
+        .firstOrNull { it.localDate == effectiveToday }
+        ?.count
+    val quickLogScope = rememberCoroutineScope()
+    val quickLogMutex = remember { Mutex() }
+    val onQuickLog: (LocalDate, QuickLogAction) -> Unit = quickLog@{ date, action ->
+        // Same bounds as the record page (also used by the long-press
+        // stepper): never write a future or pre-1970 date.
+        if (date.isAfter(effectiveToday) || date.isBefore(EARLIEST_SUPPORTED_DATE)) return@quickLog
+        val controller = selectedController
+        quickLogScope.launch {
+            try {
+                quickLogMutex.withLock {
+                    val current = controller.observeRecord(date).first()?.count
+                    val next = action.nextCount(current)
+                    if (next != null) controller.saveRecord(date, next)
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                snackbarHostState.showSnackbar(AppCopy.Record.saveFailure)
+            }
         }
-        return
     }
 
     Box(
@@ -235,7 +283,25 @@ fun DailyRecordApp(
             .fillMaxSize()
             .background(backdropBrush),
     ) {
-        if (showSettings) {
+        if (selectedDate != null) {
+            // Key the record screen by module so each module keeps its own
+            // saveable draft slots: a hand-brew draft must never be restored as a
+            // sex draft for the same date (and vice versa).
+            key(selectedModule) {
+                DailyCountRecordScreen(
+                    date = selectedDate,
+                    today = effectiveToday,
+                    controller = selectedController,
+                    moduleSpec = moduleSpec,
+                    monthRecords = monthRecords,
+                    onBack = { selectedDateText = null },
+                    // Saving is an in-place action. Keep the record page mounted so
+                    // the user can see the saved feeling and continue editing this
+                    // date; leaving the page remains an explicit back action.
+                    onSaved = {},
+                )
+            }
+        } else if (showSettings) {
             SettingsScreen(
                 versionName = BuildConfig.VERSION_NAME,
                 accountEmail = accountEmail,
@@ -243,6 +309,12 @@ fun DailyRecordApp(
                 moduleColors = moduleSpec.colors,
                 language = language,
                 onLanguageSelected = onLanguageSelected,
+                colorTheme = colorTheme,
+                onColorThemeSelected = onColorThemeSelected,
+                terminologyStyle = terminologyStyle,
+                onTerminologyStyleSelected = onTerminologyStyleSelected,
+                appLockSettings = appLockSettings,
+                launcherDisguiseSettings = launcherDisguiseSettings,
                 onBack = { showSettings = false },
                 onOpenAccount = { showAccountDialog = true },
                 onSignIn = onSignIn,
@@ -293,6 +365,10 @@ fun DailyRecordApp(
                         selectedModule = selectedModule,
                         availableModules = availableModuleSpecs,
                         earliestMonth = earliestSupportedMonth,
+                        todayCount = todayCount,
+                        onQuickLog = onQuickLog,
+                        showOnboardingCard = !intimacyOnboardingDismissed,
+                        onDismissOnboarding = { intimacyOnboardingPreference.dismiss() },
                         modifier = Modifier.padding(contentPadding),
                         onPreviousMonth = {
                             val previous = displayedMonth.minusMonths(1)

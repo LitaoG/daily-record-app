@@ -32,7 +32,7 @@
 | AI 总规则、红线和高风险操作 | [`AGENTS.md`](../AGENTS.md) |
 | 某个文件算不算权威、归谁管 | [`DOCUMENTATION_CATALOG.md`](DOCUMENTATION_CATALOG.md)、[`README.md`](README.md) |
 | 公共/私有边界、文档生命周期、生成物 | [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md) |
-| 面向使用者的隐私说明、漏洞报告 | [`PRIVACY.md`](../PRIVACY.md)、[`SECURITY.md`](../SECURITY.md) |
+| 面向使用者的隐私说明、漏洞报告 | [`PRIVACY.md`](../PRIVACY.md)（[English](../PRIVACY.en.md)）、[`SECURITY.md`](../SECURITY.md) |
 
 当前公共事实来源是 `LitaoG/daily-record-app` 的 `main`；Stage 0–6 和 `v1.0.0-beta.3` 已完成，历史阶段文档只用于追溯当时的截图与验证，不构成新的待办。2026-08-15 曾对 `main` 做过一次代码、安全、性能、生命周期与文档审计，结论已进入当前文档和[踩坑清单](AI-PITFALLS.md)；其后的公共维护还包括 compileSdk 37、Node.js 22/Functions 2nd gen、`asia-east1` 区域固定、生命周期感知的 Flow 收集、双语适配，以及 PR/`main`/Release tag 的 API 34 connected gate。后续合并后仍以 GitHub `main` 的最新提交为准。
 
@@ -66,7 +66,7 @@
 | [测试策略与执行矩阵](TESTING.md) | 每类代码改动何时跑定向测试、何时在小版本末尾跑一次全量验证 |
 | [Firebase 配置与运维](FIREBASE_SETUP.md) | 生产资源、本地配置、规则发布和网络限制 |
 | [签名与 GitHub Release](RELEASE.md) | 版本、稳定签名、Secrets、发布和灾难恢复 |
-| [隐私说明](../PRIVACY.md) | 面向使用者的数据处理说明 |
+| [隐私说明](../PRIVACY.md)（[English](../PRIVACY.en.md)） | 面向使用者的数据处理说明 |
 | [安全策略](../SECURITY.md) | 漏洞报告、敏感材料和安全基线 |
 | [参与贡献](../CONTRIBUTING.md) | 分支、代码、测试和隐私要求 |
 | [仓库维护与文档生命周期](REPOSITORY_HYGIENE.md) | 公共/私有边界、资源分层、分支清理、文档分类和生成物策略 |
@@ -78,6 +78,8 @@
 - [UI v2 分阶段执行计划](product/QUIET_PRIVATE_JOURNAL_GOALS.md)
 - [月统计改版契约：每日次数、次数分布与单日极值](product/MONTH_STATISTICS_REDESIGN.md)
 - [UI 视觉重构竞品研究与决策基线](product/UI_REDESIGN_RESEARCH_BASELINE.md)
+- [流体玻璃与 Google Play 就绪 Goal（ADR-022）](product/LIQUID_GLASS_PLAY_READINESS_GOAL.md)
+- [Google Play 上架就绪清单](product/PLAY_STORE_READINESS.md)
 - [设置中心 Goal](product/SETTINGS_HUB_GOAL.md)
 - [双语适配 Goal（i18n：中文默认 + English）](product/I18N_GOAL.md)
 - [当前 Backlog](product/PRODUCT_BACKLOG.md)

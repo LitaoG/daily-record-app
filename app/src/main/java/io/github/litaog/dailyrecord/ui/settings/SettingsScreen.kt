@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.settings
 
-import androidx.activity.compose.BackHandler
+import io.github.litaog.dailyrecord.ui.components.predictiveBackPreview
+import io.github.litaog.dailyrecord.ui.components.rememberPredictiveBackState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -27,6 +29,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -45,10 +50,14 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
+import io.github.litaog.dailyrecord.core.common.TerminologyStyle
+import io.github.litaog.dailyrecord.core.security.AppLockDelay
+import io.github.litaog.dailyrecord.core.security.LauncherIdentity
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.color
 import io.github.litaog.dailyrecord.ui.account.label
@@ -57,7 +66,14 @@ import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordThemeState
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.unit.Dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
@@ -72,6 +88,10 @@ import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 
 private val SettingsCardShape = RoundedCornerShape(18.dp)
 
+/** Public privacy notices of this open-source repository (Play listing requirement). */
+private const val PRIVACY_POLICY_URL_ZH = "https://github.com/LitaoG/daily-record-app/blob/main/PRIVACY.md"
+private const val PRIVACY_POLICY_URL_EN = "https://github.com/LitaoG/daily-record-app/blob/main/PRIVACY.en.md"
+
 @Composable
 internal fun SettingsScreen(
     versionName: String,
@@ -80,17 +100,28 @@ internal fun SettingsScreen(
     moduleColors: RecordModuleColorTokens,
     language: AppLanguage,
     onLanguageSelected: (AppLanguage) -> Unit,
+    colorTheme: DailyRecordColorTheme = DailyRecordThemeState.current,
+    onColorThemeSelected: (DailyRecordColorTheme) -> Unit = {},
+    terminologyStyle: TerminologyStyle = TerminologyStyle.ELEGANT,
+    onTerminologyStyleSelected: (TerminologyStyle) -> Unit = {},
+    appLockSettings: AppLockSettings? = null,
+    launcherDisguiseSettings: LauncherDisguiseSettings? = null,
     onBack: () -> Unit,
     onOpenAccount: () -> Unit,
     onSignIn: (() -> Unit)?,
 ) {
-    BackHandler(onBack = onBack)
+    val backState = rememberPredictiveBackState(onBack = onBack)
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
+    var showColorThemeDialog by rememberSaveable { mutableStateOf(false) }
+    var showTerminologyStyleDialog by rememberSaveable { mutableStateOf(false) }
+    var showAppLockDelayDialog by rememberSaveable { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
     val backdropBrush = remember(moduleColors) { dailyRecordBackdropBrush(moduleColors) }
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .predictiveBackPreview(backState)
             .background(backdropBrush),
     ) {
         Scaffold(
@@ -142,6 +173,25 @@ internal fun SettingsScreen(
                             tint = moduleColors.primary,
                             onClick = { showLanguageDialog = true },
                         )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 52.dp),
+                            color = DailyRecordDivider,
+                        )
+                        TerminologyStyleSettingsRow(
+                            terminologyStyle = terminologyStyle,
+                            theme = moduleColors.brandIconTheme,
+                            tint = moduleColors.primary,
+                            onClick = { showTerminologyStyleDialog = true },
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 52.dp),
+                            color = DailyRecordDivider,
+                        )
+                        ColorThemeSettingsRow(
+                            colorTheme = colorTheme,
+                            theme = moduleColors.brandIconTheme,
+                            onClick = { showColorThemeDialog = true },
+                        )
                     }
                 }
                 item {
@@ -150,10 +200,51 @@ internal fun SettingsScreen(
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 }
+                if (appLockSettings != null || launcherDisguiseSettings != null) {
+                    item {
+                        // The section's controls share one card, above the
+                        // cards that only explain.
+                        SettingsCard(contentSpacing = 0.dp) {
+                            if (appLockSettings != null) {
+                                AppLockSettingsRow(
+                                    settings = appLockSettings,
+                                    theme = moduleColors.brandIconTheme,
+                                    tint = moduleColors.primary,
+                                )
+                                if (appLockSettings.enabled) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 52.dp),
+                                        color = DailyRecordDivider,
+                                    )
+                                    AppLockDelayRow(
+                                        delay = appLockSettings.delay,
+                                        theme = moduleColors.brandIconTheme,
+                                        tint = moduleColors.primary,
+                                        onClick = { showAppLockDelayDialog = true },
+                                    )
+                                }
+                            }
+                            if (launcherDisguiseSettings != null) {
+                                if (appLockSettings != null) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 52.dp),
+                                        color = DailyRecordDivider,
+                                    )
+                                }
+                                LauncherDisguiseRow(
+                                    settings = launcherDisguiseSettings,
+                                    theme = moduleColors.brandIconTheme,
+                                    tint = moduleColors.primary,
+                                )
+                            }
+                        }
+                    }
+                }
                 item {
                     SettingsCard(contentSpacing = 0.dp) {
                         SettingsInfoRow(
-                            icon = BrandIconAsset.Lock,
+                            // The lock symbol now belongs to the app lock row.
+                            icon = BrandIconAsset.Device,
                             theme = moduleColors.brandIconTheme,
                             title = AppCopy.Settings.localFirstTitle,
                             summary = AppCopy.Settings.localFirstSummary,
@@ -190,6 +281,23 @@ internal fun SettingsScreen(
                             label = AppCopy.Settings.license,
                             value = AppCopy.Settings.licenseValue,
                         )
+                        HorizontalDivider(color = DailyRecordDivider)
+                        AboutLinkRow(
+                            label = AppCopy.Settings.privacyPolicy,
+                            actionDescription = AppCopy.Settings.privacyPolicyAction,
+                            theme = moduleColors.brandIconTheme,
+                            testTag = "settings_privacy_policy",
+                            onClick = {
+                                // Open the notice in the language the app shows.
+                                val url = when (language) {
+                                    AppLanguage.ZH -> PRIVACY_POLICY_URL_ZH
+                                    AppLanguage.EN -> PRIVACY_POLICY_URL_EN
+                                }
+                                // Only a device without any browser fails here;
+                                // the row then simply does nothing.
+                                runCatching { uriHandler.openUri(url) }
+                            },
+                        )
                     }
                 }
             }
@@ -207,6 +315,44 @@ internal fun SettingsScreen(
                 // restored dialog must not reopen.
                 showLanguageDialog = false
                 onLanguageSelected(selected)
+            },
+        )
+    }
+
+    if (showColorThemeDialog) {
+        ColorThemeSelectionDialog(
+            currentTheme = colorTheme,
+            tint = moduleColors.primary,
+            onDismiss = { showColorThemeDialog = false },
+            onSelected = { selected ->
+                // Same rule as language: the theme change recreates the
+                // activity, so the restored dialog must already be closed.
+                showColorThemeDialog = false
+                onColorThemeSelected(selected)
+            },
+        )
+    }
+
+    if (showTerminologyStyleDialog) {
+        TerminologyStyleSelectionDialog(
+            currentStyle = terminologyStyle,
+            tint = moduleColors.primary,
+            onDismiss = { showTerminologyStyleDialog = false },
+            onSelected = { selected ->
+                showTerminologyStyleDialog = false
+                onTerminologyStyleSelected(selected)
+            },
+        )
+    }
+
+    if (showAppLockDelayDialog && appLockSettings?.enabled == true) {
+        AppLockDelaySelectionDialog(
+            currentDelay = appLockSettings.delay,
+            tint = moduleColors.primary,
+            onDismiss = { showAppLockDelayDialog = false },
+            onSelected = { selected ->
+                showAppLockDelayDialog = false
+                appLockSettings.onDelayChange(selected)
             },
         )
     }
@@ -474,6 +620,43 @@ private fun AboutRow(
     }
 }
 
+/** About row that opens an external page; the chevron marks it as tappable. */
+@Composable
+private fun AboutLinkRow(
+    label: String,
+    actionDescription: String,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    testTag: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .testTag(testTag)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = AppCopy.Components.joinSemantics(label, actionDescription)
+            }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = DailyRecordText,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        BrandIcon(
+            asset = BrandIconAsset.Next,
+            theme = theme,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
 @Composable
 private fun LanguageSettingsRow(
     language: AppLanguage,
@@ -537,28 +720,31 @@ private fun LanguageSelectionDialog(
         onDismissRequest = onDismiss,
     ) {
         AppLanguage.entries.forEach { language ->
-            LanguageOptionRow(
+            SettingsOptionRow(
                 label = languageDisplayName(language),
                 selected = language == currentLanguage,
                 tint = tint,
+                testTag = "settings_language_option",
                 onClick = { onSelected(language) },
             )
         }
     }
 }
 
+/** One choice in a single-choice dialog (language, relock delay). */
 @Composable
-private fun LanguageOptionRow(
+private fun SettingsOptionRow(
     label: String,
     selected: Boolean,
     tint: Color,
+    testTag: String,
     onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .testTag("settings_language_option")
+            .testTag(testTag)
             .clickable(role = Role.RadioButton, onClick = onClick)
             .semantics(mergeDescendants = true) {
                 this.selected = selected
@@ -594,4 +780,487 @@ private fun LanguageOptionRow(
 private fun languageDisplayName(language: AppLanguage): String = when (language) {
     AppLanguage.ZH -> AppCopy.Settings.languageZh
     AppLanguage.EN -> AppCopy.Settings.languageEn
+}
+
+@Composable
+private fun TerminologyStyleSettingsRow(
+    terminologyStyle: TerminologyStyle,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    val styleLabel = terminologyStyleDisplayName(terminologyStyle)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_terminology_row")
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = AppCopy.Components.joinSemantics(
+                    AppCopy.Settings.terminologyTitle,
+                    styleLabel,
+                )
+            }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(
+            icon = BrandIconAsset.Note,
+            theme = theme,
+            tint = tint,
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = AppCopy.Settings.terminologyTitle,
+            color = DailyRecordText,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = styleLabel,
+            color = DailyRecordTextSecondary,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        BrandIcon(
+            asset = BrandIconAsset.Next,
+            theme = theme,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+private fun terminologyStyleDisplayName(style: TerminologyStyle): String = when (style) {
+    TerminologyStyle.ELEGANT -> AppCopy.Settings.terminologyElegant
+    TerminologyStyle.DIRECT -> AppCopy.Settings.terminologyDirect
+}
+
+private fun terminologyStyleOptionLabel(style: TerminologyStyle): String = when (style) {
+    TerminologyStyle.ELEGANT -> AppCopy.Settings.terminologyElegantOption
+    TerminologyStyle.DIRECT -> AppCopy.Settings.terminologyDirectOption
+}
+
+@Composable
+private fun TerminologyStyleSelectionDialog(
+    currentStyle: TerminologyStyle,
+    tint: Color,
+    onDismiss: () -> Unit,
+    onSelected: (TerminologyStyle) -> Unit,
+) {
+    DailyRecordDialog(
+        title = AppCopy.Settings.terminologyDialogTitle,
+        testTag = "settings_terminology_dialog",
+        onDismissRequest = onDismiss,
+    ) {
+        TerminologyStyle.entries.forEach { style ->
+            SettingsOptionRow(
+                label = terminologyStyleOptionLabel(style),
+                selected = style == currentStyle,
+                tint = tint,
+                testTag = "settings_terminology_option",
+                onClick = { onSelected(style) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColorThemeSettingsRow(
+    colorTheme: DailyRecordColorTheme,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    onClick: () -> Unit,
+) {
+    val name = colorTheme.displayName()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_color_theme_row")
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = AppCopy.Components.joinSemantics(
+                    AppCopy.Settings.themeTitle,
+                    name,
+                )
+            }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ColorThemeSwatch(colorTheme = colorTheme, size = 40.dp)
+        Spacer(Modifier.width(12.dp))
+        // Theme names can be long in English; keep the value on its own line
+        // so 200% font wraps instead of squeezing the title.
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = AppCopy.Settings.themeTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = name,
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        BrandIcon(
+            asset = BrandIconAsset.Next,
+            theme = theme,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun ColorThemeSelectionDialog(
+    currentTheme: DailyRecordColorTheme,
+    tint: Color,
+    onDismiss: () -> Unit,
+    onSelected: (DailyRecordColorTheme) -> Unit,
+) {
+    DailyRecordDialog(
+        title = AppCopy.Settings.themeDialogTitle,
+        testTag = "settings_color_theme_dialog",
+        onDismissRequest = onDismiss,
+    ) {
+        // Nine options do not fit short screens at 200% font; the bounded
+        // height keeps the nested scroll measurable inside the dialog.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 420.dp)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            DailyRecordColorTheme.entries.forEach { option ->
+                ColorThemeOptionRow(
+                    colorTheme = option,
+                    selected = option == currentTheme,
+                    tint = tint,
+                    onClick = { onSelected(option) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColorThemeOptionRow(
+    colorTheme: DailyRecordColorTheme,
+    selected: Boolean,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    val name = colorTheme.displayName()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .testTag("settings_color_theme_option_${colorTheme.id}")
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                this.selected = selected
+                role = Role.RadioButton
+                contentDescription = AppCopy.selectedState(name, selected)
+            }
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ColorThemeSwatch(colorTheme = colorTheme, size = 32.dp)
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = name,
+            color = if (selected) tint else DailyRecordText,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(if (selected) tint else Color.Transparent)
+                .border(
+                    width = 1.dp,
+                    color = if (selected) tint else DailyRecordDivider,
+                    shape = CircleShape,
+                ),
+        )
+    }
+}
+
+/**
+ * Decorative swatch: a circle split between the masturbation accent (left)
+ * and the sex accent (right) of the theme, flat colors only. The enclosing
+ * row carries the semantics.
+ */
+@Composable
+private fun ColorThemeSwatch(colorTheme: DailyRecordColorTheme, size: Dp) {
+    val palette = colorTheme.palette
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .drawBehind {
+                drawArc(
+                    color = palette.solo.primary,
+                    startAngle = 90f,
+                    sweepAngle = 180f,
+                    useCenter = true,
+                )
+                drawArc(
+                    color = palette.duo.primary,
+                    startAngle = 270f,
+                    sweepAngle = 180f,
+                    useCenter = true,
+                )
+            }
+            .border(1.dp, Color.White.copy(alpha = .8f), CircleShape),
+    )
+}
+
+internal fun DailyRecordColorTheme.displayName(): String = when (this) {
+    DailyRecordColorTheme.Aurora -> AppCopy.Settings.themeAurora
+    DailyRecordColorTheme.GlacialCoral -> AppCopy.Settings.themeGlacialCoral
+    DailyRecordColorTheme.TwilightLilac -> AppCopy.Settings.themeTwilightLilac
+    DailyRecordColorTheme.EmeraldBerry -> AppCopy.Settings.themeEmeraldBerry
+    DailyRecordColorTheme.TitaniumChampagne -> AppCopy.Settings.themeTitaniumChampagne
+    DailyRecordColorTheme.CreamLavender -> AppCopy.Settings.themeCreamLavender
+    DailyRecordColorTheme.SpringSky -> AppCopy.Settings.themeSpringSky
+    DailyRecordColorTheme.BuffGlacier -> AppCopy.Settings.themeBuffGlacier
+    DailyRecordColorTheme.DreamBlush -> AppCopy.Settings.themeDreamBlush
+}
+
+/**
+ * App lock switch (ADR-023). The whole row toggles; the switch only shows the
+ * state, and its thumb position and size carry it besides the color.
+ */
+@Composable
+private fun AppLockSettingsRow(
+    settings: AppLockSettings,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+) {
+    // Without a secure screen lock nothing could unlock the app, so the lock
+    // can then only be turned off, never on.
+    val available = settings.deviceSecure || settings.enabled
+    val summary = if (settings.deviceSecure) {
+        AppCopy.AppLock.settingSummary
+    } else {
+        AppCopy.AppLock.needsScreenLock
+    }
+    val note = if (settings.blocksScreenshots) {
+        AppCopy.AppLock.recentsAndScreenshotNote
+    } else {
+        AppCopy.AppLock.recentsNote
+    }
+    val state = if (settings.enabled) AppCopy.AppLock.settingOn else AppCopy.AppLock.settingOff
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_app_lock_row")
+            .toggleable(
+                value = settings.enabled,
+                enabled = available,
+                role = Role.Switch,
+                onValueChange = settings.onEnabledChange,
+            )
+            // App copy instead of the system "On" / "Off", which follow the
+            // device language rather than the app language.
+            .semantics { stateDescription = state }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(icon = BrandIconAsset.Lock, theme = theme, tint = tint)
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text(
+                text = AppCopy.AppLock.settingTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = summary,
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            if (available) {
+                Text(
+                    text = note,
+                    color = DailyRecordTextMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Switch(
+            checked = settings.enabled,
+            // The row handles the tap and the semantics.
+            onCheckedChange = null,
+            enabled = available,
+            colors = settingsSwitchColors(tint),
+        )
+    }
+}
+
+/** Flat module color when on, a muted outline when off; no gradients (ADR-022). */
+@Composable
+private fun settingsSwitchColors(tint: Color) = SwitchDefaults.colors(
+    checkedThumbColor = Color.White,
+    checkedTrackColor = tint,
+    checkedBorderColor = tint,
+    uncheckedThumbColor = DailyRecordTextMuted,
+    uncheckedTrackColor = Color.Transparent,
+    uncheckedBorderColor = DailyRecordTextMuted,
+)
+
+/**
+ * Home screen disguise switch (ADR-024). On means the launcher shows the
+ * neutral "Journal" identity; the whole row toggles, like the app lock row.
+ */
+@Composable
+private fun LauncherDisguiseRow(
+    settings: LauncherDisguiseSettings,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+) {
+    val disguised = settings.identity == LauncherIdentity.Journal
+    // The same on / off words as the app lock switch in this card.
+    val state = if (disguised) AppCopy.AppLock.settingOn else AppCopy.AppLock.settingOff
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_launcher_disguise_row")
+            .toggleable(
+                value = disguised,
+                role = Role.Switch,
+                onValueChange = { on ->
+                    settings.onIdentityChange(
+                        if (on) LauncherIdentity.Journal else LauncherIdentity.Default,
+                    )
+                },
+            )
+            .semantics { stateDescription = state }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(icon = BrandIconAsset.Note, theme = theme, tint = tint)
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text(
+                text = AppCopy.Disguise.settingTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = AppCopy.Disguise.settingSummary,
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                text = AppCopy.Disguise.settingNote,
+                color = DailyRecordTextMuted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Switch(
+            checked = disguised,
+            // The row handles the tap and the semantics.
+            onCheckedChange = null,
+            colors = settingsSwitchColors(tint),
+        )
+    }
+}
+
+@Composable
+private fun AppLockDelayRow(
+    delay: AppLockDelay,
+    theme: io.github.litaog.dailyrecord.ui.components.BrandIconTheme,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    val value = delay.displayName()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag("settings_app_lock_delay_row")
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = AppCopy.Components.joinSemantics(
+                    AppCopy.AppLock.delayTitle,
+                    value,
+                )
+            }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIconBadge(icon = BrandIconAsset.Clock, theme = theme, tint = tint)
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = AppCopy.AppLock.delayTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = value,
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        BrandIcon(
+            asset = BrandIconAsset.Next,
+            theme = theme,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun AppLockDelaySelectionDialog(
+    currentDelay: AppLockDelay,
+    tint: Color,
+    onDismiss: () -> Unit,
+    onSelected: (AppLockDelay) -> Unit,
+) {
+    DailyRecordDialog(
+        title = AppCopy.AppLock.delayDialogTitle,
+        testTag = "settings_app_lock_delay_dialog",
+        onDismissRequest = onDismiss,
+    ) {
+        AppLockDelay.entries.forEach { option ->
+            SettingsOptionRow(
+                label = option.displayName(),
+                selected = option == currentDelay,
+                tint = tint,
+                testTag = "settings_app_lock_delay_option_${option.id}",
+                onClick = { onSelected(option) },
+            )
+        }
+    }
+}
+
+private fun AppLockDelay.displayName(): String = when (this) {
+    AppLockDelay.Immediately -> AppCopy.AppLock.delayImmediately
+    AppLockDelay.OneMinute -> AppCopy.AppLock.delayOneMinute
+    AppLockDelay.FiveMinutes -> AppCopy.AppLock.delayFiveMinutes
 }

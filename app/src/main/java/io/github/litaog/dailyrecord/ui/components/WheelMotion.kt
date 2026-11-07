@@ -68,9 +68,13 @@ internal class WheelMotionController internal constructor(
 
                 snapToNearestValue()
                 settleAnimation.snapTo(currentOffset())
+                // Material 3 Expressive snap (ADR-022): the row overshoots the
+                // center line by about a tenth of the remaining offset, then
+                // springs back. The overshoot only moves the rows; the value
+                // was already chosen by snapToNearestValue.
                 settleAnimation.animateTo(
                     targetValue = 0f,
-                    animationSpec = spring(dampingRatio = 1f, stiffness = 700f),
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 700f),
                 ) {
                     setOffset(value)
                 }

@@ -33,6 +33,9 @@ internal interface AppStrings {
     val settings: SettingsStrings
     val navigationBar: NavigationBarStrings
     val components: ComponentStrings
+    val appLock: AppLockStrings
+    val disguise: DisguiseStrings
+    val onboarding: OnboardingStrings
 
     fun weekdayName(dayOfWeek: Int): String
 
@@ -228,6 +231,34 @@ internal interface AppStrings {
         val zeroDescription: String
         val selectedSuffix: String
         val todaySuffix: String
+
+        // Today quick-log island (ADR-022).
+        val quickLogTitle: String
+        val quickLogMarkZero: String
+
+        /** Visible status line; [count] null means today is not filled yet. */
+        fun quickLogStatus(count: Int?): String
+
+        fun quickLogStatusDescription(moduleLabel: String, count: Int?): String
+
+        fun quickLogIncreaseDescription(moduleLabel: String): String
+
+        fun quickLogDecreaseDescription(moduleLabel: String): String
+
+        fun quickLogMarkZeroDescription(moduleLabel: String): String
+
+        // Long-press quick adjust on a calendar date (ADR-022).
+        /** Accessibility label of the long-press action on a date cell. */
+        val quickAdjustAction: String
+        val quickAdjustDone: String
+
+        fun quickAdjustTitle(date: LocalDate): String
+
+        fun quickAdjustStatusDescription(date: LocalDate, moduleLabel: String, count: Int?): String
+
+        fun quickAdjustIncreaseDescription(date: LocalDate, moduleLabel: String): String
+
+        fun quickAdjustDecreaseDescription(date: LocalDate, moduleLabel: String): String
 
         fun monthSummary(count: Long, days: Int): String
 
@@ -549,10 +580,27 @@ internal interface AppStrings {
         val localAccountSummary: String
         val signedInAccountSummary: String
         val generalSection: String
+        val terminologyTitle: String
+        val terminologyDialogTitle: String
+        val terminologyElegant: String
+        val terminologyDirect: String
+        val terminologyElegantOption: String
+        val terminologyDirectOption: String
         val languageTitle: String
         val languageZh: String
         val languageEn: String
         val languageDialogTitle: String
+        val themeTitle: String
+        val themeDialogTitle: String
+        val themeAurora: String
+        val themeGlacialCoral: String
+        val themeTwilightLilac: String
+        val themeEmeraldBerry: String
+        val themeTitaniumChampagne: String
+        val themeCreamLavender: String
+        val themeSpringSky: String
+        val themeBuffGlacier: String
+        val themeDreamBlush: String
         val dataSection: String
         val localFirstTitle: String
         val localFirstSummary: String
@@ -562,6 +610,9 @@ internal interface AppStrings {
         val version: String
         val license: String
         val licenseValue: String
+        val privacyPolicy: String
+        /** Spoken after the privacy policy label: the row leaves the app. */
+        val privacyPolicyAction: String
 
         fun accountDescription(title: String, status: String): String
     }
@@ -575,6 +626,47 @@ internal interface AppStrings {
         val decrease: String
         val increase: String
     }
+
+    /** App lock screen, system prompt and settings rows (ADR-023). */
+    interface AppLockStrings {
+        val lockedTitle: String
+        val lockedBody: String
+        val unlock: String
+        val notCompleted: String
+        val promptTitle: String
+        val promptSubtitle: String
+        val settingTitle: String
+        val settingSummary: String
+        val settingOn: String
+        val settingOff: String
+        val recentsNote: String
+        val recentsAndScreenshotNote: String
+        val delayTitle: String
+        val delayDialogTitle: String
+        val delayImmediately: String
+        val delayOneMinute: String
+        val delayFiveMinutes: String
+        val needsScreenLock: String
+        val turnedOffNoScreenLock: String
+    }
+
+    /** Optional home screen disguise (ADR-024); the switch reuses the app lock's on/off words. */
+    interface DisguiseStrings {
+        val settingTitle: String
+        val settingSummary: String
+        val settingNote: String
+    }
+
+    /** First-launch onboarding explanatory card for intimacy modules (ADR-025). */
+    interface OnboardingStrings {
+        val title: String
+        val soloLabel: String
+        val soloDescription: String
+        val duoLabel: String
+        val duoDescription: String
+        val settingsHint: String
+        val dismissAction: String
+    }
 }
 
 /** Single mutable source of the active copy set, readable from non-UI layers. */
@@ -583,7 +675,7 @@ internal object AppLanguageState {
     var current: AppStrings = ZhStrings
 }
 
-internal fun AppLanguage.strings(): AppStrings = when (this) {
-    AppLanguage.ZH -> ZhStrings
-    AppLanguage.EN -> EnStrings
+internal fun AppLanguage.strings(style: TerminologyStyle = TerminologyStyle.ELEGANT): AppStrings = when (this) {
+    AppLanguage.ZH -> ZhStrings(style)
+    AppLanguage.EN -> EnStrings(style)
 }

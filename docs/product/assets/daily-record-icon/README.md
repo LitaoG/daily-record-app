@@ -1,7 +1,7 @@
 # Daily Record 主图标资源
 
 状态：`current asset handoff reference`
-最后复核：2026-08-16
+最后复核：2026-11-06
 
 本目录是图标交接入口。完整源稿和导出物统一放在 [`docs/design/icon-source`](../../../design/icon-source)，避免同一张图在多个目录重复维护；本目录不再保存运行时副本。
 
@@ -14,16 +14,19 @@ Figma 页面现在按四个可核对的画板排列：完整预览、`background
 
 ## Android 资源
 
-- `drawable/ic_launcher_background.xml` → `drawable-nodpi/ic_launcher_background_art.webp`：紫红渐变背景层。
-- `drawable/ic_launcher_foreground.xml` → `drawable-nodpi/ic_launcher_foreground_art.webp`：透明霓虹日历、人物、爱心和锁。
-- `drawable/ic_launcher_monochrome.xml` → `drawable-nodpi/ic_launcher_monochrome_art.webp`：单色 alpha 形状，锁孔保持负形。
-- `mipmap-anydpi-v26/ic_launcher.xml` 与 `ic_launcher_round.xml`：自适应图标声明。
+自 ADR-022（2026-11-05）起，启动图标三层都是手写 VectorDrawable，不再引用 `drawable-nodpi` 下的 WebP（已删除）：
 
-运行时使用优化后的 WebP 层是有意的：霓虹光晕、细描边和抗锯齿在 Android 启动器尺寸下用手写 VectorDrawable 无法稳定复现；WebP 比运行时 PNG 更轻，SVG 和 PNG 源稿仍作为可编辑交接源保留。
+- `drawable/ic_launcher_background.xml`：纯色极光紫 `#6D28D9`，左上角一层柔和的白色玻璃高光。
+- `drawable/ic_launcher_foreground.xml`：两枚交叠的磨砂白色圆环和一颗小星点，全部位于 66dp 安全区内。
+- `drawable/ic_launcher_monochrome.xml`：同样的两枚圆环，供 Android 13+ 主题图标着色。
+- `mipmap-anydpi/ic_launcher.xml` 与 `ic_launcher_round.xml`：自适应图标声明，未改动。
+- `drawable/ic_launcher_journal_*.xml` 与 `mipmap-anydpi/ic_launcher_journal*.xml`：桌面伪装（ADR-024）入口的中性图标，石板灰 `#475569` 底色上一本白色笔记本，不含品牌色和光环；同样分三层并带单色层。
+
+上文的霓虹源稿只代表 beta.3 的旧图标；颜色克制规则下，新图标不使用多色渐变。
 
 ## 商店导出
 
-- [`google-play-icon-512.png`](../../../design/icon-source/google-play-icon-512.png)：512×512、32-bit/sRGB、无预先圆角、约 320 KB，供 Play Console 使用。
+- [`google-play-icon-512.png`](../../../design/icon-source/google-play-icon-512.png)：512×512、32-bit/sRGB、无预先圆角、约 48 KB，供 Play Console 使用。2026-11-06 起由上述矢量三层导出：自适应图标可见的 72dp 正方形铺满整张图，颜色与 XML 完全一致，导出方法见 [icon-source 说明](../../../design/icon-source/README.md)。
 
 1024px 备份图、三层 PNG 副本和预览合成图不是运行时或交接输入，已在
 2026-08-11 资源整理中移除；需要复核旧导出时可从 Git 历史恢复。

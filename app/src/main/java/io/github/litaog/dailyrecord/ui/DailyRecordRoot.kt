@@ -26,6 +26,9 @@ import io.github.litaog.dailyrecord.core.auth.AuthState
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
+import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
+import io.github.litaog.dailyrecord.ui.settings.LauncherDisguiseSettings
 import io.github.litaog.dailyrecord.core.di.DailyRecordSyncScheduler
 import io.github.litaog.dailyrecord.core.di.FirebaseServices
 import io.github.litaog.dailyrecord.core.di.buildAccountDeletionCoordinator
@@ -59,6 +62,9 @@ internal fun DailyRecordRoot(
     database: DailyRecordDatabase,
     servicesProvider: () -> FirebaseServices,
     onLanguageChanged: (AppLanguage) -> Unit = {},
+    onColorThemeChanged: (DailyRecordColorTheme) -> Unit = {},
+    appLockSettings: AppLockSettings? = null,
+    launcherDisguiseSettings: LauncherDisguiseSettings? = null,
 ) {
     val context = LocalContext.current
     val rootScope = rememberCoroutineScope()
@@ -121,6 +127,9 @@ internal fun DailyRecordRoot(
                     continueOffline = false
                 },
                 onLanguageChanged = onLanguageChanged,
+                onColorThemeChanged = onColorThemeChanged,
+                appLockSettings = appLockSettings,
+                launcherDisguiseSettings = launcherDisguiseSettings,
             )
         }
         return
@@ -228,6 +237,9 @@ internal fun DailyRecordRoot(
                 onRetryDeletionRecovery = { recoveryRetryRevision += 1 },
                 hasRecoveryConflict = recoveryConflictOwners.isNotEmpty(),
                 onLanguageChanged = onLanguageChanged,
+                onColorThemeChanged = onColorThemeChanged,
+                appLockSettings = appLockSettings,
+                launcherDisguiseSettings = launcherDisguiseSettings,
                 onReplaceExistingLocal = {
                     val ownerId = recoveryConflictOwners.firstOrNull() ?: return@SignedInRoot
                     rootScope.launch {
@@ -254,6 +266,9 @@ private fun LocalRoot(
     database: DailyRecordDatabase,
     onSignIn: () -> Unit,
     onLanguageChanged: (AppLanguage) -> Unit,
+    onColorThemeChanged: (DailyRecordColorTheme) -> Unit,
+    appLockSettings: AppLockSettings?,
+    launcherDisguiseSettings: LauncherDisguiseSettings?,
 ) {
     val handBrewRepository = remember(database) {
         RoomHandBrewRecordRepository(database = database, ownerId = LOCAL_OWNER_ID)
@@ -266,6 +281,9 @@ private fun LocalRoot(
         sexRepository = sexRepository,
         onSignIn = onSignIn,
         onLanguageChanged = onLanguageChanged,
+        onColorThemeChanged = onColorThemeChanged,
+        appLockSettings = appLockSettings,
+        launcherDisguiseSettings = launcherDisguiseSettings,
     )
 }
 
@@ -284,6 +302,9 @@ private fun SignedInRoot(
     onReplaceExistingLocal: () -> Unit,
     onAccountDeletedWithLocalRecords: () -> Unit,
     onLanguageChanged: (AppLanguage) -> Unit,
+    onColorThemeChanged: (DailyRecordColorTheme) -> Unit,
+    appLockSettings: AppLockSettings?,
+    launcherDisguiseSettings: LauncherDisguiseSettings?,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val ownerId = state.account.uid
@@ -420,6 +441,9 @@ private fun SignedInRoot(
         onSyncNow = { scope.launch { syncManager.syncNow() } },
         onSignOut = services.authRepository::signOut,
         onLanguageChanged = onLanguageChanged,
+        onColorThemeChanged = onColorThemeChanged,
+        appLockSettings = appLockSettings,
+        launcherDisguiseSettings = launcherDisguiseSettings,
         onDeleteAccount = { password, localData ->
             val completion = CompletableDeferred<Result<Unit>>()
             accountDeletionScope.launch {

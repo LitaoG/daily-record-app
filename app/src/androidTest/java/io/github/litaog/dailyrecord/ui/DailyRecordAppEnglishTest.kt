@@ -45,11 +45,11 @@ class DailyRecordAppEnglishTest {
         setAppContent()
 
         composeRule.onNodeWithText("Solo").assertIsDisplayed()
-        composeRule.onNodeWithText("Sex").assertIsDisplayed()
+        composeRule.onNodeWithText("Duo").assertIsDisplayed()
         composeRule.onNodeWithText("Calendar").assertIsDisplayed()
         composeRule.onNodeWithText("Stats").assertIsDisplayed()
         composeRule
-            .onNodeWithContentDescription("Tap a date to record Masturbation. States: unset, future (disabled), 0, recorded")
+            .onNodeWithContentDescription("Tap a date to record Solo journal. States: unset, future (disabled), 0, recorded")
             .performScrollTo()
             .assertIsDisplayed()
         composeRule.onAllNodesWithText("This month: 0 times · 0 days").assertCountEquals(1)
@@ -63,10 +63,10 @@ class DailyRecordAppEnglishTest {
         setAppContent()
 
         composeRule
-            .onNodeWithContentDescription("Masturbation records, selected")
+            .onNodeWithContentDescription("Solo journal records, selected")
             .assertIsDisplayed()
         composeRule
-            .onNodeWithContentDescription("Sex records, not selected")
+            .onNodeWithContentDescription("Intimate journal records, not selected")
             .assertIsDisplayed()
     }
 

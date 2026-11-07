@@ -1,5 +1,6 @@
 package io.github.litaog.dailyrecord.ui.record
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -50,6 +51,7 @@ import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordBorders
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
@@ -113,6 +115,8 @@ internal fun RecordDetailsSection(
                 style = MaterialTheme.typography.labelSmall,
             )
         }
+        // Each occurrence is its own light glass card (ADR-022); the spacing
+        // between cards replaces the old divider lines.
         entries.forEachIndexed { index, entry ->
             key(entry.occurrenceIndex) {
                 RecordDetailRow(
@@ -124,15 +128,6 @@ internal fun RecordDetailsSection(
                     onFeelingToggle = onFeelingToggle,
                     onFeelingChange = onFeelingChange,
                 )
-                if (index < entries.lastIndex) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(DailyRecordBorders.Standard)
-                            .background(DailyRecordDivider)
-                            .testTag("record_detail_divider_${index + 1}"),
-                    )
-                }
             }
         }
     }
@@ -151,7 +146,13 @@ private fun RecordDetailRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("record_detail_${index + 1}"),
+            .dailyRecordGlass(
+                shape = DailyRecordShapes.Card,
+                level = DailyRecordGlassLevel.Base,
+            )
+            // Tagged before the padding, so the bounds are the whole card.
+            .testTag("record_detail_${index + 1}")
+            .padding(DailyRecordSpacing.Content),
         verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
     ) {
         Row(
@@ -169,7 +170,10 @@ private fun RecordDetailRow(
         BoxWithConstraints(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            val compactLayout = maxWidth < 300.dp || LocalDensity.current.fontScale >= 1.5f
+            // Measured inside the card's 12dp padding: 276dp here is the old
+            // 300dp section width, so the layout still switches below a 340dp
+            // wide screen.
+            val compactLayout = maxWidth < 276.dp || LocalDensity.current.fontScale >= 1.5f
             Column(
                 verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
             ) {
@@ -313,13 +317,11 @@ private fun DetailTimeField(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
-            .clip(DailyRecordShapes.Control)
-            .background(DailyRecordSurface)
-            .border(
-                DailyRecordBorders.Standard,
-                accent.copy(alpha = .20f),
-                DailyRecordShapes.Control,
-            )
+            // Corners stay concentric with the 24dp card and its 12dp padding.
+            .clip(DailyRecordShapes.Compact)
+            // A light flat tint instead of a white box with an outline; the
+            // text on it is graphite or muted gray, which stays AA.
+            .background(accent.copy(alpha = .08f))
             .clickable(role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
@@ -370,13 +372,9 @@ private fun FeelingAction(
     Row(
         modifier = modifier
             .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
-            .clip(DailyRecordShapes.Control)
-            .background(DailyRecordSurface)
-            .border(
-                DailyRecordBorders.Standard,
-                accent.copy(alpha = .62f),
-                DailyRecordShapes.Control,
-            )
+            .clip(DailyRecordShapes.Compact)
+            // A text button on the glass: no fill and no outline, because the
+            // accent label is only checked for AA on the bare glass.
             .clickable(role = Role.Button, onClick = onClick)
             .semantics {
                 role = Role.Button
@@ -390,9 +388,9 @@ private fun FeelingAction(
         BrandIcon(
             asset = BrandIconAsset.Edit,
             theme = theme,
-            // Optical alignment: with the cropped glyph and zero start
-            // padding, a 1dp nudge lands the pen flush against the button
-            // border. The click target and semantics stay on the full button.
+            // Optical alignment: with zero start padding, a 1dp nudge lines
+            // the pen up with the start edge of the button. The click target
+            // and semantics stay on the full button.
             modifier = Modifier.size(24.dp).offset(x = (-1).dp),
         )
         Text(
@@ -419,7 +417,9 @@ private fun FeelingEditor(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 76.dp)
+                // Starts one line tall and grows with the text (ADR-022).
+                .animateContentSize(animationSpec = DailyRecordMotion.spatial())
+                .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
                 .bringIntoViewRequester(bringIntoViewRequester)
                 .onFocusChanged { focusState ->
                     if (focusState.isFocused) {
@@ -429,9 +429,10 @@ private fun FeelingEditor(
                         }
                     }
                 }
-                .clip(DailyRecordShapes.Control)
+                .clip(DailyRecordShapes.Compact)
                 .background(DailyRecordSurface)
-                .border(DailyRecordBorders.Standard, accent.copy(alpha = .65f), DailyRecordShapes.Control)
+                // The one outline left in the card marks the text input.
+                .border(DailyRecordBorders.Standard, accent.copy(alpha = .65f), DailyRecordShapes.Compact)
                 .semantics {
                     contentDescription = AppCopy.Record.detailFeelingEditorDescription(occurrence)
                 }

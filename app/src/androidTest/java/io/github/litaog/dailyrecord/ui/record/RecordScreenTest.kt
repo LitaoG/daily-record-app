@@ -265,19 +265,25 @@ class RecordScreenTest {
         composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
 
         val section = composeRule.onNodeWithTag("record_details_section").fetchSemanticsNode().boundsInRoot
+        val firstCard = composeRule.onNodeWithTag("record_detail_1").fetchSemanticsNode().boundsInRoot
         val firstStart = composeRule.onNodeWithTag("record_detail_1_start_time").fetchSemanticsNode().boundsInRoot
         val firstEnd = composeRule.onNodeWithTag("record_detail_1_end_time").fetchSemanticsNode().boundsInRoot
         val firstFeeling = composeRule.onNodeWithTag("record_detail_1_feeling").fetchSemanticsNode().boundsInRoot
         val secondStart = composeRule.onNodeWithTag("record_detail_2_start_time").fetchSemanticsNode().boundsInRoot
 
-        assertEquals(section.left, firstStart.left, 0.5f)
+        // Each occurrence is a full-width glass card; the three controls fill
+        // its padded content row with the same inset on both sides.
+        assertEquals(section.left, firstCard.left, 0.5f)
+        assertEquals(section.right, firstCard.right, 0.5f)
+        val inset = firstStart.left - firstCard.left
+        assertTrue(inset > 0f)
+        assertEquals(inset, firstCard.right - firstFeeling.right, 0.5f)
         assertEquals(firstStart.top, firstEnd.top, 0.5f)
         assertEquals(firstStart.top, firstFeeling.top, 0.5f)
         assertEquals(firstStart.height, firstEnd.height, 0.5f)
         assertEquals(firstStart.height, firstFeeling.height, 0.5f)
         assertTrue(firstStart.right <= firstEnd.left)
         assertTrue(firstEnd.right <= firstFeeling.left)
-        assertEquals(section.right, firstFeeling.right, 0.5f)
         assertEquals(firstStart.left, secondStart.left, 0.5f)
     }
 
@@ -305,7 +311,7 @@ class RecordScreenTest {
     }
 
     @Test
-    fun detailDividerKeepsFullWidthWhenPreviousFeelingHasText() {
+    fun detailCardsKeepFullWidthWhenPreviousFeelingHasText() {
         val repository = FakeHandBrewRecordRepository(
             initialRecords = listOf(record(today, 2)),
             initialDetails = listOf(
@@ -330,12 +336,22 @@ class RecordScreenTest {
         val section = composeRule.onNodeWithTag("record_details_section")
             .fetchSemanticsNode()
             .boundsInRoot
-        val divider = composeRule.onNodeWithTag("record_detail_divider_1")
+        val firstCard = composeRule.onNodeWithTag("record_detail_1")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val secondCard = composeRule.onNodeWithTag("record_detail_2")
             .fetchSemanticsNode()
             .boundsInRoot
 
-        assertEquals(section.left, divider.left, 0.5f)
-        assertEquals(section.right, divider.right, 0.5f)
+        assertEquals(section.left, firstCard.left, 0.5f)
+        assertEquals(section.right, firstCard.right, 0.5f)
+        assertEquals(section.left, secondCard.left, 0.5f)
+        assertEquals(section.right, secondCard.right, 0.5f)
+        // Spacing between the cards replaces the old divider lines.
+        assertTrue(secondCard.top > firstCard.bottom)
+        assertTrue(
+            composeRule.onAllNodesWithTag("record_detail_divider_1").fetchSemanticsNodes().isEmpty(),
+        )
     }
 
     @Test

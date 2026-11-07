@@ -36,6 +36,13 @@ internal object EnStrings : AppStrings {
     override val settings: AppStrings.SettingsStrings = Settings
     override val navigationBar: AppStrings.NavigationBarStrings = NavigationBar
     override val components: AppStrings.ComponentStrings = Components
+    override val appLock: AppStrings.AppLockStrings = AppLock
+    override val disguise: AppStrings.DisguiseStrings = Disguise
+    override val onboarding: AppStrings.OnboardingStrings = Onboarding
+
+    fun withStyle(style: TerminologyStyle): AppStrings = this
+
+    operator fun invoke(style: TerminologyStyle = TerminologyStyle.ELEGANT): AppStrings = this
 
     private val weekdayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -165,16 +172,18 @@ internal object EnStrings : AppStrings {
     }
 
     private object RecordModule : AppStrings.RecordModuleStrings {
+        // ADR-022: English uses neutral journal wording (Solo / Duo); the
+        // Chinese labels stay direct until the Play listing decision (D1).
         override val handBrewLabel = "Solo"
-        override val handBrewAccessibilityLabel = "Masturbation"
-        override val handBrewQuestionToday = "How many times did you masturbate today?"
+        override val handBrewAccessibilityLabel = "Solo journal"
+        override val handBrewQuestionToday = "How many solo moments today?"
         override val handBrewQuestionPast = "How many times that day?"
-        override val handBrewZero = "No masturbation that day"
-        override val sexLabel = "Sex"
-        override val sexAccessibilityLabel = "Sex"
-        override val sexQuestionToday = "How many times did you have sex today?"
+        override val handBrewZero = "No solo moments that day"
+        override val sexLabel = "Duo"
+        override val sexAccessibilityLabel = "Intimate journal"
+        override val sexQuestionToday = "How many intimate moments today?"
         override val sexQuestionPast = "How many times that day?"
-        override val sexZero = "No sex that day"
+        override val sexZero = "No intimate moments that day"
 
         override fun recordLabel(label: String): String = "$label records"
     }
@@ -243,6 +252,46 @@ internal object EnStrings : AppStrings {
         override val zeroDescription = "Recorded as 0"
         override val selectedSuffix = ", selected"
         override val todaySuffix = ", today"
+
+        override val quickLogTitle = "Today"
+        override val quickLogMarkZero = "Log 0"
+
+        override fun quickLogStatus(count: Int?): String = when (count) {
+            null -> "Not logged yet"
+            1 -> "1 time today"
+            else -> "$count times today"
+        }
+
+        override fun quickLogStatusDescription(moduleLabel: String, count: Int?): String = when (count) {
+            null -> "$moduleLabel today: not logged yet"
+            1 -> "$moduleLabel today: 1 time"
+            else -> "$moduleLabel today: $count times"
+        }
+
+        override fun quickLogIncreaseDescription(moduleLabel: String): String = "Add 1 to $moduleLabel today"
+
+        override fun quickLogDecreaseDescription(moduleLabel: String): String = "Remove 1 from $moduleLabel today"
+
+        override fun quickLogMarkZeroDescription(moduleLabel: String): String = "Log $moduleLabel today as 0"
+
+        override val quickAdjustAction = "Quick adjust"
+        override val quickAdjustDone = "Done"
+
+        override fun quickAdjustTitle(date: LocalDate): String =
+            date.format(DateTimeFormatter.ofPattern("MMM d", Locale.US))
+
+        override fun quickAdjustStatusDescription(date: LocalDate, moduleLabel: String, count: Int?): String =
+            when (count) {
+                null -> "$moduleLabel on ${quickAdjustTitle(date)}: not logged yet"
+                1 -> "$moduleLabel on ${quickAdjustTitle(date)}: 1 time"
+                else -> "$moduleLabel on ${quickAdjustTitle(date)}: $count times"
+            }
+
+        override fun quickAdjustIncreaseDescription(date: LocalDate, moduleLabel: String): String =
+            "Add 1 to $moduleLabel on ${quickAdjustTitle(date)}"
+
+        override fun quickAdjustDecreaseDescription(date: LocalDate, moduleLabel: String): String =
+            "Remove 1 from $moduleLabel on ${quickAdjustTitle(date)}"
 
         override fun monthSummary(count: Long, days: Int): String = "This month: $count times · $days days"
 
@@ -642,10 +691,27 @@ internal object EnStrings : AppStrings {
         override val localAccountSummary = "Stored on this device only; sign in to sync and restore."
         override val signedInAccountSummary = "Check sync status, sync manually, or manage your account"
         override val generalSection = "General"
+        override val terminologyTitle = "Terminology Style"
+        override val terminologyDialogTitle = "Choose terminology style"
+        override val terminologyElegant = "Elegant"
+        override val terminologyDirect = "Direct"
+        override val terminologyElegantOption = "Elegant (Solo / Partner Intimacy)"
+        override val terminologyDirectOption = "Direct (Direct Terms)"
         override val languageTitle = "Language"
         override val languageZh = "中文"
         override val languageEn = "English"
         override val languageDialogTitle = "Choose language"
+        override val themeTitle = "Color theme"
+        override val themeDialogTitle = "Choose color theme"
+        override val themeAurora = "Aurora"
+        override val themeGlacialCoral = "Glacier Coral"
+        override val themeTwilightLilac = "Twilight Lilac"
+        override val themeEmeraldBerry = "Emerald Berry"
+        override val themeTitaniumChampagne = "Titanium Gold"
+        override val themeCreamLavender = "Cream Lavender"
+        override val themeSpringSky = "Spring Sky"
+        override val themeBuffGlacier = "Buff Glacier"
+        override val themeDreamBlush = "Blush Dream"
         override val dataSection = "Data & privacy"
         override val localFirstTitle = "Local first"
         override val localFirstSummary = "All records save locally first; nothing uploads while signed out."
@@ -655,6 +721,8 @@ internal object EnStrings : AppStrings {
         override val version = "Version"
         override val license = "License"
         override val licenseValue = "Apache 2.0"
+        override val privacyPolicy = "Privacy policy"
+        override val privacyPolicyAction = "Opens in browser"
 
         override fun accountDescription(title: String, status: String): String = "$title, $status"
     }
@@ -664,8 +732,46 @@ internal object EnStrings : AppStrings {
         override val statistics = "Stats"
     }
 
+    private object AppLock : AppStrings.AppLockStrings {
+        override val lockedTitle = "Locked"
+        override val lockedBody = "Verify it's you to continue"
+        override val unlock = "Unlock"
+        override val notCompleted = "Verification wasn't completed. Try again."
+        override val promptTitle = "Verify it's you"
+        override val promptSubtitle = "Use your fingerprint, face or screen lock"
+        override val settingTitle = "App lock"
+        override val settingSummary = "Ask for verification when the app opens"
+        override val settingOn = "On"
+        override val settingOff = "Off"
+        override val recentsNote = "When on, recent apps don't show the content"
+        override val recentsAndScreenshotNote = "When on, recent apps don't show the content and screenshots are blocked"
+        override val delayTitle = "Lock again"
+        override val delayDialogTitle = "When to lock again"
+        override val delayImmediately = "Immediately"
+        override val delayOneMinute = "After 1 minute away"
+        override val delayFiveMinutes = "After 5 minutes away"
+        override val needsScreenLock = "Set a screen lock in system settings first"
+        override val turnedOffNoScreenLock = "This device has no screen lock, so app lock was turned off"
+    }
+
+    private object Disguise : AppStrings.DisguiseStrings {
+        override val settingTitle = "Home screen disguise"
+        override val settingSummary = "When on, the home screen shows the app as \"Journal\""
+        override val settingNote = "The home screen takes a few seconds to update. Add the icon to your home screen again."
+    }
+
     private object Components : AppStrings.ComponentStrings {
         override val decrease = "Decrease by 1"
         override val increase = "Increase by 1"
+    }
+
+    private object Onboarding : AppStrings.OnboardingStrings {
+        override val title = "Terminology Guide"
+        override val soloLabel = "Solo Intimacy"
+        override val soloDescription = "Track personal rhythm and solo moments"
+        override val duoLabel = "Partner Intimacy"
+        override val duoDescription = "Track couple intimacy and shared moments"
+        override val settingsHint = "You can switch between Elegant and Direct styles anytime in Settings."
+        override val dismissAction = "Got it"
     }
 }

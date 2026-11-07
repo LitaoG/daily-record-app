@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Private Calendar</string>
+    <!-- Neutral launcher name of the optional home screen disguise (ADR-024). -->
+    <string name="app_name_journal">Journal</string>
 </resources>

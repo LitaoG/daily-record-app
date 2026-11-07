@@ -55,7 +55,7 @@ docs/README.md 与文档目录 → 0.3 表中命中的那一份权威文档 → 
 | AI 总规则、红线和高风险操作 | [`AGENTS.md`](../AGENTS.md) |
 | 某个文件算不算权威、归谁管 | [`DOCUMENTATION_CATALOG.md`](DOCUMENTATION_CATALOG.md)、[`README.md`](README.md) |
 | 公共/私有边界、文档生命周期、生成物 | [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md) |
-| 面向使用者的隐私说明、漏洞报告 | [`PRIVACY.md`](../PRIVACY.md)、[`SECURITY.md`](../SECURITY.md) |
+| 面向使用者的隐私说明、漏洞报告 | [`PRIVACY.md`](../PRIVACY.md)（[English](../PRIVACY.en.md)）、[`SECURITY.md`](../SECURITY.md) |
 
 `scripts/docs-integrity.test.mjs` 检查本表链接到文档目录里每一份“当前必读”文档，并检查 [`docs/README.md`](README.md) 里的同名表与本表逐行一致。
 

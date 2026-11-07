@@ -3,7 +3,10 @@ package io.github.litaog.dailyrecord.ui.statistics
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -124,6 +127,18 @@ internal fun YearLineChartCard(
     val yearNumber = remember(year) { year.months.firstOrNull()?.month?.year ?: 0 }
     val scale = remember(year) { yearLineChartScale(year) }
     val points = remember(year, scale) { yearLineChartPoints(year, scale) }
+    // Scrub bubble text per month; annualCount is localized, so keying on it
+    // re-resolves the labels after a language switch.
+    val scrubLabels = remember(year, AppCopy.Statistics.annualCount) {
+        year.months.map { month ->
+            AppCopy.Statistics.monthChartLabel(
+                month = month.month.monthValue,
+                isFuture = month.future,
+                recorded = month.recorded,
+                count = month.count,
+            )
+        }
+    }
     val revealProgress = remember(yearNumber) { Animatable(0f) }
     LaunchedEffect(yearNumber) {
         revealProgress.snapTo(0f)
@@ -155,6 +170,7 @@ internal fun YearLineChartCard(
                 scale = scale,
                 colors = colors,
                 revealProgress = revealProgress,
+                scrubLabels = scrubLabels,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -211,12 +227,28 @@ private fun YearLineChartPlot(
     scale: YearLineChartScale,
     colors: RecordModuleColorTokens,
     revealProgress: Animatable<Float, AnimationVector1D>,
+    scrubLabels: List<String>,
     modifier: Modifier = Modifier,
 ) {
+    // Touch scrubbing (ADR-022): only press and release recompose the plot;
+    // the probe itself is drawn from state read in the draw phase.
+    val scrub = rememberChartScrubState()
+    val scrubbing by remember(scrub) { derivedStateOf { scrub.activeIndex != null } }
+    val probeAlpha by animateFloatAsState(
+        targetValue = if (scrubbing) 1f else 0f,
+        animationSpec = tween(durationMillis = if (scrubbing) 120 else 300),
+        label = "yearProbeAlpha",
+    )
+    val monthCount = points.size
     BoxWithConstraints(
         modifier = modifier
             .height(156.dp)
-            .testTag("year_line_chart"),
+            .testTag("year_line_chart")
+            .chartScrub(
+                key = monthCount,
+                indexAt = { x, width -> yearLineChartIndexAt(x, width, monthCount) },
+                onScrub = scrub::update,
+            ),
     ) {
         val density = LocalDensity.current
         val plotTop = 30.dp
@@ -306,6 +338,19 @@ private fun YearLineChartPlot(
                     }
                 }
             }
+
+            // Scrub probe above the data; months without a value sit on the baseline.
+            val shown = scrub.shownIndex
+            if (shown != null && shown in points.indices) {
+                drawChartProbe(
+                    x = chartWidthPx * (shown + .5f) / 12f,
+                    pointY = offsets[shown]?.y ?: plotBottomPx,
+                    topY = plotTopPx,
+                    bottomY = plotBottomPx,
+                    color = colors.primary,
+                    alpha = probeAlpha,
+                )
+            }
         }
 
         points.forEachIndexed { index, point ->
@@ -333,7 +378,34 @@ private fun YearLineChartPlot(
                 }
             }
         }
+
+        YearScrubBubble(
+            scrub = scrub,
+            labels = scrubLabels,
+            chartWidthPx = chartWidthPx,
+            colors = colors,
+            alpha = { probeAlpha },
+        )
     }
+}
+
+/** Separate restart scope: moving between months recomposes only the bubble. */
+@Composable
+private fun YearScrubBubble(
+    scrub: ChartScrubState,
+    labels: List<String>,
+    chartWidthPx: Float,
+    colors: RecordModuleColorTokens,
+    alpha: () -> Float,
+) {
+    val shown = scrub.shownIndex ?: return
+    val label = labels.getOrNull(shown) ?: return
+    ChartScrubBubble(
+        text = label,
+        anchorX = chartWidthPx * (shown + .5f) / 12f,
+        colors = colors,
+        alpha = alpha,
+    )
 }
 
 private fun List<Offset?>.contiguousSegments(): List<List<Offset>> = buildList {

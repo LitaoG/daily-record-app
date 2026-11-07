@@ -146,6 +146,57 @@
 - 原因：Firebase Android SDK 内部的 `FirebaseInstanceId.checkRequiredFirebaseOptions` 在向 Callable 等云端服务请求上下文时会强制调用 `isValidApiKeyFormat` 校验 API Key 格式（必须匹配 `\AA[\w-]{38}\z`）；若传入普通的短字符串（如 `demo-api-key`），会导致其抛出 `IllegalArgumentException` 阻断测试。而若写成类似真实 Google API Key 的 `AIza...` 前缀，又会命中 GitHub Secret Scanning 等安全工具的静态扫描正则（`\bAIza[0-9A-Za-z-_]{35}\b`）产生误报告警。
 - 后果：`demoOptions()` 使用 `A_EMULATOR_DUMMY_KEY_000000000000000000` 既严格满足 Firebase SDK 内部的 39 字符校验规则，保证本地与 CI 的全部自动化设备集成测试正常通过；又完全避开以 `AIza` 开头的通用扫描规则，消除代码库中的假阳性误报。
 
+## ADR-022：流体玻璃视觉、即时记录与 Google Play 就绪（b1 目标书）
+
+- 状态：Accepted（2026-11-05）。产品负责人用仓库外的 b1 目标书指定方向，并要求整体风格为 Material 3 Expressive 加 iOS 式玻璃拟态；本仓库只记录结论与边界，不复制目标书全文。阶段进度见[流体玻璃与 Google Play 就绪 Goal](product/LIQUID_GLASS_PLAY_READINESS_GOAL.md)。
+- 视觉决策：
+  1. 玻璃分两层。只有不含内容的背景光晕层可以模糊，API 31+ 使用 `RenderEffect`，更低版本用径向渐变近似；卡片层只画奶白填充（不低于 84% 白）、顶部高光描边和柔和弥散阴影，从不模糊自身，文字与控件保持清晰。
+  2. Material 3 Expressive 体现为弹簧动效、更大的圆角尺度、按压回弹和更醒目的数字字重；不为此升级 Compose 依赖。
+  3. 提供 9 套可选主题（默认“极光星云”，另有 4 套扩展渐变和 4 套用户 Pantone 灵感方案），在设置“通用 → 主题配色”切换并持久化。每套主题为自慰、做爱分别给出独立色板；两模块不共用颜色，也不互相读取。
+  4. 运行时图标改为 Compose 矢量绘制，删除 `drawable-nodpi` 下按颜色预渲染的 PNG；启动图标改为矢量自适应图标。
+  5. 颜色克制（产品负责人 2026-11-05 补充）：模块色一律以纯色填充选中态、按钮和次数色阶；渐变只用于白色玻璃高光、一处淡色背景光晕和单色淡出，不在任何表面混合多种色相，避免渐变带来的审美疲劳。
+- 交互决策：主页“今日速记”浮岛、日历格长按就地加减、月历左右滑动切月（保留箭头与年月跳转）、加减与切换的系统触感反馈、统计图表手指滑动查看单点数值。这些入口只调用既有 Repository 保存路径，不新增数据表。
+- 隐私与发布决策：可选应用锁（系统生物识别或设备凭据）和最近任务遮挡、可选桌面伪装（切换启动器图标与名称）；以 Google Play 上架为目标准备 Data Safety、内容分级说明和 AAB 构建。现有 GitHub Releases 渠道（ADR-012）在另立发布决策前保持不变。
+- 不变的边界：ADR-002/014 两模块独立、ADR-003 本地优先、ADR-004 零次与未填写分离、ADR-005 两项主导航、ADR-016 详情语义和 Room v6 全部保持。新增持久化只有 SharedPreferences 中的主题 id、应用锁设置和伪装选择，不进入 Room、Firestore 或统计。
+- 对比度后果：所有主题由 `DesignTokensTest` 按 WCAG AA 逐套验证。目标书中达不到 AA 的个别色值以 AA 为准调整并在代码注释说明，例如紫色 4+ 档 `#A855F7`（白字 3.95:1、深字 3.70:1）改为 `#C084FC`，注释灰 `#94A3B8`（2.57:1）改为 `#586880`，玫瑰主色 `#E11D48` 在画布上 4.49:1 改为 `#DE1B46`。
+- 取代：UI_UX.md 中“模块切换器严格二等分且无内部胶囊”“切月只用箭头或年月标题”的旧规则，以及“设置不出现主题或应用锁”的限制；ADR-015 “没有真实实现不得以占位项出现”仍然有效。新增依赖（如 `androidx.biometric`）在引入时单独记录版本依据并完成对应验证。
+
+## ADR-023：应用锁使用平台认证接口，不引入 androidx.biometric
+
+- 状态：Accepted（2026-11-06）。实现 ADR-022 的可选应用锁，进度见[流体玻璃与 Google Play 就绪 Goal](product/LIQUID_GLASS_PLAY_READINESS_GOAL.md)。
+- 决策：Android 10 及以上（API 29+）使用平台 `BiometricPrompt`，同时允许生物识别和设备锁屏密码（API 30+ 用 `BIOMETRIC_WEAK | DEVICE_CREDENTIAL`，API 29 用 `setDeviceCredentialAllowed(true)`）；Android 8–9（API 26–28）使用 `KeyguardManager.createConfirmDeviceCredentialIntent` 确认锁屏密码。不提供应用自己的备用 PIN，设备锁屏密码就是备用方式。
+- 原因：截至 2026-11-04，androidx.biometric 的最新稳定版仍是 2021 年的 1.1.0，它要求把 `MainActivity` 改为 `FragmentActivity` 并引入 Fragment；支持 `ComponentActivity` 与 Compose 的 1.4.0 仍是 beta。平台接口覆盖 `minSdk 26` 到 `targetSdk 36` 的全部版本，不新增依赖，也不改变 ADR-018 的构建基线。应用自管 PIN 需要安全存储、找回和防暴力破解，收益小于风险。
+- 锁定规则：开启后冷启动即锁定；离开前台超过所选时长（立即、1 分钟、5 分钟，默认立即）后返回时锁定；配置变化和应用自身切换语言或主题引起的 `recreate()` 不锁定；认证界面本身造成的停止与恢复不会再次锁定。锁定状态只在内存中，进程被回收后冷启动重新锁定。
+- 界面后果：锁屏层是盖在所有应用弹窗之上的全屏窗口；底层内容保持组合，进行中的保存、同步和账号删除不会因锁定被取消，锁定期间底层内容不进入 TalkBack 焦点，输入法焦点被清除。
+- 安全后果：只有设备已设置安全锁屏时才能开启；设备之后移除了锁屏密码时，应用锁自动关闭并提示，避免用户被永久挡在自己的数据之外。开启后，Android 13+ 用 `setRecentsScreenshotEnabled(false)` 隐藏最近任务预览，更低版本使用 `FLAG_SECURE`，后者同时禁止截屏，设置页需要说明。应用锁只保护界面入口，不加密数据库；数据仍由系统应用沙箱保护。
+- 测试后果：锁定判断写成纯函数，由 JVM 测试覆盖；三条认证路径需要在 API 34 模拟器和 Android 8/9 设备上手工回归，列入 ADR-022 小版本末尾的设备验证。
+- Lint 后果：Firebase Auth 经 `play-services-auth` 20.7.0 传递引入 `androidx.fragment` 1.1.0，lint 因此对 Android 8–9 路径的 `registerForActivityResult` 报 `InvalidFragmentVersionForActivityResult`。该检查针对 1.3.0 以前的 `FragmentActivity`；`MainActivity` 是 `ComponentActivity`，启动器由它自己的 `ActivityResultRegistry` 处理，所以只在注册处局部抑制，不为此新增或升级 Fragment 依赖。
+
+## ADR-024：桌面伪装只切换到一个如实的中性身份
+
+- 状态：Accepted（2026-11-06）。产品负责人把决策 D6（见 [Google Play 上架就绪清单](product/PLAY_STORE_READINESS.md)）交给代理决定，代理采用本方案。细化 ADR-022 的可选桌面伪装，进度见[流体玻璃与 Google Play 就绪 Goal](product/LIQUID_GLASS_PLAY_READINESS_GOAL.md)。
+- 决策：只提供一个伪装身份：名称“日记 / Journal”，图标是石板灰底上的白色笔记本，不带品牌色和光环。它如实说明应用用途，不冒充计算器、备忘录或任何其他应用、品牌与系统功能。打开后仍是同一个应用，应用内名称、数据和统计不变，照常遵守应用锁（ADR-023）。开关位于设置“数据与隐私”，默认关闭。
+- 机制：唯一的 Activity 移到 `ui.MainActivity`，不导出，也没有自己的启动器入口。清单用两个 `activity-alias` 指向它：默认身份沿用旧组件名 `.MainActivity` 并初始启用，伪装身份 `.JournalLauncher` 初始停用。设置中切换时用 `PackageManager.setComponentEnabledSetting(..., DONT_KILL_APP)` 先启用新入口、再停用旧入口，任何时刻至少有一个启动器入口。只切换别名，从不停用 Activity 本身，所以系统不会结束正在显示的页面。选择先同步写入 SharedPreferences 再切换；每次启动按保存值校正两个入口，修复切换中途进程被杀造成的双图标或无图标。最近任务的名称和图标用 `setTaskDescription` 跟随当前身份。
+- 不采用：目标书模式 A“简易计算器，输入 `1234=` 解锁”。它需要应用自管的数字口令，与 ADR-023“不提供应用自己的 PIN”冲突；Google Play 的欺骗行为政策禁止模仿其他应用，仿冒政策禁止歪曲应用的主要用途，假计算器两条都可能触及，而做成真正的计算器又超出 PRODUCT.md 范围。也不采用模式 B“日常备忘录”：它暗示另一类应用，而“日记”同样低调且如实。
+- 后果：
+  1. 默认身份沿用 `.MainActivity` 组件名，所以升级到本版本不会丢失已固定在桌面上的图标，`scripts/verify-release-upgrade.mjs` 的 `am start -n …/.MainActivity` 也继续可用。每次开启或关闭伪装时，多数桌面会移除旧入口的图标，用户需要从应用列表重新添加；设置说明提前告知。
+  2. 部分桌面刷新图标需要几秒；个别厂商系统可能在停用组件时仍结束应用进程，需要设备验证。
+  3. 伪装只改桌面图标和名称，不隐藏通知、系统设置中的应用信息或 Google Play 中的条目；隐私说明和商店说明要如实写明。
+  4. Play 政策结论未经官方确认：上架前由负责人对照[欺骗行为政策](https://support.google.com/googleplay/android-developer/answer/16680223)和[仿冒政策](https://play.google.com/about/ip-deception-spam/impersonation-ip/)复核，并在商店说明中披露该功能（政策为转述，以官方页面为准）。
+  5. 桌面名称只能由清单引用，所以伪装名放在字符串资源 `app_name_journal` 中，与 `app_name` 一样跟随系统语言；应用内文案仍只在 `ZhStrings.kt` / `EnStrings.kt`。
+- 测试后果：入口切换逻辑是纯函数，由 `LauncherIdentityTest` 在 JVM 上覆盖（标识与组件名、启用顺序、中断修复、任一步骤都至少留一个入口）。`LauncherDisguiseTest` 在设备上验证真实组件状态以及启动器只列出一个入口，`SettingsPrivacyControlsTest` 验证设置行的开关语义；两个入口在 API 26、29、34 桌面上的显示与切换仍需手工设备回归。
+
+## ADR-025：亲密用语中性化与用语风格双模式
+
+- 状态：Accepted（2026-11-07）。实现 Google Play 就绪决策 D1（见 [Google Play 上架就绪清单](product/PLAY_STORE_READINESS.md)）。
+- 决策：
+  1. 中文默认采用典雅风格（「个人私密」与「伴侣亲密」），替换生硬的“自我亲密”；英文保持「Solo」与「Duo」。
+  2. 在设置中提供「用语风格」切换，允许用户自由选择直白模式（「自慰」与「做爱」）。偏好保存在 `SharedPreferences`（`daily_record_terminology_style`）中，切换即时重组刷新。
+  3. 首次进入主页时，在日历上方呈现轻量流体玻璃引导卡（「用语说明」），解释两模块含义；用户点击“我知道了”后关闭并持久化记录，不再重复弹出。
+- 原因：Google Play 政策禁止在商品详情、截图及默认审核元数据中包含露骨性词汇。默认采用典雅中性词确保上架审核 100% 合规；同时提供直白模式与引导卡片，消除歧义并尊重用户的真实直观偏好。
+- 边界：底层数据模型、Room 数据库表及字段（`hand_brew_records`、`sex_records`）保持严格不变；文案严格集中在 `ZhStrings.kt` 与 `EnStrings.kt` 中。
+- 后果：`TerminologyStyle` 枚举与 `TerminologyStylePreference` 管理偏好，`AppLanguageState.current` 按选定风格生成动态文案。
+
 ## 已废止方向
 
 旧版通用活动表、三种预设计量方式、活动身份色、活动归档、短信验证码、端到端加密和通用日历标记均由本次产品收缩废止，只存在于 Git 历史，不再指导实现。健身等其他记录不属于当前范围；若未来立项，应采用 ADR-002 的独立垂直模块方式重新定义，而不是恢复旧模型。

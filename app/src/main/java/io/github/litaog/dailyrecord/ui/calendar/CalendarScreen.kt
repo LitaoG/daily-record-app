@@ -62,6 +62,8 @@ import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import java.time.LocalDate
 import java.time.YearMonth
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 
 // Legacy single-module adapter retained for tests; production uses DailyCountCalendarScreen.
 @Composable
@@ -106,6 +108,15 @@ internal fun DailyCountCalendarScreen(
     availableModules: List<RecordModuleUiSpec>,
     modifier: Modifier = Modifier,
     earliestMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE),
+    /** Today's stored count of the current module; null means not filled. */
+    todayCount: Int? = null,
+    /**
+     * Applies a quick-log action to one date (ADR-022). When set, the today
+     * island is shown and past/today cells offer the long-press stepper.
+     */
+    onQuickLog: ((LocalDate, QuickLogAction) -> Unit)? = null,
+    showOnboardingCard: Boolean = false,
+    onDismissOnboarding: () -> Unit = {},
     onModuleSelected: (RecordModule) -> Unit,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
@@ -120,6 +131,11 @@ internal fun DailyCountCalendarScreen(
     val totalCount = remember(monthRecords) { monthRecords.sumOf { it.count.toLong() } }
     val recordedDays = remember(monthRecords) { monthRecords.count { it.count > 0 } }
     val gridDates = remember(month) { calendarGridDates(month) }
+    // The long-press stepper closes when the month or the module changes, so
+    // it never adjusts a date or a module the user is no longer looking at.
+    val quickAdjustDate = remember(month, selectedModule) {
+        androidx.compose.runtime.mutableStateOf<LocalDate?>(null)
+    }
     val canGoPrevious = month > earliestMonth
     val canGoNext = month < YearMonth.from(today)
     val fontScale = LocalDensity.current.fontScale
@@ -150,6 +166,19 @@ internal fun DailyCountCalendarScreen(
                         specs = availableModules,
                         onSelected = onModuleSelected,
                     )
+                    if (showOnboardingCard) {
+                        IntimacyOnboardingCard(
+                            colors = moduleSpec.colors,
+                            onDismiss = onDismissOnboarding,
+                        )
+                    }
+                    if (onQuickLog != null) {
+                        TodayQuickLogIsland(
+                            count = todayCount,
+                            moduleSpec = moduleSpec,
+                            onAction = { action -> onQuickLog(today, action) },
+                        )
+                    }
                     MonthHeader(
                         month = month,
                         canGoPrevious = canGoPrevious,
@@ -175,6 +204,31 @@ internal fun DailyCountCalendarScreen(
                         cellHeight = dayCellHeight,
                         largeText = largeText,
                         onDateSelected = onDateSelected,
+                        // Swipe left / right to change month; arrows stay (ADR-022).
+                        modifier = Modifier.monthSwipe(
+                            month = month,
+                            canGoPrevious = canGoPrevious,
+                            canGoNext = canGoNext,
+                            onPrevious = onPreviousMonth,
+                            onNext = onNextMonth,
+                        ),
+                        quickAdjustDate = quickAdjustDate.value,
+                        onLongPress = if (onQuickLog != null) {
+                            { date -> quickAdjustDate.value = date }
+                        } else {
+                            null
+                        },
+                        quickAdjustPopup = { date ->
+                            if (onQuickLog != null) {
+                                CalendarQuickAdjustPopup(
+                                    date = date,
+                                    count = recordsByDate[date]?.count,
+                                    moduleSpec = moduleSpec,
+                                    onAction = { action -> onQuickLog(date, action) },
+                                    onDismiss = { quickAdjustDate.value = null },
+                                )
+                            }
+                        },
                     )
                 }
             }
@@ -214,8 +268,13 @@ private fun CalendarMonthGrid(
     cellHeight: androidx.compose.ui.unit.Dp,
     largeText: Boolean,
     onDateSelected: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+    /** Date whose quick-adjust stepper is open, if any. */
+    quickAdjustDate: LocalDate? = null,
+    onLongPress: ((LocalDate) -> Unit)? = null,
+    quickAdjustPopup: (@Composable (LocalDate) -> Unit)? = null,
 ) {
-    Column {
+    Column(modifier = modifier) {
         gridDates.chunked(7).forEach { week ->
             Row(modifier = Modifier.fillMaxWidth()) {
                 week.forEach { date ->
@@ -226,6 +285,8 @@ private fun CalendarMonthGrid(
                                 .height(cellHeight),
                         )
                     } else {
+                        // Only today and past supported dates can be adjusted.
+                        val canQuickAdjust = onLongPress != null && date <= today && date >= earliestDate
                         CalendarDayCell(
                             date = date,
                             earliestDate = earliestDate,
@@ -237,6 +298,16 @@ private fun CalendarMonthGrid(
                             largeText = largeText,
                             modifier = Modifier.weight(1f),
                             onClick = { onDateSelected(date) },
+                            onLongClick = if (canQuickAdjust) {
+                                { onLongPress?.invoke(date) }
+                            } else {
+                                null
+                            },
+                            quickAdjustPopup = if (canQuickAdjust && date == quickAdjustDate && quickAdjustPopup != null) {
+                                { quickAdjustPopup(date) }
+                            } else {
+                                null
+                            },
                         )
                     }
                 }
@@ -501,6 +572,9 @@ private fun MonthArrow(
     )
 }
 
+// combinedClickable is stable in current Compose; the opt-in only keeps older
+// foundation versions compiling.
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CalendarDayCell(
     date: LocalDate,
@@ -513,6 +587,10 @@ private fun CalendarDayCell(
     largeText: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Opens the quick-adjust stepper; null when quick log is unavailable. */
+    onLongClick: (() -> Unit)? = null,
+    /** The stepper popup anchored to this cell while it is open. */
+    quickAdjustPopup: (@Composable () -> Unit)? = null,
 ) {
     val unsupported = date < earliestDate
     val future = date > today
@@ -558,7 +636,15 @@ private fun CalendarDayCell(
             .height(cellHeight)
             .testTag("calendar_day_$date")
             .clip(cellShape)
-            .clickable(enabled = !future && !unsupported, role = Role.Button, onClick = onClick)
+            .combinedClickable(
+                enabled = !future && !unsupported,
+                role = Role.Button,
+                // Long press opens the quick-adjust stepper (ADR-022); the
+                // system long-press haptic comes with combinedClickable.
+                onLongClickLabel = if (onLongClick != null) AppCopy.Calendar.quickAdjustAction else null,
+                onLongClick = onLongClick,
+                onClick = onClick,
+            )
             .semantics {
                 role = Role.Button
                 selected = focused
@@ -605,6 +691,10 @@ private fun CalendarDayCell(
                     maxLines = 1,
                 )
             }
+        }
+        // Placed inside the cell so the popup anchors to this date.
+        if (quickAdjustPopup != null) {
+            quickAdjustPopup()
         }
     }
 }

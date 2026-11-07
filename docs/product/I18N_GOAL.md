@@ -26,7 +26,7 @@
 
 | 位置 | 可见 | TalkBack |
 |---|---|---|
-| 模块切换器 | Solo / Sex | Masturbation / Sex |
+| 模块切换器 | Solo / Duo（ADR-022 前为 Solo / Sex） | Solo journal / Intimate journal（ADR-022 前为 Masturbation / Sex） |
 | 统计周期胶囊 | Wk / Mo / Yr / All | Week / Month / Year / All history |
 | 底部导航 | Calendar / Stats | 同左 |
 | 日历格次数 | 数字，9+ | 9 times or more |

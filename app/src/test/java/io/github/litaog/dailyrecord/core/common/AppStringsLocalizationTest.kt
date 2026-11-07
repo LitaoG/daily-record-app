@@ -20,9 +20,9 @@ class AppStringsLocalizationTest {
     @Test
     fun englishModuleLabelsAreShortAndAccessibilityUsesFullTerms() = inEnglish {
         assertEquals("Solo", AppCopy.RecordModule.handBrewLabel)
-        assertEquals("Sex", AppCopy.RecordModule.sexLabel)
-        assertEquals("Masturbation", AppCopy.RecordModule.handBrewAccessibilityLabel)
-        assertEquals("Sex", AppCopy.RecordModule.sexAccessibilityLabel)
+        assertEquals("Duo", AppCopy.RecordModule.sexLabel)
+        assertEquals("Solo journal", AppCopy.RecordModule.handBrewAccessibilityLabel)
+        assertEquals("Intimate journal", AppCopy.RecordModule.sexAccessibilityLabel)
     }
 
     @Test
@@ -111,12 +111,95 @@ class AppStringsLocalizationTest {
 
     @Test
     fun zhAnchorsRemainUnchanged() {
-        assertEquals("自慰", AppCopy.RecordModule.handBrewLabel)
-        assertEquals("做爱", AppCopy.RecordModule.sexLabel)
+        assertEquals("个人私密", AppCopy.RecordModule.handBrewLabel)
+        assertEquals("伴侣亲密", AppCopy.RecordModule.sexLabel)
         assertEquals("周", AppCopy.Statistics.weekTab)
         assertEquals("2026年 8月", AppCopy.Calendar.monthTitle(YearMonth.of(2026, 8)))
         assertEquals("3 次", AppCopy.Statistics.countText(3))
         assertEquals("9 次以上", AppCopy.Calendar.countDescription(9))
+    }
+
+    @Test
+    fun zhElegantDefaultsUseIntimacyTerms() {
+        val previous = AppLanguageState.current
+        AppLanguageState.current = ZhStrings(TerminologyStyle.ELEGANT)
+        try {
+            assertEquals("个人私密", AppCopy.RecordModule.handBrewLabel)
+            assertEquals("伴侣亲密", AppCopy.RecordModule.sexLabel)
+            assertEquals("个人私密", AppCopy.RecordModule.handBrewAccessibilityLabel)
+            assertEquals("伴侣亲密", AppCopy.RecordModule.sexAccessibilityLabel)
+            assertEquals("今天个人私密了几次？", AppCopy.RecordModule.handBrewQuestionToday)
+            assertEquals("今天伴侣亲密了几次？", AppCopy.RecordModule.sexQuestionToday)
+            assertEquals("当天个人私密了几次？", AppCopy.RecordModule.handBrewQuestionPast)
+            assertEquals("当天伴侣亲密了几次？", AppCopy.RecordModule.sexQuestionPast)
+            assertEquals("当天没有个人私密", AppCopy.RecordModule.handBrewZero)
+            assertEquals("当天没有伴侣亲密", AppCopy.RecordModule.sexZero)
+        } finally {
+            AppLanguageState.current = previous
+        }
+    }
+
+    @Test
+    fun zhDirectStyleUsesDirectTerms() {
+        val previous = AppLanguageState.current
+        AppLanguageState.current = ZhStrings(TerminologyStyle.DIRECT)
+        try {
+            assertEquals("自慰", AppCopy.RecordModule.handBrewLabel)
+            assertEquals("做爱", AppCopy.RecordModule.sexLabel)
+            assertEquals("自慰", AppCopy.RecordModule.handBrewAccessibilityLabel)
+            assertEquals("做爱", AppCopy.RecordModule.sexAccessibilityLabel)
+            assertEquals("今天自慰了几次？", AppCopy.RecordModule.handBrewQuestionToday)
+            assertEquals("今天做爱了几次？", AppCopy.RecordModule.sexQuestionToday)
+            assertEquals("当天自慰了几次？", AppCopy.RecordModule.handBrewQuestionPast)
+            assertEquals("当天做爱了几次？", AppCopy.RecordModule.sexQuestionPast)
+            assertEquals("当天没有自慰", AppCopy.RecordModule.handBrewZero)
+            assertEquals("当天没有做爱", AppCopy.RecordModule.sexZero)
+        } finally {
+            AppLanguageState.current = previous
+        }
+    }
+
+    @Test
+    fun noForbiddenSelfIntimacyTermInAnyStrings() {
+        val forbidden = "自我亲密"
+        val elegantValues = collectStringValues(ZhStrings(TerminologyStyle.ELEGANT))
+        val directValues = collectStringValues(ZhStrings(TerminologyStyle.DIRECT))
+        val enValues = collectStringValues(EnStrings)
+
+        (elegantValues + directValues + enValues).forEach { value ->
+            assertFalse("Strings must not contain '$forbidden', found in: $value", value.contains(forbidden))
+        }
+    }
+
+    @Test
+    fun englishStringsUnaffectedByTerminologyStyle() {
+        val elegantEn = AppLanguage.EN.strings(TerminologyStyle.ELEGANT)
+        val directEn = AppLanguage.EN.strings(TerminologyStyle.DIRECT)
+        assertEquals("Solo", elegantEn.recordModule.handBrewLabel)
+        assertEquals("Solo", directEn.recordModule.handBrewLabel)
+        assertEquals("Duo", elegantEn.recordModule.sexLabel)
+        assertEquals("Duo", directEn.recordModule.sexLabel)
+    }
+
+    @Test
+    fun settingsAndOnboardingCopyArePresent() {
+        assertEquals("用语风格", ZhStrings.settings.terminologyTitle)
+        assertEquals("选择用语风格", ZhStrings.settings.terminologyDialogTitle)
+        assertEquals("典雅", ZhStrings.settings.terminologyElegant)
+        assertEquals("直白", ZhStrings.settings.terminologyDirect)
+        assertEquals("用语说明", ZhStrings.onboarding.title)
+        assertEquals("个人私密", ZhStrings.onboarding.soloLabel)
+        assertEquals("伴侣亲密", ZhStrings.onboarding.duoLabel)
+        assertEquals("我知道了", ZhStrings.onboarding.dismissAction)
+
+        assertEquals("Terminology Style", EnStrings.settings.terminologyTitle)
+        assertEquals("Choose terminology style", EnStrings.settings.terminologyDialogTitle)
+        assertEquals("Elegant", EnStrings.settings.terminologyElegant)
+        assertEquals("Direct", EnStrings.settings.terminologyDirect)
+        assertEquals("Terminology Guide", EnStrings.onboarding.title)
+        assertEquals("Solo Intimacy", EnStrings.onboarding.soloLabel)
+        assertEquals("Partner Intimacy", EnStrings.onboarding.duoLabel)
+        assertEquals("Got it", EnStrings.onboarding.dismissAction)
     }
 
     @Test
@@ -166,7 +249,7 @@ class AppStringsLocalizationTest {
                     it.returnType.isInterface &&
                     it.returnType.name.startsWith("io.github.litaog.dailyrecord.core.common.AppStrings")
             }
-            nested.forEach { walk(it.invoke(target)) }
+            nested.forEach { method -> method.invoke(target)?.let { walk(it) } }
         }
 
         walk(root)

@@ -36,6 +36,7 @@
 | `CONTRIBUTING.md` | 当前必读 | P1 | 必需 | 是 | 是 | Issue、分支、PR、测试和隐私边界 |
 | `.github/pull_request_template.md` | 协作模板 | P1 | 按范围 | 按范围 | 按范围 | 创建 PR 时填写变更原因和验证证据 |
 | `PRIVACY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 面向使用者的本机、账号、云端和删除隐私说明 |
+| `PRIVACY.en.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 隐私说明的英文译本，供英文界面和英文商店页链接；与中文版不一致时以中文版为准，两者须同步修改 |
 | `SECURITY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 漏洞报告、敏感文件边界和安全基线 |
 | `docs/PRODUCT.md` | 当前必读 | P0 | 必需 | 是 | 是 | 当前产品范围、两个模块语义和不做什么 |
 | `docs/ARCHITECTURE.md` | 当前必读 | P0 | 必需 | 是 | 是 | 分层、数据流、同步边界和模块隔离 |
@@ -43,6 +44,7 @@
 | `docs/DECISIONS.md` | 当前必读 | P0 | 必需 | 是 | 是 | 已接受 ADR 和不可随意推翻的技术/产品决策 |
 | `docs/STATISTICS.md` | 当前必读 | P1 | 必需 | 是 | 是 | 周/月/年/全部历史统计的唯一口径 |
 | `docs/SYNC_AND_PRIVACY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 本地优先、账号隔离、同步冲突和删除语义 |
+| `docs/ACCOUNT_DELETION.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | Google Play 政策合规：应用内与网页/邮件账号及云端数据删除指引 |
 | `docs/UI_UX.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前 Compose 页面、状态、文案和无障碍规则 |
 | `docs/DEVELOPMENT.md` | 当前必读 | P1 | 必需 | 是 | 是 | 本机环境、命令、配置边界和日常开发流程 |
 | `docs/TESTING.md` | 当前必读 | P1 | 必需 | 是 | 是 | 按影响范围选择测试及小版本完整门禁 |
@@ -61,6 +63,8 @@
 | `docs/product/IMPLEMENTATION_READINESS.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 当前实现、发布和质量门槛 |
 | `docs/product/PRODUCT_BACKLOG.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | 已完成事项与持续观察项，不是旧阶段启动器 |
 | `docs/product/USER_STORIES_AND_ACCEPTANCE.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 用户行为和可验收条件 |
+| `docs/product/LIQUID_GLASS_PLAY_READINESS_GOAL.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | ADR-022 流体玻璃主题、即时记录、隐私护甲与 Google Play 就绪的范围、阶段状态、与目标书的差异和验证证据 |
+| `docs/product/PLAY_STORE_READINESS.md` | 当前参考 | P1 | 按范围 | 按范围 | 按范围 | Google Play 上架就绪清单：技术基线、内容政策定位、Data safety 与健康声明建议答案、账号删除和待决策项 |
 | `docs/product/MONTH_STATISTICS_REDESIGN.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 月统计逐日脉冲图、分布和极值规则 |
 | `docs/product/SETTINGS_HUB_GOAL.md` | 当前参考 | P2 | 按范围 | 按范围 | 按范围 | 已实现设置中心的目标、范围和验收 |
 | `docs/product/I18N_GOAL.md` | 当前契约 | P1 | 按范围 | 按范围 | 按范围 | 双语适配（中文默认 + English）的目标、机制、简写策略与阶段证据 |

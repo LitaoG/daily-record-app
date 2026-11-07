@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -57,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.BrandIcon
 import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
+import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.components.rememberWheelMotion
 import io.github.litaog.dailyrecord.core.common.AppCopy
@@ -200,6 +202,9 @@ private fun DateWheelColumn(
     }
     val wheelMotion = rememberWheelMotion(minimumFlingVelocity)
     val shape = RoundedCornerShape(14.dp)
+    // One light tick each time a new value reaches the center line, like the
+    // time wheel (ADR-022). A value clamped by another wheel does not tick.
+    val haptic = LocalHapticFeedback.current
 
     /**
      * Keep the local wheel position in sync with changes made by another wheel
@@ -231,6 +236,7 @@ private fun DateWheelColumn(
     }
 
     fun applyOffsetDelta(delta: Float) {
+        val indexBefore = selectedIndex
         var nextOffset = dragOffsetPx + delta
 
         // Rebase the rendered three-row window whenever a full row passes the
@@ -244,6 +250,8 @@ private fun DateWheelColumn(
             if (!commitIndex(selectedIndex - 1)) break
             nextOffset -= rowHeightPx
         }
+        // At most one tick per call, so a fast fling ticks at most once per frame.
+        if (selectedIndex != indexBefore) DailyRecordHaptics.tick(haptic)
 
         // Add a small edge resistance instead of exposing an empty row when
         // the wheel is already at its first or last value.
@@ -260,9 +268,15 @@ private fun DateWheelColumn(
 
     fun snapToNearestValue() {
         if (dragOffsetPx <= -rowHeightPx / 2f && selectedIndex < values.lastIndex) {
-            if (commitIndex(selectedIndex + 1)) dragOffsetPx += rowHeightPx
+            if (commitIndex(selectedIndex + 1)) {
+                dragOffsetPx += rowHeightPx
+                DailyRecordHaptics.tick(haptic)
+            }
         } else if (dragOffsetPx >= rowHeightPx / 2f && selectedIndex > 0) {
-            if (commitIndex(selectedIndex - 1)) dragOffsetPx -= rowHeightPx
+            if (commitIndex(selectedIndex - 1)) {
+                dragOffsetPx -= rowHeightPx
+                DailyRecordHaptics.tick(haptic)
+            }
         }
     }
 
@@ -344,6 +358,7 @@ private fun DateWheelColumn(
                         isGestureActive = false
                         if (commitIndex(selectedIndex - 1)) {
                             dragOffsetPx = 0f
+                            DailyRecordHaptics.tick(haptic)
                         }
                     },
                 )
@@ -374,6 +389,7 @@ private fun DateWheelColumn(
                         isGestureActive = false
                         if (commitIndex(selectedIndex + 1)) {
                             dragOffsetPx = 0f
+                            DailyRecordHaptics.tick(haptic)
                         }
                     },
                 )

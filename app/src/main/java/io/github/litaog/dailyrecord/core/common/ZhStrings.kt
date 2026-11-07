@@ -21,7 +21,7 @@ internal object ZhStrings : AppStrings {
 
     override val auth: AppStrings.AuthStrings = Auth
     override val account: AppStrings.AccountStrings = Account
-    override val recordModule: AppStrings.RecordModuleStrings = RecordModule
+    override val recordModule: AppStrings.RecordModuleStrings = ElegantRecordModule
     override val deletion: AppStrings.DeletionStrings = Deletion
     override val calendar: AppStrings.CalendarStrings = Calendar
     override val navigation: AppStrings.NavigationStrings = Navigation
@@ -30,6 +30,9 @@ internal object ZhStrings : AppStrings {
     override val settings: AppStrings.SettingsStrings = Settings
     override val navigationBar: AppStrings.NavigationBarStrings = NavigationBar
     override val components: AppStrings.ComponentStrings = Components
+    override val appLock: AppStrings.AppLockStrings = AppLock
+    override val disguise: AppStrings.DisguiseStrings = Disguise
+    override val onboarding: AppStrings.OnboardingStrings = Onboarding
 
     private val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
@@ -158,20 +161,28 @@ internal object ZhStrings : AppStrings {
         override fun syncChipDescription(status: String): String = "账号与云同步状态：$status"
     }
 
-    private object RecordModule : AppStrings.RecordModuleStrings {
-        override val handBrewLabel = "自慰"
-        override val handBrewAccessibilityLabel = "自慰"
-        override val handBrewQuestionToday = "今天自慰了几次？"
-        override val handBrewQuestionPast = "当天自慰了几次？"
-        override val handBrewZero = "当天没有自慰"
-        override val sexLabel = "做爱"
-        override val sexAccessibilityLabel = "做爱"
-        override val sexQuestionToday = "今天做爱了几次？"
-        override val sexQuestionPast = "当天做爱了几次？"
-        override val sexZero = "当天没有做爱"
+    private object ElegantRecordModule : AppStrings.RecordModuleStrings {
+        override val handBrewLabel = "个人私密"
+        override val handBrewAccessibilityLabel = "个人私密"
+        override val handBrewQuestionToday = "今天个人私密了几次？"
+        override val handBrewQuestionPast = "当天个人私密了几次？"
+        override val handBrewZero = "当天没有个人私密"
+        override val sexLabel = "伴侣亲密"
+        override val sexAccessibilityLabel = "伴侣亲密"
+        override val sexQuestionToday = "今天伴侣亲密了几次？"
+        override val sexQuestionPast = "当天伴侣亲密了几次？"
+        override val sexZero = "当天没有伴侣亲密"
 
         override fun recordLabel(label: String): String = "${label}记录"
     }
+
+    fun withStyle(style: TerminologyStyle): AppStrings = when (style) {
+        TerminologyStyle.ELEGANT -> this
+        TerminologyStyle.DIRECT -> ZhStringsWithStyle(style)
+    }
+
+    operator fun invoke(style: TerminologyStyle = TerminologyStyle.ELEGANT): AppStrings =
+        withStyle(style)
 
     private object Deletion : AppStrings.DeletionStrings {
         override val warningTitle = "删除账号与云端数据？"
@@ -235,6 +246,39 @@ internal object ZhStrings : AppStrings {
         override val zeroDescription = "记录为 0 次"
         override val selectedSuffix = "，已选择"
         override val todaySuffix = "，今天"
+
+        override val quickLogTitle = "今日速记"
+        override val quickLogMarkZero = "记为 0 次"
+
+        override fun quickLogStatus(count: Int?): String =
+            if (count == null) "今天还没记录" else "今天 $count 次"
+
+        override fun quickLogStatusDescription(moduleLabel: String, count: Int?): String =
+            if (count == null) "今天${moduleLabel}还没记录" else "今天${moduleLabel}已记录 $count 次"
+
+        override fun quickLogIncreaseDescription(moduleLabel: String): String = "今天${moduleLabel}加 1 次"
+
+        override fun quickLogDecreaseDescription(moduleLabel: String): String = "今天${moduleLabel}减 1 次"
+
+        override fun quickLogMarkZeroDescription(moduleLabel: String): String = "把今天${moduleLabel}记为 0 次"
+
+        override val quickAdjustAction = "快速调整次数"
+        override val quickAdjustDone = "完成"
+
+        override fun quickAdjustTitle(date: LocalDate): String = "${date.monthValue}月${date.dayOfMonth}日"
+
+        override fun quickAdjustStatusDescription(date: LocalDate, moduleLabel: String, count: Int?): String =
+            if (count == null) {
+                "${quickAdjustTitle(date)}${moduleLabel}还没记录"
+            } else {
+                "${quickAdjustTitle(date)}${moduleLabel}已记录 $count 次"
+            }
+
+        override fun quickAdjustIncreaseDescription(date: LocalDate, moduleLabel: String): String =
+            "${quickAdjustTitle(date)}${moduleLabel}加 1 次"
+
+        override fun quickAdjustDecreaseDescription(date: LocalDate, moduleLabel: String): String =
+            "${quickAdjustTitle(date)}${moduleLabel}减 1 次"
 
         override fun monthSummary(count: Long, days: Int): String = "本月 $count 次 · $days 天有记录"
 
@@ -615,10 +659,27 @@ internal object ZhStrings : AppStrings {
         override val localAccountSummary = "记录只保存在这台设备；登录后可同步并在换机时恢复。"
         override val signedInAccountSummary = "查看同步状态、手动同步或管理账号"
         override val generalSection = "通用"
+        override val terminologyTitle = "用语风格"
+        override val terminologyDialogTitle = "选择用语风格"
+        override val terminologyElegant = "典雅"
+        override val terminologyDirect = "直白"
+        override val terminologyElegantOption = "典雅（个人私密 / 伴侣亲密）"
+        override val terminologyDirectOption = "直白（自慰 / 做爱）"
         override val languageTitle = "语言"
         override val languageZh = "中文"
         override val languageEn = "English"
         override val languageDialogTitle = "选择语言"
+        override val themeTitle = "主题配色"
+        override val themeDialogTitle = "选择主题配色"
+        override val themeAurora = "极光星云"
+        override val themeGlacialCoral = "冰川蜜桃"
+        override val themeTwilightLilac = "暮光丁香"
+        override val themeEmeraldBerry = "翡翠莓果"
+        override val themeTitaniumChampagne = "钛金香槟"
+        override val themeCreamLavender = "奶油丁香"
+        override val themeSpringSky = "嫩芽晴空"
+        override val themeBuffGlacier = "暖阳冰川"
+        override val themeDreamBlush = "梦境腮红"
         override val dataSection = "数据与隐私"
         override val localFirstTitle = "本机优先"
         override val localFirstSummary = "所有记录先保存在本机；未登录时不会上传。"
@@ -628,6 +689,8 @@ internal object ZhStrings : AppStrings {
         override val version = "版本"
         override val license = "开源许可"
         override val licenseValue = "Apache 2.0"
+        override val privacyPolicy = "隐私政策"
+        override val privacyPolicyAction = "在浏览器中打开"
 
         override fun accountDescription(title: String, status: String): String = "$title，$status"
     }
@@ -637,8 +700,70 @@ internal object ZhStrings : AppStrings {
         override val statistics = "统计"
     }
 
+    private object AppLock : AppStrings.AppLockStrings {
+        override val lockedTitle = "已锁定"
+        override val lockedBody = "验证身份后继续使用"
+        override val unlock = "解锁"
+        override val notCompleted = "验证未完成，可以再试一次"
+        override val promptTitle = "验证身份"
+        override val promptSubtitle = "使用指纹、面容或锁屏密码"
+        override val settingTitle = "应用锁"
+        override val settingSummary = "打开应用时需要验证身份"
+        override val settingOn = "已开启"
+        override val settingOff = "已关闭"
+        override val recentsNote = "开启后，最近任务中不显示内容"
+        override val recentsAndScreenshotNote = "开启后，最近任务中不显示内容，也无法截屏"
+        override val delayTitle = "重新锁定"
+        override val delayDialogTitle = "何时重新锁定"
+        override val delayImmediately = "立即"
+        override val delayOneMinute = "离开 1 分钟后"
+        override val delayFiveMinutes = "离开 5 分钟后"
+        override val needsScreenLock = "请先在系统设置中设置锁屏密码"
+        override val turnedOffNoScreenLock = "设备已没有锁屏密码，应用锁已关闭"
+    }
+
+    private object Disguise : AppStrings.DisguiseStrings {
+        override val settingTitle = "桌面伪装"
+        override val settingSummary = "开启后，桌面图标和名称显示为“日记”"
+        override val settingNote = "切换后桌面要几秒才更新；已放到桌面上的图标需要重新添加"
+    }
+
     private object Components : AppStrings.ComponentStrings {
         override val decrease = "减少一次"
         override val increase = "增加一次"
     }
+
+    private object Onboarding : AppStrings.OnboardingStrings {
+        override val title = "用语说明"
+        override val soloLabel = "个人私密"
+        override val soloDescription = "记录个人习惯与节奏"
+        override val duoLabel = "伴侣亲密"
+        override val duoDescription = "记录伴侣亲密与性生活"
+        override val settingsHint = "可在「设置」中随时切换为您偏好的用语风格（典雅 / 直白）。"
+        override val dismissAction = "我知道了"
+    }
+}
+
+private class ZhStringsWithStyle(
+    private val style: TerminologyStyle,
+) : AppStrings by ZhStrings {
+    override val recordModule: AppStrings.RecordModuleStrings = when (style) {
+        TerminologyStyle.ELEGANT -> ZhStrings.recordModule
+        TerminologyStyle.DIRECT -> ZhDirectRecordModule
+    }
+}
+
+private object ZhDirectRecordModule : AppStrings.RecordModuleStrings {
+    override val handBrewLabel = "自慰"
+    override val handBrewAccessibilityLabel = "自慰"
+    override val handBrewQuestionToday = "今天自慰了几次？"
+    override val handBrewQuestionPast = "当天自慰了几次？"
+    override val handBrewZero = "当天没有自慰"
+    override val sexLabel = "做爱"
+    override val sexAccessibilityLabel = "做爱"
+    override val sexQuestionToday = "今天做爱了几次？"
+    override val sexQuestionPast = "当天做爱了几次？"
+    override val sexZero = "当天没有做爱"
+
+    override fun recordLabel(label: String): String = "${label}记录"
 }
