@@ -101,6 +101,12 @@ jobs:
       - name: Validate Functions log safety
         run: node --test functions/delete-log.test.js
 
+      # AGENTS.md cost-safety discipline: the rate limiter, circuit breaker,
+      # App Check gate and resource caps need a regression gate of their own
+      # (docs/operations/firebase-cost-safety-test-matrix.md).
+      - name: Validate Firebase cost safety
+        run: node --test scripts/firebase-cost-safety.test.mjs
+
       - name: Validate Firestore rules
         if: needs.changes.outputs.code == 'true'
         run: pnpm test:firestore-rules
