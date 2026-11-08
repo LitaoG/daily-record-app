@@ -28,18 +28,22 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.AppLanguageState
+import io.github.litaog.dailyrecord.core.common.TerminologyStyle
+import io.github.litaog.dailyrecord.core.common.ZhStrings
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.PeriodTabs
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.math.abs
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -57,6 +61,24 @@ class RecordModuleIntegrationTest {
     fun selectHandBrewByDefault() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         SelectedRecordModulePreference(context).setSelectedModule(RecordModule.HandBrew)
+        // ADR-025: these tests assert the direct wording. Module specs and all
+        // copy read the process-global AppLanguageState, which DailyRecordApp
+        // only refreshes from the persisted style inside event callbacks, so
+        // both the preference and the global copy set must be pinned here.
+        TerminologyStylePreference(context).setStyle(TerminologyStyle.DIRECT)
+        AppLanguageState.current = ZhStrings(TerminologyStyle.DIRECT)
+    }
+
+    @After
+    fun resetGlobalCopyState() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences(TerminologyStylePreference.PREFERENCES_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(TerminologyStylePreference.KEY_TERMINOLOGY_STYLE)
+            .commit()
+        // DailyRecordApp compositions overwrite AppLanguageState; restore the
+        // default so screen-level tests that read the global stay order-proof.
+        AppLanguageState.current = ZhStrings
     }
 
     @Test
@@ -144,25 +166,28 @@ class RecordModuleIntegrationTest {
             .fetchSemanticsNode()
             .boundsInRoot
 
-        assertEquals(selectorBounds.width / 2f, handBrewBounds.width, 0.5f)
-        assertEquals(selectorBounds.width / 2f, sexBounds.width, 0.5f)
-        assertEquals(selectorBounds.left, handBrewBounds.left, 0.5f)
-        assertEquals(selectorBounds.top, handBrewBounds.top, 0.5f)
-        assertEquals(selectorBounds.bottom, handBrewBounds.bottom, 0.5f)
-        assertEquals(handBrewBounds.right, sexBounds.left, 0.5f)
-        assertEquals(selectorBounds.top, sexBounds.top, 0.5f)
-        assertEquals(selectorBounds.right, sexBounds.right, 0.5f)
-        assertEquals(selectorBounds.bottom, sexBounds.bottom, 0.5f)
+        // ADR-022: the glass track keeps a 4dp (Compact) gutter on every side,
+        // so each clickable half spans the padded inner area, not the outer
+        // glass ring. The tagged halves are inset by exactly one gutter.
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val compactPx = DailyRecordSpacing.Compact.value * context.resources.displayMetrics.density
+
+        assertEquals(selectorBounds.width / 2f - compactPx, handBrewBounds.width, 1.5f)
+        assertEquals(selectorBounds.width / 2f - compactPx, sexBounds.width, 1.5f)
+        assertEquals(selectorBounds.left + compactPx, handBrewBounds.left, 1.5f)
+        assertEquals(selectorBounds.top + compactPx, handBrewBounds.top, 1.5f)
+        assertEquals(selectorBounds.bottom - compactPx, handBrewBounds.bottom, 1.5f)
+        assertEquals(handBrewBounds.right, sexBounds.left, 1.5f)
+        assertEquals(selectorBounds.top + compactPx, sexBounds.top, 1.5f)
+        assertEquals(selectorBounds.right - compactPx, sexBounds.right, 1.5f)
+        assertEquals(selectorBounds.bottom - compactPx, sexBounds.bottom, 1.5f)
     }
 
     @Test
     fun handBrewColorCoversTheCompleteSelectedHalfWithoutAnInnerPill() {
         setDualModuleContent()
 
-        assertSelectorHalfColors(
-            left = HandBrewColorTokens.primary,
-            right = DailyRecordSurface,
-        )
+        assertSelectorHalfColors(selected = HandBrewColorTokens.primary, selectedOnLeft = true)
     }
 
     @Test
@@ -171,10 +196,7 @@ class RecordModuleIntegrationTest {
         SelectedRecordModulePreference(context).setSelectedModule(RecordModule.Sex)
         setDualModuleContent()
 
-        assertSelectorHalfColors(
-            left = DailyRecordSurface,
-            right = SexColorTokens.primary,
-        )
+        assertSelectorHalfColors(selected = SexColorTokens.primary, selectedOnLeft = false)
     }
 
     @Test
@@ -289,7 +311,7 @@ class RecordModuleIntegrationTest {
         assertSnackbarColor(SexColorTokens.strong)
     }
 
-    private fun assertSelectorHalfColors(left: Color, right: Color) {
+    private fun assertSelectorHalfColors(selected: Color, selectedOnLeft: Boolean) {
         var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
         composeRule.waitUntil(timeoutMillis = 10_000) {
             runCatching {
@@ -299,10 +321,35 @@ class RecordModuleIntegrationTest {
         val resolvedBitmap = requireNotNull(bitmap)
         val pixels = resolvedBitmap.toPixelMap()
         val sampleY = resolvedBitmap.height / 2
-        val inset = 10.coerceAtMost(resolvedBitmap.width / 8)
+        // Sample past the 4dp glass gutter (11px at the test density); a 10px
+        // inset lands on the translucent ring and picks up its lightened color.
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val compactPx = DailyRecordSpacing.Compact.value * context.resources.displayMetrics.density
+        val inset = (compactPx + 2f).toInt().coerceAtMost(resolvedBitmap.width / 8)
+        val selectedPixel = if (selectedOnLeft) {
+            pixels[inset, sampleY]
+        } else {
+            pixels[resolvedBitmap.width - inset - 1, sampleY]
+        }
+        val surfacePixel = if (selectedOnLeft) {
+            pixels[resolvedBitmap.width - inset - 1, sampleY]
+        } else {
+            pixels[inset, sampleY]
+        }
 
-        assertEquals(left.toArgb(), pixels[inset, sampleY].toArgb())
-        assertEquals(right.toArgb(), pixels[resolvedBitmap.width - inset - 1, sampleY].toArgb())
+        // The selected color must reach the inner edge of its half: an inner
+        // pill would leave a light surface pixel at the edge. Since ADR-022 the
+        // unselected half is a translucent milk-glass fill instead of the flat
+        // DailyRecordSurface, so it is pinned as a light tone that differs from
+        // the module color rather than an exact value.
+        assertEquals(selected.toArgb(), selectedPixel.toArgb())
+        assertTrue(
+            "Expected a light unselected half without the module color, was $surfacePixel",
+            surfacePixel.toArgb() != selected.toArgb() &&
+                surfacePixel.red > .9f &&
+                surfacePixel.green > .9f &&
+                surfacePixel.blue > .9f,
+        )
     }
 
     private fun assertSnackbarColor(expected: Color) {
