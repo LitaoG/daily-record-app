@@ -44,6 +44,7 @@ import io.github.litaog.dailyrecord.core.database.DailyRecordDatabase
 import io.github.litaog.dailyrecord.core.sync.AccountSyncManager
 import io.github.litaog.dailyrecord.core.sync.AndroidNetworkMonitor
 import io.github.litaog.dailyrecord.core.sync.DeletionBarrier
+import io.github.litaog.dailyrecord.core.sync.cloudWriteGate
 import io.github.litaog.dailyrecord.core.database.LOCAL_OWNER_ID
 import io.github.litaog.dailyrecord.ui.auth.AuthScreen
 import io.github.litaog.dailyrecord.ui.components.DailyRecordConfirmationDialog
