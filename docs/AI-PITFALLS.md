@@ -316,7 +316,7 @@ app/src/androidTest/java/.../FirebaseEmulatorIntegrationTest.kt -text
 - 必须保留的光学偏移写成具名常量，并在注释中写测量依据（[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 第 2 节）。
 - 用同视口前后截图验证；截图只放临时目录，不进仓库。
 
-**修复状态**：已修复（裁边资源与带注释的光学偏移，见 `RecordDetailsComponents.kt`）。
+**修复状态**：已修复（裁边资源与带注释的光学偏移，见 `RecordDetailFeeling.kt`；原 `RecordDetailsComponents.kt` 已拆分）。
 
 **防复发机制**：暂无自动门禁；依靠第 2 节“魔法数字需测量依据并附注释”的规则和 PR 中的同视口截图。
 
