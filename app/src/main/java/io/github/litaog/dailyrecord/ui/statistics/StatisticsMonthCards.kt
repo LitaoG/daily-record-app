@@ -53,6 +53,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
 
@@ -143,7 +144,7 @@ internal fun MonthSummaryCard(
         modifier = modifier
             .fillMaxWidth()
             .dailyRecordGlass(
-                shape = RoundedCornerShape(18.dp),
+                shape = DailyRecordShapes.Large,
                 moduleColors = colors,
                 level = DailyRecordGlassLevel.Elevated,
             )
@@ -155,7 +156,7 @@ internal fun MonthSummaryCard(
                 )
             },
         color = androidx.compose.ui.graphics.Color.Transparent,
-        shape = RoundedCornerShape(18.dp),
+        shape = DailyRecordShapes.Large,
         border = null,
     ) {
         if (useStackedLayout) {

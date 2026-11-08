@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -43,7 +44,7 @@ fun DailyRecordDialog(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.6f
-    val dialogShape = RoundedCornerShape(20.dp)
+    val dialogShape = DailyRecordShapes.Large
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false),

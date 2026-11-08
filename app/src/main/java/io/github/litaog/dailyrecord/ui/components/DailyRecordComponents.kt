@@ -26,9 +26,17 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -97,134 +105,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
 // (ZhStrings / EnStrings). Never hardcode visible text or CJK punctuation here; see
 // docs/ENGINEERING_STANDARDS.md section 7. scripts/copy-integrity.test.mjs rejects CJK leaks.
 
-@Composable
-internal fun DailyRecordBottomBar(
-    selected: TopDestination,
-    colors: RecordModuleColorTokens,
-    onSelected: (TopDestination) -> Unit,
-) {
-    // ADR-022: a floating liquid glass capsule above the system navigation
-    // bar. Each destination keeps a 48dp hit area and full Tab semantics.
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(
-                start = DailyRecordSpacing.ScreenHorizontal,
-                end = DailyRecordSpacing.ScreenHorizontal,
-                bottom = DailyRecordSpacing.Inline,
-            ),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = DailyRecordSizes.BottomBarMinHeight)
-                .appleLiquidGlass(
-                    shape = DailyRecordShapes.BottomBar,
-                    glowColor = colors.primary,
-                    elevation = LiquidGlassElevation.Elevated,
-                )
-                .padding(
-                    horizontal = DailyRecordSpacing.Content,
-                    vertical = DailyRecordSpacing.Compact,
-                ),
-            horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BottomDestination(
-                label = AppCopy.NavigationBar.calendar,
-                selected = selected == TopDestination.Calendar,
-                accent = colors.primary,
-                modifier = Modifier.weight(1f),
-                onClick = { onSelected(TopDestination.Calendar) },
-                icon = { color ->
-                    // The vector calendar symbol is optically centered, so the
-                    // nudge the old PNG artwork needed is gone.
-                    CalendarGlyph(
-                        color,
-                        modifier = Modifier.size(24.dp),
-                        theme = colors.brandIconTheme,
-                    )
-                },
-            )
-            BottomDestination(
-                label = AppCopy.NavigationBar.statistics,
-                selected = selected == TopDestination.Statistics,
-                accent = colors.primary,
-                modifier = Modifier.weight(1f),
-                onClick = { onSelected(TopDestination.Statistics) },
-                icon = { color ->
-                    StatisticsGlyph(
-                        color,
-                        modifier = Modifier.size(24.dp),
-                        theme = colors.brandIconTheme,
-                    )
-                },
-            )
-        }
-    }
-}
 
-@Composable
-private fun BottomDestination(
-    label: String,
-    selected: Boolean,
-    accent: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    icon: @Composable (Color) -> Unit,
-) {
-    val haptic = LocalHapticFeedback.current
-    val interactionSource = remember { MutableInteractionSource() }
-    val contentColor by animateColorAsState(
-        targetValue = if (selected) accent else DailyRecordTextSecondary,
-        label = "bottomDestinationColor",
-    )
-    // Short underline that springs open from the center when selected.
-    val indicatorWidth by animateDpAsState(
-        targetValue = if (selected) 24.dp else 0.dp,
-        animationSpec = DailyRecordMotion.spatial(),
-        label = "bottomDestinationIndicator",
-    )
-    Column(
-        modifier = modifier
-            .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
-            .testTag("bottom_destination_$label")
-            .pressScale(interactionSource)
-            .clip(DailyRecordShapes.Control)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                role = Role.Tab,
-            ) {
-                if (!selected) DailyRecordHaptics.tabSwitch(haptic)
-                onClick()
-            }
-            .semantics {
-                this.selected = selected
-                role = Role.Tab
-                contentDescription = AppCopy.selectedState(label, selected)
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        icon(contentColor)
-        Text(
-            text = label,
-            color = contentColor,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-        )
-        Spacer(Modifier.height(DailyRecordSpacing.Compact))
-        Box(
-            Modifier
-                .width(indicatorWidth)
-                .height(3.dp)
-                .clip(CircleShape)
-                .background(accent),
-        )
-    }
-}
 
 @Composable
 internal fun CalendarGlyph(
@@ -310,116 +191,6 @@ fun SexIcon(
     )
 }
 
-@Composable
-internal fun RecordModuleSelector(
-    selected: RecordModule,
-    specs: List<RecordModuleUiSpec>,
-    onSelected: (RecordModule) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    // ADR-022: a glass pill track with a flat module-color slider that springs
-    // to the selected half. Each half keeps its full-width hit and semantics area.
-    val haptic = LocalHapticFeedback.current
-    val selectedIndex = specs.indexOfFirst { it.module == selected }.coerceAtLeast(0)
-    val selectedColors = specs.getOrNull(selectedIndex)?.colors
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = DailyRecordSizes.ModuleSelectorMinHeight)
-            .testTag("record_module_selector")
-            .appleLiquidGlass(
-                shape = DailyRecordShapes.ModuleSelector,
-                glowColor = selectedColors?.primary ?: Color.Transparent,
-                elevation = LiquidGlassElevation.Subtle,
-            )
-            .padding(DailyRecordSpacing.Compact),
-    ) {
-        val segmentWidth = if (specs.isEmpty()) maxWidth else maxWidth / specs.size
-        val sliderOffset by animateDpAsState(
-            targetValue = segmentWidth * selectedIndex,
-            animationSpec = DailyRecordMotion.spatial(),
-            label = "moduleSlider",
-        )
-        if (selectedColors != null) {
-            Box(Modifier.matchParentSize()) {
-                Box(
-                    modifier = Modifier
-                        // Lambda overload: the animated value is read during
-                        // layout, so the slide never recomposes the selector.
-                        .offset { IntOffset(sliderOffset.roundToPx(), 0) }
-                        .width(segmentWidth)
-                        .fillMaxHeight()
-                        .shadow(
-                            elevation = 6.dp,
-                            shape = DailyRecordShapes.ModuleSelectorSlider,
-                            ambientColor = Color.Transparent,
-                            spotColor = selectedColors.primary.copy(alpha = .35f),
-                        )
-                        .clip(DailyRecordShapes.ModuleSelectorSlider)
-                        .background(selectedColors.primary),
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min),
-        ) {
-            specs.forEachIndexed { index, spec ->
-                val active = index == selectedIndex
-                val interactionSource = remember { MutableInteractionSource() }
-                val labelColor by animateColorAsState(
-                    targetValue = if (active) spec.colors.onPrimary else DailyRecordTextSecondary,
-                    label = "moduleLabel",
-                )
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
-                        .testTag("record_module_${spec.module.name}")
-                        .pressScale(interactionSource)
-                        .clickable(
-                            interactionSource = interactionSource,
-                            indication = null,
-                            role = Role.Tab,
-                        ) {
-                            if (!active) DailyRecordHaptics.tabSwitch(haptic)
-                            onSelected(spec.module)
-                        }
-                        .padding(
-                            horizontal = DailyRecordSpacing.Inline,
-                            vertical = DailyRecordSpacing.Inline,
-                        )
-                        .semantics {
-                            this.selected = active
-                            role = Role.Tab
-                            contentDescription = AppCopy.selectedState(
-                                AppCopy.RecordModule.recordLabel(spec.semanticCountLabel),
-                                active,
-                            )
-                        },
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    spec.icon(
-                        Modifier.size(DailyRecordSizes.ModuleIcon),
-                        if (active) spec.colors.onPrimary else DailyRecordTextSecondary,
-                    )
-                    Spacer(Modifier.width(DailyRecordSpacing.Inline))
-                    Text(
-                        text = spec.label,
-                        color = labelColor,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun PeriodTabs(
@@ -430,8 +201,8 @@ fun PeriodTabs(
 ) {
     val periods = StatisticsPeriod.entries
     val selectedIndex = periods.indexOf(selected).coerceAtLeast(0)
-    val trackShape = RoundedCornerShape(percent = 50)
-    val sliderShape = RoundedCornerShape(percent = 50)
+    val trackShape = DailyRecordShapes.Full
+    val sliderShape = DailyRecordShapes.Full
     val sliderInset = DailyRecordSpacing.Compact
     val glassGlow = colors.periodGlassGlow
     val haptic = LocalHapticFeedback.current
@@ -569,6 +340,74 @@ fun PeriodTabs(
     }
 }
 
+/**
+ * Extracts decimal digits of a non-negative counter value.
+ * Used for multi-digit transition validation (ADR-022 / Feature 26).
+ */
+internal fun extractDigits(count: Int): List<Int> =
+    if (count <= 0) listOf(0) else count.toString().map { it.digitToInt() }
+
+/**
+ * Vertical slide animated numeric ticker for counter values (Feature 26).
+ *
+ * Increments slide in from bottom and exit to top.
+ * Decrements slide in from top and exit to bottom.
+ * Uses tabular figures ("tnum") to prevent horizontal glyph jitter.
+ */
+@Composable
+fun RollingCounter(
+    count: Int,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = MetricNumberMedium,
+    color: Color = DailyRecordText,
+) {
+    Box(
+        modifier = modifier
+            .clipToBounds()
+            .semantics(mergeDescendants = true) {
+                contentDescription = if (enabled) count.toString() else "—"
+            }
+            .testTag("rolling_counter"),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (!enabled) {
+            Text(
+                text = "—",
+                color = DailyRecordTextMuted,
+                style = textStyle,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("rolling_counter_disabled"),
+            )
+        } else {
+            AnimatedContent(
+                targetState = count,
+                transitionSpec = {
+                    val isIncrease = targetState >= initialState
+                    if (isIncrease) {
+                        (slideInVertically(DailyRecordMotion.spatial()) { height -> height } + fadeIn(tween(150)))
+                            .togetherWith(slideOutVertically(DailyRecordMotion.spatial()) { height -> -height } + fadeOut(tween(120)))
+                    } else {
+                        (slideInVertically(DailyRecordMotion.spatial()) { height -> -height } + fadeIn(tween(150)))
+                            .togetherWith(slideOutVertically(DailyRecordMotion.spatial()) { height -> height } + fadeOut(tween(120)))
+                    }
+                },
+                label = "rolling_counter_transition",
+            ) { targetCount ->
+                Text(
+                    text = targetCount.toString(),
+                    color = color,
+                    style = textStyle,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.testTag("rolling_counter_text"),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun DailyCountControl(
     count: Int,
@@ -584,12 +423,12 @@ fun DailyCountControl(
             .fillMaxWidth()
             .heightIn(min = if (compact) 108.dp else 132.dp)
             .dailyRecordGlass(
-                shape = RoundedCornerShape(18.dp),
+                shape = DailyRecordShapes.Large,
                 moduleColors = colors,
                 level = if (enabled) DailyRecordGlassLevel.Elevated else DailyRecordGlassLevel.Muted,
             ),
         color = Color.Transparent,
-        shape = RoundedCornerShape(18.dp),
+        shape = DailyRecordShapes.Large,
         border = null,
     ) {
         Row(
@@ -599,11 +438,11 @@ fun DailyCountControl(
         ) {
             CountButton(AppCopy.Components.decrease, enabled && count > 0, false, colors, onDecrease)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = if (enabled) count.toString() else "—",
+                RollingCounter(
+                    count = count,
+                    enabled = enabled,
+                    textStyle = MetricNumberMedium,
                     color = if (enabled) DailyRecordText else DailyRecordTextMuted,
-                    style = MetricNumberMedium,
-                    fontWeight = FontWeight.Bold,
                 )
             }
             CountButton(AppCopy.Components.increase, enabled && count < Int.MAX_VALUE, true, colors, onIncrease)

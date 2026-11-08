@@ -63,6 +63,11 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordWarning
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
+import androidx.compose.ui.platform.LocalHapticFeedback
+import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
+import io.github.litaog.dailyrecord.ui.theme.LiquidGlassElevation
+import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
 
 internal enum class SyncFailureAction {
     Retry,
@@ -289,13 +294,19 @@ private fun SyncStatusChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
     Row(
         modifier = modifier
             .height(DailyRecordSizes.SyncChipHeight)
-            .clip(CircleShape)
-            .background(DailyRecordDefaultAccentSoft)
-            .border(1.dp, DailyRecordDivider, CircleShape)
-            .clickable(role = Role.Button, onClick = onClick)
+            .appleLiquidGlass(
+                shape = DailyRecordShapes.Full,
+                glowColor = status.color(),
+                elevation = LiquidGlassElevation.Subtle,
+            )
+            .clickable(role = Role.Button) {
+                DailyRecordHaptics.tick(haptic)
+                onClick()
+            }
             .padding(horizontal = 12.dp)
             .semantics {
                 role = Role.Button
@@ -347,15 +358,15 @@ internal fun AccountDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 18.dp)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                    .clip(DailyRecordShapes.Medium)
                     .background(
                         DailyRecordSurfaceMuted,
-                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                        DailyRecordShapes.Medium,
                     )
                     .border(
                         1.dp,
                         DailyRecordDivider,
-                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                        DailyRecordShapes.Medium,
                     )
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),

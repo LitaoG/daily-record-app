@@ -3,7 +3,9 @@ package io.github.litaog.dailyrecord.ui.theme
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 object DailyRecordSpacing {
@@ -26,15 +28,37 @@ object DailyRecordSizes {
 }
 
 object DailyRecordShapes {
-    /** Material 3 Expressive pill track for the module selector (ADR-022). */
-    val ModuleSelector = RoundedCornerShape(percent = 50)
-    val ModuleSelectorSlider = RoundedCornerShape(percent = 50)
-    val Control = RoundedCornerShape(16.dp)
-    val Compact = RoundedCornerShape(12.dp)
-    /** Large glass cards such as the today island and chart containers. */
-    val Card = RoundedCornerShape(24.dp)
-    /** Floating liquid glass bottom navigation capsule. */
-    val BottomBar = RoundedCornerShape(28.dp)
+    /** 6.dp: Status indicators, tiny legend markers, badges, small tags (ADR-022 / M1). */
+    val ExtraSmall: CornerBasedShape = RoundedCornerShape(6.dp)
+
+    /** 10.dp: Calendar day cells, compact controls, progress segments, nested card elements. */
+    val Small: CornerBasedShape = RoundedCornerShape(10.dp)
+
+    /** 16.dp: Standard action buttons, inputs, picker wheel frames, feedback containers. */
+    val Medium: CornerBasedShape = RoundedCornerShape(16.dp)
+
+    /** 22.dp: Cards, dialog containers, today island, statistics cards, settings cards. */
+    val Large: CornerBasedShape = RoundedCornerShape(22.dp)
+
+    /** 50%: Pill capsules: module selector, period tabs, bottom nav bar, quick log done pills. */
+    val Full: CornerBasedShape = RoundedCornerShape(percent = 50)
+
+    // --- Backwards Compatibility & Semantic Role Aliases ---
+    val ModuleSelector: CornerBasedShape = Full
+    val ModuleSelectorSlider: CornerBasedShape = Full
+    val Control: CornerBasedShape = Medium
+    val Compact: CornerBasedShape = Small
+    val Card: CornerBasedShape = Large
+    val BottomBar: CornerBasedShape = Full
+
+    /** Material 3 Shapes bridge for Compose MaterialTheme integration. */
+    val Material3Shapes: Shapes = Shapes(
+        extraSmall = ExtraSmall,
+        small = Small,
+        medium = Medium,
+        large = Large,
+        extraLarge = Large,
+    )
 }
 
 object DailyRecordBorders {

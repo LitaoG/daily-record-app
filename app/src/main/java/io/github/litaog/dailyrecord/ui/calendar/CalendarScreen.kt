@@ -58,6 +58,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import java.time.LocalDate
@@ -445,21 +446,21 @@ private fun CalendarLegendMarker(
         CalendarLegendItem.Unset -> Box(
             Modifier
                 .size(14.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(DailyRecordShapes.ExtraSmall)
                 .background(colors.colorsFor(RecordVisualState.Unset).background),
         )
         CalendarLegendItem.Disabled -> Box(
             Modifier
                 .size(14.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(DailyRecordShapes.ExtraSmall)
                 .background(DailyRecordSurfaceDisabled),
         )
         CalendarLegendItem.Zero -> Box(
             modifier = Modifier
                 .size(14.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(DailyRecordShapes.ExtraSmall)
                 .background(DailyRecordSurface)
-                .border(1.dp, colors.primary, RoundedCornerShape(4.dp)),
+                .border(1.dp, colors.primary, DailyRecordShapes.ExtraSmall),
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -475,7 +476,7 @@ private fun CalendarLegendMarker(
                 Box(
                     Modifier
                         .size(width = 5.dp, height = 14.dp)
-                        .clip(RoundedCornerShape(2.dp))
+                        .clip(DailyRecordShapes.ExtraSmall)
                         .background(color),
                 )
             }
@@ -513,7 +514,7 @@ private fun MonthHeader(
             modifier = Modifier
                 .weight(1f)
                 .sizeIn(minHeight = DailyRecordSizes.MinimumTouchTarget)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(DailyRecordShapes.Medium)
                 .clickable(role = Role.Button, onClick = onOpenDatePicker)
                 .semantics {
                     role = Role.Button
@@ -545,7 +546,7 @@ private fun MonthHeader(
             modifier = Modifier
                 .padding(start = 6.dp)
                 .sizeIn(minWidth = DailyRecordSizes.MinimumTouchTarget, minHeight = DailyRecordSizes.MinimumTouchTarget)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(DailyRecordShapes.Medium)
                 .clickable(role = Role.Button, onClick = onToday)
                 .semantics { role = Role.Button; contentDescription = AppCopy.Calendar.backToToday },
             contentAlignment = Alignment.Center,
@@ -576,7 +577,7 @@ private fun MonthArrow(
 // foundation versions compiling.
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun CalendarDayCell(
+internal fun CalendarDayCell(
     date: LocalDate,
     earliestDate: LocalDate,
     today: LocalDate,
@@ -628,7 +629,7 @@ private fun CalendarDayCell(
     }
     val showOutline = focused || date == today || visualState == RecordVisualState.ExplicitZero
     val borderWidth = if (focused || date == today) 2.dp else 1.dp
-    val cellShape = RoundedCornerShape(9.dp)
+    val cellShape = DailyRecordShapes.Small
     val stateDescription = semanticStatus
 
     Box(
@@ -645,7 +646,7 @@ private fun CalendarDayCell(
                 onLongClick = onLongClick,
                 onClick = onClick,
             )
-            .semantics {
+            .semantics(mergeDescendants = true) {
                 role = Role.Button
                 selected = focused
                 contentDescription = AppCopy.Calendar.monthDateDescription(date, stateDescription, focused)

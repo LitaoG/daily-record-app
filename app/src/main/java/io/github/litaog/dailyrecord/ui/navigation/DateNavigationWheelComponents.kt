@@ -62,6 +62,7 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.components.rememberWheelMotion
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -201,7 +202,7 @@ private fun DateWheelColumn(
         MINIMUM_FLING_VELOCITY_DP_PER_SECOND.dp.toPx()
     }
     val wheelMotion = rememberWheelMotion(minimumFlingVelocity)
-    val shape = RoundedCornerShape(14.dp)
+    val shape = DailyRecordShapes.Medium
     // One light tick each time a new value reaches the center line, like the
     // time wheel (ADR-022). A value clamped by another wheel does not tick.
     val haptic = LocalHapticFeedback.current
@@ -467,9 +468,9 @@ internal fun YearWheelPicker(
         modifier = Modifier
             .fillMaxWidth()
             .height(270.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(DailyRecordShapes.Medium)
             .background(DailyRecordSurfaceMuted)
-            .border(1.dp, DailyRecordDivider, RoundedCornerShape(14.dp)),
+            .border(1.dp, DailyRecordDivider, DailyRecordShapes.Medium),
     ) {
         LazyColumn(
             state = listState,
@@ -618,7 +619,7 @@ internal fun MonthSelectionPicker(
             Box(
                 modifier = Modifier
                     .height(54.dp)
-                    .clip(RoundedCornerShape(28.dp))
+                    .clip(DailyRecordShapes.Full)
                     .background(if (selected) colors.primary.copy(alpha = .92f) else Color.Transparent)
                     .clickable(enabled = enabled, role = Role.Button) { onMonthSelected(month) }
                     .semantics {

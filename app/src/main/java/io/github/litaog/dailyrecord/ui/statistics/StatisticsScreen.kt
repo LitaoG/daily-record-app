@@ -75,8 +75,9 @@ internal fun DailyCountStatisticsScreen(
     modifier: Modifier = Modifier,
     onOpenPeriodPicker: (StatisticsPeriod) -> Unit = { onOpenDatePicker() },
     onOpenCalendar: () -> Unit = {},
+    initialPeriod: StatisticsPeriod = StatisticsPeriod.Week,
 ) {
-    var periodName by rememberSaveable { mutableStateOf(StatisticsPeriod.Week.name) }
+    var periodName by rememberSaveable { mutableStateOf(initialPeriod.name) }
     val period = StatisticsPeriod.entries.firstOrNull { it.name == periodName }
         ?: StatisticsPeriod.Week
     // moduleSpec.label differs per module and per language, so model labels

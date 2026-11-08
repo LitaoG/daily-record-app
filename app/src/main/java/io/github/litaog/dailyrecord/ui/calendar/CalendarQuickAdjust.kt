@@ -1,5 +1,12 @@
 package io.github.litaog.dailyrecord.ui.calendar
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -42,6 +49,8 @@ import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.components.CountButton
 import io.github.litaog.dailyrecord.ui.components.pressScale
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordBorders
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
@@ -51,8 +60,8 @@ import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
 import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
 import java.time.LocalDate
 
-private val StepperShape = RoundedCornerShape(28.dp)
-private val StepperPill = RoundedCornerShape(percent = 50)
+private val StepperShape = DailyRecordShapes.Large
+private val StepperPill = DailyRecordShapes.Full
 
 /**
  * Placement rule for the long-press stepper: centered on the date cell,
@@ -114,7 +123,7 @@ internal fun CalendarQuickAdjustPopup(
 }
 
 @Composable
-private fun QuickAdjustContent(
+internal fun QuickAdjustContent(
     date: LocalDate,
     count: Int?,
     moduleSpec: RecordModuleUiSpec,
@@ -132,7 +141,7 @@ private fun QuickAdjustContent(
             .appleLiquidGlass(
                 shape = StepperShape,
                 glowColor = moduleSpec.colors.primary,
-                elevation = LiquidGlassElevation.Elevated,
+                elevation = LiquidGlassElevation.Emphasis,
             )
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -159,17 +168,33 @@ private fun QuickAdjustContent(
                 onClick = { onAction(QuickLogAction.Decrease) },
             )
             // The status line above already speaks the count.
-            Text(
-                text = count?.toString() ?: AppCopy.Calendar.unset,
-                color = if (count == null) DailyRecordTextMuted else DailyRecordText,
-                style = if (count == null) MaterialTheme.typography.labelLarge else MetricNumberMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
+            AnimatedContent(
+                targetState = count,
+                transitionSpec = {
+                    val target = targetState ?: 0
+                    val initial = initialState ?: 0
+                    if (target >= initial) {
+                        (slideInVertically(DailyRecordMotion.spatial()) { height -> height } + fadeIn(tween(150)))
+                            .togetherWith(slideOutVertically(DailyRecordMotion.spatial()) { height -> -height } + fadeOut(tween(120)))
+                    } else {
+                        (slideInVertically(DailyRecordMotion.spatial()) { height -> -height } + fadeIn(tween(150)))
+                            .togetherWith(slideOutVertically(DailyRecordMotion.spatial()) { height -> height } + fadeOut(tween(120)))
+                    }
+                },
+                label = "quickAdjustCounter",
                 modifier = Modifier
                     .widthIn(min = 44.dp)
                     .clearAndSetSemantics { },
-            )
+            ) { targetCount ->
+                Text(
+                    text = targetCount?.toString() ?: AppCopy.Calendar.unset,
+                    color = if (targetCount == null) DailyRecordTextMuted else DailyRecordText,
+                    style = if (targetCount == null) MaterialTheme.typography.labelLarge else MetricNumberMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+            }
             CountButton(
                 description = AppCopy.Calendar.quickAdjustIncreaseDescription(date, label),
                 enabled = QuickLogAction.Increase.nextCount(count) != null,

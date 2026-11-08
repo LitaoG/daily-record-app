@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +25,7 @@ import io.github.litaog.dailyrecord.ui.components.BrandIcon
 import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -75,9 +78,14 @@ internal fun IntimacyOnboardingCard(
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = colors.primary,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
+                    .sizeIn(
+                        minWidth = DailyRecordSizes.MinimumTouchTarget,
+                        minHeight = DailyRecordSizes.MinimumTouchTarget,
+                    )
+                    .clip(DailyRecordShapes.Small)
                     .clickable(role = Role.Button, onClick = onDismiss)
                     .testTag("intimacy_onboarding_dismiss")
+                    .wrapContentSize(Alignment.Center)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }

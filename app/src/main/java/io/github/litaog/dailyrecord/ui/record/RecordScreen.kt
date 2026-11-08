@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -61,17 +63,22 @@ import io.github.litaog.dailyrecord.ui.components.DailyCountControl
 import io.github.litaog.dailyrecord.ui.components.DailyRecordConfirmationDialog
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
+import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.LiquidGlassElevation
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
+import androidx.compose.ui.platform.LocalHapticFeedback
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -180,6 +187,7 @@ internal fun DailyCountRecordScreen(
         }
     }
 
+    val haptic = LocalHapticFeedback.current
     val storedMonthCount = remember(monthRecords) { monthRecords.sumOf { it.count.toLong() } }
     val storedMonthDays = remember(monthRecords) { monthRecords.count { it.count > 0 } }
     val hasUnsavedChanges = dataReady && (countDraft.hasChanges || detailsDraft.hasChanges)
@@ -210,6 +218,7 @@ internal fun DailyCountRecordScreen(
                 val result = runCatchingPreservingCancellation(operation)
                 saving = false
                 if (result.isSuccess) {
+                    DailyRecordHaptics.success(haptic)
                     // Close the feeling editor after a successful mutation. The
                     // caller decides whether to keep this page or leave it.
                     detailsDraft = detailsDraft.copy(
@@ -400,65 +409,46 @@ internal fun DailyCountRecordScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted)
-                        .testTag("record_actions"),
-                    color = Color.Transparent,
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                horizontal = DailyRecordSpacing.ScreenHorizontal,
-                                vertical = DailyRecordSpacing.Content,
-                            ),
-                        verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
-                    ) {
-                        PrimaryActionButton(
-                            label = when {
-                                !dataReady -> AppCopy.Record.loading
-                                saving -> AppCopy.Record.saving
-                                !canSave && record != null -> AppCopy.Record.saved
-                                else -> AppCopy.Record.save
-                            },
-                            enabled = editable && canSave && !saving,
-                            onClick = {
-                                if (!editable || !canSave || saving) return@PrimaryActionButton
-                                val currentDraftCount = countDraft.count
-                                val currentDetails = when {
-                                    currentDraftCount == 0 -> emptyList()
-                                    currentDraftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS ->
-                                        detailsDraft.asEntries().take(currentDraftCount)
-                                    detailsDraft.hasChanges ->
-                                        (storedDetails + detailsDraft.asEntries())
-                                            .filter { it.occurrenceIndex in 1..currentDraftCount }
-                                            .associateBy(RecordDetailEntry::occurrenceIndex)
-                                            .values
-                                            .sortedBy(RecordDetailEntry::occurrenceIndex)
-                                    else -> null
-                                }
-                                launchMutation(AppCopy.Record.saveFailure, onSaved) {
-                                    if (currentDetails == null) {
-                                        controller.saveRecord(date, currentDraftCount)
-                                    } else {
-                                        controller.saveRecord(date, currentDraftCount, currentDetails)
-                                    }
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
-                            accent = moduleSpec.colors.primary,
-                        )
-                        RecordTextAction(
-                            label = AppCopy.Record.clear,
-                            enabled = editable && dataReady && record != null && !saving,
-                            accent = moduleSpec.colors.primary,
-                            onClick = { showClearDialog = true },
-                        )
-                    }
-                }
+                Spacer(Modifier.height(DailyRecordSpacing.Inline))
             }
+
+            PinnedStickySaveActionBar(
+                saveLabel = when {
+                    !dataReady -> AppCopy.Record.loading
+                    saving -> AppCopy.Record.saving
+                    !canSave && record != null -> AppCopy.Record.saved
+                    else -> AppCopy.Record.save
+                },
+                saveEnabled = editable && canSave && !saving,
+                clearVisible = record != null,
+                clearEnabled = editable && dataReady && !saving,
+                accent = moduleSpec.colors.primary,
+                colors = moduleSpec.colors,
+                onSave = {
+                    if (!editable || !canSave || saving) return@PinnedStickySaveActionBar
+                    val currentDraftCount = countDraft.count
+                    val currentDetails = when {
+                        currentDraftCount == 0 -> emptyList()
+                        currentDraftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS ->
+                            detailsDraft.asEntries().take(currentDraftCount)
+                        detailsDraft.hasChanges ->
+                            (storedDetails + detailsDraft.asEntries())
+                                .filter { it.occurrenceIndex in 1..currentDraftCount }
+                                .associateBy(RecordDetailEntry::occurrenceIndex)
+                                .values
+                                .sortedBy(RecordDetailEntry::occurrenceIndex)
+                        else -> null
+                    }
+                    launchMutation(AppCopy.Record.saveFailure, onSaved) {
+                        if (currentDetails == null) {
+                            controller.saveRecord(date, currentDraftCount)
+                        } else {
+                            controller.saveRecord(date, currentDraftCount, currentDetails)
+                        }
+                    }
+                },
+                onClear = { showClearDialog = true },
+            )
         }
     }
 
@@ -665,6 +655,14 @@ private fun RecordHeader(
             }
         }
         Row(
+            modifier = Modifier
+                .clip(DailyRecordShapes.Full)
+                .appleLiquidGlass(
+                    shape = DailyRecordShapes.Full,
+                    glowColor = moduleSpec.colors.primary,
+                    elevation = LiquidGlassElevation.Subtle,
+                )
+                .padding(horizontal = 14.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -680,7 +678,7 @@ private fun RecordHeader(
 }
 
 @Composable
-private fun RecordTextAction(
+internal fun RecordTextAction(
     label: String,
     enabled: Boolean,
     accent: Color,
@@ -699,6 +697,61 @@ private fun RecordTextAction(
             color = if (enabled) accent else DailyRecordTextMuted,
             style = MaterialTheme.typography.labelLarge,
         )
+    }
+}
+
+@Composable
+internal fun PinnedStickySaveActionBar(
+    saveLabel: String,
+    saveEnabled: Boolean,
+    clearVisible: Boolean,
+    clearEnabled: Boolean,
+    accent: Color,
+    colors: RecordModuleColorTokens,
+    onSave: () -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .appleLiquidGlass(
+                shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+                glowColor = colors.primary,
+                elevation = LiquidGlassElevation.Elevated,
+            )
+            .testTag("record_actions"),
+        color = Color.Transparent,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = DailyRecordSpacing.ScreenHorizontal,
+                    end = DailyRecordSpacing.ScreenHorizontal,
+                    top = DailyRecordSpacing.Content,
+                    bottom = DailyRecordSpacing.ScreenVertical,
+                ),
+            verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
+        ) {
+            PrimaryActionButton(
+                label = saveLabel,
+                enabled = saveEnabled,
+                onClick = onSave,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("save_record_button"),
+                accent = accent,
+            )
+            if (clearVisible) {
+                RecordTextAction(
+                    label = AppCopy.Record.clear,
+                    enabled = clearEnabled,
+                    accent = accent,
+                    onClick = onClear,
+                )
+            }
+        }
     }
 }
 

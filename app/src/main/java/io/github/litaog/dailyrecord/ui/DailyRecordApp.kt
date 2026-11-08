@@ -64,12 +64,31 @@ import io.github.litaog.dailyrecord.ui.calendar.QuickLogAction
 import io.github.litaog.dailyrecord.ui.calendar.nextCount
 import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
 import io.github.litaog.dailyrecord.ui.settings.LauncherDisguiseSettings
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordLiquidBackdrop
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
 
 private val earliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
 
 internal enum class TopDestination {
     Calendar,
     Statistics,
+}
+
+internal sealed interface AppScreen {
+    data object Main : AppScreen
+    data class Record(val date: LocalDate) : AppScreen
+    data object Settings : AppScreen
 }
 
 @Composable
@@ -278,158 +297,224 @@ fun DailyRecordApp(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(backdropBrush),
-    ) {
-        if (selectedDate != null) {
-            // Key the record screen by module so each module keeps its own
-            // saveable draft slots: a hand-brew draft must never be restored as a
-            // sex draft for the same date (and vice versa).
-            key(selectedModule) {
-                DailyCountRecordScreen(
-                    date = selectedDate,
-                    today = effectiveToday,
-                    controller = selectedController,
-                    moduleSpec = moduleSpec,
-                    monthRecords = monthRecords,
-                    onBack = { selectedDateText = null },
-                    // Saving is an in-place action. Keep the record page mounted so
-                    // the user can see the saved feeling and continue editing this
-                    // date; leaving the page remains an explicit back action.
-                    onSaved = {},
-                )
-            }
-        } else if (showSettings) {
-            SettingsScreen(
-                versionName = BuildConfig.VERSION_NAME,
-                accountEmail = accountEmail,
-                syncStatus = syncStatus,
-                moduleColors = moduleSpec.colors,
-                language = language,
-                onLanguageSelected = onLanguageSelected,
-                colorTheme = colorTheme,
-                onColorThemeSelected = onColorThemeSelected,
-                terminologyStyle = terminologyStyle,
-                onTerminologyStyleSelected = onTerminologyStyleSelected,
-                appLockSettings = appLockSettings,
-                launcherDisguiseSettings = launcherDisguiseSettings,
-                onBack = { showSettings = false },
-                onOpenAccount = { showAccountDialog = true },
-                onSignIn = onSignIn,
-            )
-        } else {
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                snackbarHost = {
-                    if (!showAccountDialog) {
-                        DailyRecordSnackbarHost(
-                            hostState = snackbarHostState,
-                            colors = moduleSpec.colors,
-                        )
-                    }
-                },
-                topBar = {
-                    if (accountEmail != null) {
-                        AccountTopBar(
-                            status = syncStatus,
-                            colors = moduleSpec.colors,
-                            onClick = { showAccountDialog = true },
-                            onSettings = { showSettings = true },
-                        )
-                    } else {
-                        LocalAccountTopBar(
-                            colors = moduleSpec.colors,
-                            onSignIn = onSignIn,
-                            onSettings = { showSettings = true },
-                        )
-                    }
-                },
-                bottomBar = {
-                    DailyRecordBottomBar(
-                        selected = destination,
-                        colors = moduleSpec.colors,
-                        onSelected = { destinationName = it.name },
-                    )
-                },
-            ) { contentPadding ->
-                when (destination) {
-                    TopDestination.Calendar -> DailyCountCalendarScreen(
-                        month = displayedMonth,
-                        focusedDate = browseDate,
-                        today = effectiveToday,
-                        records = monthRecords,
-                        moduleSpec = moduleSpec,
-                        selectedModule = selectedModule,
-                        availableModules = availableModuleSpecs,
-                        earliestMonth = earliestSupportedMonth,
-                        todayCount = todayCount,
-                        onQuickLog = onQuickLog,
-                        showOnboardingCard = !intimacyOnboardingDismissed,
-                        onDismissOnboarding = { intimacyOnboardingPreference.dismiss() },
-                        modifier = Modifier.padding(contentPadding),
-                        onPreviousMonth = {
-                            val previous = displayedMonth.minusMonths(1)
-                            if (!previous.isBefore(earliestSupportedMonth)) {
-                                browseDateText = shiftMonthAnchor(
-                                    browseDate,
-                                    months = -1,
-                                    earliestDate = EARLIEST_SUPPORTED_DATE,
-                                    latestDate = effectiveToday,
-                                ).toString()
-                            }
-                        },
-                        onModuleSelected = selectModule,
-                        onNextMonth = {
-                            val next = displayedMonth.plusMonths(1)
-                            if (!next.isAfter(currentMonth)) {
-                                browseDateText = shiftMonthAnchor(
-                                    browseDate,
-                                    months = 1,
-                                    earliestDate = EARLIEST_SUPPORTED_DATE,
-                                    latestDate = effectiveToday,
-                                ).toString()
-                            }
-                        },
-                        onToday = { browseDateText = effectiveToday.toString() },
-                        onOpenDatePicker = {
-                            datePickerSelectionName = DateNavigationSelection.Date.name
-                            showDatePicker = true
-                        },
-                        onDateSelected = {
-                            browseDateText = it.toString()
-                            selectedDateText = it.toString()
-                        },
-                    )
+    val currentScreen: AppScreen = when {
+        selectedDate != null -> AppScreen.Record(selectedDate)
+        showSettings -> AppScreen.Settings
+        else -> AppScreen.Main
+    }
 
-                    TopDestination.Statistics -> DailyCountStatisticsScreen(
-                        today = effectiveToday,
-                        anchorDate = browseDate,
-                        earliestDate = EARLIEST_SUPPORTED_DATE,
-                        records = allRecords,
-                        moduleSpec = moduleSpec,
-                        selectedModule = selectedModule,
-                        availableModules = availableModuleSpecs,
-                        onModuleSelected = selectModule,
-                        modifier = Modifier.padding(contentPadding),
-                        onAnchorDateChanged = { browseDateText = it.toString() },
-                        onOpenDatePicker = {
-                            datePickerSelectionName = DateNavigationSelection.Date.name
-                            showDatePicker = true
-                        },
-                        onOpenPeriodPicker = { period ->
-                            datePickerSelectionName = when (period) {
-                                StatisticsPeriod.Week -> DateNavigationSelection.Date.name
-                                StatisticsPeriod.Month -> DateNavigationSelection.Month.name
-                                StatisticsPeriod.Year -> DateNavigationSelection.Year.name
-                                StatisticsPeriod.All -> DateNavigationSelection.Date.name
-                            }
-                            showDatePicker = true
-                        },
-                        onOpenCalendar = { destinationName = TopDestination.Calendar.name },
+    Box(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        DailyRecordLiquidBackdrop(colors = moduleSpec.colors)
+
+        AnimatedContent(
+            targetState = currentScreen,
+            transitionSpec = {
+                when {
+                    initialState is AppScreen.Main -> {
+                        (slideInHorizontally(
+                            initialOffsetX = { (it * 0.25f).toInt() },
+                            animationSpec = DailyRecordMotion.spatial(),
+                        ) + fadeIn(
+                            animationSpec = tween(220, easing = LinearOutSlowInEasing),
+                        )).togetherWith(
+                            slideOutHorizontally(
+                                targetOffsetX = { -(it * 0.15f).toInt() },
+                                animationSpec = DailyRecordMotion.spatial(),
+                            ) + fadeOut(
+                                animationSpec = tween(180, easing = FastOutLinearInEasing),
+                            )
+                        )
+                    }
+                    targetState is AppScreen.Main -> {
+                        (slideInHorizontally(
+                            initialOffsetX = { -(it * 0.15f).toInt() },
+                            animationSpec = DailyRecordMotion.spatial(),
+                        ) + fadeIn(
+                            animationSpec = tween(220, easing = LinearOutSlowInEasing),
+                        )).togetherWith(
+                            slideOutHorizontally(
+                                targetOffsetX = { (it * 0.25f).toInt() },
+                                animationSpec = DailyRecordMotion.spatial(),
+                            ) + fadeOut(
+                                animationSpec = tween(180, easing = FastOutLinearInEasing),
+                            )
+                        )
+                    }
+                    else -> {
+                        fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(180))
+                    }
+                }
+            },
+            label = "appScreenTransition",
+        ) { screen ->
+            when (screen) {
+                is AppScreen.Record -> {
+                    // Key the record screen by module so each module keeps its own
+                    // saveable draft slots: a hand-brew draft must never be restored as a
+                    // sex draft for the same date (and vice versa).
+                    key(selectedModule) {
+                        DailyCountRecordScreen(
+                            date = screen.date,
+                            today = effectiveToday,
+                            controller = selectedController,
+                            moduleSpec = moduleSpec,
+                            monthRecords = monthRecords,
+                            onBack = { selectedDateText = null },
+                            // Saving is an in-place action. Keep the record page mounted so
+                            // the user can see the saved feeling and continue editing this
+                            // date; leaving the page remains an explicit back action.
+                            onSaved = {},
+                        )
+                    }
+                }
+                is AppScreen.Settings -> {
+                    SettingsScreen(
+                        versionName = BuildConfig.VERSION_NAME,
+                        accountEmail = accountEmail,
+                        syncStatus = syncStatus,
+                        moduleColors = moduleSpec.colors,
+                        language = language,
+                        onLanguageSelected = onLanguageSelected,
+                        colorTheme = colorTheme,
+                        onColorThemeSelected = onColorThemeSelected,
+                        terminologyStyle = terminologyStyle,
+                        onTerminologyStyleSelected = onTerminologyStyleSelected,
+                        appLockSettings = appLockSettings,
+                        launcherDisguiseSettings = launcherDisguiseSettings,
+                        onBack = { showSettings = false },
+                        onOpenAccount = { showAccountDialog = true },
+                        onSignIn = onSignIn,
                     )
+                }
+                is AppScreen.Main -> {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        snackbarHost = {
+                            if (!showAccountDialog) {
+                                DailyRecordSnackbarHost(
+                                    hostState = snackbarHostState,
+                                    colors = moduleSpec.colors,
+                                )
+                            }
+                        },
+                        topBar = {
+                            if (accountEmail != null) {
+                                AccountTopBar(
+                                    status = syncStatus,
+                                    colors = moduleSpec.colors,
+                                    onClick = { showAccountDialog = true },
+                                    onSettings = { showSettings = true },
+                                )
+                            } else {
+                                LocalAccountTopBar(
+                                    colors = moduleSpec.colors,
+                                    onSignIn = onSignIn,
+                                    onSettings = { showSettings = true },
+                                )
+                            }
+                        },
+                        bottomBar = {
+                            DailyRecordBottomBar(
+                                selected = destination,
+                                colors = moduleSpec.colors,
+                                onSelected = { destinationName = it.name },
+                            )
+                        },
+                    ) { contentPadding ->
+                        AnimatedContent(
+                            targetState = destination,
+                            transitionSpec = {
+                                if (targetState == TopDestination.Statistics) {
+                                    (slideInHorizontally(DailyRecordMotion.spatial()) { it / 6 } + fadeIn(tween(180)))
+                                        .togetherWith(slideOutHorizontally(DailyRecordMotion.spatial()) { -it / 6 } + fadeOut(tween(140)))
+                                } else {
+                                    (slideInHorizontally(DailyRecordMotion.spatial()) { -it / 6 } + fadeIn(tween(180)))
+                                        .togetherWith(slideOutHorizontally(DailyRecordMotion.spatial()) { it / 6 } + fadeOut(tween(140)))
+                                }
+                            },
+                            label = "topDestinationTransition",
+                        ) { dest ->
+                            when (dest) {
+                                TopDestination.Calendar -> DailyCountCalendarScreen(
+                                    month = displayedMonth,
+                                    focusedDate = browseDate,
+                                    today = effectiveToday,
+                                    records = monthRecords,
+                                    moduleSpec = moduleSpec,
+                                    selectedModule = selectedModule,
+                                    availableModules = availableModuleSpecs,
+                                    earliestMonth = earliestSupportedMonth,
+                                    todayCount = todayCount,
+                                    onQuickLog = onQuickLog,
+                                    showOnboardingCard = !intimacyOnboardingDismissed,
+                                    onDismissOnboarding = { intimacyOnboardingPreference.dismiss() },
+                                    modifier = Modifier.padding(contentPadding),
+                                    onPreviousMonth = {
+                                        val previous = displayedMonth.minusMonths(1)
+                                        if (!previous.isBefore(earliestSupportedMonth)) {
+                                            browseDateText = shiftMonthAnchor(
+                                                browseDate,
+                                                months = -1,
+                                                earliestDate = EARLIEST_SUPPORTED_DATE,
+                                                latestDate = effectiveToday,
+                                            ).toString()
+                                        }
+                                    },
+                                    onModuleSelected = selectModule,
+                                    onNextMonth = {
+                                        val next = displayedMonth.plusMonths(1)
+                                        if (!next.isAfter(currentMonth)) {
+                                            browseDateText = shiftMonthAnchor(
+                                                browseDate,
+                                                months = 1,
+                                                earliestDate = EARLIEST_SUPPORTED_DATE,
+                                                latestDate = effectiveToday,
+                                            ).toString()
+                                        }
+                                    },
+                                    onToday = { browseDateText = effectiveToday.toString() },
+                                    onOpenDatePicker = {
+                                        datePickerSelectionName = DateNavigationSelection.Date.name
+                                        showDatePicker = true
+                                    },
+                                    onDateSelected = {
+                                        browseDateText = it.toString()
+                                        selectedDateText = it.toString()
+                                    },
+                                )
+
+                                TopDestination.Statistics -> DailyCountStatisticsScreen(
+                                    today = effectiveToday,
+                                    anchorDate = browseDate,
+                                    earliestDate = EARLIEST_SUPPORTED_DATE,
+                                    records = allRecords,
+                                    moduleSpec = moduleSpec,
+                                    selectedModule = selectedModule,
+                                    availableModules = availableModuleSpecs,
+                                    onModuleSelected = selectModule,
+                                    modifier = Modifier.padding(contentPadding),
+                                    onAnchorDateChanged = { browseDateText = it.toString() },
+                                    onOpenDatePicker = {
+                                        datePickerSelectionName = DateNavigationSelection.Date.name
+                                        showDatePicker = true
+                                    },
+                                    onOpenPeriodPicker = { period ->
+                                        datePickerSelectionName = when (period) {
+                                            StatisticsPeriod.Week -> DateNavigationSelection.Date.name
+                                            StatisticsPeriod.Month -> DateNavigationSelection.Month.name
+                                            StatisticsPeriod.Year -> DateNavigationSelection.Year.name
+                                            StatisticsPeriod.All -> DateNavigationSelection.Date.name
+                                        }
+                                        showDatePicker = true
+                                    },
+                                    onOpenCalendar = { destinationName = TopDestination.Calendar.name },
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

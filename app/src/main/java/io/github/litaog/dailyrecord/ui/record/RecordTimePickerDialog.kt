@@ -48,6 +48,7 @@ import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.components.rememberWheelMotion
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -207,7 +208,7 @@ private fun TimeWheelColumn(
     }
     val wheelMotion = rememberWheelMotion(minimumFlingVelocity)
     val wheelHeight = rowHeight * 3
-    val shape = RoundedCornerShape(16.dp)
+    val shape = DailyRecordShapes.Medium
     // One light tick each time a new value reaches the center line (b1 4.6).
     // A fast fling ticks at most once per frame, because each frame applies
     // its whole offset in one call.

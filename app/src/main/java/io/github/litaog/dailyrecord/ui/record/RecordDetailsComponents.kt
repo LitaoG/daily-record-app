@@ -338,7 +338,7 @@ private fun DetailTimeField(
         Text(
             text = minutes?.let(::formatMinutesOfDay) ?: placeholder,
             color = if (minutes == null) DailyRecordTextMuted else DailyRecordText,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
             textAlign = TextAlign.Center,
         )
     }
