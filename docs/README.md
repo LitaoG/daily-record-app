@@ -100,6 +100,6 @@
 - [v1.0.0-beta.1 发布说明](releases/v1.0.0-beta.1.md)
 - [v1.0.0-beta.2 发布说明](releases/v1.0.0-beta.2.md)
 
-2026-07 至 2026-09 的阶段审计目录（`docs/product/audit/`）、UI v2 设计稿（`docs/product/design/`）、明亮玻璃主题草案、日常使用反馈草案和旧 Figma 设计系统已于 2026-11 从仓库移除；仍然有效的规则已并入 [`UI_UX.md`](UI_UX.md)、[`STATISTICS.md`](STATISTICS.md)、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 和 [`AI-PITFALLS.md`](AI-PITFALLS.md)。需要追溯原始证据时查 Git 历史，恢复方法见 [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md)。
+2026-07 至 2026-09 的阶段审计目录（`docs/product/audit/`）、UI v2 设计稿（`docs/product/design/`）、明亮玻璃主题草案、日常使用反馈政策和旧 Figma 设计系统已于 2026-11 从仓库移除；仍然有效的规则已并入 [`UI_UX.md`](UI_UX.md)、[`STATISTICS.md`](STATISTICS.md)、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 和 [`AI-PITFALLS.md`](AI-PITFALLS.md)。需要追溯原始证据时查 Git 历史，恢复方法见 [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md)。
 
 历史文档中的测试数量、截图日期、分支名和“下一步”只描述当时状态。当前版本、发布物和 CI 状态以仓库首页、GitHub Releases 与 `main` 为准。

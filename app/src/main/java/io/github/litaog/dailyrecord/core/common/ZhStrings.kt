@@ -738,7 +738,7 @@ internal object ZhStrings : AppStrings {
         override val soloLabel = "个人私密"
         override val soloDescription = "记录个人习惯与节奏"
         override val duoLabel = "伴侣亲密"
-        override val duoDescription = "记录伴侣亲密与性生活"
+        override val duoDescription = "记录与伴侣的亲密"
         override val settingsHint = "可在「设置」中随时切换为您偏好的用语风格（典雅 / 直白）。"
         override val dismissAction = "我知道了"
     }
