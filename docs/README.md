@@ -52,7 +52,7 @@
 | [架构决策](DECISIONS.md) | 已接受的长期技术与产品决策 |
 | [路线图](ROADMAP.md) | 已完成阶段和持续维护方向 |
 | [踩坑清单](AI-PITFALLS.md) | 已付出代价的问题、根因和防复发门禁 |
-| [AI 证据标准](AI-EVIDENCE-STANDARD.md) | 什么证据算数、汇报必须包含什么、什么时候必须停下问人 |
+| [AI 证据标准](AI-EVIDENCE-STANDARD.md) | 三档主张、证据合格形式与冲突裁决、测试五态、评审收敛、停止条件与 A~E 交付分类 |
 
 当前运行画面见[README 运行截图](product/assets/readme/README.md)。这些图片来自 API 34 测试模拟器的本机空数据，只作为当前运行时展示。
 
