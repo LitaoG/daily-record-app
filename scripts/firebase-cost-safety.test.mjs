@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   InMemoryRateLimiter,
   WRITE_RULES,
@@ -13,6 +14,84 @@ import {
   resetCircuitBreakerCacheForTesting,
 } from "../functions/circuit-breaker.js";
 import { verifyAppCheck } from "../functions/app-check-gate.js";
+import {
+  REGION,
+  CALLABLE_OPTIONS,
+  DELETION_CALLABLE_OPTIONS,
+  TRIGGER_OPTIONS,
+} from "../functions/resource-config.js";
+
+// Source of functions/index.js, loaded once: the wiring tests below must fail
+// loudly if a resource-config option set stops being passed to the runtime.
+const INDEX_SOURCE = readFileSync(
+  new URL("../functions/index.js", import.meta.url),
+  "utf8",
+);
+
+test("Resource config locks the compute quartet documented in the cost matrix", () => {
+  assert.equal(REGION, "asia-east1");
+  // Row 3 of the cost matrix: bounded instances, timeouts and concurrency so
+  // a traffic flood cannot inflate the Cloud Run compute bill.
+  assert.deepEqual(CALLABLE_OPTIONS, {
+    region: "asia-east1",
+    maxInstances: 10,
+    timeoutSeconds: 30,
+    concurrency: 80,
+    memory: "256MiB",
+  });
+  assert.deepEqual(DELETION_CALLABLE_OPTIONS, {
+    region: "asia-east1",
+    maxInstances: 5,
+    timeoutSeconds: 60,
+    concurrency: 10,
+    memory: "256MiB",
+  });
+  assert.deepEqual(TRIGGER_OPTIONS, {
+    region: "asia-east1",
+    maxInstances: 5,
+    timeoutSeconds: 30,
+    retry: false,
+    memory: "256MiB",
+  });
+});
+
+test("Every callable and trigger actually receives its resource options", () => {
+  assert.match(
+    INDEX_SOURCE,
+    /exports\.writeDailyCountRecord = onCall\(CALLABLE_OPTIONS,/,
+  );
+  assert.match(
+    INDEX_SOURCE,
+    /exports\.deleteAccountData = onCall\(DELETION_CALLABLE_OPTIONS,/,
+  );
+  // Triggers spread TRIGGER_OPTIONS into their per-trigger options object.
+  assert.match(
+    INDEX_SOURCE,
+    /exports\.validateHandBrewRecord = onDocumentWritten\(\s*\{[\s\S]*?\.\.\.TRIGGER_OPTIONS,/,
+  );
+  assert.match(
+    INDEX_SOURCE,
+    /exports\.validateSexRecord = onDocumentWritten\(\s*\{[\s\S]*?\.\.\.TRIGGER_OPTIONS,/,
+  );
+});
+
+test("Zero-I/O App Check gate runs before the circuit breaker read and rate limiter", () => {
+  const assertGateOrder = (section, name) => {
+    const authIndex = section.indexOf("= requireAuthenticated(request)");
+    const appCheckIndex = section.indexOf("verifyAppCheck(request");
+    const breakerIndex = section.indexOf("Allowed(db)");
+    assert.ok(authIndex !== -1 && appCheckIndex !== -1 && breakerIndex !== -1, name);
+    assert.ok(appCheckIndex < breakerIndex, `${name}: App Check must precede the breaker read`);
+  };
+
+  const writeStart = INDEX_SOURCE.indexOf("exports.writeDailyCountRecord");
+  const writeEnd = INDEX_SOURCE.indexOf("exports.deleteAccountData");
+  assertGateOrder(INDEX_SOURCE.slice(writeStart, writeEnd), "writeDailyCountRecord");
+
+  const deletionStart = writeEnd;
+  const deletionEnd = INDEX_SOURCE.indexOf("exports.validateHandBrewRecord");
+  assertGateOrder(INDEX_SOURCE.slice(deletionStart, deletionEnd), "deleteAccountData");
+});
 
 test("Rate limiter allows requests within threshold and blocks bursts", () => {
   const limiter = new InMemoryRateLimiter();

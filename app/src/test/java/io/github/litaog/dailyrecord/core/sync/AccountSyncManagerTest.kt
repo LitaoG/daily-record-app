@@ -50,6 +50,44 @@ class AccountSyncManagerTest {
     }
 
     @Test
+    fun followUpQueuedDuringTheFinalBurstAttemptIsNotDropped() = runBlocking {
+        val operations = GatedBurstOperations()
+        val manager = AccountSyncManager(
+            ownerId = "owner",
+            coordinator = operations,
+            productionConfigured = true,
+            syncAttemptTimeoutMillis = 1_000,
+        )
+
+        // The burst loop only stays alive while follow-up requests keep
+        // arriving, so park every attempt and queue one follow-up per attempt;
+        // the third one lands during the final burst attempt.
+        val burst = launch { manager.syncNow() }
+        withTimeout(5_000) { operations.awaitAttempt(1) }
+        launch { manager.syncNow() }.join()
+        operations.release(1)
+        withTimeout(5_000) { operations.awaitAttempt(2) }
+        launch { manager.syncNow() }.join()
+        operations.release(2)
+        withTimeout(5_000) { operations.awaitAttempt(3) }
+        launch { manager.syncNow() }.join()
+        operations.release(3)
+        burst.join()
+
+        // The burst is exhausted, and the follow-up queued during the final
+        // attempt must survive the exit instead of being wiped together with
+        // it (the old behaviour cleared the flag on every exit path).
+        assertEquals(3, operations.syncCalls.get())
+
+        // The next sync consumes the surviving follow-up: its first attempt
+        // covers the queued request, then the loop runs one more attempt for
+        // the consumed flag before exiting (3 + 2 = 5 calls in total).
+        manager.syncNow()
+        assertEquals(5, operations.syncCalls.get())
+        assertEquals(SyncStatus.UpToDate, manager.status.value)
+    }
+
+    @Test
     fun malformedRemoteSnapshotStillFlushesHealthyPendingRows() = runBlocking {
         val operations = RejectedSnapshotOperations()
         val manager = AccountSyncManager(
@@ -381,6 +419,40 @@ private class BlockingSyncOperations : AccountSyncOperations {
         syncCalls.incrementAndGet()
         started.complete(Unit)
         release.await()
+        return SyncResult(uploaded = 0, downloaded = 0, pending = 0)
+    }
+}
+
+/**
+ * Parks every sync attempt on its own gate, so a test can queue a follow-up
+ * while the mutex is held by an in-flight attempt and release attempts one by
+ * one to walk the burst loop to its final attempt.
+ */
+private class GatedBurstOperations : AccountSyncOperations {
+    val syncCalls = AtomicInteger()
+    private val attemptsStarted = List(3) { CompletableDeferred<Unit>() }
+    private val attemptsRelease = List(3) { CompletableDeferred<Unit>() }
+
+    suspend fun awaitAttempt(number: Int) = attemptsStarted[number - 1].await()
+
+    fun release(number: Int) {
+        attemptsRelease[number - 1].complete(Unit)
+    }
+
+    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = emptyFlow()
+
+    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
+
+    override suspend fun pendingCount(ownerId: String): Int = 0
+
+    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int = 0
+
+    override suspend fun syncOnce(ownerId: String): SyncResult {
+        val call = syncCalls.incrementAndGet()
+        if (call <= 3) {
+            attemptsStarted[call - 1].complete(Unit)
+            attemptsRelease[call - 1].await()
+        }
         return SyncResult(uploaded = 0, downloaded = 0, pending = 0)
     }
 }

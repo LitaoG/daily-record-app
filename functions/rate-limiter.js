@@ -3,8 +3,16 @@ const { createHash } = require("node:crypto");
 
 /**
  * In-memory sliding window rate limiter.
- * Operates with ZERO database writes to satisfy the minimum-necessary-cost principle.
- * Combined with strict maxInstances in Cloud Functions v2, it bounds global invocation rates.
+ * Operates with ZERO database reads or writes to satisfy the
+ * minimum-necessary-cost principle.
+ *
+ * Known bound (issue #289): buckets are per instance, so a single UID's global
+ * ceiling is the configured threshold multiplied by the number of active
+ * instances (maxInstances caps it at 10 for writes, 5 for deletions), and a
+ * cold instance starts with an empty bucket. A globally shared counter was
+ * rejected because every check would cost an extra billed Firestore read.
+ * The hard cost backstops are therefore maxInstances, App Check and the
+ * circuit breaker; this limiter is per-instance defense in depth.
  */
 class InMemoryRateLimiter {
   constructor() {
