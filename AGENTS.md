@@ -170,7 +170,7 @@
 - **新增 Firebase 服务**：必须核对官方最新费用方案与配额（见 [`docs/operations/firebase-cost-and-quota-inventory.md`](docs/operations/firebase-cost-and-quota-inventory.md)）。
 - **新增云函数**：必须显式配置资源限制（含 `maxInstances`、`timeoutSeconds`、`concurrency`、`memory`），严禁放开无界扩容；必须接入服务端限流与熔断门禁。
 - **新增重试逻辑**：必须有明确终止条件（如 `runAttemptCount < MAX_ATTEMPTS`）、指数退避和错误分类；配额超限（`Quota` / `RESOURCE_EXHAUSTED`）严禁无限密集重试。
-- **新增 Firestore 触发器**：必须证明幂等性、显式配置 `retry: false` 并检查触发器循环与级联副作用。
+- **新增 Firestore 触发器**：必须证明幂等性、显式配置 `retry: false` 并检查触发器循环与级联副作用；触发器资源四件套中的 `concurrency` 不适用（该选项只作用于 callable/HTTP 函数），以显式 `memory` 代替。
 - **新增后台任务**：WorkManager 任务必须能够取消，严禁无界无限重试。
 - **服务端防线优先**：严禁把客户端按钮禁用或倒计时当成服务端安全保护；服务端端点必须能防御脱机脚本攻击。
 - **费用安全测试**：任何可能显著提高费用的代码改动都必须同步增加自动化回归测试（见 [`docs/operations/firebase-cost-safety-test-matrix.md`](docs/operations/firebase-cost-safety-test-matrix.md)）。
