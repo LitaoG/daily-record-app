@@ -14,8 +14,10 @@ class PasswordResetCooldownTest {
 
     @Test
     fun emailIsNotCoolingDownInitially() {
-        assertFalse(PasswordResetCooldown.isCoolingDown("user@example.com"))
-        assertEquals(0, PasswordResetCooldown.remainingCooldownSeconds("user@example.com"))
+        // Inject the clock explicitly: the production default reads
+        // SystemClock.elapsedRealtime, which is unavailable on the JVM.
+        assertFalse(PasswordResetCooldown.isCoolingDown("user@example.com", nowMillis = 0L))
+        assertEquals(0, PasswordResetCooldown.remainingCooldownSeconds("user@example.com", nowMillis = 0L))
     }
 
     @Test

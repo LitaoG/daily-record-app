@@ -695,8 +695,11 @@ internal object EnStrings : AppStrings {
         override val terminologyDialogTitle = "Choose terminology style"
         override val terminologyElegant = "Elegant"
         override val terminologyDirect = "Direct"
-        override val terminologyElegantOption = "Elegant (Solo / Partner Intimacy)"
-        override val terminologyDirectOption = "Direct (Direct Terms)"
+        // English copy is style-independent (EnStrings.withStyle returns this),
+        // so the options only state that the choice affects the Chinese wording
+        // instead of inventing a third naming for the modules.
+        override val terminologyElegantOption = "Elegant (affects Chinese wording)"
+        override val terminologyDirectOption = "Direct (affects Chinese wording)"
         override val languageTitle = "Language"
         override val languageZh = "中文"
         override val languageEn = "English"
