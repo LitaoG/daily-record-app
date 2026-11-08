@@ -1,0 +1,295 @@
+package io.github.litaog.dailyrecord.core.statistics
+
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
+import java.time.LocalDate
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class StatisticsYearModelsTest {
+    private val today = LocalDate.of(2026, 7, 17)
+
+    private fun record(date: LocalDate, count: Int) = DailyCountEntry(
+        localDate = date,
+        count = count,
+    )
+
+    @Test
+    fun fixedYearFixtureReconcilesAcrossAllPeriods() {
+        // Mirrors RoomHandBrewRecordRepositoryTest.fixedYearFixtureReports128BrewsAcross74Days:
+        // Jan-Oct carry 128 brews on 74 distinct days, Nov-Dec are empty.
+        val monthlyCounts = listOf(13, 11, 12, 14, 15, 16, 13, 14, 11, 9)
+        val monthlyDays = listOf(9, 7, 8, 8, 10, 9, 8, 9, 4, 2)
+        val records = monthlyCounts.zip(monthlyDays).flatMapIndexed { monthIndex, (count, days) ->
+            val baseCount = count / days
+            val remainder = count % days
+            (0 until days).map { dayIndex ->
+                record(
+                    LocalDate.of(2026, monthIndex + 1, dayIndex + 1),
+                    baseCount + if (dayIndex < remainder) 1 else 0,
+                )
+            }
+        }
+        assertEquals(74, records.size)
+        val octoberEnd = LocalDate.of(2026, 10, 31)
+
+        val all = buildDailyCountStatistics(StatisticsPeriod.All, octoberEnd, octoberEnd, records)
+        assertEquals(128L, all.summary.totalCount)
+        assertEquals(74, all.summary.recordedDays)
+        assertEquals(128L, all.details.sumOf { it.count ?: 0L })
+
+        val year = buildDailyCountStatistics(StatisticsPeriod.Year, octoberEnd, octoberEnd, records)
+        assertEquals(128L, year.summary.totalCount)
+        assertEquals(74, year.summary.recordedDays)
+        assertEquals(
+            listOf(36L, 45L, 38L, 9L),
+            requireNotNull(year.year).quarters.map { it.totalCount },
+        )
+        assertEquals(128L, year.details.filterNot { it.future }.sumOf { it.count ?: 0L })
+
+        val march = LocalDate.of(2026, 3, 15)
+        val month = buildDailyCountStatistics(StatisticsPeriod.Month, march, octoberEnd, records)
+        assertEquals(12L, month.summary.totalCount)
+        assertEquals(8, month.summary.recordedDays)
+        assertEquals(12L, month.details.filter { it.recorded }.sumOf { it.count ?: 0L })
+
+        val weekStart = LocalDate.of(2026, 1, 5)
+        val weekEnd = weekStart.plusDays(6)
+        val week = buildDailyCountStatistics(
+            StatisticsPeriod.Week,
+            LocalDate.of(2026, 1, 7),
+            octoberEnd,
+            records,
+        )
+        val expectedWeek = records.filter { it.localDate in weekStart..weekEnd }
+        assertEquals(expectedWeek.sumOf { it.count.toLong() }, week.summary.totalCount)
+        assertEquals(expectedWeek.size, week.summary.recordedDays)
+        assertEquals(
+            expectedWeek.sumOf { it.count.toLong() },
+            week.details.filter { it.recorded }.sumOf { it.count ?: 0L },
+        )
+    }
+
+    @Test
+    fun yearDetailsReconcileWithSummaryAndFutureMonthsStayEmpty() {
+        val records = listOf(
+            record(LocalDate.of(2026, 1, 3), 12),
+            record(LocalDate.of(2026, 2, 4), 15),
+            record(LocalDate.of(2026, 3, 5), 18),
+            record(LocalDate.of(2026, 4, 6), 20),
+            record(LocalDate.of(2026, 5, 7), 21),
+            record(LocalDate.of(2026, 6, 8), 24),
+            record(LocalDate.of(2026, 7, 9), 18),
+        )
+
+        val model = buildDailyCountStatistics(StatisticsPeriod.Year, today, today, records)
+
+        assertEquals(128L, model.summary.totalCount)
+        assertEquals(7, model.summary.recordedDays)
+        assertEquals(128L, model.details.filterNot { it.future }.sumOf { it.count ?: 0L })
+        assertEquals(5, model.details.count { it.future })
+    }
+
+
+    @Test
+    fun allHistoryGroupsByYearAndIgnoresFutureRecords() {
+        val model = buildDailyCountStatistics(
+            StatisticsPeriod.All,
+            today,
+            today,
+            listOf(
+                record(LocalDate.of(2024, 4, 3), 56),
+                record(LocalDate.of(2025, 2, 1), 142),
+                record(LocalDate.of(2026, 6, 1), 128),
+                record(LocalDate.of(2026, 8, 1), 999),
+            ),
+        )
+
+        assertEquals(326L, model.summary.totalCount)
+        assertEquals(listOf("2026年", "2025年", "2024年"), model.details.map { it.label })
+        assertEquals(326L, model.details.sumOf { it.count ?: 0L })
+    }
+
+
+    @Test
+    fun pastYearContainsNoFuturePlaceholders() {
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2025, 7, 17),
+            today = today,
+            records = listOf(record(LocalDate.of(2025, 12, 31), 2)),
+        )
+
+        assertEquals("2025年", model.title)
+        assertEquals("已结束", model.status)
+        assertEquals(0, model.details.count { it.future })
+        assertEquals(2L, model.details.sumOf { it.count ?: 0L })
+    }
+
+
+    @Test
+    fun yearAnalysisExcludesIncompleteMonthFromExtremaButKeepsItsTotals() {
+        val today = LocalDate.of(2026, 7, 17)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = today,
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 3), 10),
+                record(LocalDate.of(2026, 2, 3), 0),
+                record(LocalDate.of(2026, 3, 3), 10),
+                record(LocalDate.of(2026, 4, 3), 5),
+                record(LocalDate.of(2026, 5, 3), 5),
+                record(LocalDate.of(2026, 7, 3), 99),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertEquals(129L, model.summary.totalCount)
+        assertEquals(129L, year.quarters.sumOf { it.totalCount })
+        assertEquals(129L, year.months.sumOf { it.count ?: 0L })
+        assertEquals(listOf(1, 3), year.maximumMonths.map { it.month.monthValue })
+        assertEquals(listOf(2), year.minimumMonths.map { it.month.monthValue })
+        assertTrue(year.months[6].inProgress)
+        assertFalse(year.months[6].complete)
+        assertEquals(5, year.months.count { it.future })
+        assertEquals(129.0 / 7.0, year.monthlyAverage, 0.001)
+    }
+
+
+    @Test
+    fun quarterSlicesAssignMonthsToTheCorrectCalendarQuarter() {
+        val today = LocalDate.of(2026, 12, 31)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2026, 12, 31),
+            today = today,
+            records = listOf(
+                // Q1: 1-3月; Q2: 4-6月; Q3: 7-9月; Q4: 10-12月.
+                record(LocalDate.of(2026, 1, 3), 1),
+                record(LocalDate.of(2026, 2, 3), 2),
+                record(LocalDate.of(2026, 3, 3), 3),
+                record(LocalDate.of(2026, 4, 3), 4),
+                record(LocalDate.of(2026, 5, 3), 5),
+                record(LocalDate.of(2026, 6, 3), 6),
+                record(LocalDate.of(2026, 7, 3), 7),
+                record(LocalDate.of(2026, 8, 3), 8),
+                record(LocalDate.of(2026, 9, 3), 9),
+                record(LocalDate.of(2026, 10, 3), 10),
+                record(LocalDate.of(2026, 11, 3), 11),
+                record(LocalDate.of(2026, 12, 3), 12),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        // Distinct per-quarter totals make any Q1/Q2 mis-slicing detectable
+        // instead of being hidden by the sum-only identity.
+        assertEquals(listOf(1, 2, 3, 4), year.quarters.map { it.quarter })
+        assertEquals(listOf(6L, 15L, 24L, 33L), year.quarters.map { it.totalCount })
+        assertEquals(78L, year.quarters.sumOf { it.totalCount })
+        assertEquals(78L, year.months.sumOf { it.count ?: 0L })
+    }
+
+
+    @Test
+    fun completedDecemberParticipatesInExtremaAtTheYearBoundary() {
+        val today = LocalDate.of(2027, 1, 1)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2026, 12, 31),
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 4), 2),
+                record(LocalDate.of(2026, 12, 31), 12),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertTrue(year.months[11].complete)
+        assertEquals(listOf(12), year.maximumMonths.map { it.month.monthValue })
+        assertEquals(listOf(1), year.minimumMonths.map { it.month.monthValue })
+    }
+
+
+    @Test
+    fun currentDecemberIsKeptOutOfExtremaUntilTheYearHasEnded() {
+        val today = LocalDate.of(2026, 12, 31)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = today,
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 4), 2),
+                record(LocalDate.of(2026, 11, 30), 8),
+                record(LocalDate.of(2026, 12, 31), 99),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertTrue(year.months[11].inProgress)
+        assertFalse(year.months[11].complete)
+        assertEquals(listOf(11), year.maximumMonths.map { it.month.monthValue })
+        assertEquals(listOf(1), year.minimumMonths.map { it.month.monthValue })
+    }
+
+
+    @Test
+    fun decemberRemainsInTiedExtremaListsInsteadOfBeingDroppedAtTheEnd() {
+        val today = LocalDate.of(2027, 1, 1)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = LocalDate.of(2026, 12, 20),
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 4), 5),
+                record(LocalDate.of(2026, 6, 4), 1),
+                record(LocalDate.of(2026, 12, 31), 5),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertEquals(listOf(1, 12), year.maximumMonths.map { it.month.monthValue })
+        assertEquals(listOf(6), year.minimumMonths.map { it.month.monthValue })
+    }
+
+
+    @Test
+    fun emptyYearHasNoExtremaAndZeroTotals() {
+        val today = LocalDate.of(2026, 7, 17)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = today,
+            today = today,
+            records = emptyList(),
+        )
+
+        val year = requireNotNull(model.year)
+        assertTrue(year.maximumMonths.isEmpty())
+        assertTrue(year.minimumMonths.isEmpty())
+        assertEquals(0L, model.summary.totalCount)
+        assertEquals(0.0, year.monthlyAverage, 0.001)
+        assertTrue(year.quarters.all { it.totalCount == 0L })
+    }
+
+
+
+    @Test
+    fun tiedMinimumMonthsAreBothKept() {
+        val today = LocalDate.of(2026, 12, 31)
+        val model = buildDailyCountStatistics(
+            period = StatisticsPeriod.Year,
+            anchorDate = today,
+            today = today,
+            records = listOf(
+                record(LocalDate.of(2026, 1, 4), 2),
+                record(LocalDate.of(2026, 3, 4), 2),
+                record(LocalDate.of(2026, 7, 4), 9),
+            ),
+        )
+
+        val year = requireNotNull(model.year)
+        assertEquals(listOf(1, 3), year.minimumMonths.map { it.month.monthValue })
+    }
+
+}
