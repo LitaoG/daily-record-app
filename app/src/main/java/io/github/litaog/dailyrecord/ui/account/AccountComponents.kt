@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -289,25 +291,37 @@ private fun SyncStatusChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    // The interactive layer and the visual pill are separate nodes: touch and
+    // TalkBack get the 48dp contract target while the visible pill keeps the
+    // 38dp height (#261, #278, #287). Painting the pill on the expanded layer
+    // instead was the visual bloat #278 fixed.
+    Box(
         modifier = modifier
-            .height(DailyRecordSizes.SyncChipHeight)
-            .clip(CircleShape)
-            .background(DailyRecordDefaultAccentSoft)
-            .border(1.dp, DailyRecordDivider, CircleShape)
+            .testTag("sync_status_chip")
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp)
+            .minimumInteractiveComponentSize()
             .semantics {
                 role = Role.Button
                 contentDescription = AppCopy.Account.syncChipDescription(status.label())
             },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally),
+        contentAlignment = Alignment.Center,
     ) {
-        androidx.compose.foundation.Canvas(Modifier.size(8.dp)) {
-            drawCircle(status.color())
+        Row(
+            modifier = Modifier
+                .testTag("sync_status_chip_pill")
+                .height(DailyRecordSizes.SyncChipHeight)
+                .clip(CircleShape)
+                .background(DailyRecordDefaultAccentSoft)
+                .border(1.dp, DailyRecordDivider, CircleShape)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally),
+        ) {
+            androidx.compose.foundation.Canvas(Modifier.size(8.dp)) {
+                drawCircle(status.color())
+            }
+            Text(status.shortLabel(), color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
         }
-        Text(status.shortLabel(), color = DailyRecordText, style = MaterialTheme.typography.labelMedium)
     }
 }
 

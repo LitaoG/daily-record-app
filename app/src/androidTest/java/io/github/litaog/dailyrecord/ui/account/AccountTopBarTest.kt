@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -62,6 +63,14 @@ class AccountTopBarTest {
         val widthDp = bounds.width / density
         val heightDp = bounds.height / density
         assertTrue("${status.label()} chip was stretched to $widthDp dp", widthDp < 240f)
-        assertEquals("${status.label()} chip height", 38f, heightDp, 0.5f)
+        // The interactive node carries the 48dp touch contract (#261, #287);
+        // the visual pill inside it stays 38dp (#278).
+        assertEquals("${status.label()} chip touch target", 48f, heightDp, 0.5f)
+        val pillHeightDp = composeRule
+            .onNodeWithTag("sync_status_chip_pill", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .height / density
+        assertEquals("${status.label()} chip pill height", 38f, pillHeightDp, 0.5f)
     }
 }
