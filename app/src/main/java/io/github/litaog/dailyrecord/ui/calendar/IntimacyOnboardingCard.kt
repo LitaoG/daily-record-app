@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,9 +76,13 @@ internal fun IntimacyOnboardingCard(
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = colors.primary,
                 modifier = Modifier
+                    .testTag("intimacy_onboarding_dismiss")
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(role = Role.Button, onClick = onDismiss)
-                    .testTag("intimacy_onboarding_dismiss")
+                    // The touch and TalkBack target must meet the 48dp
+                    // contract; the label keeps its visual padding and stays
+                    // centered inside the expanded target (issue #287).
+                    .minimumInteractiveComponentSize()
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }
