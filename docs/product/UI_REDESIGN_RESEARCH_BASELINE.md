@@ -83,7 +83,7 @@
 截图只证明对应视口与状态；代码证据用于补充其他日期状态、统计周期和大字体分支。
 
 早期任务清单中的 `HandBrewComponents.kt` 已在当前双模块应用壳中重命名为
-[`DailyRecordComponents.kt`](../../app/src/main/java/io/github/litaog/dailyrecord/ui/components/DailyRecordComponents.kt)；
+组件文件（`RecordModuleSelector.kt` / `PeriodTabs.kt` / `DailyCountControl.kt`，同目录拆分后各自独立）；
 后者才是模块切换器、底部导航、周期切换、指标卡和次数控件的当前证据。
 
 ## 5. 当前设计已经做对的部分
@@ -91,7 +91,7 @@
 后续视觉重构必须保留这些成果，不能为了“高级感”重新破坏：
 
 1. **模块切换器已经是正确的单层结构。**
-   [`DailyRecordComponents.kt`](../../app/src/main/java/io/github/litaog/dailyrecord/ui/components/DailyRecordComponents.kt) 的 `RecordModuleSelector` 让左右模块各占外框完整半区，选中背景和点击范围一致，中线是单独分隔线；不存在“外框内再套一个小胶囊”的双层问题。
+   组件文件（`RecordModuleSelector.kt` / `PeriodTabs.kt` / `DailyCountControl.kt`，同目录拆分后各自独立） 的 `RecordModuleSelector` 让左右模块各占外框完整半区，选中背景和点击范围一致，中线是单独分隔线；不存在“外框内再套一个小胶囊”的双层问题。
 
 2. **日历已经减少可见汉字。**
    [`CalendarScreen.kt`](../../app/src/main/java/io/github/litaog/dailyrecord/ui/calendar/CalendarScreen.kt) 的 `CalendarDayCell` 不再为普通未填写日期显示“未填”，也不再为未来日期显示“未来”；今天未填写时只显示“今”。TalkBack 仍保留“未填写”和“未来日期，不可记录”的完整语义。
@@ -100,7 +100,7 @@
    未填写、明确 0、1、2、3 次及以上仍然能够从数据库、统计和语义层区分。
 
 4. **零次图表已经是真正的零高度。**
-   [`StatisticsPeriodCards.kt`](../../app/src/main/java/io/github/litaog/dailyrecord/ui/statistics/StatisticsPeriodCards.kt) 对未来、未填写和 `count <= 0` 返回零比例，不会用一小截柱子伪造 0 次。
+   `WeekDistributionCard.kt`（原 `StatisticsPeriodCards.kt` 拆分后） 对未来、未填写和 `count <= 0` 返回零比例，不会用一小截柱子伪造 0 次。
 
 5. **无障碍不是事后补丁。**
    关键控件已有按钮角色、状态描述和 48dp 触控边界；日历高度和统计指标排列在较大字体下已有适配分支。
@@ -211,7 +211,7 @@
 
 以下记录的是 2026-07-29 研究时的旧实现形态，不是当前运行时代码的组件清单。旧的
 `CompactPeriodSummary`、`MetricCard` 和未接入的月分布组件已在后续整理中移除；当前统计页
-以 `StatisticsScreen.kt` 与 `StatisticsPeriodCards.kt` 中实际调用的组件为准。
+以 `StatisticsScreen.kt` 与 `ui/statistics/` 各卡片文件中实际调用的组件为准（原 `StatisticsPeriodCards.kt` 已拆分）。。
 
 当前 `RecordModuleSelector` 已经是单一外框、严格二等分、完整半区点击和完整半区选中背景。此前“外框里再套小胶囊”的问题已经解决。
 
@@ -311,7 +311,7 @@
 
 以下记录的是 2026-07-29 研究时的旧实现形态，不是当前运行时代码的组件清单。旧的
 `CompactPeriodSummary`、`MetricCard` 和未接入的月分布组件已在后续整理中移除；当前统计页
-以 `StatisticsScreen.kt` 与 `StatisticsPeriodCards.kt` 中实际调用的组件为准。
+以 `StatisticsScreen.kt` 与 `ui/statistics/` 各卡片文件中实际调用的组件为准（原 `StatisticsPeriodCards.kt` 已拆分）。。
 
 [`StatisticsScreen.kt`](../../app/src/main/java/io/github/litaog/dailyrecord/ui/statistics/StatisticsScreen.kt) 中：
 
@@ -344,7 +344,7 @@
 
 ### 9.6 底部导航
 
-[`DailyRecordComponents.kt`](../../app/src/main/java/io/github/litaog/dailyrecord/ui/components/DailyRecordComponents.kt) 的底部导航使用大面积、圆角、带阴影的陶土色块覆盖选中目的地。它和模块切换器、周期切换器构成三套相似的“选中胶囊”，控制器视觉重量超过内容。
+组件文件（`RecordModuleSelector.kt` / `PeriodTabs.kt` / `DailyCountControl.kt`，同目录拆分后各自独立） 的底部导航使用大面积、圆角、带阴影的陶土色块覆盖选中目的地。它和模块切换器、周期切换器构成三套相似的“选中胶囊”，控制器视觉重量超过内容。
 
 推荐恢复为标准图标＋文字导航：选中时改变图标/文字颜色，并使用小型指示器或极浅选中面。触控区域保持不变。
 
