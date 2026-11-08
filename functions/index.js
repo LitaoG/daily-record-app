@@ -248,9 +248,12 @@ function callableRecord(data, module) {
 
 exports.writeDailyCountRecord = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuthenticated(request);
+  // The App Check gate does zero I/O, so it runs before the Firestore-backed
+  // circuit breaker read and the rate limiter: rejected junk traffic must not
+  // cost a config read per request.
+  verifyAppCheck(request, "writeDailyCountRecord");
   await requireWritesAllowed(db);
   enforceWriteRateLimit(auth.uid);
-  verifyAppCheck(request, "writeDailyCountRecord");
 
   const data = request.data;
   let validated;
@@ -316,9 +319,11 @@ exports.writeDailyCountRecord = onCall(CALLABLE_OPTIONS, async (request) => {
 exports.deleteAccountData = onCall(DELETION_CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuthenticated(request);
   requireRecentlyAuthenticated(auth);
+  // Same ordering as writeDailyCountRecord: the zero-I/O App Check gate runs
+  // before the Firestore-backed circuit breaker read and the rate limiter.
+  verifyAppCheck(request, "deleteAccountData");
   await requireDeletionsAllowed(db);
   enforceDeletionRateLimit(auth.uid);
-  verifyAppCheck(request, "deleteAccountData");
 
   const data = request.data;
   if (!data || data.ownerId !== auth.uid) {

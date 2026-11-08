@@ -30,12 +30,16 @@ const DELETION_CALLABLE_OPTIONS = Object.freeze({
  * Options for Firestore write event triggers (e.g. validateWrittenRecord).
  * Critical: retry: false prevents Eventarc from infinitely retrying triggers
  * on unhandled exceptions or malformed data crashes.
+ * Event-driven functions do not take a concurrency option (it only applies to
+ * the HTTP protocol used by callables), so the resource quartet from AGENTS.md
+ * is completed with an explicit memory instead.
  */
 const TRIGGER_OPTIONS = Object.freeze({
   region: REGION,
   maxInstances: 5,
   timeoutSeconds: 30,
   retry: false,
+  memory: "256MiB",
 });
 
 module.exports = {
