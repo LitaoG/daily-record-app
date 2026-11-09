@@ -366,14 +366,14 @@ fun RollingCounter(
         modifier = modifier
             .clipToBounds()
             .semantics(mergeDescendants = true) {
-                contentDescription = if (enabled) count.toString() else "—"
+                contentDescription = if (enabled) count.toString() else AppCopy.Statistics.dash
             }
             .testTag("rolling_counter"),
         contentAlignment = Alignment.Center,
     ) {
         if (!enabled) {
             Text(
-                text = "—",
+                text = AppCopy.Statistics.dash,
                 color = DailyRecordTextMuted,
                 style = textStyle,
                 fontWeight = FontWeight.Bold,
