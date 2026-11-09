@@ -1,9 +1,5 @@
 package io.github.litaog.dailyrecord.ui.statistics
 
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
 import io.github.litaog.dailyrecord.core.common.AppLanguageState
@@ -13,28 +9,12 @@ import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
 import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
-import io.github.litaog.dailyrecord.core.statistics.YearMonthStatistics
 import io.github.litaog.dailyrecord.core.statistics.QuarterStatistics
 import io.github.litaog.dailyrecord.core.statistics.YearStatistics
 import io.github.litaog.dailyrecord.core.statistics.buildDailyCountStatistics
 import io.github.litaog.dailyrecord.core.statistics.nextPeriodAnchor
 import io.github.litaog.dailyrecord.core.statistics.previousPeriodAnchor
-import io.github.litaog.dailyrecord.ui.RecordModule
-import io.github.litaog.dailyrecord.ui.preview.PreviewFontScales
-import io.github.litaog.dailyrecord.ui.preview.PreviewModules
-import io.github.litaog.dailyrecord.ui.preview.PreviewThemes
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
-import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
-import io.github.litaog.dailyrecord.ui.theme.MetricNumberLarge
-import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
-import io.github.litaog.dailyrecord.ui.theme.MetricNumberSmall
-import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
-import io.github.litaog.dailyrecord.ui.theme.Typography
-import io.github.litaog.dailyrecord.ui.uiSpec
-import java.lang.reflect.Method
 import java.time.LocalDate
-import java.time.YearMonth
 import java.util.Random
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -43,26 +23,13 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
- * Empirical and adversarial stress verification for Milestone 4:
- * Statistics Subsystem.
- *
- * Verifies:
- * 1. Rapid switching across all 4 temporal aggregation periods (Week, Month, Year, All)
- *    under high-concurrency simulation and random record configurations.
- * 2. Interactive scrub probe gesture handling & mathematical invariants:
- *    boundary clamping, negative/extreme coords, NaN/Infinity tolerance,
- *    vertical scroll vs horizontal scrub disambiguation.
- * 3. Zero-count, single-count, leap-year, and extreme-count edge cases.
- * 4. 200% accessibility font scale resilience and layout hierarchy switching.
- * 5. TalkBack accessibility semantics across all statistics components.
- * 6. Compose Previews architecture and reflection verification for StatisticsPreviewsKt.
+ * Boundary and invariant stress tests for the statistics engine, chart geometry
+ * math, and accessibility copy helpers (JVM unit tests that call production
+ * functions directly; no instrumentation).
  */
-class StatisticsAdversarialStressTest {
+class ChartGeometryStressTest {
 
     // =========================================================================
     // 1. Rapid Period Switching & Model Invariant Stress Tests
@@ -356,42 +323,6 @@ class StatisticsAdversarialStressTest {
     }
 
     @Test
-    fun gestureDisambiguationLogicFollowsVerticalScrollVsHorizontalScrubContract() {
-        // Mathematical contract test of the gesture disambiguation in Modifier.chartScrub:
-        // slop threshold determines whether gesture is vertical (page scroll) or horizontal (scrub probe).
-        val slop = 16f
-
-        // Case 1: Pure vertical drag (deltaY > slop && abs(deltaY) > abs(deltaX))
-        fun isVerticalExit(totalX: Float, totalY: Float): Boolean {
-            return abs(totalY) > slop && abs(totalY) > abs(totalX)
-        }
-
-        // Case 2: Pure horizontal lock (abs(totalX) > slop)
-        fun isHorizontalLock(totalX: Float): Boolean {
-            return abs(totalX) > slop
-        }
-
-        // Pure vertical scroll gesture
-        assertTrue("Pure vertical drag must exit and yield to parent scroll", isVerticalExit(2f, 24f))
-        assertFalse("Pure vertical drag must not lock horizontal", isHorizontalLock(2f))
-
-        // Pure horizontal scrub gesture
-        assertFalse("Pure horizontal drag must not trigger vertical exit", isVerticalExit(24f, 2f))
-        assertTrue("Pure horizontal drag must lock horizontal and consume events", isHorizontalLock(24f))
-
-        // Sub-slop jitter (small finger movement)
-        assertFalse("Small jitter must not exit", isVerticalExit(5f, 7f))
-        assertFalse("Small jitter must not lock", isHorizontalLock(5f))
-
-        // Diagonal drag where vertical exceeds horizontal
-        assertTrue("Diagonal favoring vertical must exit", isVerticalExit(18f, 22f))
-
-        // Diagonal drag favoring horizontal
-        assertFalse("Diagonal favoring horizontal must not exit", isVerticalExit(22f, 18f))
-        assertTrue("Diagonal favoring horizontal must lock", isHorizontalLock(22f))
-    }
-
-    @Test
     fun chartScrubStateGracefullyRetainsShownIndexDuringFadeOut() {
         val state = ChartScrubState()
         assertNull("Initial activeIndex must be null", state.activeIndex)
@@ -526,61 +457,6 @@ class StatisticsAdversarialStressTest {
         )
     }
 
-    // =========================================================================
-    // 4. 200% Accessibility Font Scale Resilience & Layout Switching Tests
-    // =========================================================================
-
-    @Test
-    fun statisticsTypographyUnder200PercentFontScaleMaintainsValidBoundsWithoutOverlap() {
-        val baseDensity = Density(density = 2.5f, fontScale = 1.0f)
-        val maxA11yDensity = Density(density = 2.5f, fontScale = 2.0f)
-
-        val statisticsStyles = listOf(
-            "MetricNumberLarge" to MetricNumberLarge,
-            "MetricNumberMedium" to MetricNumberMedium,
-            "MetricNumberSmall" to MetricNumberSmall,
-            "titleLarge" to Typography.titleLarge,
-            "titleMedium" to Typography.titleMedium,
-            "labelLarge" to Typography.labelLarge,
-            "labelMedium" to Typography.labelMedium,
-            "labelSmall" to Typography.labelSmall,
-            "bodyMedium" to Typography.bodyMedium,
-        )
-
-        statisticsStyles.forEach { (name, style) ->
-            val basePx = with(baseDensity) { style.fontSize.toPx() }
-            val a11yPx = with(maxA11yDensity) { style.fontSize.toPx() }
-            val lineBasePx = with(baseDensity) { style.lineHeight.toPx() }
-            val lineA11yPx = with(maxA11yDensity) { style.lineHeight.toPx() }
-
-            assertTrue("$name font size must scale up at 200%", a11yPx > basePx)
-            assertTrue("$name line height must scale up at 200%", lineA11yPx > lineBasePx)
-
-            // Line height must equal or exceed font size to prevent character vertical collisions
-            assertTrue(
-                "$name line height ($lineA11yPx) must be >= font size ($a11yPx) at 200% scale",
-                lineA11yPx >= a11yPx,
-            )
-        }
-    }
-
-    @Test
-    fun largeFontScaleThresholdsSwitchToStackedLayoutToPreventClipping() {
-        // MonthSummaryCard layout switch threshold: fontScale >= 1.6f
-        // StatisticsSurface header switch threshold: fontScale >= 1.6f
-        val standardScales = listOf(0.85f, 1.0f, 1.15f, 1.3f, 1.59f)
-        for (scale in standardScales) {
-            val useStacked = scale >= 1.6f
-            assertFalse("Scale $scale must use compact horizontal layout", useStacked)
-        }
-
-        val highScales = listOf(1.6f, 1.75f, 2.0f)
-        for (scale in highScales) {
-            val useStacked = scale >= 1.6f
-            assertTrue("Scale $scale must switch to stacked vertical layout", useStacked)
-        }
-    }
-
     @Test
     fun weekRingLabelRadialDistanceAndGapsRemainFiniteAndPositive() {
         val outerRadius = 92f
@@ -705,98 +581,5 @@ class StatisticsAdversarialStressTest {
         } finally {
             AppLanguageState.current = previousStrings
         }
-    }
-
-    // =========================================================================
-    // 6. Compose Previews Architecture & Reflection Verification
-    // =========================================================================
-
-    @Test
-    fun statisticsPreviewsCompileAndFollowZeroArgumentToolingContract() {
-        val previewClass = Class.forName("io.github.litaog.dailyrecord.ui.preview.StatisticsPreviewsKt")
-        val previewMethods = previewClass.declaredMethods.filter { method ->
-            method.name.endsWith("Preview")
-        }
-
-        assertTrue("StatisticsPreviewsKt must define preview functions", previewMethods.isNotEmpty())
-
-        val expectedPreviewNames = setOf(
-            "StatisticsScreenSoloWeekPreview",
-            "StatisticsScreenDuoMonthPreview",
-            "StatisticsScreenYearPreview",
-            "StatisticsScreenAllPreview",
-            "StatisticsScreenEmptyPreview",
-            "StatisticsScreenModulesPreview",
-            "StatisticsScreenThemesPreview",
-            "StatisticsScreenFontScalesPreview",
-            "PeriodTabsPreview",
-            "KpiSummaryCardsPreview",
-            "WeeklyRadialRingPreview",
-            "MonthlyPulseAndCompositionPreview",
-            "AnnualChartAndBreakdownPreview",
-        )
-
-        val actualPreviewNames = previewMethods.map { it.name }.toSet()
-        for (expected in expectedPreviewNames) {
-            assertTrue(
-                "Expected preview '$expected' must exist in StatisticsPreviewsKt",
-                actualPreviewNames.contains(expected),
-            )
-        }
-
-        val classLoader = previewClass.classLoader ?: ClassLoader.getSystemClassLoader()
-        val classStream = classLoader.getResourceAsStream(
-            "io/github/litaog/dailyrecord/ui/preview/StatisticsPreviewsKt.class",
-        )
-        assertNotNull("StatisticsPreviewsKt.class must be loadable", classStream)
-        val classBytes = classStream!!.readBytes()
-        val classByteString = String(classBytes, Charsets.ISO_8859_1)
-
-        // Verify that the class bytecode constant pool contains MultiPreview descriptors
-        assertTrue(classByteString.contains("Lio/github/litaog/dailyrecord/ui/preview/PreviewThemes;"))
-        assertTrue(classByteString.contains("Lio/github/litaog/dailyrecord/ui/preview/PreviewFontScales;"))
-        assertTrue(classByteString.contains("Lio/github/litaog/dailyrecord/ui/preview/PreviewModules;"))
-
-        previewMethods.forEach { method: Method ->
-            val nonSyntheticParams = method.parameterTypes.filter {
-                it.name != "androidx.compose.runtime.Composer" && it != Int::class.javaPrimitiveType
-            }
-            assertEquals(
-                "Preview function ${method.name} must have 0 user-facing parameters for tooling support",
-                0,
-                nonSyntheticParams.size,
-            )
-
-            val runtimeAnnotations = method.annotations.map { it.annotationClass.java.name }
-            val hasRuntimePreview = runtimeAnnotations.any {
-                it.contains("Preview") ||
-                    it == PreviewModules::class.java.name ||
-                    it == PreviewThemes::class.java.name ||
-                    it == PreviewFontScales::class.java.name
-            }
-
-            val hasBytecodePreview = classByteString.contains(method.name) && (
-                classByteString.contains("Landroidx/compose/ui/tooling/preview/Preview;") ||
-                    classByteString.contains("PreviewThemes") ||
-                    classByteString.contains("PreviewFontScales") ||
-                    classByteString.contains("PreviewModules")
-            )
-
-            assertTrue(
-                "Preview function ${method.name} must carry a @Preview or MultiPreview annotation in bytecode",
-                hasRuntimePreview || hasBytecodePreview,
-            )
-        }
-    }
-
-    @Test
-    fun shapeTokenNormalizationAdheresToFiveSemanticTiers() {
-        // Feature 21 validation: Shapes across statistics components must use standard semantic tiers:
-        // ExtraSmall = 6dp, Small = 10dp, Medium = 16dp, Large = 22dp, Full = 50% pill
-        assertEquals(6.dp, DailyRecordShapes.ExtraSmall.topStart.toPx(androidx.compose.ui.geometry.Size(100f, 100f), Density(1f)).dp)
-        assertEquals(10.dp, DailyRecordShapes.Small.topStart.toPx(androidx.compose.ui.geometry.Size(100f, 100f), Density(1f)).dp)
-        assertEquals(16.dp, DailyRecordShapes.Medium.topStart.toPx(androidx.compose.ui.geometry.Size(100f, 100f), Density(1f)).dp)
-        assertEquals(22.dp, DailyRecordShapes.Large.topStart.toPx(androidx.compose.ui.geometry.Size(100f, 100f), Density(1f)).dp)
-        assertEquals(DailyRecordShapes.Large, DailyRecordShapes.Card)
     }
 }

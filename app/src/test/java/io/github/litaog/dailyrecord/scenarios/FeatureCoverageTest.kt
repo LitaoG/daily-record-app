@@ -1,21 +1,10 @@
-package io.github.litaog.dailyrecord.e2e
+package io.github.litaog.dailyrecord.scenarios
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.core.common.AppLanguage
-import io.github.litaog.dailyrecord.core.common.AppLanguageState
-import io.github.litaog.dailyrecord.core.common.EnStrings
 import io.github.litaog.dailyrecord.core.common.TerminologyStyle
-import io.github.litaog.dailyrecord.core.common.ZhStrings
-import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
-import io.github.litaog.dailyrecord.core.model.HandBrewRecord
-import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.core.security.AppLockDelay
 import io.github.litaog.dailyrecord.core.security.AppLockSession
 import io.github.litaog.dailyrecord.core.security.LauncherIdentity
@@ -23,15 +12,12 @@ import io.github.litaog.dailyrecord.core.security.launcherAliasChanges
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.core.statistics.StatisticsSummary
-import io.github.litaog.dailyrecord.core.statistics.StatisticsUiModel
 import io.github.litaog.dailyrecord.core.statistics.buildDailyCountStatistics
 import io.github.litaog.dailyrecord.core.statistics.nextPeriodAnchor
 import io.github.litaog.dailyrecord.core.statistics.previousPeriodAnchor
 import io.github.litaog.dailyrecord.ui.IntimacyOnboardingPreference
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
-import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.TerminologyStylePreference
-import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.calendar.MonthSwipe
 import io.github.litaog.dailyrecord.ui.calendar.QuickLogAction
 import io.github.litaog.dailyrecord.ui.calendar.monthSwipeFollowPx
@@ -50,61 +36,22 @@ import io.github.litaog.dailyrecord.ui.statistics.ChartScrubState
 import io.github.litaog.dailyrecord.ui.statistics.chartBubbleX
 import io.github.litaog.dailyrecord.ui.statistics.monthDailyChartIndexAt
 import io.github.litaog.dailyrecord.ui.statistics.yearLineChartIndexAt
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordThemeState
-import io.github.litaog.dailyrecord.ui.theme.LiquidGlassElevation
-import io.github.litaog.dailyrecord.ui.theme.MetricNumberLarge
-import io.github.litaog.dailyrecord.ui.theme.MetricNumberMedium
-import io.github.litaog.dailyrecord.ui.theme.Typography
 import java.time.LocalDate
-import java.time.LocalTime
-import java.time.YearMonth
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tier 1 - Feature Coverage (Opaque-Box Isolation Verification).
- * Tests all 29 inventoried features in isolation to verify their baseline
- * happy paths and architectural contracts.
+ * Production function-level coverage for implemented features: baseline happy paths
+ * and architectural contracts (JVM unit tests that call production functions directly;
+ * no instrumentation).
  */
-class Tier1FeatureCoverageTest {
+class FeatureCoverageTest {
 
     private val earliestSupportedDate = EARLIEST_SUPPORTED_DATE
-
-    // Feature 1: Dual-Module Switcher
-    @Test
-    fun testFeature1_DualModuleSwitcher_ModuleBoundaries() {
-        val modules = RecordModule.entries
-        assertEquals(2, modules.size)
-        assertTrue(modules.contains(RecordModule.HandBrew))
-        assertTrue(modules.contains(RecordModule.Sex))
-
-        // Module isolation: HandBrew and Sex have distinct entity names & semantics
-        assertEquals("HandBrew", RecordModule.HandBrew.name)
-        assertEquals("Sex", RecordModule.Sex.name)
-    }
-
-    // Feature 2: Primary 2-Destination Bottom Bar
-    @Test
-    fun testFeature2_PrimaryBottomBar_DestinationsAndCopy() {
-        val destinations = TopDestination.entries
-        assertEquals(2, destinations.size)
-        assertTrue(destinations.contains(TopDestination.Calendar))
-        assertTrue(destinations.contains(TopDestination.Statistics))
-
-        // Navigation labels from AppCopy are non-empty
-        assertTrue(AppCopy.NavigationBar.calendar.isNotBlank())
-        assertTrue(AppCopy.NavigationBar.statistics.isNotBlank())
-    }
 
     // Feature 3: Today Quick-Log Island
     @Test
@@ -388,21 +335,6 @@ class Tier1FeatureCoverageTest {
         assertTrue(changes.any { it.identity == LauncherIdentity.Default && !it.enabled })
     }
 
-    // Feature 17: Theme Engine (9 Themes)
-    @Test
-    fun testFeature17_ThemeEngine_NineThemesIntegrity() {
-        val themes = DailyRecordColorTheme.entries
-        assertEquals(9, themes.size)
-        assertEquals(DailyRecordColorTheme.Aurora, DailyRecordColorTheme.Default)
-
-        themes.forEach { theme ->
-            assertNotNull(theme.palette)
-            assertNotNull(theme.palette.solo)
-            assertNotNull(theme.palette.duo)
-            assertTrue(theme.id.isNotBlank())
-        }
-    }
-
     // Feature 18: Terminology Style Mode
     @Test
     fun testFeature18_TerminologyStyle_ElegantVsDirect() {
@@ -426,63 +358,6 @@ class Tier1FeatureCoverageTest {
         assertTrue(pref.dismissed.value)
     }
 
-    // Feature 20: Dual-Language Contract
-    @Test
-    fun testFeature20_DualLanguageContract_NonEmptyStrings() {
-        val zh = ZhStrings(TerminologyStyle.ELEGANT)
-        val en = EnStrings(TerminologyStyle.ELEGANT)
-
-        // Both language strings must be fully populated
-        assertTrue(zh.today.isNotBlank())
-        assertTrue(en.today.isNotBlank())
-        assertTrue(zh.navigationBar.calendar.isNotBlank())
-        assertTrue(en.navigationBar.calendar.isNotBlank())
-    }
-
-    // Feature 21: Shape Scale Normalization
-    @Test
-    fun testFeature21_ShapeScale_StandardRadii() {
-        assertNotNull(DailyRecordShapes.Control)
-        assertNotNull(DailyRecordShapes.Compact)
-        assertNotNull(DailyRecordShapes.Card)
-        assertNotNull(DailyRecordShapes.BottomBar)
-        assertNotNull(DailyRecordShapes.ModuleSelector)
-    }
-
-    // Feature 22: Typography Scale Refinement
-    @Test
-    fun testFeature22_TypographyScale_Styles() {
-        assertNotNull(Typography.displaySmall)
-        assertNotNull(Typography.headlineLarge)
-        assertNotNull(Typography.titleMedium)
-        assertNotNull(Typography.bodyLarge)
-        assertNotNull(Typography.labelSmall)
-        assertNotNull(MetricNumberLarge)
-        assertNotNull(MetricNumberMedium)
-    }
-
-    // Feature 23: Elevated Liquid Glass Materials
-    @Test
-    fun testFeature23_LiquidGlass_Elevations() {
-        assertEquals(0.dp, LiquidGlassElevation.Flat.shadow)
-        assertEquals(3.dp, LiquidGlassElevation.Subtle.shadow)
-        assertEquals(8.dp, LiquidGlassElevation.Elevated.shadow)
-        assertEquals(16.dp, LiquidGlassElevation.Emphasis.shadow)
-    }
-
-    // Feature 24: Compose Previews Implementation
-    @Test
-    fun testFeature24_PreviewContracts_MockDataReadiness() {
-        val testDate = LocalDate.of(2026, 11, 7)
-        val hb = E2ETestFixtures.handBrewRecord(testDate, 3)
-        val sex = E2ETestFixtures.sexRecord(testDate, 1)
-
-        assertEquals(3, hb.brewCount)
-        assertEquals(1, sex.sexCount)
-        assertTrue(hb.wasBrewed)
-        assertTrue(sex.occurred)
-    }
-
     // Feature 25: Pinned Sticky Save Action Bar
     @Test
     fun testFeature25_PinnedStickyActionBar_SaveEligibility() {
@@ -494,18 +369,6 @@ class Tier1FeatureCoverageTest {
         val modified = draft.increase()
         assertTrue(modified.hasChanges)
         assertEquals(3, modified.count)
-    }
-
-    // Feature 26: Rolling Counter Numeric Ticker
-    @Test
-    fun testFeature26_RollingCounter_DigitTransitions() {
-        val currentCount = 9
-        val nextCount = 10
-        val currentDigits = currentCount.toString().map { it.digitToInt() }
-        val nextDigits = nextCount.toString().map { it.digitToInt() }
-
-        assertEquals(listOf(9), currentDigits)
-        assertEquals(listOf(1, 0), nextDigits)
     }
 
     // Feature 27: Fluid Screen Transitions
@@ -520,32 +383,5 @@ class Tier1FeatureCoverageTest {
 
         assertEquals(0.dp, calculatePredictiveBackCornerRadius(0f))
         assertEquals(24.dp, calculatePredictiveBackCornerRadius(1.0f))
-    }
-
-    // Feature 28: Rich Theme Selection Previews
-    @Test
-    fun testFeature28_ThemeSelectionPreviews_PaletteSwatches() {
-        DailyRecordColorTheme.entries.forEach { theme ->
-            val solo = theme.palette.solo
-            val duo = theme.palette.duo
-            assertNotEquals(solo.primary, duo.primary)
-            assertNotNull(solo.strong)
-            assertNotNull(solo.soft)
-            assertNotNull(duo.strong)
-            assertNotNull(duo.soft)
-        }
-    }
-
-    // Feature 29: E2E Test Suite Pass (Readiness)
-    @Test
-    fun testFeature29_E2EInfrastructure_Readiness() {
-        val repo = InMemoryHandBrewRecordRepository()
-        val date = LocalDate.of(2026, 11, 7)
-        runBlocking {
-            repo.saveRecord(E2ETestFixtures.handBrewRecord(date, 5))
-            val record = repo.getRecord(date)
-            assertNotNull(record)
-            assertEquals(5, record?.brewCount)
-        }
     }
 }

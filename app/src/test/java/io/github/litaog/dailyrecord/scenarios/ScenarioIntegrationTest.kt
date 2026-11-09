@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.e2e
+package io.github.litaog.dailyrecord.scenarios
 
 import androidx.compose.ui.graphics.Color
 import io.github.litaog.dailyrecord.core.common.AppCopy
@@ -7,7 +7,6 @@ import io.github.litaog.dailyrecord.core.common.AppLanguageState
 import io.github.litaog.dailyrecord.core.common.TerminologyStyle
 import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
-import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.security.AppLockDelay
 import io.github.litaog.dailyrecord.core.security.AppLockSession
 import io.github.litaog.dailyrecord.core.security.LauncherIdentity
@@ -17,7 +16,6 @@ import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.core.statistics.buildDailyCountStatistics
 import io.github.litaog.dailyrecord.ui.IntimacyOnboardingPreference
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
-import io.github.litaog.dailyrecord.ui.RecordModule
 import io.github.litaog.dailyrecord.ui.TerminologyStylePreference
 import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.ui.calendar.MonthSwipe
@@ -43,11 +41,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tier 4 - Real-World Application Scenarios (End-to-End User Journeys).
- * Simulates complete, multi-step user workflows through the domain, state,
- * and presentation contracts.
+ * Multi-step real-world user scenarios wired through the domain, state, and
+ * presentation contracts (JVM unit tests that call production functions directly;
+ * no instrumentation).
  */
-class Tier4RealWorldScenariosTest {
+class ScenarioIntegrationTest {
 
     private val earliest = EARLIEST_SUPPORTED_DATE
     private val today = LocalDate.of(2026, 11, 7)
@@ -207,62 +205,69 @@ class Tier4RealWorldScenariosTest {
      */
     @Test
     fun testScenario3_PrivacySecurityAndThemeReconfiguration() {
-        val fakePrefs = E2EFakeSharedPreferences()
+        val previousTheme = DailyRecordThemeState.current
+        val previousStrings = AppLanguageState.current
+        try {
+            val fakePrefs = E2EFakeSharedPreferences()
 
-        // Step 1: Switch theme to EmeraldBerry
-        DailyRecordThemeState.current = DailyRecordColorTheme.EmeraldBerry
-        val activeTheme = DailyRecordThemeState.current
-        assertEquals(DailyRecordColorTheme.EmeraldBerry, activeTheme)
+            // Step 1: Switch theme to EmeraldBerry
+            DailyRecordThemeState.current = DailyRecordColorTheme.EmeraldBerry
+            val activeTheme = DailyRecordThemeState.current
+            assertEquals(DailyRecordColorTheme.EmeraldBerry, activeTheme)
 
-        // Verify EmeraldBerry WCAG AA contrast on both Solo and Duo
-        val soloPrimaryContrast = E2ETestFixtures.contrastRatio(Color.White, activeTheme.palette.solo.primary)
-        val duoPrimaryContrast = E2ETestFixtures.contrastRatio(Color.White, activeTheme.palette.duo.primary)
-        assertTrue(soloPrimaryContrast >= 4.5)
-        assertTrue(duoPrimaryContrast >= 4.5)
+            // Verify EmeraldBerry WCAG AA contrast on both Solo and Duo
+            val soloPrimaryContrast = E2ETestFixtures.contrastRatio(Color.White, activeTheme.palette.solo.primary)
+            val duoPrimaryContrast = E2ETestFixtures.contrastRatio(Color.White, activeTheme.palette.duo.primary)
+            assertTrue(soloPrimaryContrast >= 4.5)
+            assertTrue(duoPrimaryContrast >= 4.5)
 
-        // Step 2: Switch Terminology style to DIRECT
-        val terminologyPref = TerminologyStylePreference(fakePrefs)
-        terminologyPref.setStyle(TerminologyStyle.DIRECT)
-        assertEquals(TerminologyStyle.DIRECT, terminologyPref.current)
+            // Step 2: Switch Terminology style to DIRECT
+            val terminologyPref = TerminologyStylePreference(fakePrefs)
+            terminologyPref.setStyle(TerminologyStyle.DIRECT)
+            assertEquals(TerminologyStyle.DIRECT, terminologyPref.current)
 
-        AppLanguageState.current = AppLanguage.ZH.strings(TerminologyStyle.DIRECT)
-        assertEquals("自慰", AppCopy.RecordModule.handBrewLabel)
-        assertEquals("做爱", AppCopy.RecordModule.sexLabel)
+            AppLanguageState.current = AppLanguage.ZH.strings(TerminologyStyle.DIRECT)
+            assertEquals("自慰", AppCopy.RecordModule.handBrewLabel)
+            assertEquals("做爱", AppCopy.RecordModule.sexLabel)
 
-        // Step 3: Enable Biometric App Lock with 1-minute delay
-        val lockSession = AppLockSession(enabled = true, delay = AppLockDelay.OneMinute)
-        lockSession.onForeground(0L)
-        lockSession.onAuthenticationStarted()
-        lockSession.onAuthenticationFinished(success = true)
-        assertFalse("Session should be unlocked after successful biometric prompt", lockSession.locked.value)
+            // Step 3: Enable Biometric App Lock with 1-minute delay
+            val lockSession = AppLockSession(enabled = true, delay = AppLockDelay.OneMinute)
+            lockSession.onForeground(0L)
+            lockSession.onAuthenticationStarted()
+            lockSession.onAuthenticationFinished(success = true)
+            assertFalse("Session should be unlocked after successful biometric prompt", lockSession.locked.value)
 
-        // Step 4: Configure Launcher Disguise to Journal alias
-        val disguiseChanges = launcherAliasChanges(
-            target = LauncherIdentity.Journal,
-            enabledNow = setOf(LauncherIdentity.Default),
-        )
-        assertEquals(2, disguiseChanges.size)
-        assertTrue(disguiseChanges.any { it.identity == LauncherIdentity.Journal && it.enabled })
-        assertTrue(disguiseChanges.any { it.identity == LauncherIdentity.Default && !it.enabled })
+            // Step 4: Configure Launcher Disguise to Journal alias
+            val disguiseChanges = launcherAliasChanges(
+                target = LauncherIdentity.Journal,
+                enabledNow = setOf(LauncherIdentity.Default),
+            )
+            assertEquals(2, disguiseChanges.size)
+            assertTrue(disguiseChanges.any { it.identity == LauncherIdentity.Journal && it.enabled })
+            assertTrue(disguiseChanges.any { it.identity == LauncherIdentity.Default && !it.enabled })
 
-        // Step 5: Background app for 120s (exceeds 60s delay)
-        val backgroundTimestamp = 10_000L
-        lockSession.onBackground(backgroundTimestamp, changingConfigurations = false)
+            // Step 5: Background app for 120s (exceeds 60s delay)
+            val backgroundTimestamp = 10_000L
+            lockSession.onBackground(backgroundTimestamp, changingConfigurations = false)
 
-        val foregroundTimestamp = backgroundTimestamp + 120_000L
-        lockSession.onForeground(foregroundTimestamp)
+            val foregroundTimestamp = backgroundTimestamp + 120_000L
+            lockSession.onForeground(foregroundTimestamp)
 
-        // Step 6: Verify app lock actively shields the app
-        assertTrue("App lock should be locked after timeout expired", lockSession.locked.value)
+            // Step 6: Verify app lock actively shields the app
+            assertTrue("App lock should be locked after timeout expired", lockSession.locked.value)
 
-        // Step 7: Biometric authentication succeeds
-        val request = lockSession.onAuthenticationStarted()
-        assertNotNull(request)
-        lockSession.onAuthenticationFinished(success = true, request = request)
+            // Step 7: Biometric authentication succeeds
+            val request = lockSession.onAuthenticationStarted()
+            assertNotNull(request)
+            lockSession.onAuthenticationFinished(success = true, request = request)
 
-        // Step 8: Verify app resumes unlocked with chosen configuration intact
-        assertFalse("App lock should be unlocked", lockSession.locked.value)
-        assertEquals(DailyRecordColorTheme.EmeraldBerry, DailyRecordThemeState.current)
-        assertEquals(TerminologyStyle.DIRECT, terminologyPref.current)
+            // Step 8: Verify app resumes unlocked with chosen configuration intact
+            assertFalse("App lock should be unlocked", lockSession.locked.value)
+            assertEquals(DailyRecordColorTheme.EmeraldBerry, DailyRecordThemeState.current)
+            assertEquals(TerminologyStyle.DIRECT, terminologyPref.current)
+        } finally {
+            DailyRecordThemeState.current = previousTheme
+            AppLanguageState.current = previousStrings
+        }
     }
 }

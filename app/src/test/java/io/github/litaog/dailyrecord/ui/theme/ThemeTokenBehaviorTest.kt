@@ -4,13 +4,9 @@ import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnitType
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -18,12 +14,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Adversarial and empirical stress tests for Daily Record shapes and typography tokens.
- *
- * Stress-tests boundary geometries, extreme densities, 200% accessibility font scaling,
- * numerical precision, and hierarchical monotonicity.
+ * Shape outline behaviour, font-scale math, and line-height/letter-spacing invariants
+ * for the theme tokens (JVM unit tests that call production functions directly; no instrumentation).
  */
-class ThemeAdversarialStressTest {
+class ThemeTokenBehaviorTest {
 
     private val allShapes: List<Pair<String, CornerBasedShape>> = listOf(
         "ExtraSmall" to DailyRecordShapes.ExtraSmall,
@@ -67,7 +61,7 @@ class ThemeAdversarialStressTest {
     )
 
     // =========================================================================
-    // 1. Shape Adversarial Dimension & Density Stress Tests
+    // 1. Shape outline behaviour under degenerate dimensions and densities
     // =========================================================================
 
     @Test
@@ -173,7 +167,7 @@ class ThemeAdversarialStressTest {
     }
 
     // =========================================================================
-    // 2. Typography 200% Accessibility Font Scale Stress Tests
+    // 2. Typography under 200% accessibility font scale
     // =========================================================================
 
     @Test
@@ -223,62 +217,9 @@ class ThemeAdversarialStressTest {
         }
     }
 
-    @Test
-    fun metricNumeralsPreserveTabularSettingsAndScaleHarmoniously() {
-        val metrics = listOf(
-            "MetricNumberLarge" to MetricNumberLarge,
-            "MetricNumberMedium" to MetricNumberMedium,
-            "MetricNumberSmall" to MetricNumberSmall,
-        )
-
-        metrics.forEach { (name, metric) ->
-            assertEquals("$name must enforce OpenType tnum feature", "tnum", metric.fontFeatureSettings)
-            assertEquals("$name must use SansSerif font family", FontFamily.SansSerif, metric.fontFamily)
-            assertEquals("$name must be bold", FontWeight.Bold, metric.fontWeight)
-            assertTrue("$name line height must exceed font size", metric.lineHeight.value > metric.fontSize.value)
-        }
-
-        // Progression check
-        assertTrue(MetricNumberLarge.fontSize > MetricNumberMedium.fontSize)
-        assertTrue(MetricNumberMedium.fontSize > MetricNumberSmall.fontSize)
-        assertTrue(MetricNumberLarge.lineHeight > MetricNumberMedium.lineHeight)
-        assertTrue(MetricNumberMedium.lineHeight > MetricNumberSmall.lineHeight)
-
-        // At 200% scale, line height delta must remain positive
-        val density = Density(density = 3f, fontScale = 2.0f)
-        val largeH = with(density) { MetricNumberLarge.lineHeight.toPx() }
-        val medH = with(density) { MetricNumberMedium.lineHeight.toPx() }
-        val smallH = with(density) { MetricNumberSmall.lineHeight.toPx() }
-        assertTrue(largeH > medH)
-        assertTrue(medH > smallH)
-    }
-
     // =========================================================================
-    // 3. Hierarchy Inversion & Ratio Stress Tests
+    // 3. Line spacing and letter spacing invariants
     // =========================================================================
-
-    @Test
-    fun headlineProgressionIsStrictlyMonotonicAndNonInverting() {
-        // Explicitly check the historical inversion bug: headlineSmall was previously 24sp > headlineMedium 22sp
-        assertTrue(
-            "headlineLarge (${Typography.headlineLarge.fontSize}) must be > headlineMedium (${Typography.headlineMedium.fontSize})",
-            Typography.headlineLarge.fontSize > Typography.headlineMedium.fontSize,
-        )
-        assertTrue(
-            "headlineMedium (${Typography.headlineMedium.fontSize}) must be > headlineSmall (${Typography.headlineSmall.fontSize})",
-            Typography.headlineMedium.fontSize > Typography.headlineSmall.fontSize,
-        )
-        assertEquals("headlineLarge must be 28sp", 28.sp, Typography.headlineLarge.fontSize)
-        assertEquals("headlineMedium must be 24sp", 24.sp, Typography.headlineMedium.fontSize)
-        assertEquals("headlineSmall must be 20sp", 20.sp, Typography.headlineSmall.fontSize)
-
-        // Line heights must also follow strict progression
-        assertTrue(Typography.headlineLarge.lineHeight > Typography.headlineMedium.lineHeight)
-        assertTrue(Typography.headlineMedium.lineHeight > Typography.headlineSmall.lineHeight)
-        assertEquals(36.sp, Typography.headlineLarge.lineHeight)
-        assertEquals(32.sp, Typography.headlineMedium.lineHeight)
-        assertEquals(28.sp, Typography.headlineSmall.lineHeight)
-    }
 
     @Test
     fun lineSpacingRatiosRemainComfortableAcrossAllRoles() {

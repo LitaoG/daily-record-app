@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.e2e
+package io.github.litaog.dailyrecord.scenarios
 
 import android.content.SharedPreferences
 import androidx.compose.ui.graphics.Color
@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /**
- * Shared test infrastructure, in-memory repository fakes, and utility fixtures
- * for the opaque-box E2E test suite.
+ * Shared fixtures for the scenario test suite: in-memory repositories, fake
+ * SharedPreferences, and fixed record datasets (pure JVM unit test infrastructure).
  */
 class E2EFakeSharedPreferences : SharedPreferences {
     private val data = mutableMapOf<String, Any?>()
@@ -129,7 +129,7 @@ class E2EFakeSharedPreferences : SharedPreferences {
     }
 }
 
-/** In-memory implementation of HandBrewRecordRepository for opaque-box testing. */
+/** In-memory implementation of HandBrewRecordRepository for scenario testing. */
 class InMemoryHandBrewRecordRepository : HandBrewRecordRepository {
     private val records = MutableStateFlow<Map<LocalDate, HandBrewRecord>>(emptyMap())
     private val details = MutableStateFlow<Map<LocalDate, List<HandBrewRecordDetail>>>(emptyMap())
@@ -175,7 +175,7 @@ class InMemoryHandBrewRecordRepository : HandBrewRecordRepository {
     }
 }
 
-/** In-memory implementation of SexRecordRepository for opaque-box testing. */
+/** In-memory implementation of SexRecordRepository for scenario testing. */
 class InMemorySexRecordRepository : SexRecordRepository {
     private val records = MutableStateFlow<Map<LocalDate, SexRecord>>(emptyMap())
     private val details = MutableStateFlow<Map<LocalDate, List<SexRecordDetail>>>(emptyMap())

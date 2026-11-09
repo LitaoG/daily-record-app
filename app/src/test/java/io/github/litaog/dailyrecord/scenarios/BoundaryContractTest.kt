@@ -1,4 +1,4 @@
-package io.github.litaog.dailyrecord.e2e
+package io.github.litaog.dailyrecord.scenarios
 
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.data.requireValidRecordRange
@@ -28,11 +28,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tier 2 - Boundary & Corner Cases (Opaque-Box Resilience & Stress Verification).
- * Tests extreme inputs, null vs zero semantics, boundary clamping, rapid taps,
- * and security constraints.
+ * Boundary and corner-case contracts: extreme inputs, null vs zero semantics,
+ * boundary clamping, rapid taps, and security constraints (JVM unit tests that
+ * call production functions directly; no instrumentation). The 48dp touch-target
+ * test below is the only JVM-level pinning of the DailyRecordSizes tokens.
  */
-class Tier2BoundaryCornerCasesTest {
+class BoundaryContractTest {
 
     private val earliestDate = LocalDate.of(1970, 1, 1)
     private val today = LocalDate.of(2026, 11, 7)
