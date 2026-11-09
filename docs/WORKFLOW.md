@@ -1,7 +1,7 @@
 # 端到端工程工作流
 
 状态：`current — authoritative workflow`
-最后复核：2026-11-05
+最后复核：2026-11-09
 
 本文件是 Daily Record 从任务开始到合并清理的唯一权威流程来源。其他文档（[`AGENTS.md`](../AGENTS.md)、[`CONTRIBUTING.md`](../CONTRIBUTING.md)、[`DEVELOPMENT.md`](DEVELOPMENT.md)、[`TESTING.md`](TESTING.md)）只保留各自职责范围内的简短摘要并链接回本文，不再各自维护一套互相矛盾的步骤。
 
@@ -75,7 +75,7 @@ docs/README.md 与文档目录 → 0.3 表中命中的那一份权威文档 → 
 | 7 | 发起 PR，等 CI 通过 | §8 |
 | 8 | 普通 merge 合入 `main`，删除分支、worktree 和全部中间产物，然后汇报 | §9、§10 |
 
-推送、合并和删除远端分支属于不可轻易撤销的远端写操作；AI 只在用户明确同意后执行（见 [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) 第 5 节）。
+推送工作分支（`agent/*`）、创建与更新 PR、回复评审评论是八步链路的常规部分：定向验证通过后由 AI 直接执行，无需逐次询问（用户 2026-11-09 起长期授权）。合并进 `main`、删除远端分支、发布与改权限仍属于不可轻易撤销的远端写操作，AI 只在用户明确同意后执行（见 [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) 第 11 节）。
 
 ### 0.5 AI 必守纪律
 
