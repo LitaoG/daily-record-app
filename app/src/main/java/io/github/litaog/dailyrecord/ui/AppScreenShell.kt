@@ -9,10 +9,18 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordLiquidBackdrop
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
@@ -86,5 +94,23 @@ internal fun AppScreenShell(
         ) { screen ->
             content(screen)
         }
+    }
+}
+
+/** Full-screen gate shown while the first Room snapshot has not arrived yet. */
+@Composable
+internal fun RecordsLoadingGate(
+    colors: RecordModuleColorTokens,
+    backdropBrush: Brush,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backdropBrush)
+            .testTag("records_loading")
+            .semantics { contentDescription = AppCopy.readingLocalRecords },
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(color = colors.primary)
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.RecordDetailEntry
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
@@ -117,4 +118,25 @@ internal fun RecordMonthSummaryCard(
             fontWeight = FontWeight.Bold,
         )
     }
+}
+
+/**
+ * Assembles the detail rows to persist with a count-only or full-detail save.
+ * Returns null when the save should stay count-only, empty when the count is
+ * zero, and the merged occurrence-indexed entries otherwise.
+ */
+internal fun assembleSaveEntries(
+    draftCount: Int,
+    detailsDraft: RecordDetailsDraft,
+    storedDetails: List<RecordDetailEntry>,
+): List<RecordDetailEntry>? = when {
+    draftCount == 0 -> emptyList()
+    draftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS -> detailsDraft.asEntries().take(draftCount)
+    detailsDraft.hasChanges ->
+        (storedDetails + detailsDraft.asEntries())
+            .filter { it.occurrenceIndex in 1..draftCount }
+            .associateBy(RecordDetailEntry::occurrenceIndex)
+            .values
+            .sortedBy(RecordDetailEntry::occurrenceIndex)
+    else -> null
 }

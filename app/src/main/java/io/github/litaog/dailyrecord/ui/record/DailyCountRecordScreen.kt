@@ -33,7 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
-import io.github.litaog.dailyrecord.ui.RecordDetailEntry
 import io.github.litaog.dailyrecord.ui.RecordModuleController
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.components.DailyCountControl
@@ -102,13 +101,10 @@ internal fun DailyCountRecordScreen(
 
     LaunchedEffect(dataReady, record, storedDetails) {
         if (dataReady) {
-            val latestCount = record?.count ?: 0
-            val reconciledCountDraft = countDraft.reconcile(latestCount)
-            countDraft = reconciledCountDraft
-            // Normalize the detail rows to the reconciled draft count: a dirty
-            // count keeps its size (no remote truncation of in-progress edits)
-            // and a clean count stays in sync with the server.
-            detailsDraft = detailsDraft.reconcile(storedDetails, reconciledCountDraft.count)
+            val (reconciledCount, reconciledDetails) =
+                reconcileRecordDrafts(countDraft, detailsDraft, record?.count ?: 0, storedDetails)
+            countDraft = reconciledCount
+            detailsDraft = reconciledDetails
         }
     }
 
@@ -323,18 +319,8 @@ internal fun DailyCountRecordScreen(
                 onSave = {
                     if (!editable || !canSave || saving) return@PinnedStickySaveActionBar
                     val currentDraftCount = countDraft.count
-                    val currentDetails = when {
-                        currentDraftCount == 0 -> emptyList()
-                        currentDraftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS ->
-                            detailsDraft.asEntries().take(currentDraftCount)
-                        detailsDraft.hasChanges ->
-                            (storedDetails + detailsDraft.asEntries())
-                                .filter { it.occurrenceIndex in 1..currentDraftCount }
-                                .associateBy(RecordDetailEntry::occurrenceIndex)
-                                .values
-                                .sortedBy(RecordDetailEntry::occurrenceIndex)
-                        else -> null
-                    }
+                    val currentDetails =
+                        assembleSaveEntries(currentDraftCount, detailsDraft, storedDetails)
                     launchMutation(AppCopy.Record.saveFailure, onSaved) {
                         if (currentDetails == null) {
                             controller.saveRecord(date, currentDraftCount)
@@ -373,50 +359,41 @@ internal fun DailyCountRecordScreen(
         onDismiss = { timePickerRequest = null },
     )
 
-    if (showClearDialog) {
-        RecordClearConfirmDialog(
-            detailsOnly = detailsDraft.expanded,
-            saving = saving,
-            onDismiss = { if (!saving) showClearDialog = false },
-            onConfirmDetailsOnly = {
-                val currentDraftCount = countDraft.count
-                launchMutation(
-                    AppCopy.Record.clearDetailsFailure,
-                    { detailsDraft = detailsDraft.clearContent() },
-                ) {
-                    controller.clearDetails(date, currentDraftCount)
-                }
-            },
-            onConfirmRecord = {
-                launchMutation(AppCopy.Record.clearFailure, onBack) {
-                    controller.clearRecord(date)
-                }
-            },
-        )
-    }
-
-    if (showRemoveDetailDialog) {
-        RecordRemoveDetailConfirmDialog(
-            occurrenceCount = countDraft.count,
-            onDismiss = { showRemoveDetailDialog = false },
-            onConfirm = {
-                showRemoveDetailDialog = false
-                applyCount(countDraft.decrease().count)
-            },
-        )
-    }
-
-    if (showDiscardDialog) {
-        RecordDiscardConfirmDialog(
-            onDismiss = { showDiscardDialog = false },
-            onConfirm = {
-                showDiscardDialog = false
-                // The user confirmed the edits are discarded: clear the
-                // remembered drafts so reopening the day starts clean.
-                countDraft = CountDraft()
-                detailsDraft = RecordDetailsDraft()
-                onBack()
-            },
-        )
-    }
+    RecordScreenDialogsHost(
+        showClearDialog = showClearDialog,
+        clearDetailsOnly = detailsDraft.expanded,
+        saving = saving,
+        onClearDismiss = { if (!saving) showClearDialog = false },
+        onConfirmClearDetails = {
+            val currentDraftCount = countDraft.count
+            launchMutation(
+                AppCopy.Record.clearDetailsFailure,
+                { detailsDraft = detailsDraft.clearContent() },
+            ) {
+                controller.clearDetails(date, currentDraftCount)
+            }
+        },
+        onConfirmClearRecord = {
+            launchMutation(AppCopy.Record.clearFailure, onBack) {
+                controller.clearRecord(date)
+            }
+        },
+        showRemoveDetailDialog = showRemoveDetailDialog,
+        occurrenceCount = countDraft.count,
+        onRemoveDetailDismiss = { showRemoveDetailDialog = false },
+        onRemoveDetailConfirm = {
+            showRemoveDetailDialog = false
+            applyCount(countDraft.decrease().count)
+        },
+        showDiscardDialog = showDiscardDialog,
+        onDiscardDismiss = { showDiscardDialog = false },
+        onDiscardConfirm = {
+            showDiscardDialog = false
+            // The user confirmed the edits are discarded: clear the
+            // remembered drafts so reopening the day starts clean.
+            countDraft = CountDraft()
+            detailsDraft = RecordDetailsDraft()
+            onBack()
+        },
+    )
 }

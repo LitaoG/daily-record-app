@@ -8,10 +8,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,18 +18,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.litaog.dailyrecord.BuildConfig
 import io.github.litaog.dailyrecord.core.data.HandBrewRecordRepository
 import io.github.litaog.dailyrecord.core.data.SexRecordRepository
 import io.github.litaog.dailyrecord.core.account.LocalDataAfterAccountDeletion
-import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
 import io.github.litaog.dailyrecord.core.common.AppLanguageState
 import io.github.litaog.dailyrecord.core.common.TerminologyStyle
@@ -39,7 +32,6 @@ import io.github.litaog.dailyrecord.core.common.strings
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
-import io.github.litaog.dailyrecord.core.statistics.shiftMonthAnchor
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationSelection
 import io.github.litaog.dailyrecord.ui.calendar.DailyCountCalendarScreen
@@ -198,16 +190,7 @@ fun DailyRecordApp(
         initialValue = null as List<DailyCountEntry>?,
     )
     if (allRecordsState == null) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(backdropBrush)
-                .testTag("records_loading")
-                .semantics { contentDescription = AppCopy.readingLocalRecords },
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator(color = moduleSpec.colors.primary)
-        }
+        RecordsLoadingGate(colors = moduleSpec.colors, backdropBrush = backdropBrush)
         return
     }
     val allRecords = allRecordsState.orEmpty()
@@ -326,29 +309,21 @@ fun DailyRecordApp(
                                 showOnboardingCard = !intimacyOnboardingDismissed,
                                 onDismissOnboarding = { intimacyOnboardingPreference.dismiss() },
                                 modifier = Modifier.padding(contentPadding),
-                                onPreviousMonth = {
-                                    val previous = displayedMonth.minusMonths(1)
-                                    if (!previous.isBefore(earliestSupportedMonth)) {
-                                        browseDateText = shiftMonthAnchor(
-                                            browseDate,
-                                            months = -1,
-                                            earliestDate = EARLIEST_SUPPORTED_DATE,
-                                            latestDate = effectiveToday,
-                                        ).toString()
-                                    }
-                                },
-                                onModuleSelected = selectModule,
-                                onNextMonth = {
-                                    val next = displayedMonth.plusMonths(1)
-                                    if (!next.isAfter(currentMonth)) {
-                                        browseDateText = shiftMonthAnchor(
-                                            browseDate,
-                                            months = 1,
-                                            earliestDate = EARLIEST_SUPPORTED_DATE,
-                                            latestDate = effectiveToday,
-                                        ).toString()
-                                    }
-                                },
+                        onPreviousMonth = {
+                            val previous = displayedMonth.minusMonths(1)
+                            if (!previous.isBefore(earliestSupportedMonth)) {
+                                browseDateText =
+                                    shiftBrowseMonth(browseDate, months = -1L, effectiveToday).toString()
+                            }
+                        },
+                        onModuleSelected = selectModule,
+                        onNextMonth = {
+                            val next = displayedMonth.plusMonths(1)
+                            if (!next.isAfter(currentMonth)) {
+                                browseDateText =
+                                    shiftBrowseMonth(browseDate, months = 1L, effectiveToday).toString()
+                            }
+                        },
                                 onToday = { browseDateText = effectiveToday.toString() },
                                 onOpenDatePicker = {
                                     datePickerSelectionName = DateNavigationSelection.Date.name

@@ -251,3 +251,19 @@ private fun List<RecordDetailDraft>.materializeForEditor(count: Int): List<Recor
 
 private fun List<RecordDetailDraft>.contentWithoutExpansion(): List<RecordDetailDraft> =
     map(RecordDetailDraft::withoutExpansion)
+
+/**
+ * Normalizes both drafts against the latest stored record: a dirty count keeps
+ * its size (no remote truncation of in-progress edits) and a clean count stays
+ * in sync with the server.
+ */
+internal fun reconcileRecordDrafts(
+    countDraft: CountDraft,
+    detailsDraft: RecordDetailsDraft,
+    storedCount: Int,
+    storedDetails: List<RecordDetailEntry>,
+): Pair<CountDraft, RecordDetailsDraft> {
+    val reconciledCountDraft = countDraft.reconcile(storedCount)
+    val reconciledDetails = detailsDraft.reconcile(storedDetails, reconciledCountDraft.count)
+    return reconciledCountDraft to reconciledDetails
+}
