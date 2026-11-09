@@ -219,3 +219,36 @@ test("subagent orchestration rule mandates summary and first-hand sampling", () 
     }
   }
 });
+
+// ── 8. 改码同步文档门禁 ──
+test("code-change doc sync rule is declared and forbids leaving stale docs", () => {
+  const declarationSites = ["AGENTS.md", "docs/WORKFLOW.md"];
+  const requiredTokens = [
+    "改码必同步文档",
+    "不留过时描述",
+    "受影响",
+    "旧行为",
+  ];
+  const forbiddenPhrases = [
+    "无需同步文档",
+    "不必更新文档",
+    "文档可以以后再改",
+    "允许文档过时",
+  ];
+
+  for (const site of declarationSites) {
+    const text = read(site);
+    for (const token of requiredTokens) {
+      assert.ok(
+        text.includes(token),
+        `Missing required token "${token}" in doc sync rule at ${site}`,
+      );
+    }
+    for (const forbidden of forbiddenPhrases) {
+      assert.ok(
+        !text.includes(forbidden),
+        `Found forbidden phrase "${forbidden}" in ${site}`,
+      );
+    }
+  }
+});
