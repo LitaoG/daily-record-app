@@ -1,12 +1,12 @@
 # 开发环境与日常命令
 
-最后复核：2026-08-16
+最后复核：2026-11-09
 
 本文件只回答环境、命令与配置边界；端到端流程以 [`WORKFLOW.md`](WORKFLOW.md) 为准，测试策略以 [`TESTING.md`](TESTING.md) 为唯一事实来源，代码写法以 [`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 为准，发布流程以 [`RELEASE.md`](RELEASE.md) 为准。
 
 ## 环境
 
-- Android Studio 稳定版与内置 JDK 21
+- Android Studio 稳定版，Gradle 使用其内置 JBR 运行（2026.2.x 内置 JBR 25；JBR 随 Studio 版本演进，以实际安装为准）
 - Android SDK / Platform Tools
 - 当前配置为 `minSdk 26`、`compileSdk 37`、`targetSdk 36`，Room schema 为 v6；版本号以 `gradle.properties` 为准，当前公开版本为 `v1.0.0-beta.3` / `versionCode 4`
 - SDK 版本说明：`compileSdk 37` 是升级 core-ktx 1.19.0 / lifecycle 2.11.0 后的强制要求（AAR 元数据校验），本轮已随库升级同步完成。`targetSdk` 刻意冻结在 36：升级到 37 是运行期行为变化（影响 Android 16+ 设备），需要新版本规划中的 API 34 与 minSdk 26 设备回归后一并评估。compileSdk 37 的新 Lint 版本库还新报告 AGP 9.3.1、Compose BOM 2026.08.00、Firebase BOM 34.17.0：其中 Firebase BOM 升级会改变客户端同步/认证 SDK 行为，需设备回归，统一归入 `v1.0.0-beta.4` 的协调升级矩阵，本轮不追版本。下次复查时间为 `v1.0.0-beta.4` 规划时
