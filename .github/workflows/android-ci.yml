@@ -162,6 +162,10 @@ jobs:
           arch: x86_64
           profile: pixel_6
           emulator-boot-timeout: 600
+          # The default swiftshader_indirect GPU backend crashes (ColorBuffer
+          # 405 -> device offline) under the overhaul-rendered suite; the same
+          # tests pass on a local no-window API 34 emulator with angle_indirect.
+          emulator-options: -no-window -gpu angle_indirect -no-snapshot -noaudio -no-boot-anim
           script: pnpm test:android-connected:unix
 
       - name: Capture device logs on failure
