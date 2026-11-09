@@ -71,7 +71,7 @@
 
 ## 开发与验证
 
-需要 Android Studio 内置 JDK 21、Android SDK、Node.js 22/pnpm，以及一台 API 34 Android 模拟器。自动化设备测试会修改应用数据，只能在测试模拟器上运行，不要连接日常使用的真机。
+需要 Android Studio（内置 JBR，无需另装 JDK）、Android SDK、Node.js 22/pnpm，以及一台 API 34 Android 模拟器。自动化设备测试会修改应用数据，只能在测试模拟器上运行，不要连接日常使用的真机。
 
 日常开发按 [`测试策略与执行矩阵`](docs/TESTING.md) 运行受影响范围的定向测试；下面的完整套件只在一个连贯小版本的最终功能 head 上运行一次，不在每个小修改后机械重复。
 
