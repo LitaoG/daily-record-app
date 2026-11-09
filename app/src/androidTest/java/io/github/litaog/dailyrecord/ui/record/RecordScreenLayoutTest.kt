@@ -22,6 +22,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.click
@@ -103,7 +104,11 @@ class RecordScreenLayoutTest {
         composeRule.onNodeWithTag("record_month_summary").assertIsDisplayed()
         composeRule.onNodeWithTag("record_actions").assertIsDisplayed()
         assertTrue(actionBounds.top >= summaryBounds.bottom)
-        assertTrue(actionBounds.bottom <= scrollBounds.bottom)
+        // Since the pinned save bar (docs/UI_UX.md: keep the bottom save bar
+        // fixed), the bar sits below the scrolling viewport instead of inside it.
+        val screenBounds = composeRule.onNodeWithTag("record_screen").fetchSemanticsNode().boundsInRoot
+        assertTrue(actionBounds.bottom <= screenBounds.bottom)
+        assertTrue(actionBounds.bottom >= scrollBounds.bottom - 1)
         assertTrue(lastDetailBounds.bottom <= actionBounds.top)
         composeRule.onNodeWithTag("record_detail_12").assertIsDisplayed()
         composeRule.onNodeWithTag("save_record_button").assertIsDisplayed()
@@ -118,7 +123,9 @@ class RecordScreenLayoutTest {
         setRecordContent(repository, width = 260.dp, viewportHeight = 720.dp, fontScale = 2f)
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithContentDescription("记录时间和感受").performClick()
+        composeRule.onNodeWithContentDescription("记录时间和感受")
+            .performScrollTo()
+            .performClick()
         composeRule.waitForIdle()
         repeat(30) {
             composeRule.onNodeWithTag("record_scroll_content")
@@ -141,7 +148,11 @@ class RecordScreenLayoutTest {
             .boundsInRoot
 
         assertTrue(actionBounds.top >= summaryBounds.bottom)
-        assertTrue(actionBounds.bottom <= scrollBounds.bottom)
+        // Since the pinned save bar (docs/UI_UX.md: keep the bottom save bar
+        // fixed), the bar sits below the scrolling viewport instead of inside it.
+        val screenBounds = composeRule.onNodeWithTag("record_screen").fetchSemanticsNode().boundsInRoot
+        assertTrue(actionBounds.bottom <= screenBounds.bottom)
+        assertTrue(actionBounds.bottom >= scrollBounds.bottom - 1)
         assertTrue(lastDetailBounds.bottom <= actionBounds.top)
         composeRule.onNodeWithTag("record_detail_12").assertIsDisplayed()
         composeRule.onNodeWithTag("save_record_button").assertIsDisplayed()

@@ -230,11 +230,14 @@ class RecordModuleIntegrationTest {
         val resolvedBitmap = requireNotNull(bitmap)
         val pixels = resolvedBitmap.toPixelMap()
         val sampleY = resolvedBitmap.height / 2
-        // Sample past the 4dp glass gutter (11px at the test density); a 10px
-        // inset lands on the translucent ring and picks up its lightened color.
         val context = ApplicationProvider.getApplicationContext<Context>()
         val compactPx = DailyRecordSpacing.Compact.value * context.resources.displayMetrics.density
-        val inset = (compactPx + 2f).toInt().coerceAtMost(resolvedBitmap.width / 8)
+        // Sample 8px into the slider half: past the 4dp glass gutter (11px at
+        // the test density) and past the 1dp specular rim of the selected
+        // slider (~3px), whose lightened white would otherwise be sampled. An
+        // inner pill would still leave a light pixel at this inset, so the
+        // contract below is unchanged.
+        val inset = (compactPx + 8f).toInt().coerceAtMost(resolvedBitmap.width / 8)
         val selectedPixel = if (selectedOnLeft) {
             pixels[inset, sampleY]
         } else {
