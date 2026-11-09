@@ -1,6 +1,5 @@
 package io.github.litaog.dailyrecord.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,8 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
@@ -27,8 +24,8 @@ import androidx.compose.ui.unit.dp
  *
  * Two decoupled layers keep text sharp:
  * 1. [DailyRecordLiquidBackdrop] paints the pearl canvas and one faint module
- *    glow; only that empty layer is blurred, and only on API 31+ where
- *    `RenderEffect` exists. Older devices draw a radial fade that looks the same.
+ *    glow as a radial fade; no layer is ever blurred with a RenderEffect,
+ *    which measured 333-675ms per frame under software renderers.
  * 2. [appleLiquidGlass] paints a surface: diffuse shadow, milk-glass fill and a
  *    directional top-lit rim highlight. It never blurs itself, so text, icons
  *    and controls inside stay pin-sharp.
@@ -65,7 +62,6 @@ private val GlassNeutralTint = Color(0xFFE2E8F0)
 private val LiquidShadowAmbient = Color(0x0A000000)
 private val LiquidShadowSpot = Color(0x14000000)
 private val LiquidGlowRadius = 220.dp
-private val LiquidGlowBlur = 45.dp
 
 /**
  * Directional top-lit rim highlight brush (ADR-022):
@@ -224,43 +220,37 @@ fun dailyRecordBackdropBrush(colors: RecordModuleColorTokens): Brush =
 
 /**
  * Full-screen backdrop layer. Place it as the first child of a screen root so
- * every glass surface floats above it. Only this empty layer is ever blurred.
+ * every glass surface floats above it.
+ *
+ * The module glow always renders as a radial fade. A [Modifier.blur] based
+ * glow was measured at 333-675ms per frame under software renderers
+ * (SwiftShader on CI emulators), which hung whole devices during screen
+ * transitions, while the radial fade is visually identical and cheap on
+ * every GPU path.
  */
 @Composable
 fun DailyRecordLiquidBackdrop(
     colors: RecordModuleColorTokens,
     modifier: Modifier = Modifier,
 ) {
-    val supportsBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     Box(modifier.fillMaxSize().background(dailyRecordBackdropBrush(colors))) {
         Box(
             Modifier
                 .fillMaxSize()
-                .then(
-                    if (supportsBlur) {
-                        Modifier.blur(LiquidGlowBlur, BlurredEdgeTreatment.Unbounded)
-                    } else {
-                        Modifier
-                    },
-                )
                 .drawBehind {
                     // One faint module glow behind the top of the screen.
                     val radius = LiquidGlowRadius.toPx()
                     val center = Offset(size.width * .86f, size.height * .04f)
                     val glow = colors.glow.copy(alpha = .12f)
-                    if (supportsBlur) {
-                        drawCircle(color = glow, radius = radius, center = center)
-                    } else {
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(glow, Color.Transparent),
-                                center = center,
-                                radius = radius,
-                            ),
-                            radius = radius,
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(glow, Color.Transparent),
                             center = center,
-                        )
-                    }
+                            radius = radius,
+                        ),
+                        radius = radius,
+                        center = center,
+                    )
                 },
         )
     }
