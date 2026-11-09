@@ -1,7 +1,7 @@
 # 端到端工程工作流
 
 状态：`current — authoritative workflow`
-最后复核：2026-11-05
+最后复核：2026-11-09
 
 本文件是 Daily Record 从任务开始到合并清理的唯一权威流程来源。其他文档（[`AGENTS.md`](../AGENTS.md)、[`CONTRIBUTING.md`](../CONTRIBUTING.md)、[`DEVELOPMENT.md`](DEVELOPMENT.md)、[`TESTING.md`](TESTING.md)）只保留各自职责范围内的简短摘要并链接回本文，不再各自维护一套互相矛盾的步骤。
 
@@ -75,7 +75,7 @@ docs/README.md 与文档目录 → 0.3 表中命中的那一份权威文档 → 
 | 7 | 发起 PR，等 CI 通过 | §8 |
 | 8 | 普通 merge 合入 `main`，删除分支、worktree 和全部中间产物，然后汇报 | §9、§10 |
 
-推送、合并和删除远端分支属于不可轻易撤销的远端写操作；AI 只在用户明确同意后执行（见 [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) 第 5 节）。
+完成定向验证与自检后：推送工作分支、创建与更新 PR、回复评审评论、`gh pr checks` 与 `gh pr merge`、删除已合并的本地与远端临时分支，全部由 AI 自行执行，不逐次询问（仿照涨幅榜仓库的 AI 工作逻辑，用户 2026-11-09 长期授权）。放行条件三项缺一不可：本地门禁全绿（按 [`TESTING.md`](TESTING.md) 影响面矩阵）、PR CI 全绿、评审评论逐条处理（见 [`AGENTS.md`](../AGENTS.md) 第 1.10 节）。发布 tag/Release、改权限、删除用户数据仍需用户明确同意；强制推送任何时候都禁止（见 [`AI-EVIDENCE-STANDARD.md`](AI-EVIDENCE-STANDARD.md) 第 11 节）。
 
 ### 0.5 AI 必守纪律
 
