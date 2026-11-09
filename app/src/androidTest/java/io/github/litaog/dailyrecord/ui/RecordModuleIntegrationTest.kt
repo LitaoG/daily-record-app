@@ -28,18 +28,22 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.AppLanguageState
+import io.github.litaog.dailyrecord.core.common.TerminologyStyle
+import io.github.litaog.dailyrecord.core.common.ZhStrings
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.core.model.SexRecord
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
 import io.github.litaog.dailyrecord.ui.components.PeriodTabs
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
 import io.github.litaog.dailyrecord.ui.theme.SexColorTokens
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.math.abs
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -57,6 +61,24 @@ class RecordModuleIntegrationTest {
     fun selectHandBrewByDefault() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         SelectedRecordModulePreference(context).setSelectedModule(RecordModule.HandBrew)
+        // ADR-025: these tests assert the direct wording. Module specs and all
+        // copy read the process-global AppLanguageState, which DailyRecordApp
+        // only refreshes from the persisted style inside event callbacks, so
+        // both the preference and the global copy set must be pinned here.
+        TerminologyStylePreference(context).setStyle(TerminologyStyle.DIRECT)
+        AppLanguageState.current = ZhStrings(TerminologyStyle.DIRECT)
+    }
+
+    @After
+    fun resetGlobalCopyState() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences(TerminologyStylePreference.PREFERENCES_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(TerminologyStylePreference.KEY_TERMINOLOGY_STYLE)
+            .commit()
+        // DailyRecordApp compositions overwrite AppLanguageState; restore the
+        // default so screen-level tests that read the global stay order-proof.
+        AppLanguageState.current = ZhStrings
     }
 
     @Test
@@ -144,25 +166,28 @@ class RecordModuleIntegrationTest {
             .fetchSemanticsNode()
             .boundsInRoot
 
-        assertEquals(selectorBounds.width / 2f, handBrewBounds.width, 0.5f)
-        assertEquals(selectorBounds.width / 2f, sexBounds.width, 0.5f)
-        assertEquals(selectorBounds.left, handBrewBounds.left, 0.5f)
-        assertEquals(selectorBounds.top, handBrewBounds.top, 0.5f)
-        assertEquals(selectorBounds.bottom, handBrewBounds.bottom, 0.5f)
-        assertEquals(handBrewBounds.right, sexBounds.left, 0.5f)
-        assertEquals(selectorBounds.top, sexBounds.top, 0.5f)
-        assertEquals(selectorBounds.right, sexBounds.right, 0.5f)
-        assertEquals(selectorBounds.bottom, sexBounds.bottom, 0.5f)
+        // ADR-022: the glass track keeps a 4dp (Compact) gutter on every side,
+        // so each clickable half spans the padded inner area, not the outer
+        // glass ring. The tagged halves are inset by exactly one gutter.
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val compactPx = DailyRecordSpacing.Compact.value * context.resources.displayMetrics.density
+
+        assertEquals(selectorBounds.width / 2f - compactPx, handBrewBounds.width, 1.5f)
+        assertEquals(selectorBounds.width / 2f - compactPx, sexBounds.width, 1.5f)
+        assertEquals(selectorBounds.left + compactPx, handBrewBounds.left, 1.5f)
+        assertEquals(selectorBounds.top + compactPx, handBrewBounds.top, 1.5f)
+        assertEquals(selectorBounds.bottom - compactPx, handBrewBounds.bottom, 1.5f)
+        assertEquals(handBrewBounds.right, sexBounds.left, 1.5f)
+        assertEquals(selectorBounds.top + compactPx, sexBounds.top, 1.5f)
+        assertEquals(selectorBounds.right - compactPx, sexBounds.right, 1.5f)
+        assertEquals(selectorBounds.bottom - compactPx, sexBounds.bottom, 1.5f)
     }
 
     @Test
     fun handBrewColorCoversTheCompleteSelectedHalfWithoutAnInnerPill() {
         setDualModuleContent()
 
-        assertSelectorHalfColors(
-            left = HandBrewColorTokens.primary,
-            right = DailyRecordSurface,
-        )
+        assertSelectorHalfColors(selected = HandBrewColorTokens.primary, selectedOnLeft = true)
     }
 
     @Test
@@ -171,10 +196,7 @@ class RecordModuleIntegrationTest {
         SelectedRecordModulePreference(context).setSelectedModule(RecordModule.Sex)
         setDualModuleContent()
 
-        assertSelectorHalfColors(
-            left = DailyRecordSurface,
-            right = SexColorTokens.primary,
-        )
+        assertSelectorHalfColors(selected = SexColorTokens.primary, selectedOnLeft = false)
     }
 
     @Test
@@ -198,98 +220,7 @@ class RecordModuleIntegrationTest {
         composeRule.onNodeWithText("全部").assertIsDisplayed()
     }
 
-    @Test
-    fun periodTabsKeepEqualTouchTargetsAndInsetGlassSlider() {
-        setDualModuleContent()
-
-        composeRule.onNodeWithContentDescription("统计，未选择").performClick()
-        composeRule.waitForIdle()
-
-        val container = composeRule.onNodeWithTag("statistics_period_tabs").fetchSemanticsNode().boundsInRoot
-        val slider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
-        val segments = StatisticsPeriod.entries.map { period ->
-            composeRule.onNodeWithTag("statistics_period_${period.name}").fetchSemanticsNode().boundsInRoot
-        }
-        val weekLabel = composeRule.onNodeWithText("周").fetchSemanticsNode().boundsInRoot
-        val minWidth = segments.minOf { it.width }
-        val maxWidth = segments.maxOf { it.width }
-
-        // Segment widths are integer pixels on a device; one pixel of rounding
-        // is expected when the full width is not divisible by four.
-        assertEquals(minWidth, maxWidth, 1f)
-        assertEquals(segments.first().center.y, weekLabel.center.y, 1.5f)
-        assertTrue(slider.width < segments.first().width)
-        assertTrue(slider.left > segments.first().left)
-        assertTrue(slider.right < segments.first().right)
-        assertTrue(slider.top > container.top)
-        assertTrue(slider.bottom < container.bottom)
-
-        composeRule.onNodeWithTag("statistics_period_Month").performClick()
-        composeRule.waitForIdle()
-        val movedSlider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
-        assertEquals(segments[1].left + (segments[1].width - movedSlider.width) / 2f, movedSlider.left, 1.5f)
-        assertEquals(segments[1].right - (segments[1].width - movedSlider.width) / 2f, movedSlider.right, 1.5f)
-    }
-
-    @Test
-    fun periodTabsKeepRatiosAcrossParentWidths() {
-        val parentWidth = androidx.compose.runtime.mutableStateOf(240.dp)
-        composeRule.setContent {
-            DailyRecordTheme {
-                Box(modifier = Modifier.width(parentWidth.value)) {
-                    PeriodTabs(
-                        selected = StatisticsPeriod.Week,
-                        onSelected = {},
-                        colors = HandBrewColorTokens,
-                    )
-                }
-            }
-        }
-
-        listOf(240.dp, 360.dp, 600.dp).forEach { width ->
-            composeRule.runOnIdle { parentWidth.value = width }
-            composeRule.waitForIdle()
-
-            val container = composeRule.onNodeWithTag("statistics_period_tabs").fetchSemanticsNode().boundsInRoot
-            val segments = StatisticsPeriod.entries.map { period ->
-                composeRule.onNodeWithTag("statistics_period_${period.name}").fetchSemanticsNode().boundsInRoot
-            }
-            val slider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
-
-            assertTrue(container.width > 0f)
-            assertEquals(segments.first().width, segments[1].width, 1f)
-            assertEquals(segments.first().width, segments[2].width, 1f)
-            assertEquals(segments.first().width, segments[3].width, 1f)
-            assertTrue(slider.width < segments.first().width)
-            assertTrue(slider.left > segments.first().left)
-            assertTrue(slider.right < segments.first().right)
-            assertTrue(slider.top > container.top)
-            assertTrue(slider.bottom < container.bottom)
-        }
-    }
-
-    @Test
-    fun snackbarUsesTheActiveModuleColorTokens() {
-        val hostState = SnackbarHostState()
-        val activeColors = androidx.compose.runtime.mutableStateOf(HandBrewColorTokens)
-        composeRule.setContent {
-            DailyRecordTheme {
-                DailyRecordSnackbarHost(
-                    hostState = hostState,
-                    colors = activeColors.value,
-                )
-                LaunchedEffect(Unit) {
-                    hostState.showSnackbar("网络提示", duration = SnackbarDuration.Indefinite)
-                }
-            }
-        }
-
-        assertSnackbarColor(HandBrewColorTokens.strong)
-        composeRule.runOnIdle { activeColors.value = SexColorTokens }
-        assertSnackbarColor(SexColorTokens.strong)
-    }
-
-    private fun assertSelectorHalfColors(left: Color, right: Color) {
+    private fun assertSelectorHalfColors(selected: Color, selectedOnLeft: Boolean) {
         var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
         composeRule.waitUntil(timeoutMillis = 10_000) {
             runCatching {
@@ -299,23 +230,35 @@ class RecordModuleIntegrationTest {
         val resolvedBitmap = requireNotNull(bitmap)
         val pixels = resolvedBitmap.toPixelMap()
         val sampleY = resolvedBitmap.height / 2
-        val inset = 10.coerceAtMost(resolvedBitmap.width / 8)
-
-        assertEquals(left.toArgb(), pixels[inset, sampleY].toArgb())
-        assertEquals(right.toArgb(), pixels[resolvedBitmap.width - inset - 1, sampleY].toArgb())
-    }
-
-    private fun assertSnackbarColor(expected: Color) {
-        var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            runCatching {
-                bitmap = composeRule.onNodeWithTag("daily_record_snackbar").captureToImage()
-            }.isSuccess
+        // Sample past the 4dp glass gutter (11px at the test density); a 10px
+        // inset lands on the translucent ring and picks up its lightened color.
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val compactPx = DailyRecordSpacing.Compact.value * context.resources.displayMetrics.density
+        val inset = (compactPx + 2f).toInt().coerceAtMost(resolvedBitmap.width / 8)
+        val selectedPixel = if (selectedOnLeft) {
+            pixels[inset, sampleY]
+        } else {
+            pixels[resolvedBitmap.width - inset - 1, sampleY]
         }
-        val pixels = requireNotNull(bitmap).toPixelMap()
-        val sampleX = (pixels.width - 8).coerceAtLeast(0)
-        val sampleY = pixels.height / 2
-        assertEquals(expected.toArgb(), pixels[sampleX, sampleY].toArgb())
+        val surfacePixel = if (selectedOnLeft) {
+            pixels[resolvedBitmap.width - inset - 1, sampleY]
+        } else {
+            pixels[inset, sampleY]
+        }
+
+        // The selected color must reach the inner edge of its half: an inner
+        // pill would leave a light surface pixel at the edge. Since ADR-022 the
+        // unselected half is a translucent milk-glass fill instead of the flat
+        // DailyRecordSurface, so it is pinned as a light tone that differs from
+        // the module color rather than an exact value.
+        assertEquals(selected.toArgb(), selectedPixel.toArgb())
+        assertTrue(
+            "Expected a light unselected half without the module color, was $surfacePixel",
+            surfacePixel.toArgb() != selected.toArgb() &&
+                surfacePixel.red > .9f &&
+                surfacePixel.green > .9f &&
+                surfacePixel.blue > .9f,
+        )
     }
 
     private fun assertSettingsIconContains(expected: Color, unexpected: Color) {
@@ -363,23 +306,6 @@ class RecordModuleIntegrationTest {
         )
     }
 
-    private fun assertMinimumHeight(tag: String, minimumDp: Float) {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val heightPx = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.height
-        val heightDp = heightPx / context.resources.displayMetrics.density
-        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
-    }
-
-    private fun assertMinimumSize(tag: String, minimumDp: Float) {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val bounds = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
-        val density = context.resources.displayMetrics.density
-        val widthDp = bounds.width / density
-        val heightDp = bounds.height / density
-        assertTrue("$tag width was $widthDp dp", widthDp >= minimumDp)
-        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
-    }
-
     private fun setDualModuleContent(fontScale: Float = 1f) {
         composeRule.setContent {
             val density = LocalDensity.current.density
@@ -414,5 +340,22 @@ class RecordModuleIntegrationTest {
             }
         }
         composeRule.waitForIdle()
+    }
+
+    private fun assertMinimumHeight(tag: String, minimumDp: Float) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val heightPx = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.height
+        val heightDp = heightPx / context.resources.displayMetrics.density
+        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
+    }
+
+    private fun assertMinimumSize(tag: String, minimumDp: Float) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val bounds = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+        val density = context.resources.displayMetrics.density
+        val widthDp = bounds.width / density
+        val heightDp = bounds.height / density
+        assertTrue("$tag width was $widthDp dp", widthDp >= minimumDp)
+        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
     }
 }

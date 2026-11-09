@@ -1,0 +1,422 @@
+package io.github.litaog.dailyrecord.ui.record
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.core.common.runCatchingPreservingCancellation
+import io.github.litaog.dailyrecord.core.model.DailyCountEntry
+import io.github.litaog.dailyrecord.ui.RecordDetailEntry
+import io.github.litaog.dailyrecord.ui.RecordModuleController
+import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
+import io.github.litaog.dailyrecord.ui.components.DailyCountControl
+import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
+import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
+import io.github.litaog.dailyrecord.ui.components.brandIconTheme
+import io.github.litaog.dailyrecord.ui.components.predictiveBackPreview
+import io.github.litaog.dailyrecord.ui.components.rememberPredictiveBackState
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.dailyRecordBackdropBrush
+import java.time.LocalDate
+import java.time.LocalTime
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+
+@Composable
+internal fun DailyCountRecordScreen(
+    date: LocalDate,
+    today: LocalDate,
+    controller: RecordModuleController,
+    moduleSpec: RecordModuleUiSpec,
+    monthRecords: List<DailyCountEntry>,
+    onBack: () -> Unit,
+    onSaved: () -> Unit,
+) {
+    val recordFlow = remember(controller, date) {
+        combine(
+            controller.observeRecord(date),
+            controller.observeDetails(date),
+        ) { record, details -> RecordLoadState.Loaded(record, details) }
+            // Room can re-emit equal snapshots (e.g. background writes to other
+            // dates); structural equality on the data-class state keeps the UI
+            // asleep instead of restarting the reconcile effect below.
+            .distinctUntilChanged()
+    }
+    val recordState by recordFlow.collectAsStateWithLifecycle(
+        initialValue = RecordLoadState.Loading,
+    )
+    val loadedState = recordState as? RecordLoadState.Loaded
+    val record = loadedState?.record
+    val storedDetails = loadedState?.details.orEmpty()
+    val dataReady = loadedState != null
+    var countDraft by rememberSaveable(date.toString(), stateSaver = CountDraft.Saver) {
+        mutableStateOf(CountDraft())
+    }
+    var detailsDraft by rememberSaveable(
+        date.toString(),
+        stateSaver = RecordDetailsDraft.Saver,
+    ) {
+        mutableStateOf(RecordDetailsDraft())
+    }
+    var saving by remember(date) { mutableStateOf(false) }
+    var showClearDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
+    var showDiscardDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
+    var showRemoveDetailDialog by rememberSaveable(date.toString()) { mutableStateOf(false) }
+    var errorMessage by remember(date) { mutableStateOf<String?>(null) }
+    var timePickerRequest by remember(date) { mutableStateOf<TimePickerRequest?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val editable = date <= today
+    val haptic = LocalHapticFeedback.current
+
+    LaunchedEffect(dataReady, record, storedDetails) {
+        if (dataReady) {
+            val latestCount = record?.count ?: 0
+            val reconciledCountDraft = countDraft.reconcile(latestCount)
+            countDraft = reconciledCountDraft
+            // Normalize the detail rows to the reconciled draft count: a dirty
+            // count keeps its size (no remote truncation of in-progress edits)
+            // and a clean count stays in sync with the server.
+            detailsDraft = detailsDraft.reconcile(storedDetails, reconciledCountDraft.count)
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            errorMessage = null
+        }
+    }
+
+    val storedMonthCount = remember(monthRecords) { monthRecords.sumOf { it.count.toLong() } }
+    val storedMonthDays = remember(monthRecords) { monthRecords.count { it.count > 0 } }
+    val hasUnsavedChanges = dataReady && (countDraft.hasChanges || detailsDraft.hasChanges)
+    val canSave = dataReady && countDraft.initialized && (record == null || hasUnsavedChanges)
+    val applyCount = { nextCount: Int ->
+        val previousCount = countDraft.count
+        countDraft = countDraft.copy(count = nextCount)
+        detailsDraft = if (
+            nextCount <= MAX_RECORD_DETAIL_EDITOR_ROWS &&
+            previousCount > MAX_RECORD_DETAIL_EDITOR_ROWS &&
+            !detailsDraft.hasChanges
+        ) {
+            RecordDetailsDraft().reconcile(storedDetails, nextCount)
+        } else {
+            detailsDraft.resize(nextCount)
+        }.let {
+            if (nextCount == 0) it.copy(expanded = false) else it
+        }
+    }
+    val launchMutation = {
+        failureMessage: String,
+        onSuccess: () -> Unit,
+        operation: suspend () -> Unit,
+    ->
+        if (!saving) {
+            saving = true
+            scope.launch {
+                val result = runCatchingPreservingCancellation(operation)
+                saving = false
+                if (result.isSuccess) {
+                    DailyRecordHaptics.success(haptic)
+                    // Close the feeling editor after a successful mutation. The
+                    // caller decides whether to keep this page or leave it.
+                    detailsDraft = detailsDraft.copy(
+                        entries = detailsDraft.entries.map { it.copy(feelingExpanded = false) },
+                    )
+                    onSuccess()
+                } else {
+                    errorMessage = failureMessage
+                }
+            }
+        }
+    }
+    val requestBack = {
+        when {
+            saving -> Unit
+            hasUnsavedChanges -> showDiscardDialog = true
+            else -> onBack()
+        }
+    }
+
+    val backState = rememberPredictiveBackState(enabled = !saving, onBack = requestBack)
+
+    val backdropBrush = remember(moduleSpec) { dailyRecordBackdropBrush(moduleSpec.colors) }
+
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPreview(backState)
+            .background(backdropBrush)
+            .testTag("record_screen"),
+        containerColor = Color.Transparent,
+        snackbarHost = {
+            DailyRecordSnackbarHost(
+                hostState = snackbarHostState,
+                colors = moduleSpec.colors,
+            )
+        },
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .padding(contentPadding),
+        ) {
+            val recordScrollState = remember(date) { ScrollState(0) }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(recordScrollState)
+                    .testTag("record_scroll_content")
+                    .padding(
+                        horizontal = DailyRecordSpacing.ScreenHorizontal,
+                        vertical = DailyRecordSpacing.ScreenVertical,
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
+            ) {
+                RecordHeader(date = date, today = today, moduleSpec = moduleSpec, onBack = requestBack)
+                Text(
+                    text = if (date == today) moduleSpec.questionToday else moduleSpec.questionPast,
+                    color = DailyRecordText,
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = when {
+                        detailsDraft.expanded && countDraft.count > 0 -> AppCopy.Record.countAndDetails
+                        countDraft.count > 0 -> AppCopy.Record.countFirst
+                        else -> AppCopy.Record.countOnly
+                    },
+                    color = DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                DailyCountControl(
+                    count = countDraft.count,
+                    enabled = editable && dataReady && countDraft.initialized && !saving,
+                    onDecrease = {
+                        val last = detailsDraft.entries.lastOrNull()
+                            .takeIf { countDraft.count <= MAX_RECORD_DETAIL_EDITOR_ROWS }
+                        if (shouldConfirmDetailRemoval(
+                                count = countDraft.count,
+                                editorRowLimit = MAX_RECORD_DETAIL_EDITOR_ROWS,
+                                draftTailHasContent = last?.hasContent == true,
+                                storedDetails = storedDetails,
+                            )
+                        ) {
+                            showRemoveDetailDialog = true
+                        } else {
+                            applyCount(countDraft.decrease().count)
+                        }
+                    },
+                    onIncrease = {
+                        if (countDraft.count < Int.MAX_VALUE) {
+                            applyCount(countDraft.increase().count)
+                        }
+                    },
+                    colors = moduleSpec.colors,
+                    compact = detailsDraft.expanded,
+                )
+                Text(
+                    text = when {
+                        !dataReady -> AppCopy.Record.loadingRecords
+                        !editable -> AppCopy.Record.futureUnavailable
+                        hasUnsavedChanges -> AppCopy.Record.savedStatus(countDraft.count)
+                        record == null -> AppCopy.Record.notSaved
+                        record.count == 0 -> AppCopy.Record.zeroRecorded
+                        else -> AppCopy.Record.recordedStatus(record.count)
+                    },
+                    color = if (editable) moduleSpec.colors.primary else DailyRecordTextMuted,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                if (!detailsDraft.expanded) {
+                    Text(
+                        AppCopy.Record.explicitZeroHint(moduleSpec.explicitZeroText),
+                        color = DailyRecordTextMuted,
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                RecordDetailsRegion(
+                    count = countDraft.count,
+                    detailsExpanded = detailsDraft.expanded,
+                    entries = detailsDraft.entries,
+                    accent = moduleSpec.colors.primary,
+                    theme = moduleSpec.colors.brandIconTheme,
+                    colors = moduleSpec.colors,
+                    onCollapse = { detailsDraft = detailsDraft.copy(expanded = false) },
+                    onTimeClick = { index, target ->
+                        val current = detailsDraft.entries.getOrNull(index)
+                        val minutes = when (target) {
+                            DetailTimeTarget.Start -> current?.startMinutes
+                            DetailTimeTarget.End -> current?.endMinutes
+                        }
+                        val initialMinutes = initialTimePickerMinutes(minutes, LocalTime.now())
+                        timePickerRequest = TimePickerRequest(index, target, initialMinutes)
+                    },
+                    onFeelingToggle = { index ->
+                        detailsDraft = detailsDraft.update(index) {
+                            it.copy(feelingExpanded = !it.feelingExpanded)
+                        }
+                    },
+                    onFeelingChange = { index, value ->
+                        detailsDraft = detailsDraft.update(index) { it.withFeeling(value) }
+                    },
+                    onExpand = {
+                        detailsDraft = detailsDraft.resize(countDraft.count)
+                            .copy(expanded = true)
+                    },
+                )
+                RecordMonthSummaryCard(
+                    date = date,
+                    storedMonthCount = storedMonthCount,
+                    storedMonthDays = storedMonthDays,
+                )
+                Spacer(Modifier.height(DailyRecordSpacing.Inline))
+            }
+
+            PinnedStickySaveActionBar(
+                saveLabel = when {
+                    !dataReady -> AppCopy.Record.loading
+                    saving -> AppCopy.Record.saving
+                    !canSave && record != null -> AppCopy.Record.saved
+                    else -> AppCopy.Record.save
+                },
+                saveEnabled = editable && canSave && !saving,
+                clearVisible = record != null,
+                clearEnabled = editable && dataReady && !saving,
+                accent = moduleSpec.colors.primary,
+                colors = moduleSpec.colors,
+                onSave = {
+                    if (!editable || !canSave || saving) return@PinnedStickySaveActionBar
+                    val currentDraftCount = countDraft.count
+                    val currentDetails = when {
+                        currentDraftCount == 0 -> emptyList()
+                        currentDraftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS ->
+                            detailsDraft.asEntries().take(currentDraftCount)
+                        detailsDraft.hasChanges ->
+                            (storedDetails + detailsDraft.asEntries())
+                                .filter { it.occurrenceIndex in 1..currentDraftCount }
+                                .associateBy(RecordDetailEntry::occurrenceIndex)
+                                .values
+                                .sortedBy(RecordDetailEntry::occurrenceIndex)
+                        else -> null
+                    }
+                    launchMutation(AppCopy.Record.saveFailure, onSaved) {
+                        if (currentDetails == null) {
+                            controller.saveRecord(date, currentDraftCount)
+                        } else {
+                            controller.saveRecord(date, currentDraftCount, currentDetails)
+                        }
+                    }
+                },
+                onClear = { showClearDialog = true },
+            )
+        }
+    }
+
+    TimePickerHost(
+        request = timePickerRequest,
+        colors = moduleSpec.colors,
+        onSelected = { request, minutes ->
+            val current = detailsDraft.entries.getOrNull(request.index) ?: return@TimePickerHost
+            if (
+                request.target == DetailTimeTarget.End &&
+                current.startMinutes != null &&
+                minutes < current.startMinutes
+            ) {
+                errorMessage = AppCopy.Record.detailEndBeforeStart
+            } else {
+                detailsDraft = detailsDraft.update(request.index) {
+                    if (request.target == DetailTimeTarget.Start) {
+                        it.copy(startMinutes = minutes)
+                    } else {
+                        it.copy(endMinutes = minutes)
+                    }
+                }
+            }
+            timePickerRequest = null
+        },
+        onDismiss = { timePickerRequest = null },
+    )
+
+    if (showClearDialog) {
+        RecordClearConfirmDialog(
+            detailsOnly = detailsDraft.expanded,
+            saving = saving,
+            onDismiss = { if (!saving) showClearDialog = false },
+            onConfirmDetailsOnly = {
+                val currentDraftCount = countDraft.count
+                launchMutation(
+                    AppCopy.Record.clearDetailsFailure,
+                    { detailsDraft = detailsDraft.clearContent() },
+                ) {
+                    controller.clearDetails(date, currentDraftCount)
+                }
+            },
+            onConfirmRecord = {
+                launchMutation(AppCopy.Record.clearFailure, onBack) {
+                    controller.clearRecord(date)
+                }
+            },
+        )
+    }
+
+    if (showRemoveDetailDialog) {
+        RecordRemoveDetailConfirmDialog(
+            occurrenceCount = countDraft.count,
+            onDismiss = { showRemoveDetailDialog = false },
+            onConfirm = {
+                showRemoveDetailDialog = false
+                applyCount(countDraft.decrease().count)
+            },
+        )
+    }
+
+    if (showDiscardDialog) {
+        RecordDiscardConfirmDialog(
+            onDismiss = { showDiscardDialog = false },
+            onConfirm = {
+                showDiscardDialog = false
+                // The user confirmed the edits are discarded: clear the
+                // remembered drafts so reopening the day starts clean.
+                countDraft = CountDraft()
+                detailsDraft = RecordDetailsDraft()
+                onBack()
+            },
+        )
+    }
+}

@@ -56,6 +56,7 @@
 | [P12](#p12-同一状态规则在日历与统计两处各写一份反复漂移) | 同一状态规则在日历与统计两处各写一份，反复漂移 | 中 | 已修复并加测试 |
 | [P13](#p13-位图图标自带透明边靠反复手调偏移对齐) | 位图图标自带透明边，靠反复手调偏移对齐 | 低 | 已修复，无自动门禁 |
 | [P14](#p14-v1-迁移把未填写日期迁成明确-0-次) | v1 迁移把未填写日期迁成明确 0 次 | 高 | 已修复并加设备测试 |
+| [P15](#p15-内存限流按实例计数宣称的全局阈值并未全局生效) | 内存限流按实例计数，宣称的全局阈值并未全局生效 | 中 | 已如实披露并加门禁 |
 
 ---
 
@@ -315,7 +316,7 @@ app/src/androidTest/java/.../FirebaseEmulatorIntegrationTest.kt -text
 - 必须保留的光学偏移写成具名常量，并在注释中写测量依据（[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 第 2 节）。
 - 用同视口前后截图验证；截图只放临时目录，不进仓库。
 
-**修复状态**：已修复（裁边资源与带注释的光学偏移，见 `RecordDetailsComponents.kt`）。
+**修复状态**：已修复（裁边资源与带注释的光学偏移，见 `RecordDetailFeeling.kt`；原 `RecordDetailsComponents.kt` 已拆分）。
 
 **防复发机制**：暂无自动门禁；依靠第 2 节“魔法数字需测量依据并附注释”的规则和 PR 中的同视口截图。
 
@@ -338,3 +339,24 @@ app/src/androidTest/java/.../FirebaseEmulatorIntegrationTest.kt -text
 **防复发机制**：设备测试 `DatabaseSchemaTest` 断言 UNSET 行迁移后不产生记录；第 4 节的迁移规则。
 
 **权威规则**：[`DATA_MODEL.md`](DATA_MODEL.md)、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 第 4 节
+
+---
+
+## P15 内存限流按实例计数，宣称的全局阈值并未全局生效
+
+**背景与证据**：`functions/rate-limiter.js` 用进程内 Map 做滑动窗口计数；Cloud Functions v2 按 `resource-config.js` 配置最多扩到 10 个（写入）/5 个（删除）实例，每个实例有独立计数桶。文档曾宣称「单 UID 每分钟最多 30 次写入」，实际单 UID 全局上限 = 阈值 × 活跃实例数，且实例冷启动清零桶（Issue #289，PR #280 评审发现）。
+
+**影响与代价**：防刷阈值被按实例乘数放大，文档口径与真实防护不符；若按误信的全局阈值做容量/止损决策会低估实际费用上限。
+
+**根因**：把进程内限流当成全局限流描述；「零数据库读写」的最小成本取向与「全局精确计数」天然冲突，但没有把这一边界写下来。
+
+**正确做法**：
+- 涉及实例内存态的防线，文档必须写明「按实例」口径与放大倍数（`maxInstances` 是硬上限）。
+- 若要真正全局计数，先核算它自身的费用影响（每次校验多一次计费 Firestore 读），不能为防刷引入新账单；本项目因此选择保留按实例计数并如实披露。
+- 单 UID 防刷的硬兜底是 `maxInstances`、App Check 与熔断器；限流器只是纵深防御的一层。
+
+**修复状态**：已修复。`rate-limiter.js` 头注释、费用矩阵第 1 行与 inventory 第 3 行已如实披露按实例口径；未改变阈值（收缩阈值会误伤落在单个热实例上的正常用户）。
+
+**防复发机制**：`scripts/firebase-cost-safety.test.mjs` 新增资源四件套断言（值锁定 + 确认真被传给 `onCall`/`onDocumentWritten`），矩阵第 3 行命令同步更正为该测试。
+
+**权威规则**：[`docs/operations/firebase-cost-safety-test-matrix.md`](operations/firebase-cost-safety-test-matrix.md)、[`docs/operations/firebase-cost-and-quota-inventory.md`](operations/firebase-cost-and-quota-inventory.md)

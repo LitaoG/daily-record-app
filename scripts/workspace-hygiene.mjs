@@ -16,8 +16,12 @@ function git(...args) {
 const problems = [];
 
 const workDirectory = path.join(root, "work");
+// The scheduled review-patrol automation keeps its persistent state file in
+// work/ (see docs/REPOSITORY_HYGIENE.md). It is a standing fixture, not task
+// scratch, so it is the only allowed resident; anything else fails the check.
+const allowedWorkResidents = new Set(["agent-watch-state.json"]);
 if (fs.existsSync(workDirectory)) {
-  const leftovers = fs.readdirSync(workDirectory);
+  const leftovers = fs.readdirSync(workDirectory).filter((name) => !allowedWorkResidents.has(name));
   if (leftovers.length > 0) {
     problems.push(`work/ is not empty: ${leftovers.join(", ")}`);
   }

@@ -52,7 +52,7 @@
 | [架构决策](DECISIONS.md) | 已接受的长期技术与产品决策 |
 | [路线图](ROADMAP.md) | 已完成阶段和持续维护方向 |
 | [踩坑清单](AI-PITFALLS.md) | 已付出代价的问题、根因和防复发门禁 |
-| [AI 证据标准](AI-EVIDENCE-STANDARD.md) | 什么证据算数、汇报必须包含什么、什么时候必须停下问人 |
+| [AI 证据标准](AI-EVIDENCE-STANDARD.md) | 三档主张、证据合格形式与冲突裁决、测试五态、评审收敛、停止条件与 A~E 交付分类 |
 
 当前运行画面见[README 运行截图](product/assets/readme/README.md)。这些图片来自 API 34 测试模拟器的本机空数据，只作为当前运行时展示。
 
@@ -100,6 +100,6 @@
 - [v1.0.0-beta.1 发布说明](releases/v1.0.0-beta.1.md)
 - [v1.0.0-beta.2 发布说明](releases/v1.0.0-beta.2.md)
 
-2026-07 至 2026-09 的阶段审计目录（`docs/product/audit/`）、UI v2 设计稿（`docs/product/design/`）、明亮玻璃主题草案、日常使用反馈草案和旧 Figma 设计系统已于 2026-11 从仓库移除；仍然有效的规则已并入 [`UI_UX.md`](UI_UX.md)、[`STATISTICS.md`](STATISTICS.md)、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 和 [`AI-PITFALLS.md`](AI-PITFALLS.md)。需要追溯原始证据时查 Git 历史，恢复方法见 [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md)。
+2026-07 至 2026-09 的阶段审计目录（`docs/product/audit/`）、UI v2 设计稿（`docs/product/design/`）、明亮玻璃主题草案、日常使用反馈政策和旧 Figma 设计系统已于 2026-11 从仓库移除；仍然有效的规则已并入 [`UI_UX.md`](UI_UX.md)、[`STATISTICS.md`](STATISTICS.md)、[`ENGINEERING_STANDARDS.md`](ENGINEERING_STANDARDS.md) 和 [`AI-PITFALLS.md`](AI-PITFALLS.md)。需要追溯原始证据时查 Git 历史，恢复方法见 [`REPOSITORY_HYGIENE.md`](REPOSITORY_HYGIENE.md)。
 
 历史文档中的测试数量、截图日期、分支名和“下一步”只描述当时状态。当前版本、发布物和 CI 状态以仓库首页、GitHub Releases 与 `main` 为准。

@@ -7,6 +7,14 @@ const { HttpsError } = require("firebase-functions/v2/https");
  */
 const CACHE_TTL_MILLIS = 30 * 1000;
 
+/**
+ * Shorter cache for a state derived from a FAILED config read: the fail-open
+ * fallback still amortizes repeated failing reads during a Firestore outage,
+ * but expires quickly so a recovered backend (and a kill switch written just
+ * before the outage) is picked up within seconds.
+ */
+const FAILURE_CACHE_TTL_MILLIS = 10 * 1000;
+
 let cachedState = null;
 let cacheExpiresAt = 0;
 
@@ -35,6 +43,7 @@ async function getCircuitBreakerState(db) {
   }
 
   let firestoreFlags = {};
+  let lastReadFailed = false;
   if (db) {
     try {
       const doc = await db.collection("_system").doc("circuitBreaker").get();
@@ -42,6 +51,7 @@ async function getCircuitBreakerState(db) {
         firestoreFlags = doc.data() || {};
       }
     } catch (error) {
+      lastReadFailed = true;
       console.warn(JSON.stringify({
         severity: "WARNING",
         event: "CIRCUIT_BREAKER_CHECK_ERROR",
@@ -55,7 +65,7 @@ async function getCircuitBreakerState(db) {
   const triggersAllowed = !env.triggersDisabled && firestoreFlags.triggersDisabled !== true;
 
   cachedState = { writesAllowed, deletionsAllowed, triggersAllowed, source: "config" };
-  cacheExpiresAt = now + CACHE_TTL_MILLIS;
+  cacheExpiresAt = now + (lastReadFailed ? FAILURE_CACHE_TTL_MILLIS : CACHE_TTL_MILLIS);
   return cachedState;
 }
 

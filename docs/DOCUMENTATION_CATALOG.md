@@ -32,7 +32,7 @@
 | `docs/WORKFLOW.md` | 当前必读 | P0 | 必需 | 是 | 是 | 从开工到合并清理的唯一权威端到端流程 |
 | `docs/ENGINEERING_STANDARDS.md` | 当前必读 | P0 | 必需 | 是 | 是 | 代码、分层、异步、数据、隐私和测试的实现规范 |
 | `docs/AI-PITFALLS.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 已付出代价的问题、根因与防复发门禁 |
-| `docs/AI-EVIDENCE-STANDARD.md` | 当前必读 | P0 | 必需 | 是 | 是 | 证据三级、汇报必须包含的内容和必须停下问人的条件 |
+| `docs/AI-EVIDENCE-STANDARD.md` | 当前必读 | P0 | 必需 | 是 | 是 | 三档主张、证据合格形式、冲突裁决、测试五态、评审收敛、停止条件与 A~E 交付分类 |
 | `CONTRIBUTING.md` | 当前必读 | P1 | 必需 | 是 | 是 | Issue、分支、PR、测试和隐私边界 |
 | `.github/pull_request_template.md` | 协作模板 | P1 | 按范围 | 按范围 | 按范围 | 创建 PR 时填写变更原因和验证证据 |
 | `PRIVACY.md` | 当前必读 | P1 | 按范围 | 按范围 | 按范围 | 面向使用者的本机、账号、云端和删除隐私说明 |

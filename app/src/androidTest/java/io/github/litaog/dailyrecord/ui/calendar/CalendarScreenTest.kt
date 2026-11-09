@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -14,20 +15,39 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.Density
 import androidx.test.core.app.ApplicationProvider
+import io.github.litaog.dailyrecord.core.common.AppLanguageState
+import io.github.litaog.dailyrecord.core.common.TerminologyStyle
+import io.github.litaog.dailyrecord.core.common.ZhStrings
 import io.github.litaog.dailyrecord.core.model.HandBrewRecord
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import org.junit.After
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class CalendarScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Before
+    fun useDirectTerminology() {
+        // ADR-025: this class composes CalendarScreen directly and asserts the
+        // direct wording, so the global copy set must be pinned explicitly;
+        // the process default (and other test classes) may leave ELEGANT behind.
+        AppLanguageState.current = ZhStrings(TerminologyStyle.DIRECT)
+    }
+
+    @After
+    fun resetGlobalCopyState() {
+        AppLanguageState.current = ZhStrings
+    }
 
     @Test
     fun compactDayCellsHideEmptyLabelsButKeepAccessibleSemantics() {
@@ -108,10 +128,14 @@ class CalendarScreenTest {
         composeRule
             .onNodeWithContentDescription("本月 3 次 · 2 天有记录")
             .assertExists()
+        // The guide is the last item of the calendar lazy list; scroll it into
+        // composition before asserting instead of assuming it starts composed.
+        val legendDescription = "点击日期填写自慰次数。状态包括：未填写、未来不可填写、0 次和已记录"
         composeRule
-            .onNodeWithContentDescription(
-                "点击日期填写自慰次数。状态包括：未填写、未来不可填写、0 次和已记录",
-            )
+            .onNodeWithTag("calendar_screen")
+            .performScrollToNode(hasContentDescription(legendDescription))
+        composeRule
+            .onNodeWithContentDescription(legendDescription)
             .assertExists()
     }
 

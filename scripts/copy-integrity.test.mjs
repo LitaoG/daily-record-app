@@ -17,14 +17,29 @@ const commonRoot = path.join(
   "core",
   "common",
 );
-// Bilingual contract: Chinese copy lives only in the Chinese language file,
-// and the English language file may only carry the self-named "中文" option.
+// Bilingual contract: Chinese copy lives only in the Chinese language files,
+// and the English language files may only carry the self-named "中文" option.
 // AppCopy.kt is intentionally NOT excluded: as a pure delegation facade it
 // must stay Han-free, and the scan enforces that.
+// ZhStrings.kt / EnStrings.kt are split into per-group implementation files;
+// the extra entries below are those split language implementation files of
+// the same two language surfaces.
 const allowedCopyFiles = new Set([
   path.join(commonRoot, "ZhStrings.kt"),
+  path.join(commonRoot, "ZhStatisticsStrings.kt"),
+  path.join(commonRoot, "ZhCalendarStrings.kt"),
+  path.join(commonRoot, "ZhRecordStrings.kt"),
+  path.join(commonRoot, "ZhAccountStrings.kt"),
+  path.join(commonRoot, "ZhShellStrings.kt"),
 ]);
-const englishLanguageFile = path.join(commonRoot, "EnStrings.kt");
+const englishLanguageFiles = new Set([
+  path.join(commonRoot, "EnStrings.kt"),
+  path.join(commonRoot, "EnStatisticsStrings.kt"),
+  path.join(commonRoot, "EnCalendarStrings.kt"),
+  path.join(commonRoot, "EnRecordStrings.kt"),
+  path.join(commonRoot, "EnAccountStrings.kt"),
+  path.join(commonRoot, "EnShellStrings.kt"),
+]);
 const appNameResource = path.join(productionRoot, "res", "values", "strings.xml");
 const textExtensions = new Set([".kt", ".java", ".xml", ".kts", ".gradle", ".properties"]);
 // Han ideographs plus CJK punctuation/fullwidth forms. The punctuation ranges
@@ -55,7 +70,7 @@ test("production Chinese copy stays in the language files or Android resources",
       if (file === appNameResource && /<string\s+name="app_name(?:_journal)?">/.test(line)) continue;
       // The English set intentionally shows the Chinese option in its own script.
       if (
-        file === englishLanguageFile &&
+        englishLanguageFiles.has(file) &&
         /languageZh\s*=\s*"/.test(line) &&
         line.includes(String.fromCodePoint(0x4e2d, 0x6587))
       ) {
@@ -68,9 +83,10 @@ test("production Chinese copy stays in the language files or Android resources",
   assert.deepEqual(
     violations,
     [],
-    "Move user-facing Chinese copy into ZhStrings.kt; keep only the launcher labels" +
+    "Move user-facing Chinese copy into the Chinese language files (ZhStrings.kt and its" +
+      " split implementation files); keep only the launcher labels" +
       " app_name and app_name_journal in strings.xml" +
-      " and the self-named 中文 option in EnStrings.kt.",
+      " and the self-named 中文 option in the English language files.",
   );
 });
 

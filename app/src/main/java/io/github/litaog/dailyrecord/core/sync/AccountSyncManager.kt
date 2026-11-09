@@ -186,7 +186,10 @@ internal class AccountSyncManager(
                         // A new caller can either acquire the now-free mutex,
                         // or (if it arrived before this block) set the flag
                         // that was consumed above; neither request is lost.
-                        followUpSyncRequested = false
+                        // A follow-up queued during the final burst attempt
+                        // must survive this exit: wiping it here would drop
+                        // the request silently, so it stays queued and the
+                        // first attempt of the next sync consumes it.
                         mutex.unlock()
                         mutexReleased = true
                         false

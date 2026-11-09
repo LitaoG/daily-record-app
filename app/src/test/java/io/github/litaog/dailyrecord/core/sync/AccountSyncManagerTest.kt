@@ -50,6 +50,44 @@ class AccountSyncManagerTest {
     }
 
     @Test
+    fun followUpQueuedDuringTheFinalBurstAttemptIsNotDropped() = runBlocking {
+        val operations = GatedBurstOperations()
+        val manager = AccountSyncManager(
+            ownerId = "owner",
+            coordinator = operations,
+            productionConfigured = true,
+            syncAttemptTimeoutMillis = 1_000,
+        )
+
+        // The burst loop only stays alive while follow-up requests keep
+        // arriving, so park every attempt and queue one follow-up per attempt;
+        // the third one lands during the final burst attempt.
+        val burst = launch { manager.syncNow() }
+        withTimeout(5_000) { operations.awaitAttempt(1) }
+        launch { manager.syncNow() }.join()
+        operations.release(1)
+        withTimeout(5_000) { operations.awaitAttempt(2) }
+        launch { manager.syncNow() }.join()
+        operations.release(2)
+        withTimeout(5_000) { operations.awaitAttempt(3) }
+        launch { manager.syncNow() }.join()
+        operations.release(3)
+        burst.join()
+
+        // The burst is exhausted, and the follow-up queued during the final
+        // attempt must survive the exit instead of being wiped together with
+        // it (the old behaviour cleared the flag on every exit path).
+        assertEquals(3, operations.syncCalls.get())
+
+        // The next sync consumes the surviving follow-up: its first attempt
+        // covers the queued request, then the loop runs one more attempt for
+        // the consumed flag before exiting (3 + 2 = 5 calls in total).
+        manager.syncNow()
+        assertEquals(5, operations.syncCalls.get())
+        assertEquals(SyncStatus.UpToDate, manager.status.value)
+    }
+
+    @Test
     fun malformedRemoteSnapshotStillFlushesHealthyPendingRows() = runBlocking {
         val operations = RejectedSnapshotOperations()
         val manager = AccountSyncManager(
@@ -255,132 +293,5 @@ class AccountSyncManagerTest {
         }
         assertFalse(job.isCompleted)
         scope.cancel()
-    }
-}
-
-private class DeletionBlockingGate : CloudWriteGate {
-    override suspend fun <T> withWrite(ownerId: String, block: suspend () -> T): T =
-        throw AccountDeletionInProgressException(ownerId)
-}
-
-private fun testSnapshot(rejectedRecordCount: Int = 0) = RemoteSnapshot(
-    sourceCollection = HAND_BREW_RECORDS_COLLECTION,
-    records = emptyList(),
-    fromCache = false,
-    rejectedRecordCount = rejectedRecordCount,
-)
-
-private class CountingApplyOperations : AccountSyncOperations {
-    val applyCalls = AtomicInteger()
-
-    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(testSnapshot())
-        awaitCancellation()
-    }
-
-    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
-
-    override suspend fun pendingCount(ownerId: String): Int = 0
-
-    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int {
-        applyCalls.incrementAndGet()
-        return 0
-    }
-
-    override suspend fun syncOnce(ownerId: String): SyncResult =
-        SyncResult(uploaded = 0, downloaded = 0, pending = 0)
-}
-
-private class NonRetryableFailingOperations : AccountSyncOperations {
-    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(testSnapshot())
-        throw IllegalArgumentException("malformed snapshot")
-    }
-
-    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
-
-    override suspend fun pendingCount(ownerId: String): Int = 0
-
-    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int = 0
-
-    // The startup network job runs an immediate sync attempt; in production a
-    // permanent remote error fails that attempt too, so the fake mirrors the
-    // same behaviour instead of clobbering the failed status with UpToDate.
-    override suspend fun syncOnce(ownerId: String): SyncResult =
-        throw IllegalArgumentException("malformed snapshot")
-}
-
-private class FailingApplyOperations : AccountSyncOperations {
-    private val applyCalls = AtomicInteger()
-
-    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emit(testSnapshot())
-        delay(200)
-        emit(testSnapshot())
-        awaitCancellation()
-    }
-
-    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
-
-    override suspend fun pendingCount(ownerId: String): Int = 0
-
-    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int {
-        if (applyCalls.getAndIncrement() == 0) throw IllegalStateException("Room unavailable")
-        return 0
-    }
-
-    // Mirrors production: the same Room failure that makes the observer's
-    // applySnapshot fail also fails the startup network-job sync attempt, so
-    // both paths publish the failed status and cannot race each other into
-    // overwriting it with a transient UpToDate.
-    override suspend fun syncOnce(ownerId: String): SyncResult =
-        throw IllegalStateException("Room unavailable")
-}
-
-private class RejectedSnapshotOperations : AccountSyncOperations {
-    val syncCalls = AtomicInteger()
-    val initialSyncCompleted = CompletableDeferred<Unit>()
-    val emitRejectedSnapshot = CompletableDeferred<Unit>()
-    val snapshotApplied = CompletableDeferred<Unit>()
-
-    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = flow {
-        emitRejectedSnapshot.await()
-        emit(testSnapshot(rejectedRecordCount = 1))
-    }
-
-    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(1)
-
-    override suspend fun pendingCount(ownerId: String): Int = 1
-
-    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int {
-        snapshotApplied.complete(Unit)
-        return 0
-    }
-
-    override suspend fun syncOnce(ownerId: String): SyncResult {
-        syncCalls.incrementAndGet()
-        initialSyncCompleted.complete(Unit)
-        return SyncResult(uploaded = 0, downloaded = 0, pending = 1)
-    }
-}
-
-private class BlockingSyncOperations : AccountSyncOperations {
-    val syncCalls = AtomicInteger()
-    val started = CompletableDeferred<Unit>()
-    val release = CompletableDeferred<Unit>()
-
-    override fun observeRemote(ownerId: String): Flow<RemoteSnapshot> = emptyFlow()
-
-    override fun observePendingCount(ownerId: String): Flow<Int> = MutableStateFlow(0)
-
-    override suspend fun pendingCount(ownerId: String): Int = 0
-
-    override suspend fun applySnapshot(ownerId: String, snapshot: RemoteSnapshot): Int = 0
-
-    override suspend fun syncOnce(ownerId: String): SyncResult {
-        syncCalls.incrementAndGet()
-        started.complete(Unit)
-        release.await()
-        return SyncResult(uploaded = 0, downloaded = 0, pending = 0)
     }
 }

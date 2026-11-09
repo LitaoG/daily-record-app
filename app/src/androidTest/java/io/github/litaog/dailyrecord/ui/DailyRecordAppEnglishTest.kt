@@ -3,13 +3,15 @@ package io.github.litaog.dailyrecord.ui
 import android.content.Context
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ApplicationProvider
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.common.AppLanguage
@@ -48,9 +50,22 @@ class DailyRecordAppEnglishTest {
         composeRule.onNodeWithText("Duo").assertIsDisplayed()
         composeRule.onNodeWithText("Calendar").assertIsDisplayed()
         composeRule.onNodeWithText("Stats").assertIsDisplayed()
+        // The legend is the last item of the calendar lazy list and starts out
+        // uncomposed once the onboarding card joins the list, so swipe the list
+        // until it enters composition. The semantics-level scroll-to action
+        // cannot locate lazy items that are not composed yet, and one swipe
+        // does not always cover the full overflow, hence the bounded loop.
+        val legendDescription = "Tap a date to record Solo journal. States: unset, future (disabled), 0, recorded"
+        var swipes = 0
+        while (swipes < 3 &&
+            composeRule.onAllNodes(hasContentDescription(legendDescription)).fetchSemanticsNodes().isEmpty()
+        ) {
+            composeRule.onNodeWithTag("calendar_screen").performTouchInput { swipeUp() }
+            composeRule.waitForIdle()
+            swipes++
+        }
         composeRule
-            .onNodeWithContentDescription("Tap a date to record Solo journal. States: unset, future (disabled), 0, recorded")
-            .performScrollTo()
+            .onNodeWithContentDescription(legendDescription)
             .assertIsDisplayed()
         composeRule.onAllNodesWithText("This month: 0 times · 0 days").assertCountEquals(1)
         composeRule.onAllNodesWithText("Jul 2026").assertCountEquals(1)
