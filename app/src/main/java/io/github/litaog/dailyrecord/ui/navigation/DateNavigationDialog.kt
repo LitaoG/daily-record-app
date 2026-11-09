@@ -26,6 +26,7 @@ import io.github.litaog.dailyrecord.ui.components.DailyRecordDialog
 import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.HandBrewColorTokens
@@ -144,9 +145,9 @@ private fun SelectedDateSummary(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(DailyRecordShapes.Medium)
             .background(colors.soft.copy(alpha = .54f))
-            .border(1.dp, colors.primary.copy(alpha = .20f), RoundedCornerShape(14.dp))
+            .border(1.dp, colors.primary.copy(alpha = .20f), DailyRecordShapes.Medium)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(AppCopy.Navigation.selected, color = DailyRecordTextSecondary, style = MaterialTheme.typography.labelSmall)
@@ -193,9 +194,9 @@ private fun SelectionSummary(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(DailyRecordShapes.Medium)
             .background(colors.soft.copy(alpha = .54f))
-            .border(1.dp, colors.primary.copy(alpha = .20f), RoundedCornerShape(14.dp))
+            .border(1.dp, colors.primary.copy(alpha = .20f), DailyRecordShapes.Medium)
             .padding(horizontal = 18.dp, vertical = 14.dp),
     ) {
         Text(AppCopy.Navigation.selected, color = colors.primary, style = MaterialTheme.typography.labelSmall)

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -26,11 +27,14 @@ import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.components.BackChevronIcon
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.theme.LiquidGlassElevation
+import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
 import java.time.LocalDate
 
 @Composable
@@ -86,6 +90,14 @@ internal fun RecordHeader(
             }
         }
         Row(
+            modifier = Modifier
+                .clip(DailyRecordShapes.Full)
+                .appleLiquidGlass(
+                    shape = DailyRecordShapes.Full,
+                    glowColor = moduleSpec.colors.primary,
+                    elevation = LiquidGlassElevation.Subtle,
+                )
+                .padding(horizontal = 14.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Inline),
             verticalAlignment = Alignment.CenterVertically,
         ) {

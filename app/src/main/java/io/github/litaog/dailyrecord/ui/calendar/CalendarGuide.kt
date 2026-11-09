@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceDisabled
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
@@ -136,21 +136,21 @@ private fun CalendarLegendMarker(
         CalendarLegendItem.Unset -> Box(
             Modifier
                 .size(14.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(DailyRecordShapes.ExtraSmall)
                 .background(colors.colorsFor(RecordVisualState.Unset).background),
         )
         CalendarLegendItem.Disabled -> Box(
             Modifier
                 .size(14.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(DailyRecordShapes.ExtraSmall)
                 .background(DailyRecordSurfaceDisabled),
         )
         CalendarLegendItem.Zero -> Box(
             modifier = Modifier
                 .size(14.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(DailyRecordShapes.ExtraSmall)
                 .background(DailyRecordSurface)
-                .border(1.dp, colors.primary, RoundedCornerShape(4.dp)),
+                .border(1.dp, colors.primary, DailyRecordShapes.ExtraSmall),
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -166,7 +166,7 @@ private fun CalendarLegendMarker(
                 Box(
                     Modifier
                         .size(width = 5.dp, height = 14.dp)
-                        .clip(RoundedCornerShape(2.dp))
+                        .clip(DailyRecordShapes.ExtraSmall)
                         .background(color),
                 )
             }

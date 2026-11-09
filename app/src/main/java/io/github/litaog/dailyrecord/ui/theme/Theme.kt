@@ -39,6 +39,7 @@ fun DailyRecordTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = DailyRecordShapes.Material3Shapes,
         content = content,
     )
 }

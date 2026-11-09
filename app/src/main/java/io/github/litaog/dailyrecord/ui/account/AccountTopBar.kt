@@ -1,7 +1,5 @@
 package io.github.litaog.dailyrecord.ui.account
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,9 +19,9 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -36,15 +33,17 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.R
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
+import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
 import io.github.litaog.dailyrecord.ui.components.DailyRecordTextAction
 import io.github.litaog.dailyrecord.ui.components.PrivateSettingsIcon
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.LiquidGlassElevation
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
 
 @Composable
@@ -215,6 +214,7 @@ private fun SyncStatusChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
     // The interactive layer and the visual pill are separate nodes: touch and
     // TalkBack get the 48dp contract target while the visible pill keeps the
     // 38dp height (#261, #278, #287). Painting the pill on the expanded layer
@@ -222,7 +222,10 @@ private fun SyncStatusChip(
     Box(
         modifier = modifier
             .testTag("sync_status_chip")
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(role = Role.Button) {
+                DailyRecordHaptics.tick(haptic)
+                onClick()
+            }
             .minimumInteractiveComponentSize()
             .semantics {
                 role = Role.Button
@@ -234,9 +237,11 @@ private fun SyncStatusChip(
             modifier = Modifier
                 .testTag("sync_status_chip_pill")
                 .height(DailyRecordSizes.SyncChipHeight)
-                .clip(CircleShape)
-                .background(DailyRecordDefaultAccentSoft)
-                .border(1.dp, DailyRecordDivider, CircleShape)
+                .appleLiquidGlass(
+                    shape = DailyRecordShapes.Full,
+                    glowColor = status.color(),
+                    elevation = LiquidGlassElevation.Subtle,
+                )
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally),

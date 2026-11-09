@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -46,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.core.statistics.label
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordPeriodInactiveText
@@ -66,8 +66,8 @@ fun PeriodTabs(
 ) {
     val periods = StatisticsPeriod.entries
     val selectedIndex = periods.indexOf(selected).coerceAtLeast(0)
-    val trackShape = RoundedCornerShape(percent = 50)
-    val sliderShape = RoundedCornerShape(percent = 50)
+    val trackShape = DailyRecordShapes.Full
+    val sliderShape = DailyRecordShapes.Full
     val sliderInset = DailyRecordSpacing.Compact
     val glassGlow = colors.periodGlassGlow
     val haptic = LocalHapticFeedback.current

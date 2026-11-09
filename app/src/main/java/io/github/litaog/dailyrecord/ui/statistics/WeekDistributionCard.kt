@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.statistics.StatisticsDetail
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
@@ -144,12 +144,12 @@ private fun DistributionSurface(
         modifier = modifier
             .fillMaxWidth()
             .dailyRecordGlass(
-                shape = RoundedCornerShape(20.dp),
+                shape = DailyRecordShapes.Large,
                 moduleColors = colors,
                 level = DailyRecordGlassLevel.Base,
             ),
         color = Color.Transparent,
-        shape = RoundedCornerShape(20.dp),
+        shape = DailyRecordShapes.Large,
         border = null,
         shadowElevation = 0.dp,
     ) {

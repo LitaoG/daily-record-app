@@ -1,5 +1,12 @@
 package io.github.litaog.dailyrecord.ui.calendar
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -37,6 +44,7 @@ import io.github.litaog.dailyrecord.ui.components.CountButton
 import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
 import io.github.litaog.dailyrecord.ui.components.pressScale
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordBorders
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -71,7 +79,7 @@ internal fun QuickLogAction.nextCount(current: Int?): Int? = when (this) {
     QuickLogAction.MarkZero -> if (current == null) 0 else null
 }
 
-private val QuickLogPill = RoundedCornerShape(percent = 50)
+private val QuickLogPill = DailyRecordShapes.Full
 
 /**
  * Today quick-log island (ADR-022): adjusts today's count of the current module
@@ -183,17 +191,33 @@ private fun QuickLogControls(
             onClick = { onAction(QuickLogAction.Decrease) },
         )
         // The status line already speaks the count; the number is visual only.
-        Text(
-            text = count?.toString() ?: AppCopy.Calendar.unset,
-            color = if (count == null) DailyRecordTextMuted else DailyRecordText,
-            style = if (count == null) MaterialTheme.typography.labelLarge else MetricNumberMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
+        AnimatedContent(
+            targetState = count,
+            transitionSpec = {
+                val target = targetState ?: 0
+                val initial = initialState ?: 0
+                if (target >= initial) {
+                    (slideInVertically(DailyRecordMotion.spatial()) { height -> height } + fadeIn(tween(150)))
+                        .togetherWith(slideOutVertically(DailyRecordMotion.spatial()) { height -> -height } + fadeOut(tween(120)))
+                } else {
+                    (slideInVertically(DailyRecordMotion.spatial()) { height -> -height } + fadeIn(tween(150)))
+                        .togetherWith(slideOutVertically(DailyRecordMotion.spatial()) { height -> height } + fadeOut(tween(120)))
+                }
+            },
+            label = "quickLogCounter",
             modifier = Modifier
                 .widthIn(min = 44.dp)
                 .clearAndSetSemantics { },
-        )
+        ) { targetCount ->
+            Text(
+                text = targetCount?.toString() ?: AppCopy.Calendar.unset,
+                color = if (targetCount == null) DailyRecordTextMuted else DailyRecordText,
+                style = if (targetCount == null) MaterialTheme.typography.labelLarge else MetricNumberMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+        }
         CountButton(
             description = AppCopy.Calendar.quickLogIncreaseDescription(label),
             enabled = QuickLogAction.Increase.nextCount(count) != null,

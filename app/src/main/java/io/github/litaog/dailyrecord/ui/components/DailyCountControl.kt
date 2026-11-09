@@ -1,5 +1,12 @@
 package io.github.litaog.dailyrecord.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,24 +22,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
@@ -62,12 +75,12 @@ fun DailyCountControl(
             .fillMaxWidth()
             .heightIn(min = if (compact) 108.dp else 132.dp)
             .dailyRecordGlass(
-                shape = RoundedCornerShape(18.dp),
+                shape = DailyRecordShapes.Large,
                 moduleColors = colors,
                 level = if (enabled) DailyRecordGlassLevel.Elevated else DailyRecordGlassLevel.Muted,
             ),
         color = Color.Transparent,
-        shape = RoundedCornerShape(18.dp),
+        shape = DailyRecordShapes.Large,
         border = null,
     ) {
         Row(
@@ -77,14 +90,82 @@ fun DailyCountControl(
         ) {
             CountButton(AppCopy.Components.decrease, enabled && count > 0, false, colors, onDecrease)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = if (enabled) count.toString() else "—",
+                RollingCounter(
+                    count = count,
+                    enabled = enabled,
+                    textStyle = MetricNumberMedium,
                     color = if (enabled) DailyRecordText else DailyRecordTextMuted,
-                    style = MetricNumberMedium,
-                    fontWeight = FontWeight.Bold,
                 )
             }
             CountButton(AppCopy.Components.increase, enabled && count < Int.MAX_VALUE, true, colors, onIncrease)
+        }
+    }
+}
+
+/**
+ * Extracts decimal digits of a non-negative counter value.
+ * Used for multi-digit transition validation (ADR-022 / Feature 26).
+ */
+internal fun extractDigits(count: Int): List<Int> =
+    if (count <= 0) listOf(0) else count.toString().map { it.digitToInt() }
+
+/**
+ * Vertical slide animated numeric ticker for counter values (Feature 26).
+ *
+ * Increments slide in from bottom and exit to top.
+ * Decrements slide in from top and exit to bottom.
+ * Uses tabular figures ("tnum") to prevent horizontal glyph jitter.
+ */
+@Composable
+fun RollingCounter(
+    count: Int,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = MetricNumberMedium,
+    color: Color = DailyRecordText,
+) {
+    Box(
+        modifier = modifier
+            .clipToBounds()
+            .semantics(mergeDescendants = true) {
+                contentDescription = if (enabled) count.toString() else AppCopy.Statistics.dash
+            }
+            .testTag("rolling_counter"),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (!enabled) {
+            Text(
+                text = AppCopy.Statistics.dash,
+                color = DailyRecordTextMuted,
+                style = textStyle,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("rolling_counter_disabled"),
+            )
+        } else {
+            AnimatedContent(
+                targetState = count,
+                transitionSpec = {
+                    val isIncrease = targetState >= initialState
+                    if (isIncrease) {
+                        (slideInVertically(DailyRecordMotion.spatial()) { height -> height } + fadeIn(tween(150)))
+                            .togetherWith(slideOutVertically(DailyRecordMotion.spatial()) { height -> -height } + fadeOut(tween(120)))
+                    } else {
+                        (slideInVertically(DailyRecordMotion.spatial()) { height -> -height } + fadeIn(tween(150)))
+                            .togetherWith(slideOutVertically(DailyRecordMotion.spatial()) { height -> height } + fadeOut(tween(120)))
+                    }
+                },
+                label = "rolling_counter_transition",
+            ) { targetCount ->
+                Text(
+                    text = targetCount.toString(),
+                    color = color,
+                    style = textStyle,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.testTag("rolling_counter_text"),
+                )
+            }
         }
     }
 }

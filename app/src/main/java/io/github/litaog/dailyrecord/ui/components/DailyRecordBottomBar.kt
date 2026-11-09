@@ -1,5 +1,8 @@
 package io.github.litaog.dailyrecord.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,16 +19,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -34,22 +38,16 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.github.litaog.dailyrecord.ui.TopDestination
 import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
+import io.github.litaog.dailyrecord.ui.TopDestination
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
-import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.runtime.getValue
-import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.LiquidGlassElevation
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordMotion
-
-// Copy rule for the shared components: visible text arrives as a parameter or from AppCopy
-// (ZhStrings / EnStrings). Never hardcode visible text or CJK punctuation here; see
-// docs/ENGINEERING_STANDARDS.md section 7. scripts/copy-integrity.test.mjs rejects CJK leaks.
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
 
 @Composable
 internal fun DailyRecordBottomBar(
@@ -57,8 +55,6 @@ internal fun DailyRecordBottomBar(
     colors: RecordModuleColorTokens,
     onSelected: (TopDestination) -> Unit,
 ) {
-    // ADR-022: a floating liquid glass capsule above the system navigation
-    // bar. Each destination keeps a 48dp hit area and full Tab semantics.
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -92,10 +88,8 @@ internal fun DailyRecordBottomBar(
                 modifier = Modifier.weight(1f),
                 onClick = { onSelected(TopDestination.Calendar) },
                 icon = { color ->
-                    // The vector calendar symbol is optically centered, so the
-                    // nudge the old PNG artwork needed is gone.
                     CalendarGlyph(
-                        color,
+                        color = color,
                         modifier = Modifier.size(24.dp),
                         theme = colors.brandIconTheme,
                     )
@@ -109,7 +103,7 @@ internal fun DailyRecordBottomBar(
                 onClick = { onSelected(TopDestination.Statistics) },
                 icon = { color ->
                     StatisticsGlyph(
-                        color,
+                        color = color,
                         modifier = Modifier.size(24.dp),
                         theme = colors.brandIconTheme,
                     )
@@ -130,16 +124,26 @@ private fun BottomDestination(
 ) {
     val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
+
     val contentColor by animateColorAsState(
         targetValue = if (selected) accent else DailyRecordTextSecondary,
         label = "bottomDestinationColor",
     )
-    // Short underline that springs open from the center when selected.
+
+    // Micro-scaling pop for active destination icon
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1.08f else 1.0f,
+        animationSpec = DailyRecordMotion.effects(),
+        label = "bottomDestinationIconScale",
+    )
+
+    // Polished jewel indicator underline that springs open from center
     val indicatorWidth by animateDpAsState(
         targetValue = if (selected) 24.dp else 0.dp,
         animationSpec = DailyRecordMotion.spatial(),
         label = "bottomDestinationIndicator",
     )
+
     Column(
         modifier = modifier
             .heightIn(min = DailyRecordSizes.MinimumTouchTarget)
@@ -162,7 +166,15 @@ private fun BottomDestination(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        icon(contentColor)
+        Box(
+            modifier = Modifier.graphicsLayer {
+                scaleX = iconScale
+                scaleY = iconScale
+            },
+            contentAlignment = Alignment.Center,
+        ) {
+            icon(contentColor)
+        }
         Text(
             text = label,
             color = contentColor,

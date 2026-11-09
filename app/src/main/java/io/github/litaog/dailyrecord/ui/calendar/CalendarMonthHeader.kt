@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.components.IconArrowButton
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
@@ -63,7 +63,7 @@ internal fun MonthHeader(
             modifier = Modifier
                 .weight(1f)
                 .sizeIn(minHeight = DailyRecordSizes.MinimumTouchTarget)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(DailyRecordShapes.Medium)
                 .clickable(role = Role.Button, onClick = onOpenDatePicker)
                 .semantics {
                     role = Role.Button
@@ -95,7 +95,7 @@ internal fun MonthHeader(
             modifier = Modifier
                 .padding(start = 6.dp)
                 .sizeIn(minWidth = DailyRecordSizes.MinimumTouchTarget, minHeight = DailyRecordSizes.MinimumTouchTarget)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(DailyRecordShapes.Medium)
                 .clickable(role = Role.Button, onClick = onToday)
                 .semantics { role = Role.Button; contentDescription = AppCopy.Calendar.backToToday },
             contentAlignment = Alignment.Center,

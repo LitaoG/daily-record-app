@@ -150,5 +150,7 @@ dependencies {
     androidTestImplementation(libs.androidx.work.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    // Previews live in the debug source set (ui/preview), so the tooling-preview
+    // artifact stays out of the release classpath per the #256/#257 APK-slimming decisions.
     debugImplementation(libs.androidx.compose.ui.tooling.preview)
 }

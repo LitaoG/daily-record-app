@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
 import io.github.litaog.dailyrecord.ui.components.rememberWheelMotion
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
@@ -72,7 +72,7 @@ internal fun DateWheelColumn(
         MINIMUM_FLING_VELOCITY_DP_PER_SECOND.dp.toPx()
     }
     val wheelMotion = rememberWheelMotion(minimumFlingVelocity)
-    val shape = RoundedCornerShape(14.dp)
+    val shape = DailyRecordShapes.Medium
     // One light tick each time a new value reaches the center line, like the
     // time wheel (ADR-022). A value clamped by another wheel does not tick.
     val haptic = LocalHapticFeedback.current

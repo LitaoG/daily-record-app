@@ -7,11 +7,13 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
+import io.github.litaog.dailyrecord.core.statistics.shiftMonthAnchor
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
 import io.github.litaog.dailyrecord.ui.account.AccountTopBar
 import io.github.litaog.dailyrecord.ui.account.LocalAccountTopBar
 import io.github.litaog.dailyrecord.ui.components.DailyRecordBottomBar
 import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
+import java.time.LocalDate
 import java.time.YearMonth
 
 internal val earliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
@@ -73,3 +75,15 @@ internal fun MainAppScaffold(
         content(contentPadding)
     }
 }
+
+/** Clips the browsed month anchor into the supported date range. */
+internal fun shiftBrowseMonth(
+    browseDate: LocalDate,
+    months: Long,
+    effectiveToday: LocalDate,
+): LocalDate = shiftMonthAnchor(
+    browseDate,
+    months = months,
+    earliestDate = EARLIEST_SUPPORTED_DATE,
+    latestDate = effectiveToday,
+)

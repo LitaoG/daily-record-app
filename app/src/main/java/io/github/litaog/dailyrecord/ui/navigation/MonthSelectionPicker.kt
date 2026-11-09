@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -138,7 +139,7 @@ internal fun MonthSelectionPicker(
             Box(
                 modifier = Modifier
                     .height(54.dp)
-                    .clip(RoundedCornerShape(28.dp))
+                    .clip(DailyRecordShapes.Full)
                     .background(if (selected) colors.primary.copy(alpha = .92f) else Color.Transparent)
                     .clickable(enabled = enabled, role = Role.Button) { onMonthSelected(month) }
                     .semantics {

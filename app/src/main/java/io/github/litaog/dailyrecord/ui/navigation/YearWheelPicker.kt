@@ -37,6 +37,7 @@ import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.ChevronIcon
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -66,9 +67,9 @@ internal fun YearWheelPicker(
         modifier = Modifier
             .fillMaxWidth()
             .height(270.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(DailyRecordShapes.Medium)
             .background(DailyRecordSurfaceMuted)
-            .border(1.dp, DailyRecordDivider, RoundedCornerShape(14.dp)),
+            .border(1.dp, DailyRecordDivider, DailyRecordShapes.Medium),
     ) {
         LazyColumn(
             state = listState,

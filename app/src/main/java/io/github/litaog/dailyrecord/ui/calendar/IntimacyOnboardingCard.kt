@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +24,7 @@ import io.github.litaog.dailyrecord.ui.components.BrandIcon
 import io.github.litaog.dailyrecord.ui.components.BrandIconAsset
 import io.github.litaog.dailyrecord.ui.components.brandIconTheme
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -76,13 +77,14 @@ internal fun IntimacyOnboardingCard(
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = colors.primary,
                 modifier = Modifier
-                    .testTag("intimacy_onboarding_dismiss")
-                    .clip(RoundedCornerShape(8.dp))
+                    .sizeIn(
+                        minWidth = DailyRecordSizes.MinimumTouchTarget,
+                        minHeight = DailyRecordSizes.MinimumTouchTarget,
+                    )
+                    .clip(DailyRecordShapes.Small)
                     .clickable(role = Role.Button, onClick = onDismiss)
-                    // The touch and TalkBack target must meet the 48dp
-                    // contract; the label keeps its visual padding and stays
-                    // centered inside the expanded target (issue #287).
-                    .minimumInteractiveComponentSize()
+                    .testTag("intimacy_onboarding_dismiss")
+                    .wrapContentSize(Alignment.Center)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }

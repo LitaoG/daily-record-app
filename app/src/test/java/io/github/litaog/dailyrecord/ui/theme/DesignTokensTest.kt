@@ -1,7 +1,9 @@
 package io.github.litaog.dailyrecord.ui.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -215,6 +217,35 @@ class DesignTokensTest {
             assertTrue("$name: gradient needs at least two stops", module.gradient.size >= 2)
             assertTrue("$name: glow must stay translucent", module.glow.alpha < .2f)
         }
+    }
+
+    @Test
+    fun dailyRecordShapesFollowFiveStepSemanticScale() {
+        assertEquals(RoundedCornerShape(6.dp), DailyRecordShapes.ExtraSmall)
+        assertEquals(RoundedCornerShape(10.dp), DailyRecordShapes.Small)
+        assertEquals(RoundedCornerShape(16.dp), DailyRecordShapes.Medium)
+        assertEquals(RoundedCornerShape(22.dp), DailyRecordShapes.Large)
+        assertEquals(RoundedCornerShape(percent = 50), DailyRecordShapes.Full)
+    }
+
+    @Test
+    fun dailyRecordShapesAliasesRemainAlignedWithSemanticScale() {
+        assertEquals(DailyRecordShapes.Full, DailyRecordShapes.ModuleSelector)
+        assertEquals(DailyRecordShapes.Full, DailyRecordShapes.ModuleSelectorSlider)
+        assertEquals(DailyRecordShapes.Medium, DailyRecordShapes.Control)
+        assertEquals(DailyRecordShapes.Small, DailyRecordShapes.Compact)
+        assertEquals(DailyRecordShapes.Large, DailyRecordShapes.Card)
+        assertEquals(DailyRecordShapes.Full, DailyRecordShapes.BottomBar)
+    }
+
+    @Test
+    fun material3ShapesBridgeIsConsistent() {
+        val m3 = DailyRecordShapes.Material3Shapes
+        assertEquals(DailyRecordShapes.ExtraSmall, m3.extraSmall)
+        assertEquals(DailyRecordShapes.Small, m3.small)
+        assertEquals(DailyRecordShapes.Medium, m3.medium)
+        assertEquals(DailyRecordShapes.Large, m3.large)
+        assertEquals(DailyRecordShapes.Large, m3.extraLarge)
     }
 
     private fun assertArgb(expected: Long, actual: Color) {

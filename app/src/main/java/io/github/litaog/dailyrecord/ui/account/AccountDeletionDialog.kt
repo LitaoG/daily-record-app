@@ -56,6 +56,7 @@ import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurface
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccentSoft
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import kotlinx.coroutines.launch
 
 private enum class AccountDeletionStep {
@@ -170,7 +171,7 @@ internal fun AccountDeletionDialog(
                     imeAction = ImeAction.Done,
                 ),
                 keyboardActions = KeyboardActions(onDone = { submit() }),
-                shape = RoundedCornerShape(16.dp),
+                shape = DailyRecordShapes.Medium,
                 colors = deletionFieldColors(),
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp).testTag("account_deletion_password"),
             )
@@ -213,12 +214,12 @@ private fun DeletionChoiceCard(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(DailyRecordShapes.Medium)
             .background(if (selected) DailyRecordDefaultAccentSoft else DailyRecordSurface)
             .border(
                 1.dp,
                 if (selected) DailyRecordDefaultAccent else DailyRecordDivider,
-                RoundedCornerShape(14.dp),
+                DailyRecordShapes.Medium,
             )
             .clickable(role = Role.RadioButton, onClick = onClick)
             .padding(14.dp)

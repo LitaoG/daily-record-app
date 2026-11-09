@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.ui.components.DailyRecordHaptics
 import io.github.litaog.dailyrecord.ui.components.rememberWheelMotion
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
@@ -68,7 +68,7 @@ internal fun TimeWheelColumn(
     }
     val wheelMotion = rememberWheelMotion(minimumFlingVelocity)
     val wheelHeight = rowHeight * 3
-    val shape = RoundedCornerShape(16.dp)
+    val shape = DailyRecordShapes.Medium
     // One light tick each time a new value reaches the center line (b1 4.6).
     // A fast fling ticks at most once per frame, because each frame applies
     // its whole offset in one call.

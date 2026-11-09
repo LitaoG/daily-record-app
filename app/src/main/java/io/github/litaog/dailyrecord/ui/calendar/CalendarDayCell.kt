@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
 import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.RecordVisualState
 import java.time.LocalDate
 
@@ -89,7 +89,7 @@ internal fun CalendarDayCell(
     }
     val showOutline = focused || date == today || visualState == RecordVisualState.ExplicitZero
     val borderWidth = if (focused || date == today) 2.dp else 1.dp
-    val cellShape = RoundedCornerShape(9.dp)
+    val cellShape = DailyRecordShapes.Small
     val stateDescription = semanticStatus
 
     Box(
@@ -106,7 +106,7 @@ internal fun CalendarDayCell(
                 onLongClick = onLongClick,
                 onClick = onClick,
             )
-            .semantics {
+            .semantics(mergeDescendants = true) {
                 role = Role.Button
                 selected = focused
                 contentDescription = AppCopy.Calendar.monthDateDescription(date, stateDescription, focused)

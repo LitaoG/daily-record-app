@@ -34,6 +34,7 @@ import io.github.litaog.dailyrecord.ui.components.OutlineActionButton
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDefaultAccent
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDanger
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSizes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSuccess
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSurfaceMuted
@@ -79,15 +80,15 @@ internal fun AccountDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 18.dp)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                    .clip(DailyRecordShapes.Medium)
                     .background(
                         DailyRecordSurfaceMuted,
-                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                        DailyRecordShapes.Medium,
                     )
                     .border(
                         1.dp,
                         DailyRecordDivider,
-                        androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                        DailyRecordShapes.Medium,
                     )
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),

@@ -1,6 +1,7 @@
 package io.github.litaog.dailyrecord.ui.lock
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -50,8 +52,6 @@ internal fun AppLockScreen(
     onUnlock: () -> Unit,
     onLeave: () -> Unit,
 ) {
-    // Module-neutral app accent: the lock must not reveal the last module.
-    val colors = HandBrewColorTokens
     Dialog(
         onDismissRequest = onLeave,
         properties = DialogProperties(
@@ -61,70 +61,94 @@ internal fun AppLockScreen(
             decorFitsSystemWindows = false,
         ),
     ) {
-        Box(
+        AppLockContent(
+            attemptFailed = attemptFailed,
+            onUnlock = onUnlock,
+        )
+    }
+}
+
+@Composable
+internal fun AppLockContent(
+    attemptFailed: Boolean,
+    onUnlock: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // Module-neutral app accent: the lock must not reveal the last module.
+    val colors = HandBrewColorTokens
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(DailyRecordCanvas)
+            .testTag("app_lock_screen"),
+        contentAlignment = Alignment.Center,
+    ) {
+        DailyRecordLiquidBackdrop(colors = colors)
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(DailyRecordCanvas)
-                .testTag("app_lock_screen"),
-            contentAlignment = Alignment.Center,
+                .padding(horizontal = 28.dp)
+                .widthIn(max = 420.dp)
+                .fillMaxWidth()
+                .appleLiquidGlass(
+                    shape = DailyRecordShapes.Card,
+                    glowColor = colors.primary,
+                    elevation = LiquidGlassElevation.Emphasis,
+                )
+                .semantics { paneTitle = AppCopy.AppLock.lockedTitle }
+                .padding(horizontal = 24.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            DailyRecordLiquidBackdrop(colors = colors)
-            Column(
+            // Elevated Meniscus Lock Emblem (68dp circular meniscus glass halo badge)
+            Box(
                 modifier = Modifier
-                    .padding(horizontal = 28.dp)
-                    .widthIn(max = 420.dp)
-                    .fillMaxWidth()
-                    .appleLiquidGlass(
-                        shape = DailyRecordShapes.Card,
-                        glowColor = colors.primary,
-                        elevation = LiquidGlassElevation.Emphasis,
-                    )
-                    .semantics { paneTitle = AppCopy.AppLock.lockedTitle }
-                    .padding(horizontal = 24.dp, vertical = 28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .size(68.dp)
+                    .clip(DailyRecordShapes.Full)
+                    .background(colors.primary.copy(alpha = 0.08f))
+                    .border(1.dp, colors.primary.copy(alpha = 0.20f), DailyRecordShapes.Full),
+                contentAlignment = Alignment.Center,
             ) {
                 BrandIcon(
                     asset = BrandIconAsset.Lock,
                     contentDescription = null,
                     tint = colors.primary,
-                    modifier = Modifier.size(40.dp),
-                )
-                Text(
-                    text = AppCopy.AppLock.lockedTitle,
-                    color = DailyRecordText,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.semantics { heading() },
-                )
-                Text(
-                    text = AppCopy.AppLock.lockedBody,
-                    color = DailyRecordTextSecondary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                )
-                if (attemptFailed) {
-                    Text(
-                        text = AppCopy.AppLock.notCompleted,
-                        color = DailyRecordTextSecondary,
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .testTag("app_lock_not_completed")
-                            .semantics { liveRegion = LiveRegionMode.Polite },
-                    )
-                }
-                PrimaryActionButton(
-                    label = AppCopy.AppLock.unlock,
-                    onClick = onUnlock,
-                    accent = colors.primary,
-                    modifier = Modifier
-                        .padding(top = 4.dp)
-                        .fillMaxWidth()
-                        .testTag("app_lock_unlock"),
+                    modifier = Modifier.size(32.dp),
                 )
             }
+            Text(
+                text = AppCopy.AppLock.lockedTitle,
+                color = DailyRecordText,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = AppCopy.AppLock.lockedBody,
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
+            if (attemptFailed) {
+                Text(
+                    text = AppCopy.AppLock.notCompleted,
+                    color = DailyRecordTextSecondary,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .testTag("app_lock_not_completed")
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
+            PrimaryActionButton(
+                label = AppCopy.AppLock.unlock,
+                onClick = onUnlock,
+                accent = colors.primary,
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .fillMaxWidth()
+                    .testTag("app_lock_unlock"),
+            )
         }
     }
 }

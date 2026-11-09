@@ -32,8 +32,10 @@ import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextMuted
+import io.github.litaog.dailyrecord.ui.theme.DailyRecordShapes
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
 import io.github.litaog.dailyrecord.ui.theme.MetricNumberLarge
+import io.github.litaog.dailyrecord.ui.theme.MetricNumberSmall
 import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlass
@@ -51,16 +53,27 @@ internal fun StatisticsSummaryCard(
     colors: RecordModuleColorTokens,
     modifier: Modifier = Modifier,
 ) {
+    val summaryDescription = AppCopy.Components.joinSemantics(
+        AppCopy.Statistics.periodCountLabel(periodLabel, moduleLabel),
+        AppCopy.Statistics.countText(totalCount),
+        AppCopy.Statistics.recordedDaysLabel,
+        AppCopy.Statistics.daysText(recordedDays),
+        AppCopy.Statistics.averageLabel,
+        AppCopy.Statistics.average(average),
+    )
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .dailyRecordGlass(
-                shape = RoundedCornerShape(18.dp),
+                shape = DailyRecordShapes.Large,
                 moduleColors = colors,
                 level = DailyRecordGlassLevel.Elevated,
-            ),
+            )
+            .semantics(mergeDescendants = true) {
+                contentDescription = summaryDescription
+            },
         color = androidx.compose.ui.graphics.Color.Transparent,
-        shape = RoundedCornerShape(18.dp),
+        shape = DailyRecordShapes.Large,
         border = null,
     ) {
         Column(
@@ -90,11 +103,17 @@ internal fun StatisticsSummaryCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                SummaryFact(AppCopy.Statistics.recordedDaysLabel, AppCopy.Statistics.daysText(recordedDays), Modifier.weight(1f))
                 SummaryFact(
-                    AppCopy.Statistics.averageLabel,
-                    AppCopy.Statistics.average(average),
-                    Modifier.weight(1f),
+                    label = AppCopy.Statistics.recordedDaysLabel,
+                    value = recordedDays.toString(),
+                    unit = AppCopy.Statistics.dayUnit,
+                    modifier = Modifier.weight(1f),
+                )
+                SummaryFact(
+                    label = AppCopy.Statistics.averageLabel,
+                    value = AppCopy.Statistics.averageNumber(average),
+                    unit = AppCopy.Statistics.perDayUnit,
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -102,15 +121,35 @@ internal fun StatisticsSummaryCard(
 }
 
 @Composable
-private fun SummaryFact(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Text(label, color = DailyRecordTextMuted, style = MaterialTheme.typography.labelSmall)
+private fun SummaryFact(
+    label: String,
+    value: String,
+    unit: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
         Text(
-            value,
-            color = DailyRecordText,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
+            text = label,
+            color = DailyRecordTextMuted,
+            style = MaterialTheme.typography.labelSmall,
         )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = value,
+                color = DailyRecordText,
+                style = MetricNumberSmall,
+                maxLines = 1,
+            )
+            Text(
+                text = unit,
+                color = DailyRecordTextSecondary,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(start = 2.dp, bottom = 2.dp),
+            )
+        }
     }
 }
 
@@ -281,12 +320,12 @@ internal fun StatisticsSurface(
         modifier = modifier
             .fillMaxWidth()
             .dailyRecordGlass(
-                shape = RoundedCornerShape(18.dp),
+                shape = DailyRecordShapes.Large,
                 moduleColors = colors,
                 level = DailyRecordGlassLevel.Base,
             ),
         color = androidx.compose.ui.graphics.Color.Transparent,
-        shape = RoundedCornerShape(18.dp),
+        shape = DailyRecordShapes.Large,
         border = null,
     ) {
         Column(

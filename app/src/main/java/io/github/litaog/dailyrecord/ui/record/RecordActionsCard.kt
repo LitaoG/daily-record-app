@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,41 +19,38 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.litaog.dailyrecord.core.common.AppCopy
-import io.github.litaog.dailyrecord.core.model.DailyCountEntry
 import io.github.litaog.dailyrecord.ui.RecordDetailEntry
-import io.github.litaog.dailyrecord.ui.RecordModuleController
-import io.github.litaog.dailyrecord.ui.RecordModuleUiSpec
 import io.github.litaog.dailyrecord.ui.components.PrimaryActionButton
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordDivider
-import io.github.litaog.dailyrecord.ui.theme.DailyRecordGlassLevel
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordSpacing
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordText
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordTextSecondary
-import io.github.litaog.dailyrecord.ui.theme.dailyRecordGlassBackground
+import io.github.litaog.dailyrecord.ui.theme.LiquidGlassElevation
+import io.github.litaog.dailyrecord.ui.theme.RecordModuleColorTokens
+import io.github.litaog.dailyrecord.ui.theme.appleLiquidGlass
 import java.time.LocalDate
 import java.time.YearMonth
 
 @Composable
-internal fun RecordActionsCard(
-    date: LocalDate,
-    editable: Boolean,
-    dataReady: Boolean,
-    saving: Boolean,
-    canSave: Boolean,
-    record: DailyCountEntry?,
-    count: Int,
-    detailsDraft: RecordDetailsDraft,
-    storedDetails: List<RecordDetailEntry>,
-    moduleSpec: RecordModuleUiSpec,
-    launchMutation: (String, () -> Unit, suspend () -> Unit) -> Unit,
-    onSaved: () -> Unit,
-    controller: RecordModuleController,
-    onClearRequest: () -> Unit,
+internal fun PinnedStickySaveActionBar(
+    saveLabel: String,
+    saveEnabled: Boolean,
+    clearVisible: Boolean,
+    clearEnabled: Boolean,
+    accent: Color,
+    colors: RecordModuleColorTokens,
+    onSave: () -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .dailyRecordGlassBackground(moduleSpec.colors, DailyRecordGlassLevel.Muted)
+            .appleLiquidGlass(
+                shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+                glowColor = colors.primary,
+                elevation = LiquidGlassElevation.Elevated,
+            )
             .testTag("record_actions"),
         color = Color.Transparent,
     ) {
@@ -60,51 +58,30 @@ internal fun RecordActionsCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = DailyRecordSpacing.ScreenHorizontal,
-                    vertical = DailyRecordSpacing.Content,
+                    start = DailyRecordSpacing.ScreenHorizontal,
+                    end = DailyRecordSpacing.ScreenHorizontal,
+                    top = DailyRecordSpacing.Content,
+                    bottom = DailyRecordSpacing.ScreenVertical,
                 ),
             verticalArrangement = Arrangement.spacedBy(DailyRecordSpacing.Content),
         ) {
             PrimaryActionButton(
-                label = when {
-                    !dataReady -> AppCopy.Record.loading
-                    saving -> AppCopy.Record.saving
-                    !canSave && record != null -> AppCopy.Record.saved
-                    else -> AppCopy.Record.save
-                },
-                enabled = editable && canSave && !saving,
-                onClick = {
-                    if (!editable || !canSave || saving) return@PrimaryActionButton
-                    val currentDraftCount = count
-                    val currentDetails = when {
-                        currentDraftCount == 0 -> emptyList()
-                        currentDraftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS ->
-                            detailsDraft.asEntries().take(currentDraftCount)
-                        detailsDraft.hasChanges ->
-                            (storedDetails + detailsDraft.asEntries())
-                                .filter { it.occurrenceIndex in 1..currentDraftCount }
-                                .associateBy(RecordDetailEntry::occurrenceIndex)
-                                .values
-                                .sortedBy(RecordDetailEntry::occurrenceIndex)
-                        else -> null
-                    }
-                    launchMutation(AppCopy.Record.saveFailure, onSaved) {
-                        if (currentDetails == null) {
-                            controller.saveRecord(date, currentDraftCount)
-                        } else {
-                            controller.saveRecord(date, currentDraftCount, currentDetails)
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().testTag("save_record_button"),
-                accent = moduleSpec.colors.primary,
+                label = saveLabel,
+                enabled = saveEnabled,
+                onClick = onSave,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("save_record_button"),
+                accent = accent,
             )
-            RecordTextAction(
-                label = AppCopy.Record.clear,
-                enabled = editable && dataReady && record != null && !saving,
-                accent = moduleSpec.colors.primary,
-                onClick = onClearRequest,
-            )
+            if (clearVisible) {
+                RecordTextAction(
+                    label = AppCopy.Record.clear,
+                    enabled = clearEnabled,
+                    accent = accent,
+                    onClick = onClear,
+                )
+            }
         }
     }
 }
@@ -141,4 +118,25 @@ internal fun RecordMonthSummaryCard(
             fontWeight = FontWeight.Bold,
         )
     }
+}
+
+/**
+ * Assembles the detail rows to persist with a count-only or full-detail save.
+ * Returns null when the save should stay count-only, empty when the count is
+ * zero, and the merged occurrence-indexed entries otherwise.
+ */
+internal fun assembleSaveEntries(
+    draftCount: Int,
+    detailsDraft: RecordDetailsDraft,
+    storedDetails: List<RecordDetailEntry>,
+): List<RecordDetailEntry>? = when {
+    draftCount == 0 -> emptyList()
+    draftCount <= MAX_RECORD_DETAIL_EDITOR_ROWS -> detailsDraft.asEntries().take(draftCount)
+    detailsDraft.hasChanges ->
+        (storedDetails + detailsDraft.asEntries())
+            .filter { it.occurrenceIndex in 1..draftCount }
+            .associateBy(RecordDetailEntry::occurrenceIndex)
+            .values
+            .sortedBy(RecordDetailEntry::occurrenceIndex)
+    else -> null
 }
