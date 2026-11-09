@@ -140,25 +140,15 @@ test("max file lines rule is declared and enforces physical line limits on Kotli
   const ktFiles = getAllKotlinFiles(ktDir);
   assert.ok(ktFiles.length > 0, "No Kotlin files found in app/src/main/java");
 
-  // 历史超长文件唯一豁免白名单与基线行数
-  const historicalOversized = {
-    "SettingsScreen.kt": 1450,
-    "StatisticsMonthCards.kt": 850,
-    "DailyRecordComponents.kt": 835,
-  };
-
+  // 历史超长文件已于 2026-11 拆分治理完毕（Issue #299）：不再有豁免白名单，
+  // 全部 Kotlin 源码统一受 800 行物理硬顶约束（400 行为风格目标）。
   const violations = [];
   for (const file of ktFiles) {
     const fileName = path.basename(file);
     const content = fs.readFileSync(file, "utf8");
     const lineCount = content.split(/\r?\n/).length;
 
-    if (fileName in historicalOversized) {
-      const allowedMax = historicalOversized[fileName];
-      if (lineCount > allowedMax) {
-        violations.push(`${fileName}: historical baseline exceeded (${lineCount} > ${allowedMax})`);
-      }
-    } else if (lineCount > 800) {
+    if (lineCount > 800) {
       violations.push(`${path.relative(root, file)}: ${lineCount} lines exceeds hard ceiling of 800`);
     }
   }

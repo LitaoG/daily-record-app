@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -37,13 +34,6 @@ import io.github.litaog.dailyrecord.core.statistics.EARLIEST_SUPPORTED_DATE
 import io.github.litaog.dailyrecord.core.statistics.StatisticsPeriod
 import io.github.litaog.dailyrecord.core.statistics.shiftMonthAnchor
 import io.github.litaog.dailyrecord.core.sync.SyncStatus
-import io.github.litaog.dailyrecord.ui.account.AccountDialog
-import io.github.litaog.dailyrecord.ui.account.AccountDeletionDialog
-import io.github.litaog.dailyrecord.ui.account.AccountTopBar
-import io.github.litaog.dailyrecord.ui.account.LocalAccountTopBar
-import io.github.litaog.dailyrecord.ui.components.DailyRecordBottomBar
-import io.github.litaog.dailyrecord.ui.components.DailyRecordSnackbarHost
-import io.github.litaog.dailyrecord.ui.navigation.DateNavigationDialog
 import io.github.litaog.dailyrecord.ui.navigation.DateNavigationSelection
 import io.github.litaog.dailyrecord.ui.calendar.DailyCountCalendarScreen
 import io.github.litaog.dailyrecord.ui.record.DailyCountRecordScreen
@@ -55,22 +45,9 @@ import java.time.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import io.github.litaog.dailyrecord.ui.theme.DailyRecordColorTheme
 import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.CancellationException
-import io.github.litaog.dailyrecord.ui.calendar.QuickLogAction
-import io.github.litaog.dailyrecord.ui.calendar.nextCount
 import io.github.litaog.dailyrecord.ui.lock.AppLockSettings
 import io.github.litaog.dailyrecord.ui.settings.LauncherDisguiseSettings
-
-private val earliestSupportedMonth: YearMonth = YearMonth.from(EARLIEST_SUPPORTED_DATE)
-
-internal enum class TopDestination {
-    Calendar,
-    Statistics,
-}
 
 @Composable
 fun DailyRecordApp(
@@ -150,32 +127,17 @@ fun DailyRecordApp(
     var datePickerSelectionName by rememberSaveable {
         mutableStateOf(DateNavigationSelection.Date.name)
     }
-    val datePickerSelection = DateNavigationSelection.entries.firstOrNull {
-        it.name == datePickerSelectionName
-    } ?: DateNavigationSelection.Date
     var showAccountDialog by rememberSaveable { mutableStateOf(false) }
     var showAccountDeletion by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(syncStatus) {
-        if (
-            !showAccountDialog &&
-            !showSettings &&
-            syncStatus is SyncStatus.Failed &&
-            syncStatus.networkRelated
-        ) {
-            snackbarHostState.showSnackbar(
-                message = AppCopy.vpnSyncFailure,
-                duration = SnackbarDuration.Short,
-            )
-        }
-    }
-    LaunchedEffect(showAccountDialog) {
-        if (showAccountDialog) {
-            snackbarHostState.currentSnackbarData?.dismiss()
-        }
-    }
+    AppRootFeedbackEffects(
+        syncStatus = syncStatus,
+        showAccountDialog = showAccountDialog,
+        showSettings = showSettings,
+        snackbarHostState = snackbarHostState,
+    )
 
     val currentMonth = YearMonth.from(effectiveToday)
     val destination = TopDestination.entries.firstOrNull { it.name == destinationName }
@@ -258,25 +220,13 @@ fun DailyRecordApp(
         ?.count
     val quickLogScope = rememberCoroutineScope()
     val quickLogMutex = remember { Mutex() }
-    val onQuickLog: (LocalDate, QuickLogAction) -> Unit = quickLog@{ date, action ->
-        // Same bounds as the record page (also used by the long-press
-        // stepper): never write a future or pre-1970 date.
-        if (date.isAfter(effectiveToday) || date.isBefore(EARLIEST_SUPPORTED_DATE)) return@quickLog
-        val controller = selectedController
-        quickLogScope.launch {
-            try {
-                quickLogMutex.withLock {
-                    val current = controller.observeRecord(date).first()?.count
-                    val next = action.nextCount(current)
-                    if (next != null) controller.saveRecord(date, next)
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Exception) {
-                snackbarHostState.showSnackbar(AppCopy.Record.saveFailure)
-            }
-        }
-    }
+    val onQuickLog = todayQuickLogHandler(
+        scope = quickLogScope,
+        mutex = quickLogMutex,
+        selectedController = selectedController,
+        effectiveToday = effectiveToday,
+        snackbarHostState = snackbarHostState,
+    )
 
     Box(
         modifier = Modifier
@@ -320,40 +270,17 @@ fun DailyRecordApp(
                 onSignIn = onSignIn,
             )
         } else {
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                snackbarHost = {
-                    if (!showAccountDialog) {
-                        DailyRecordSnackbarHost(
-                            hostState = snackbarHostState,
-                            colors = moduleSpec.colors,
-                        )
-                    }
-                },
-                topBar = {
-                    if (accountEmail != null) {
-                        AccountTopBar(
-                            status = syncStatus,
-                            colors = moduleSpec.colors,
-                            onClick = { showAccountDialog = true },
-                            onSettings = { showSettings = true },
-                        )
-                    } else {
-                        LocalAccountTopBar(
-                            colors = moduleSpec.colors,
-                            onSignIn = onSignIn,
-                            onSettings = { showSettings = true },
-                        )
-                    }
-                },
-                bottomBar = {
-                    DailyRecordBottomBar(
-                        selected = destination,
-                        colors = moduleSpec.colors,
-                        onSelected = { destinationName = it.name },
-                    )
-                },
+            MainAppScaffold(
+                destination = destination,
+                moduleSpec = moduleSpec,
+                snackbarHostState = snackbarHostState,
+                showAccountDialog = showAccountDialog,
+                accountEmail = accountEmail,
+                syncStatus = syncStatus,
+                onSignIn = onSignIn,
+                onOpenAccount = { showAccountDialog = true },
+                onOpenSettings = { showSettings = true },
+                onDestinationSelected = { destinationName = it.name },
             ) { contentPadding ->
                 when (destination) {
                     TopDestination.Calendar -> DailyCountCalendarScreen(
@@ -435,38 +362,29 @@ fun DailyRecordApp(
         }
     }
 
-    if (showDatePicker) {
-        DateNavigationDialog(
-            initialDate = browseDate,
-            earliestDate = EARLIEST_SUPPORTED_DATE,
-            latestDate = effectiveToday,
-            colors = moduleSpec.colors,
-            selection = datePickerSelection,
-            onDismiss = { showDatePicker = false },
-            onDateSelected = {
-                browseDateText = it.toString()
-                showDatePicker = false
-            },
-        )
-    }
-
-    if (showAccountDialog && accountEmail != null) {
-        AccountDialog(
-            email = accountEmail,
-            status = syncStatus,
-            onSyncNow = onSyncNow,
-            onDeleteAccount = {
-                showAccountDialog = false
-                showAccountDeletion = true
-            },
-            onSignOut = onSignOut,
-            onDismiss = { showAccountDialog = false },
-        )
-    }
-    if (showAccountDeletion && accountEmail != null) {
-        AccountDeletionDialog(
-            onDeleteAccount = onDeleteAccount,
-            onDismiss = { showAccountDeletion = false },
-        )
-    }
+    AppRootDialogs(
+        showDatePicker = showDatePicker,
+        browseDate = browseDate,
+        effectiveToday = effectiveToday,
+        colors = moduleSpec.colors,
+        datePickerSelectionName = datePickerSelectionName,
+        showAccountDialog = showAccountDialog,
+        accountEmail = accountEmail,
+        syncStatus = syncStatus,
+        onSyncNow = onSyncNow,
+        onSignOut = onSignOut,
+        onDeleteAccount = onDeleteAccount,
+        onDismissAccountDialog = { showAccountDialog = false },
+        onOpenAccountDeletion = {
+            showAccountDialog = false
+            showAccountDeletion = true
+        },
+        showAccountDeletion = showAccountDeletion,
+        onDismissAccountDeletion = { showAccountDeletion = false },
+        onDatePickerDismiss = { showDatePicker = false },
+        onDatePickerDateSelected = {
+            browseDateText = it.toString()
+            showDatePicker = false
+        },
+    )
 }

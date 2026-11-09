@@ -6,29 +6,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-internal enum class AccountDeletionOutcome {
-    Completed,
-    CleanupPending,
-    /** Auth deletion was requested but its final result is unknown. */
-    AuthDeletionPending,
-    /** The temporary local recovery copy could not be safely discarded. */
-    LocalRecoveryPending,
-    RetryableFailure,
-    Interrupted,
-}
-
-internal class AccountDeletionInProgressException(
-    ownerId: String,
-) : IllegalStateException("Cloud writes are blocked while deleting account $ownerId")
-
-internal interface CloudWriteGate {
-    suspend fun <T> withWrite(ownerId: String, block: suspend () -> T): T
-}
-
-internal object NoOpCloudWriteGate : CloudWriteGate {
-    override suspend fun <T> withWrite(ownerId: String, block: suspend () -> T): T = block()
-}
-
 /**
  * Process-wide deletion barrier: serializes cloud writes against account
  * deletion and persists one versioned journal entry per owner.
@@ -357,12 +334,6 @@ internal object DeletionBarrier {
         isDeletionBlockedLocked(ownerId)
     }
 
-    internal fun cloudWriteGate(): CloudWriteGate =
-        object : CloudWriteGate {
-            override suspend fun <T> withWrite(ownerId: String, block: suspend () -> T): T =
-                withCloudWrite(ownerId, block)
-        }
-
     internal suspend fun <T> withCloudWrite(
         ownerId: String,
         block: suspend () -> T,
@@ -420,37 +391,4 @@ internal object DeletionBarrier {
         if (ownerId !in entries) return
         requireNotNull(stateStore).writeJournal(entries - ownerId)
     }
-
-    private fun requireValidJournal(entries: Map<String, DeletionJournalEntry>) {
-        entries.values.forEach { entry ->
-            check(entry.version == DeletionJournalEntry.CURRENT_VERSION)
-        }
-    }
-
-    private fun requireValidTransition(
-        current: DeletionJournalEntry,
-        next: DeletionJournalEntry,
-    ) {
-        if (current == next) return
-        val allowed = when (current.phase) {
-            DeletionJournalPhase.InProgress ->
-                next.phase == DeletionJournalPhase.InProgress ||
-                    next.phase == DeletionJournalPhase.CloudDeleted
-            DeletionJournalPhase.CloudDeleted ->
-                next.phase == DeletionJournalPhase.CloudDeleted ||
-                    next.phase == DeletionJournalPhase.AuthDeletionPending
-            DeletionJournalPhase.AuthDeletionPending ->
-                next.phase == DeletionJournalPhase.AuthDeletionPending ||
-                    next.phase == DeletionJournalPhase.AuthDeletedCleanupPending
-            DeletionJournalPhase.AuthDeletedCleanupPending ->
-                next.phase == DeletionJournalPhase.AuthDeletedCleanupPending
-        }
-        check(allowed) {
-            "Invalid deletion journal transition: ${current.phase} -> ${next.phase}"
-        }
-    }
-
-    private val DeletionJournalEntry.isSafeSameProcessRetry: Boolean
-        get() = phase == DeletionJournalPhase.InProgress &&
-            recoveryCopy == RecoveryCopyState.None
 }

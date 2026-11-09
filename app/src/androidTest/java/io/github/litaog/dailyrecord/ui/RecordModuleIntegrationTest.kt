@@ -220,97 +220,6 @@ class RecordModuleIntegrationTest {
         composeRule.onNodeWithText("全部").assertIsDisplayed()
     }
 
-    @Test
-    fun periodTabsKeepEqualTouchTargetsAndInsetGlassSlider() {
-        setDualModuleContent()
-
-        composeRule.onNodeWithContentDescription("统计，未选择").performClick()
-        composeRule.waitForIdle()
-
-        val container = composeRule.onNodeWithTag("statistics_period_tabs").fetchSemanticsNode().boundsInRoot
-        val slider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
-        val segments = StatisticsPeriod.entries.map { period ->
-            composeRule.onNodeWithTag("statistics_period_${period.name}").fetchSemanticsNode().boundsInRoot
-        }
-        val weekLabel = composeRule.onNodeWithText("周").fetchSemanticsNode().boundsInRoot
-        val minWidth = segments.minOf { it.width }
-        val maxWidth = segments.maxOf { it.width }
-
-        // Segment widths are integer pixels on a device; one pixel of rounding
-        // is expected when the full width is not divisible by four.
-        assertEquals(minWidth, maxWidth, 1f)
-        assertEquals(segments.first().center.y, weekLabel.center.y, 1.5f)
-        assertTrue(slider.width < segments.first().width)
-        assertTrue(slider.left > segments.first().left)
-        assertTrue(slider.right < segments.first().right)
-        assertTrue(slider.top > container.top)
-        assertTrue(slider.bottom < container.bottom)
-
-        composeRule.onNodeWithTag("statistics_period_Month").performClick()
-        composeRule.waitForIdle()
-        val movedSlider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
-        assertEquals(segments[1].left + (segments[1].width - movedSlider.width) / 2f, movedSlider.left, 1.5f)
-        assertEquals(segments[1].right - (segments[1].width - movedSlider.width) / 2f, movedSlider.right, 1.5f)
-    }
-
-    @Test
-    fun periodTabsKeepRatiosAcrossParentWidths() {
-        val parentWidth = androidx.compose.runtime.mutableStateOf(240.dp)
-        composeRule.setContent {
-            DailyRecordTheme {
-                Box(modifier = Modifier.width(parentWidth.value)) {
-                    PeriodTabs(
-                        selected = StatisticsPeriod.Week,
-                        onSelected = {},
-                        colors = HandBrewColorTokens,
-                    )
-                }
-            }
-        }
-
-        listOf(240.dp, 360.dp, 600.dp).forEach { width ->
-            composeRule.runOnIdle { parentWidth.value = width }
-            composeRule.waitForIdle()
-
-            val container = composeRule.onNodeWithTag("statistics_period_tabs").fetchSemanticsNode().boundsInRoot
-            val segments = StatisticsPeriod.entries.map { period ->
-                composeRule.onNodeWithTag("statistics_period_${period.name}").fetchSemanticsNode().boundsInRoot
-            }
-            val slider = composeRule.onNodeWithTag("statistics_period_slider").fetchSemanticsNode().boundsInRoot
-
-            assertTrue(container.width > 0f)
-            assertEquals(segments.first().width, segments[1].width, 1f)
-            assertEquals(segments.first().width, segments[2].width, 1f)
-            assertEquals(segments.first().width, segments[3].width, 1f)
-            assertTrue(slider.width < segments.first().width)
-            assertTrue(slider.left > segments.first().left)
-            assertTrue(slider.right < segments.first().right)
-            assertTrue(slider.top > container.top)
-            assertTrue(slider.bottom < container.bottom)
-        }
-    }
-
-    @Test
-    fun snackbarUsesTheActiveModuleColorTokens() {
-        val hostState = SnackbarHostState()
-        val activeColors = androidx.compose.runtime.mutableStateOf(HandBrewColorTokens)
-        composeRule.setContent {
-            DailyRecordTheme {
-                DailyRecordSnackbarHost(
-                    hostState = hostState,
-                    colors = activeColors.value,
-                )
-                LaunchedEffect(Unit) {
-                    hostState.showSnackbar("网络提示", duration = SnackbarDuration.Indefinite)
-                }
-            }
-        }
-
-        assertSnackbarColor(HandBrewColorTokens.strong)
-        composeRule.runOnIdle { activeColors.value = SexColorTokens }
-        assertSnackbarColor(SexColorTokens.strong)
-    }
-
     private fun assertSelectorHalfColors(selected: Color, selectedOnLeft: Boolean) {
         var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
         composeRule.waitUntil(timeoutMillis = 10_000) {
@@ -350,19 +259,6 @@ class RecordModuleIntegrationTest {
                 surfacePixel.green > .9f &&
                 surfacePixel.blue > .9f,
         )
-    }
-
-    private fun assertSnackbarColor(expected: Color) {
-        var bitmap: androidx.compose.ui.graphics.ImageBitmap? = null
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            runCatching {
-                bitmap = composeRule.onNodeWithTag("daily_record_snackbar").captureToImage()
-            }.isSuccess
-        }
-        val pixels = requireNotNull(bitmap).toPixelMap()
-        val sampleX = (pixels.width - 8).coerceAtLeast(0)
-        val sampleY = pixels.height / 2
-        assertEquals(expected.toArgb(), pixels[sampleX, sampleY].toArgb())
     }
 
     private fun assertSettingsIconContains(expected: Color, unexpected: Color) {
@@ -410,23 +306,6 @@ class RecordModuleIntegrationTest {
         )
     }
 
-    private fun assertMinimumHeight(tag: String, minimumDp: Float) {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val heightPx = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.height
-        val heightDp = heightPx / context.resources.displayMetrics.density
-        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
-    }
-
-    private fun assertMinimumSize(tag: String, minimumDp: Float) {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val bounds = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
-        val density = context.resources.displayMetrics.density
-        val widthDp = bounds.width / density
-        val heightDp = bounds.height / density
-        assertTrue("$tag width was $widthDp dp", widthDp >= minimumDp)
-        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
-    }
-
     private fun setDualModuleContent(fontScale: Float = 1f) {
         composeRule.setContent {
             val density = LocalDensity.current.density
@@ -461,5 +340,22 @@ class RecordModuleIntegrationTest {
             }
         }
         composeRule.waitForIdle()
+    }
+
+    private fun assertMinimumHeight(tag: String, minimumDp: Float) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val heightPx = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.height
+        val heightDp = heightPx / context.resources.displayMetrics.density
+        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
+    }
+
+    private fun assertMinimumSize(tag: String, minimumDp: Float) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val bounds = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+        val density = context.resources.displayMetrics.density
+        val widthDp = bounds.width / density
+        val heightDp = bounds.height / density
+        assertTrue("$tag width was $widthDp dp", widthDp >= minimumDp)
+        assertTrue("$tag height was $heightDp dp", heightDp >= minimumDp)
     }
 }
